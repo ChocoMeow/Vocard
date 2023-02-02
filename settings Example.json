@@ -1,0 +1,24 @@
+{
+    "nodes": {
+        "DEFAULT": {"host": "127.0.0.1",
+            "port": 2333,
+            "password": "password",
+            "secure": false,
+            "identifier": "DEFAULT"
+        }   
+    },
+    "bot_access_user": [],
+    "color_code":"",
+    "emoji_source_raw": {
+        "youtube": "<:youtube:826661982760992778>",
+        "youtube music": "<:youtube:826661982760992778>",
+        "spotify": "<:spotify:826661996615172146>",
+        "soundcloud": "<:soundcloud:852729280027033632>",
+        "twitch": "<:twitch:852729278285086741>",
+        "bandcamp": "<:bandcamp:864694003811221526>",
+        "vimeo": "<:vimeo:864694001919721473>",
+        "apple": "<:applemusic:994844332374884413>",
+        "reddit": "<:reddit:996007566863773717>",
+        "tiktok": "<:tiktok:996007689798811698>"
+    }
+}

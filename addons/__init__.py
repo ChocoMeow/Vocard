@@ -1,0 +1,1 @@
+from .lyrics import getLyrics
