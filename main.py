@@ -12,11 +12,8 @@ from function import (
 )
 from discord.ext import commands
 from dotenv import load_dotenv
-from googletrans import Translator
 from datetime import datetime
 from voicelink import VoicelinkException
-
-translator = Translator()
 
 load_dotenv()
 
@@ -29,12 +26,7 @@ class Translator(discord.app_commands.Translator):
     
     async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
         if str(locale) in local_langs:
-            text = local_langs[str(locale)].get(string.message, None)
-            if not text:
-                result = translator.translate(string.message, str(locale).lower())
-                print(result.origin, ' -> ', result.text)
-                return result.text
-            return text
+            return local_langs[str(locale)].get(string.message, None)
         return None
 
 class Vocard(commands.Bot):
@@ -53,8 +45,8 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     print(traceback.format_exc())
 
-        # await bot.tree.set_translator(Translator())
-        # await bot.tree.sync()
+        await bot.tree.set_translator(Translator())
+        await bot.tree.sync()
 
     async def on_ready(self):
         print("------------------")
