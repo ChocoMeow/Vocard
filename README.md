@@ -1,4 +1,6 @@
-![Support Server](https://discordapp.com/api/guilds/811542332678996008/widget.png?style=shield)
+<a href="https://discord.gg/wRCgB7vBQv">
+    <img src="https://img.shields.io/discord/811542332678996008?color=7289DA&label=Support&logo=discord&style=for-the-badge" alt="Discord">
+</a>
 
 # Vocard (Discord Music Bot)
 > Vocard is a simple custom Disocrd Music Bot built with Python & [discord.py](https://discordpy.readthedocs.io/en/stable/)
