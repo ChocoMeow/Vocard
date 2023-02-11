@@ -25,10 +25,7 @@ import discord
 from discord.ext import commands
 
 from os import getenv
-from function import (
-    embed_color,
-    invite_link
-)
+import function
 
 class HelpDropdown(discord.ui.Select):
     def __init__(self, category:list):
@@ -61,7 +58,7 @@ class HelpView(discord.ui.View):
         self.response = None
         self.categorys = [ category.capitalize() for category in bot.cogs if category not in ["Task", "Nodes"] ]
 
-        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=invite_link))
+        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=function.invite_link))
         self.add_item(discord.ui.Button(label='Invite', emoji=':invite:915152589056790589', url='https://discord.com/oauth2/authorize?client_id={}&permissions=2184260928&scope=bot%20applications.commands'.format(getenv('CLIENT_ID'))))
         self.add_item(discord.ui.Button(label='Github', url='https://github.com/ChocoMeow/Vocard'))
         self.add_item(discord.ui.Button(label='Donate', emoji=':patreon:913397909024800878', url='https://www.patreon.com/Vocard'))
@@ -86,7 +83,7 @@ class HelpView(discord.ui.View):
 
     def build_embed(self, category: str):
         if category == "News":
-            embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=embed_color)
+            embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=function.embed_color)
 
             embed.add_field(name=f"Available Categories: [{2 + len(self.categorys)}]",
                             value="```py\n👉 News\n2. Tutorial\n{}```".format("".join(f"{i}. {c}\n" for i, c in enumerate(self.categorys, start=3))),
@@ -103,7 +100,7 @@ class HelpView(discord.ui.View):
             
             return embed
 
-        embed = discord.Embed(title=f"Category: {category}", color=embed_color)
+        embed = discord.Embed(title=f"Category: {category}", color=function.embed_color)
         embed.add_field(name=f"Categories: [{2 + len(self.categorys)}]", value="```py\n" + "\n".join(f"👉 {c}" if c == category else f"{i}. {c}" for i, c in enumerate(['News', 'Tutorial'] + self.categorys, start=1)) + "```", inline=True)
 
         if category == 'Tutorial':
