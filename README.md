@@ -8,7 +8,7 @@
 ## Requirements
 * [Python 3.8+](https://www.python.org/downloads/)
 * [Modules in requirements](https://github.com/ChocoMeow/Vocard/blob/main/requirements.txt)
-* [Lavalink Server](https://github.com/freyacodes/Lavalink)
+* [Lavalink Server (Requires 3.7.0+)](https://github.com/freyacodes/Lavalink)
 
 ## Quick Start
 ```sh

@@ -21,10 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__version__ = "0.7"
+__version__ = "0.8"
 __author__ = 'Vocard Development, Choco'
 __license__ = "MIT"
-__copyright__ = "Copyright 2022 (c) Vocard Development, Choco"
+__copyright__ = "Copyright 2023 (c) Vocard Development, Choco"
 
 from .enums import SearchType
 from .events import *

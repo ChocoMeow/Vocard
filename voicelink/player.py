@@ -218,9 +218,12 @@ class Player(VoiceProtocol):
             return
 
         await self._node.send(
-            op="voiceUpdate",
-            guildId=str(self.guild.id),
-            **voice_data
+            method=0, guild_id=self._guild.id,
+            data = {"voice": {
+                "token": voice_data['event']['token'],
+                "endpoint": voice_data['event']['endpoint'],
+                "sessionId": voice_data['sessionId'],
+            }}
         )
 
     async def on_voice_server_update(self, data: dict):
@@ -445,7 +448,7 @@ class Player(VoiceProtocol):
     async def stop(self):
         """Stops the currently playing track."""
         self._current = None
-        await self._node.send(op="stop", guildId=str(self.guild.id))
+        await self._node.send(method=0, guild_id=self._guild.id, data={'encodedTrack': None})
 
     async def disconnect(self, *, force: bool = False):
         """Disconnects the player from voice."""
@@ -467,7 +470,7 @@ class Player(VoiceProtocol):
             assert self.channel is None and not self.is_connected
         
         self._node._players.pop(self.guild.id)
-        await self._node.send(op="destroy", guildId=str(self.guild.id))
+        await self._node.send(method=1, guild_id=self._guild.id)
         
     async def play(
         self,
@@ -493,26 +496,20 @@ class Player(VoiceProtocol):
 
                 track.original = search[0]
             
-            data = {
-                "op": "play",
-                "guildId": str(self.guild.id),
-                "track": track.original.track_id,
-                "startTime": str(start),
-                "noReplace": ignore_if_playing
-            }
-        else:
-            data = {
-                "op": "play",
-                "guildId": str(self.guild.id),
-                "track": track.track_id,
-                "startTime": str(start),
-                "noReplace": ignore_if_playing
-            }
+        data = {
+            "encodedTrack": track.original.track_id if track.original else track.track_id,
+            "position": str(start)
+        }
 
         if end > 0:
             data["endTime"] = str(end)
                   
-        await self._node.send(**data)
+        await self._node.send(
+            method=0, guild_id=self._guild.id,
+            data=data,
+            query=f"noReplace={ignore_if_playing}"
+        )
+
         self._current = track
 
         if self.volume != 100:
@@ -527,18 +524,18 @@ class Player(VoiceProtocol):
                 "Seek position must be between 0 and the track length"
             )
 
-        await self._node.send(op="seek", guildId=str(self.guild.id), position=position)
+        await self._node.send(method=0, guild_id=self._guild.id, data={"position": position})
         return self._position
 
     async def set_pause(self, pause: bool) -> bool:
         """Sets the pause state of the currently playing track."""
-        await self._node.send(op="pause", guildId=str(self.guild.id), pause=pause)
+        await self._node.send(method=0, guild_id=self._guild.id, data={"paused": pause})
         self._paused = pause
         return self._paused
 
     async def set_volume(self, volume: int) -> int:
         """Sets the volume of the player as an integer. Lavalink accepts values from 0 to 500."""
-        await self._node.send(op="volume", guildId=str(self.guild.id), volume=volume)
+        await self._node.send(method=0, guild_id=self._guild.id, data={"volume": volume})
         self._volume = volume
         return self._volume
 
@@ -548,7 +545,7 @@ class Player(VoiceProtocol):
         except FilterTagAlreadyInUse:
             raise FilterTagAlreadyInUse(self.get_msg("FilterTagAlreadyInUse"))
         payload = self._filters.get_all_payloads()
-        await self._node.send(op="filters", guildId=str(self.guild.id), **payload)
+        await self._node.send(method=0, guild_id=self._guild.id, data={"filters": payload})
         if fast_apply:
             await self.seek(self.position)
         return self._filters
@@ -556,7 +553,7 @@ class Player(VoiceProtocol):
     async def remove_filter(self, filter_tag: str, fast_apply=False) -> Filters:
         self._filters.remove_filter(filter_tag=filter_tag)
         payload = self._filters.get_all_payloads()
-        await self._node.send(op="filters", guildId=str(self.guild.id), **payload)
+        await self._node.send(method=0, guild_id=self._guild.id, data={"filters": payload})
         if fast_apply:
             await self.seek(self.position)
         
@@ -566,7 +563,7 @@ class Player(VoiceProtocol):
         if not self._filters:
             raise FilterInvalidArgument("You must have filters applied first in order to use this method.")
         self._filters.reset_filters()
-        await self._node.send(op="filters", guildId=str(self.guild.id))
+        await self._node.send(method=0, guild_id=self._guild.id, data={"filters": {}})
         if fast_apply:
             await self.seek(self.position)
 

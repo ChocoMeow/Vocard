@@ -27,7 +27,7 @@ import asyncio
 import json
 import os
 import re
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import Dict, Optional, TYPE_CHECKING, Union
 from urllib.parse import quote
 
 import aiohttp
@@ -68,6 +68,8 @@ URL_REGEX = re.compile(
     r"https?://(?:www\.)?.+"
 )
 
+NODE_VERSION = "v3"
+CALL_METHOD = ["PATCH", "DELETE"]
 
 def exception_catch_callback(task):
     if task.exception():
@@ -105,7 +107,7 @@ class Node:
         self._heartbeat = heartbeat
         self._secure = secure
        
-        self._websocket_uri = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}"    
+        self._websocket_uri = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}/" + NODE_VERSION + "/websocket"
         self._rest_uri = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
 
         self._session = session or aiohttp.ClientSession()
@@ -114,7 +116,7 @@ class Node:
 
         self.resume_key = resume_key or str(os.urandom(8).hex())
 
-        self._connection_id = None
+        self._session_id = None
         self._metadata = None
         self._available = None
 
@@ -232,32 +234,48 @@ class Node:
             return
 
         if op == "ready":
-            return
+            self._session_id = data.get("sessionId")
 
         if op == "stats":
             self._stats = NodeStats(data)
             return
 
-        if not (player := self._players.get(int(data["guildId"]))):
-            return
+        if "guildId" in data:
+            if not (player := self._players.get(int(data["guildId"]))):
+                return
 
         if op == "event":
             await player._dispatch_event(data)
         elif op == "playerUpdate":
             await player._update_state(data)
 
-    async def send(self, **data):
+    async def send(self, method: int, 
+                   guild_id: Union[str, int] = None, 
+                   query: str = None, 
+                   data: Union[dict, str] = {}):
+        
         if not self._available:
             raise NodeNotAvailable(
                 f"The node '{self._identifier}' is unavailable."
             )
+        
+        uri: str =  f"{self._rest_uri}/{NODE_VERSION}" \
+                    f"/sessions/{self._session_id}/players" \
+                    f"/{guild_id}" if guild_id else "" \
+                    f"?{query}" if query else ""
+        
+        async with self._session.request(method=CALL_METHOD[method],
+                                         url=uri,
+                                         headers={"Authorization": self._password},
+                                         json=data) as resp:
+            if resp.status >= 300:
+                raise NodeException(f"Getting errors from Lavalink REST api")
+            
+            if method == CALL_METHOD[1]:
+                return await resp.json(content_type=None)
 
-        payload = json.dumps(data)
-        if isinstance(payload, bytes):
-            payload = payload.decode('utf-8')
-
-        await self._websocket.send_str(payload)
-
+            return await resp.json()
+        
     def get_player(self, guild_id: int):
         """Takes a guild ID as a parameter. Returns a voicelink Player object."""
         return self._players.get(guild_id, None)
@@ -269,9 +287,12 @@ class Node:
             self._websocket = await self._session.ws_connect(
                 self._websocket_uri, headers=self._headers, heartbeat=self._heartbeat
             )
+
             self._task = self._bot.loop.create_task(self._listen())
             self._available = True
 
+            print(f"{self._identifier} is connected!")
+        
         except aiohttp.ClientConnectorError:
             raise NodeConnectionFailure(
                 f"The connection to node '{self._identifier}' failed."
@@ -285,19 +306,11 @@ class Node:
                 f"The URI for node '{self._identifier}' is invalid."
             )
         
-        if self.is_connected:
-            resume = {
-                "op": "configureResuming",
-                "key": f"{self.resume_key}",
-                "timeout": 120
-            }
+        if self.players:
+            await self.reconnect()
 
-            await self.send(**resume)
-            print(f"{self._identifier} is connected!")
-
-            if self.players:
-                await self.reconnect()
-            
+        return self
+              
     async def disconnect(self):
         """Disconnects a connected Lavalink node and removes it from the node pool.
            This also destroys any players connected to the node.
@@ -314,6 +327,7 @@ class Node:
         self._task.cancel()
 
     async def reconnect(self):
+        await asyncio.sleep(10)
         for player in self.players.copy().values():
             try:
                 if player._voice_state:
@@ -341,7 +355,7 @@ class Node:
         """
 
         async with self._session.get(
-            f"{self._rest_uri}/decodetrack?",
+            f"{self._rest_uri}/" + NODE_VERSION + "/decodetrack?",
             headers={"Authorization": self._password},
             params={"track": identifier}
         ) as resp:
@@ -440,7 +454,7 @@ class Node:
 
         elif discord_url := DISCORD_MP3_URL_REGEX.match(query):
             async with self._session.get(
-                url=f"{self._rest_uri}/loadtracks?identifier={quote(query)}",
+                url=f"{self._rest_uri}/" + NODE_VERSION + f"/loadtracks?identifier={quote(query)}",
                 headers={"Authorization": self._password}
             ) as response:
                 data: dict = await response.json()
@@ -468,7 +482,7 @@ class Node:
 
         else:
             async with self._session.get(
-                url=f"{self._rest_uri}/loadtracks?identifier={quote(query)}",
+                url=f"{self._rest_uri}/" + NODE_VERSION + f"/loadtracks?identifier={quote(query)}",
                 headers={"Authorization": self._password}
             ) as response:
                 data = await response.json()
