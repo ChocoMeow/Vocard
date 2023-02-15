@@ -13,6 +13,9 @@
     <img src="https://user-images.githubusercontent.com/94597336/218930368-46fff9ef-628b-4daa-aee1-7c5e5692700c.png" height=300>
 </div>
 
+## Run the Projects
+[![Run on Repl.it](https://replit.com/badge/github/ChocoMeow/Vocard)](https://replit.com/new/github/ChocoMeow/Vocard)
+
 ## Requirements
 * [Python 3.8+](https://www.python.org/downloads/)
 * [Modules in requirements](https://github.com/ChocoMeow/Vocard/blob/main/requirements.txt)
