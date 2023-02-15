@@ -21,7 +21,7 @@
     "toggleDuplicateTrack": "現在您已經 `{0}` 以防止隊列中的重複曲目。",
     "settingsMenu": "服務器設置 | {0}",
     "settingsTitle": "❤️ 基本信息：",
-    "settingsValue": "語言：`{0}`\n啟用音樂控制器：`{1}`\nDJ角色：{2}\n投票繞過：`{3}`\n24/7：`{4}`\n默認音量：`{5}%`\n播放時間: `{6}`\n捐贈服務器：`{7}`",
+    "settingsValue": "語言：`{0}`\n啟用音樂控制器：`{1}`\nDJ角色：{2}\n投票繞過：`{3}`\n24/7：`{4}`\n默認音量：`{5}%`\n播放時間: `{6}`",
     "settingsTitle2": "🔗 隊列信息:",
     "settingsValue2": "隊列模式: `{0}`\n最大曲目: `{1}`\n允許重複軌道: `{2}`",
     "settingsPermTitle": "✨ 權限：",

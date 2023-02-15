@@ -21,7 +21,7 @@
     "toggleDuplicateTrack": "Now you have `{0}` to prevent duplicate track in the queue.",
     "settingsMenu": "Server Settings | {0}",
     "settingsTitle": "❤️ Basic Info:",
-    "settingsValue": "Language: `{0}`\nEnable Music Controller: `{1}`\nDJ Role: {2}\nVote Bypass: `{3}`\n24/7: `{4}`\nDefault Volume: `{5}%`\nPlay Time: `{6}`\nDonate Server: `{7}`",
+    "settingsValue": "Language: `{0}`\nEnable Music Controller: `{1}`\nDJ Role: {2}\nVote Bypass: `{3}`\n24/7: `{4}`\nDefault Volume: `{5}%`\nPlay Time: `{6}`",
     "settingsTitle2": "🔗 Queue info:",
     "settingsValue2": "Queue Mode: `{0}`\nMax Song: `{1}`\nAllow Duplicate Track: `{2}`",
     "settingsPermTitle": "✨ Permissions:",
