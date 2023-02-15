@@ -36,7 +36,7 @@ from .artist import Artist
 GRANT_URL = "https://accounts.spotify.com/api/token"
 REQUEST_URL = "https://api.spotify.com/v1/{type}s/{id}"
 SEARCH_URL = "https://api.spotify.com/v1/search?q={query}&type={type}&limit={limit}"
-SUGGESTION_URL = "https://api.spotify.com/v1/recommendations?limit={limit}&seed_tracks={seed_tracks}"
+SUGGESTION_URL = "https://api.spotify.com/v1/recommendations?limit={limit}&seed_artists={seed_artists}&seed_tracks={seed_tracks}"
 SPOTIFY_URL_REGEX = re.compile(
     r"https?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)"
 )
@@ -95,7 +95,7 @@ class Client:
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
         
-        request_url = SUGGESTION_URL.format(limit=limit, seed_tracks=seed_tracks)
+        request_url = SUGGESTION_URL.format(limit=limit, seed_artists=seed_artists, seed_tracks=seed_tracks)
 
         async with self.session.get(request_url, headers=self._bearer_headers) as resp:
             if resp.status != 200:

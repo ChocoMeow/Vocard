@@ -8,10 +8,6 @@ from random import choice
 from time import strptime
 from pymongo import MongoClient
 
-if not os.path.exists("./.env"):
-    print("Error .env file not set!")
-    exit()
-
 if not os.path.exists("./settings.json"):
     print("Error: Settings file not set!")
     exit()
@@ -19,15 +15,20 @@ if not os.path.exists("./settings.json"):
 #-------------- API Clients --------------
 load_dotenv() #Load .env settings
 MONGODB_NAME = os.getenv('MONGODB_NAME')
+MONGODB_URL = os.getenv('MONGODB_URL')
+if not (MONGODB_NAME and MONGODB_URL):
+    print("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
+    exit()
+
 youtube_api_key = os.getenv('YOUTUBE_API_KEY')
-mongodb = MongoClient(os.getenv('MONGODB_URL'))
+mongodb = MongoClient(MONGODB_URL)
 collection = mongodb[MONGODB_NAME]['Settings']
 Playlist = mongodb[MONGODB_NAME]['Playlist']
 
 #--------------- Cache Var ---------------
 invite_link = "https://discord.gg/wRCgB7vBQv" #Template of invite link
 embed_color = None
-report_channel_id = int(os.getenv("BUG_REPORT_CHANNEL_ID"))
+report_channel_id = int(channel_id) if (channel_id := os.getenv("BUG_REPORT_CHANNEL_ID")) else 0
 emoji_source_raw = {} #Stores all source emoji for track
 error_log = {} #Stores error that not a Voicelink Exception
 bot_access_user = [] #Stores bot access user id
@@ -161,6 +162,9 @@ async def similar_track(player):
         if randomTrack.source != 'youtube':
             return False
 
+        if not youtube_api_key:
+            return False
+        
         request_url = "https://youtube.googleapis.com/youtube/v3/search?part={part}&relatedToVideoId={videoId}&type={type}&videoCategoryId={videoCategoryId}&key={key}".format(
             part="snippet",
             videoId=randomTrack.identifier,

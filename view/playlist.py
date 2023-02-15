@@ -22,17 +22,10 @@ SOFTWARE.
 """
 
 import discord
+import function
 
 from math import ceil
 from tldextract import extract
-
-from function import (
-    embed_color,
-    invite_link,
-    emoji_source,
-    time as ctime,
-    get_lang
-)
 
 class Select_playlist(discord.ui.Select):
     def __init__(self, results):
@@ -95,27 +88,27 @@ class PlaylistView(discord.ui.View):
         offset = self.current_page * 7
         tracks = self.current['tracks'][(offset-7):offset]
 
-        embed = discord.Embed(title=get_lang(self.guildID, 'playlistView'), color=embed_color)
+        embed = discord.Embed(title=function.get_lang(self.guildID, 'playlistView'), color=function.embed_color)
 
-        embed.description= get_lang(self.guildID, 'playlistViewDesc').format(self.current['name'], self.current['id'], len(self.current['tracks']), self.current.get('owner', "None"), self.current['type'])
+        embed.description= function.get_lang(self.guildID, 'playlistViewDesc').format(self.current['name'], self.current['id'], len(self.current['tracks']), self.current.get('owner', "None"), self.current['type'])
         
         perms = self.current['perms']
-        permsStr = get_lang(self.guildID, 'settingsPermTitle')
+        permsStr = function.get_lang(self.guildID, 'settingsPermTitle')
         if self.current['type'] == 'share':
-            embed.add_field(name=permsStr, value=get_lang(self.guildID, 'playlistViewPermsValue').format('✓' if 'write' in perms and self.author.id in perms['write'] else '✘', '✓' if 'remove' in perms and self.author.id in perms['remove'] else '✘'))
+            embed.add_field(name=permsStr, value=function.get_lang(self.guildID, 'playlistViewPermsValue').format('✓' if 'write' in perms and self.author.id in perms['write'] else '✘', '✓' if 'remove' in perms and self.author.id in perms['remove'] else '✘'))
         else:
-            embed.add_field(name=permsStr, value=get_lang(self.guildID, 'playlistViewPermsValue2').format(', '.join(f'<@{user}>' for user in perms['read'])))
+            embed.add_field(name=permsStr, value=function.get_lang(self.guildID, 'playlistViewPermsValue2').format(', '.join(f'<@{user}>' for user in perms['read'])))
 
-        trackStr = get_lang(self.guildID, 'playlistViewTrack')
+        trackStr = function.get_lang(self.guildID, 'playlistViewTrack')
         if tracks:
             try:
-                embed.add_field(name=trackStr, value='\n'.join(f"{emoji_source(extract(track['info']['uri']).domain)} `{index}.` `[{ctime(track['info']['length'] * 1000)}]` **{track['info']['title'][:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
+                embed.add_field(name=trackStr, value='\n'.join(f"{function.emoji_source(extract(track['info']['uri']).domain)} `{index}.` `[{function.time(track['info']['length'] * 1000)}]` **{track['info']['title'][:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
             except:
-                embed.add_field(name=trackStr, value='\n'.join(f"{emoji_source(extract(track.info['uri']).domain)} `{index}.` `[{ctime(track.length)}]` **{track.title[:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
+                embed.add_field(name=trackStr, value='\n'.join(f"{function.emoji_source(extract(track.info['uri']).domain)} `{index}.` `[{function.time(track.length)}]` **{track.title[:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
         else:
-            embed.add_field(name=trackStr, value=get_lang(self.guildID, 'playlistNoTrack').format(self.current['name']), inline=False)
+            embed.add_field(name=trackStr, value=function.get_lang(self.guildID, 'playlistNoTrack').format(self.current['name']), inline=False)
 
-        embed.set_footer(text=get_lang(self.guildID, 'playlistViewPage').format(self.current_page, self.page, self.current['time']))
+        embed.set_footer(text=function.get_lang(self.guildID, 'playlistViewPage').format(self.current_page, self.page, self.current['time']))
 
         return embed
 
@@ -170,7 +163,7 @@ class CreateView(discord.ui.View):
         self.value = None
         self.response = None
         self.add_item(agree())
-        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=invite_link))
+        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=function.invite_link))
 
     async def on_timeout(self):
         for child in self.children:

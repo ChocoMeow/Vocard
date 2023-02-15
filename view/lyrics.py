@@ -22,8 +22,7 @@ SOFTWARE.
 """
 
 import discord
-
-from function import embed_color
+import function
 
 class LyricsDropdown(discord.ui.Select):
     def __init__(self, langs: list):
@@ -73,7 +72,7 @@ class LyricsView(discord.ui.View):
 
     def build_embed(self):
         chunk = self.source.get(self.lang)[self.current_page - 1]
-        embed=discord.Embed(description=chunk, color=embed_color)
+        embed=discord.Embed(description=chunk, color=function.embed_color)
         embed.set_author(name=f"Searching Query: {self.name}", icon_url=self.author.display_avatar.url)
         embed.set_footer(text=f"Page: {self.current_page}/{self.pages}")
         return embed
