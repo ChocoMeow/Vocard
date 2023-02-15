@@ -2,7 +2,7 @@ import requests, zipfile, os, sys, shutil
 
 root_dir = "./"
 filename = root_dir + "Vocard.zip"
-__version__ = "v2.5.1"
+__version__ = "v2.5.2"
 
 def checkVersion(withMsg = False):
     resp = requests.get("https://api.github.com/repos/ChocoMeow/Vocard/releases/latest")
