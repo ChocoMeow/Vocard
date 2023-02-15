@@ -5,6 +5,14 @@
 # Vocard (Discord Music Bot)
 > Vocard is a simple custom Disocrd Music Bot built with Python & [discord.py](https://discordpy.readthedocs.io/en/stable/)
 
+## Screenshot
+<div style="display: flex">
+    <img src="https://user-images.githubusercontent.com/94597336/218930155-630d8a0c-aa2d-4fcf-b6b4-957b8b2ba891.png" height=300>
+    <img src="https://user-images.githubusercontent.com/94597336/218930292-a2221d22-40bb-4040-9823-6527f2f5f833.png" height=300>
+    <img src="https://user-images.githubusercontent.com/94597336/218930558-f0b3bc78-cf0f-4b75-853e-eb15b13287c2.png" height=300>
+    <img src="https://user-images.githubusercontent.com/94597336/218930368-46fff9ef-628b-4daa-aee1-7c5e5692700c.png" height=300>
+</div>
+
 ## Requirements
 * [Python 3.8+](https://www.python.org/downloads/)
 * [Modules in requirements](https://github.com/ChocoMeow/Vocard/blob/main/requirements.txt)
