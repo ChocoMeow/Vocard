@@ -1,6 +1,7 @@
 import requests, zipfile, os, sys, shutil
+from io import BytesIO
 
-root_dir = "./"
+root_dir = __file__.replace("update.py", "")
 filename = root_dir + "Vocard.zip"
 __version__ = "v2.5.2"
 
@@ -17,13 +18,15 @@ def checkVersion(withMsg = False):
 def downloadFile(version:str = None):
     if not version:
         version = checkVersion()
+    print("Downloading Vocard version: " + version)
     response = requests.get("https://github.com/ChocoMeow/Vocard/archive/" + version + ".zip")
-    open(filename, 'wb').write(response.content)
-    unZip(filename, version)
+    print("Download Completed")
+    unZip(response, version)
 
-def unZip(path: str, version: str):
-    with zipfile.ZipFile(path,"r") as f:
-        f.extractall()
+def unZip(response, version: str):
+    print("Installing ...")
+    zfile = zipfile.ZipFile(BytesIO(response.content))
+    zfile.extractall(root_dir)
 
     version = version.replace("v", "")
     source_dir = root_dir + "Vocard-" + version
@@ -31,6 +34,7 @@ def unZip(path: str, version: str):
         for filename in os.listdir(root_dir):
             if filename in ["settings.json", ".env", "Vocard-" + version]:
                 continue
+            filename = os.path.join(root_dir, filename)
             if os.path.isdir(os.path.join(root_dir, filename)):
                 shutil.rmtree(filename)
             else:
