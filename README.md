@@ -5,6 +5,11 @@
 # Vocard (Discord Music Bot)
 > Vocard is a simple custom Disocrd Music Bot built with Python & [discord.py](https://discordpy.readthedocs.io/en/stable/)
 
+## Tutorial
+Click on the image below to watch the tutorial on Youtube.
+
+[![Discord Music Bot](https://img.youtube.com/vi/f_Z0RLRZzWw/maxresdefault.jpg)](https://www.youtube.com/watch?v=f_Z0RLRZzWw)
+ 
 ## Screenshot
 <div style="display: flex">
     <img src="https://user-images.githubusercontent.com/94597336/218930155-630d8a0c-aa2d-4fcf-b6b4-957b8b2ba891.png" height=300>
