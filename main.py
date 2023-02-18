@@ -19,8 +19,8 @@ class Translator(discord.app_commands.Translator):
         print("Unload Translator")
     
     async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
-        if str(locale) in local_langs:
-            return local_langs[str(locale)].get(string.message, None)
+        if str(locale) in function.local_langs:
+            return function.local_langs[str(locale)].get(string.message, None)
         return None
 
 class Vocard(commands.Bot):
@@ -36,7 +36,7 @@ class Vocard(commands.Bot):
     
     async def setup_hook(self):
         function.langs_setup()
-        for module in os.listdir('./cogs'):
+        for module in os.listdir(function.root_dir + '/cogs'):
             if module.endswith('.py'):
                 try:
                     await self.load_extension(f"cogs.{module[:-3]}")

@@ -12,7 +12,9 @@ from io import BytesIO
 from pymongo import MongoClient
 from typing import Optional
 
-if not os.path.exists("./settings.json"):
+root_dir = os.path.dirname(__file__)
+
+if not os.path.exists(root_dir + "/settings.json"):
     print("Error: Settings file not set!")
     exit()
 
@@ -79,23 +81,23 @@ def update_settings(guildid:int, data, mode="Set"):
     return 
 
 def langs_setup():
-    for language in os.listdir('./langs'):
+    for language in os.listdir(root_dir + './langs'):
         if language.endswith('.json'):
-            with open(f'./langs/{language}', encoding="utf8") as json_file:
+            with open(f'{root_dir}/langs/{language}', encoding="utf8") as json_file:
                 lang = json.load(json_file)
 
             langs[language[:-5]] = lang
     
-    for language in os.listdir('./local_langs'):
+    for language in os.listdir(root_dir + './local_langs'):
         if language.endswith('.json'):
-            with open(f'./local_langs/{language}', encoding="utf8") as json_file:
+            with open(f'{root_dir}/local_langs/{language}', encoding="utf8") as json_file:
                 lang = json.load(json_file)
         
             local_langs[language[:-5]] = lang
     return
 
 def settings_setup():
-    with open('./settings.json', encoding="utf8") as json_file:
+    with open(root_dir + '/settings.json', encoding="utf8") as json_file:
         rawSettings = json.load(json_file)
 
     global nodes, embed_color, bot_access_user, emoji_source_raw, bot_prefix, max_queue, cooldowns_settings, aliases_settings

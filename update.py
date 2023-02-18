@@ -3,7 +3,7 @@ from io import BytesIO
 
 root_dir = __file__.replace("update.py", "")
 filename = root_dir + "Vocard.zip"
-__version__ = "v2.5.3"
+__version__ = "v2.5.4"
 
 def checkVersion(withMsg = False):
     resp = requests.get("https://api.github.com/repos/ChocoMeow/Vocard/releases/latest")
@@ -12,7 +12,7 @@ def checkVersion(withMsg = False):
         if version == __version__:
             print(f"Your bot is up-to-date! - {version}")
         else:
-            print(f"Your bot is not up-to-date! This latest version is {version} and you are currently running version {__version__}\n. Run `python update --start` to update your bot!")
+            print(f"Your bot is not up-to-date! This latest version is {version} and you are currently running version {__version__}\n. Run `python update.py --start` to update your bot!")
     return version
     
 def downloadFile(version:str = None):
