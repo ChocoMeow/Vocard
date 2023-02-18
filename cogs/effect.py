@@ -3,262 +3,191 @@ import voicelink
 
 from function import (
     get_lang,
+    get_aliases,
+    cooldown_check
 )
 from discord import app_commands
 from discord.ext import commands
 
-async def check_access(interaction: discord.Interaction):
-    player: voicelink.Player = interaction.guild.voice_client
+
+async def check_access(ctx: commands.Context):
+    player: voicelink.Player = ctx.guild.voice_client
     if not player:
-        raise voicelink.VoicelinkException(get_lang(interaction.guild_id, 'noPlayer'))
-    
+        raise voicelink.VoicelinkException(get_lang(ctx.guild.id, 'noPlayer'))
+
+    if ctx.author not in player.channel.members:
+        if not ctx.author.guild_permissions.manage_guild:
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+
     return player
+
 
 class Effect(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.description = "This category is only available to DJ on this server. (You can setdj on your server by /settings setdj <DJ ROLE>)"
-    
-    async def effect_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
-        player: voicelink.Player = interaction.guild.voice_client
+
+    async def effect_autocomplete(self, ctx: commands.Context, current: str) -> list:
+        player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return []
         if current:
-            return [ app_commands.Choice(name=effect.tag, value=effect.tag) for effect in player.filters.get_filters() if current in effect.tag]
-        return [ app_commands.Choice(name=effect.tag, value=effect.tag) for effect in player.filters.get_filters() ]
+            return [app_commands.Choice(name=effect.tag, value=effect.tag) for effect in player.filters.get_filters() if current in effect.tag]
+        return [app_commands.Choice(name=effect.tag, value=effect.tag) for effect in player.filters.get_filters()]
 
-    @app_commands.command(
-        name = "speed",
-        description= "Sets the player's playback speed."
-    )
-    @app_commands.describe(
-        value = "The value to set the speed to. Default is `1.0`"
-    )
-    @app_commands.guild_only()
-    async def speed(self, interaction: discord.Interaction, value: app_commands.Range[float, 0, 2]):
-        player = await check_access(interaction)
+    @commands.hybrid_command(name="speed", aliases=get_aliases("speed"))
+    @app_commands.describe(value="The value to set the speed to. Default is `1.0`")
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def speed(self, ctx: commands.Context, value: commands.Range[float, 0, 2]):
+        "Sets the player's playback speed"
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
         if player.filters.has_filter(filter_tag="speed"):
             player.filters.remove_filter(filter_tag="speed")
-        await player.add_filter(voicelink.Timescale(tag="speed", speed= value))
-        await interaction.response.send_message(f"You set the speed to **{value}**.")
+        await player.add_filter(voicelink.Timescale(tag="speed", speed=value))
+        await ctx.send(f"You set the speed to **{value}**.")
 
-    @app_commands.command(
-        name = "karaoke",
-        description= "Uses equalization to eliminate part of a band, usually targeting vocals."
-    )
+    @commands.hybrid_command(name="karaoke", aliases=get_aliases("karaoke"))
     @app_commands.describe(
-        level = "The level of the karaoke. Default is `1.0`",
-        monolevel = "The monolevel of the karaoke. Default is `1.0`",
-        filterband = "The filter band of the karaoke. Default is `220.0`",
-        filterwidth = "The filter band of the karaoke. Default is `100.0`"
+        level="The level of the karaoke. Default is `1.0`",
+        monolevel="The monolevel of the karaoke. Default is `1.0`",
+        filterband="The filter band of the karaoke. Default is `220.0`",
+        filterwidth="The filter band of the karaoke. Default is `100.0`"
     )
-    @app_commands.guild_only()
-    async def karaoke(self, interaction: discord.Interaction, level: app_commands.Range[float, 0, 2] = 1.0, monolevel: app_commands.Range[float, 0, 2] = 1.0, filterband: app_commands.Range[float, 100, 300] = 220.0, filterwidth: app_commands.Range[float, 50, 150] = 100.0) -> None:
-        player = await check_access(interaction)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def karaoke(self, ctx: commands.Context, level: commands.Range[float, 0, 2] = 1.0, monolevel: commands.Range[float, 0, 2] = 1.0, filterband: commands.Range[float, 100, 300] = 220.0, filterwidth: commands.Range[float, 50, 150] = 100.0) -> None:
+        "Uses equalization to eliminate part of a band, usually targeting vocals."
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
         if player.filters.has_filter(filter_tag="karaoke"):
             player.filters.remove_filter(filter_tag="karaoke")
         await player.add_filter(voicelink.Karaoke(tag="karaoke", level=level, mono_level=monolevel, filter_band=filterband, filter_width=filterwidth))
-        await interaction.response.send_message(player.get_msg('karaoke').format(level, monolevel, filterband, filterwidth))
-        
-    @app_commands.command(
-        name = "tremolo",
-        description= "Uses amplification to create a shuddering effect, where the volume quickly oscillates."
-    )
-    @app_commands.describe(
-        frequency = "The frequency of the tremolo. Default is `2.0`",
-        depth = "The depth of the tremolo. Default is `0.5`"
-    )
-    @app_commands.guild_only()
-    async def tremolo(self, interaction: discord.Interaction, frequency: app_commands.Range[float, 0, 10] = 2.0, depth: app_commands.Range[float, 0, 1] = 0.5) -> None:
-        player = await check_access(interaction)
+        await ctx.send(player.get_msg('karaoke').format(level, monolevel, filterband, filterwidth))
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
+    @commands.hybrid_command(name="tremolo", aliases=get_aliases("tremolo"))
+    @app_commands.describe(
+        frequency="The frequency of the tremolo. Default is `2.0`",
+        depth="The depth of the tremolo. Default is `0.5`"
+    )
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def tremolo(self, ctx: commands.Context, frequency: commands.Range[float, 0, 10] = 2.0, depth: commands.Range[float, 0, 1] = 0.5) -> None:
+        "Uses amplification to create a shuddering effect, where the volume quickly oscillates."
+        player = await check_access(ctx)
+
         if player.filters.has_filter(filter_tag="tremolo"):
             player.filters.remove_filter(filter_tag="tremolo")
         await player.add_filter(voicelink.Tremolo(tag="tremolo", frequency=frequency, depth=depth))
-        await interaction.response.send_message(player.get_msg('tremolo&vibrato').format(frequency, depth))
+        await ctx.send(player.get_msg('tremolo&vibrato').format(frequency, depth))
 
-    @app_commands.command(
-        name = "vibrato",
-        description= "Similar to tremolo. While tremolo oscillates the volume, vibrato oscillates the pitch."
-    )
+    @commands.hybrid_command(name="vibrato", aliases=get_aliases("vibrato"))
     @app_commands.describe(
-        frequency = "The frequency of the vibrato. Default is `2.0`",
-        depth = "The Depth of the vibrato. Default is `0.5`"
+        frequency="The frequency of the vibrato. Default is `2.0`",
+        depth="The Depth of the vibrato. Default is `0.5`"
     )
-    @app_commands.guild_only()
-    async def vibrato(self, interaction: discord.Interaction, frequency: app_commands.Range[float, 0, 14] = 2.0, depth: app_commands.Range[float, 0, 1] = 0.5) -> None:
-        player = await check_access(interaction)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def vibrato(self, ctx: commands.Context, frequency: commands.Range[float, 0, 14] = 2.0, depth: commands.Range[float, 0, 1] = 0.5) -> None:
+        "Similar to tremolo. While tremolo oscillates the volume, vibrato oscillates the pitch."
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
         if player.filters.has_filter(filter_tag="vibrato"):
             player.filters.remove_filter(filter_tag="vibrato")
         await player.add_filter(voicelink.Vibrato(tag="vibrato", frequency=frequency, depth=depth))
-        await interaction.response.send_message(player.get_msg('tremolo&vibrato').format(frequency, depth))  
+        await ctx.send(player.get_msg('tremolo&vibrato').format(frequency, depth))
 
-    @app_commands.command(
-        name = "rotation",
-        description= "Rotates the sound around the stereo channels/user headphones aka Audio Panning."
-    )
-    @app_commands.describe(
-        hertz = "The hertz of the rotation. Default is `0.2`"
-    )
-    @app_commands.guild_only()
-    async def rotation(self, interaction: discord.Interaction, hertz: app_commands.Range[float, 0, 2] = 0.2) -> None:
-        player = await check_access(interaction)
+    @commands.hybrid_command(name="rotation", aliases=get_aliases("rotation"))
+    @app_commands.describe(hertz="The hertz of the rotation. Default is `0.2`")
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def rotation(self, ctx: commands.Context, hertz: commands.Range[float, 0, 2] = 0.2) -> None:
+        "Rotates the sound around the stereo channels/user headphones aka Audio Panning."
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
         if player.filters.has_filter(filter_tag="rotation"):
             player.filters.remove_filter(filter_tag="rotation")
         await player.add_filter(voicelink.Rotation(tag="rotation", rotation_hertz=hertz))
-        await interaction.response.send_message(player.get_msg('rotation').format(hertz))
+        await ctx.send(player.get_msg('rotation').format(hertz))
 
-    @app_commands.command(
-        name = "distortion",
-        description= "Distortion effect. It can generate some pretty unique audio effects."
-    )
-    @app_commands.guild_only()
-    async def distortion(self, interaction: discord.Interaction) -> None:
-        player = await check_access(interaction)
+    @commands.hybrid_command(name="distortion", aliases=get_aliases("distortion"))
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def distortion(self, ctx: commands.Context) -> None:
+        "Distortion effect. It can generate some pretty unique audio effects."
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
         if player.filters.has_filter(filter_tag="distortion"):
             player.filters.remove_filter(filter_tag="distortion")
-        await player.add_filter(voicelink.Distortion(tag="distortion", sin_offset= 0.0, sin_scale= 1.0, cos_offset= 0.0, cos_scale=1.0, tan_offset= 0.0, tan_scale=1.0, offset=0.0, scale=1.0))
-        await interaction.response.send_message(player.get_msg('distortion'))
+        await player.add_filter(voicelink.Distortion(tag="distortion", sin_offset=0.0, sin_scale=1.0, cos_offset=0.0, cos_scale=1.0, tan_offset=0.0, tan_scale=1.0, offset=0.0, scale=1.0))
+        await ctx.send(player.get_msg('distortion'))
 
-    @app_commands.command(
-        name = "lowpass",
-        description= "Filter which supresses higher frequencies and allows lower frequencies to pass."
-    )
-    @app_commands.describe(
-        smoothing = "The level of the lowPass. Default is `20.0`"
-    )
-    @app_commands.guild_only()
-    async def lowpass(self, interaction: discord.Interaction, smoothing: app_commands.Range[float, 10, 30] = 20.0) -> None:
-        player = await check_access(interaction)
+    @commands.hybrid_command(name="lowpass", aliases=get_aliases("lowpass"))
+    @app_commands.describe(smoothing="The level of the lowPass. Default is `20.0`")
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def lowpass(self, ctx: commands.Context, smoothing: commands.Range[float, 10, 30] = 20.0) -> None:
+        "Filter which supresses higher frequencies and allows lower frequencies to pass."
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
         if player.filters.has_filter(filter_tag="lowpass"):
             player.filters.remove_filter(filter_tag="lowpass")
-        await player.add_filter(voicelink.LowPass(tag="lowpass", smoothing= smoothing))
-        await interaction.response.send_message(player.get_msg('lowpass').format(smoothing))
+        await player.add_filter(voicelink.LowPass(tag="lowpass", smoothing=smoothing))
+        await ctx.send(player.get_msg('lowpass').format(smoothing))
 
-    @app_commands.command(
-        name = "channelmix",
-        description= "Filter which manually adjusts the panning of the audio."
-    )
+    @commands.hybrid_command(name="channelmix", aliases=get_aliases("channelmix"))
     @app_commands.describe(
-        left_to_left = "Sounds from left to left. Default is `1.0`",
-        right_to_right = "Sounds from right to right. Default is `1.0`",
-        left_to_right = "Sounds from left to right. Default is `0.0`",
-        right_to_left = "Sounds from right to left. Default is `0.0`"
+        left_to_left="Sounds from left to left. Default is `1.0`",
+        right_to_right="Sounds from right to right. Default is `1.0`",
+        left_to_right="Sounds from left to right. Default is `0.0`",
+        right_to_left="Sounds from right to left. Default is `0.0`"
     )
-    @app_commands.guild_only()
-    async def channelmix(self, interaction: discord.Interaction, left_to_left: app_commands.Range[float, 0, 1] = 1.0, right_to_right: app_commands.Range[float, 0, 1] = 1.0, left_to_right: app_commands.Range[float, 0, 1] = 0.0, right_to_left: app_commands.Range[float, 0, 1] = 0.0) -> None:
-        player = await check_access(interaction)
-        
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def channelmix(self, ctx: commands.Context, left_to_left: commands.Range[float, 0, 1] = 1.0, right_to_right: commands.Range[float, 0, 1] = 1.0, left_to_right: commands.Range[float, 0, 1] = 0.0, right_to_left: commands.Range[float, 0, 1] = 0.0) -> None:
+        "Filter which manually adjusts the panning of the audio."
+        player = await check_access(ctx)
+
         if player.filters.has_filter(filter_tag="channelmix"):
             player.filters.remove_filter(filter_tag="channelmix")
         await player.add_filter(voicelink.ChannelMix(tag="channelmix", left_to_left=left_to_left, right_to_right=right_to_right, left_to_right=left_to_right, right_to_left=right_to_left))
-        await interaction.response.send_message(player.get_msg('channelmix').format(left_to_left, right_to_right, left_to_right, right_to_left))
+        await ctx.send(player.get_msg('channelmix').format(left_to_left, right_to_right, left_to_right, right_to_left))
 
-    @app_commands.command(
-        name = "nightcore",
-        description= "Add nightcore filter into your player."
-    )
-    @app_commands.guild_only()
-    async def nightcore(self, interaction: discord.Interaction) -> None:
-        player = await check_access(interaction)
+    @commands.hybrid_command(name="nightcore", aliases=get_aliases("nightcore"))
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def nightcore(self, ctx: commands.Context) -> None:
+        "Add nightcore filter into your player."
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-        
         await player.add_filter(voicelink.Timescale.nightcore())
-        await interaction.response.send_message(player.get_msg('nightcore'))
+        await ctx.send(player.get_msg('nightcore'))
 
-    @app_commands.command(
-        name = "8d",
-        description= "Add 8D filter into your player."
-    )
-    @app_commands.guild_only()
-    async def eightD(self, interaction: discord.Interaction) -> None:
-        player = await check_access(interaction)
+    @commands.hybrid_command(name="8d", aliases=get_aliases("8d"))
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def eightD(self, ctx: commands.Context) -> None:
+        "Add 8D filter into your player."
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-         
         await player.add_filter(voicelink.Rotation.nightD())
-        await interaction.response.send_message(player.get_msg('8d'))
+        await ctx.send(player.get_msg('8d'))
 
-    @app_commands.command(
-        name = "vaporwave",
-        description= "Add vaporwave filter into your player."
-    )
-    @app_commands.guild_only()
-    async def vaporwave(self, interaction: discord.Interaction) -> None:
-        player = await check_access(interaction)
-        
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
-         
+    @commands.hybrid_command(name="vaporwave", aliases=get_aliases("vaporwave"))
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def vaporwave(self, ctx: commands.Context) -> None:
+        "Add vaporwave filter into your player."
+        player = await check_access(ctx)
+
         await player.add_filter(voicelink.Timescale.vaporwave())
-        await interaction.response.send_message(player.get_msg('vaporwave'))
+        await ctx.send(player.get_msg('vaporwave'))
 
-    @app_commands.command(
-        name = "cleareffect",
-        description= "Clear all or specific sound effects."
-    )
-    @app_commands.describe(
-        effect = "Remove a specific sound effects."
-    )
-    @app_commands.guild_only()
+    @commands.hybrid_command(name="cleareffect", aliases=get_aliases("cleareffect"))
+    @app_commands.describe(effect="Remove a specific sound effects.")
     @app_commands.autocomplete(effect=effect_autocomplete)
-    async def cleareffect(self, interaction: discord.Interaction, effect: str = None) -> None:
-        player: voicelink.Player = interaction.guild.voice_client
-        if not player:
-            return await interaction.response.send_message(get_lang(interaction.guild_id, "noPlayer"), ephemeral=True)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def cleareffect(self, ctx: commands.Context, effect: str = None) -> None:
+        "Clear all or specific sound effects."
+        player = await check_access(ctx)
 
-        if interaction.user not in player.channel.members:
-            if not interaction.user.guild_permissions.manage_guild:
-                return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)       
         if effect:
             await player.remove_filter(effect)
         else:
             await player.reset_filter()
-        await interaction.response.send_message(player.get_msg('cleareffect'))
+            
+        await ctx.send(player.get_msg('cleareffect'))
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Effect(bot))

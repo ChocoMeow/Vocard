@@ -137,7 +137,6 @@ class Client:
         elif isArtist:
             return Artist(data)
         else:
-
             tracks = [
                 Track(track["track"])
                 for track in data["tracks"]["items"] if track["track"] is not None

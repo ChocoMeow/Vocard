@@ -37,6 +37,7 @@ lang_guilds = {} #Cache guild language
 local_langs = {} #Stores all the localization languages in ./local_langs 
 playlist_name = {} #Cache the user's playlist name
 
+bot_prefix = "?" #The default bot prefix
 #----------------- Nodes -----------------
 nodes = {}
 

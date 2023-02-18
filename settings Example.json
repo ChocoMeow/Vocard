@@ -7,6 +7,7 @@
             "identifier": "DEFAULT"
         }   
     },
+    "prefix": "?",
     "bot_access_user": [],
     "color_code":"0xb3b3b3",
     "emoji_source_raw": {
@@ -20,5 +21,15 @@
         "apple": "<:applemusic:994844332374884413>",
         "reddit": "<:reddit:996007566863773717>",
         "tiktok": "<:tiktok:996007689798811698>"
+    },
+    "cooldowns": {
+        "connect": [2, 30],
+        "playlist view": [1, 30]
+    },
+    "aliases": {
+        "connect": ["join"],
+        "leave": ["stop", "bye"],
+        "play": ["p"],
+        "view": ["v"]
     }
 }

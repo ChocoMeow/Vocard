@@ -96,9 +96,9 @@ class Queue:
             self._position -= index
     
     def set_repeat(self, mode:str):
-        if mode == 'Track':
+        if mode == 'track':
             self._repeat = 1
-        elif mode == 'Queue':
+        elif mode == 'queue':
             self._repeat = 2
             self._repeat_position = self._position - 1
         else:

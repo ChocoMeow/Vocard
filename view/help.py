@@ -109,9 +109,9 @@ class HelpView(discord.ui.View):
         else:
             cog = [c for _, c in self.bot.cogs.items() if _.capitalize() == category][0]
 
-            commands = [command for command in cog.walk_app_commands()]
+            commands = [command for command in cog.walk_commands()]
             embed.description = cog.description
             embed.add_field(name=f"{category} Commands: [{len(commands)}]",
-                            value="```{}```".format("".join(f"/{command.qualified_name}\n" for command in commands)))
+                            value="```{}```".format("".join(f"/{command.qualified_name}\n" for command in commands if not command.qualified_name == cog.qualified_name)))
 
         return embed

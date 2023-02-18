@@ -41,10 +41,10 @@ from discord import (
     StageChannel,
     Member,
     Embed,
-    ui,
-    Interaction
+    ui
 )
 
+from discord.ext import commands
 from . import events
 from .enums import SearchType
 from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent
@@ -72,12 +72,12 @@ class Player(VoiceProtocol):
         self, 
         client: Optional[Client] = None, 
         channel: Optional[VoiceChannel] = None, 
-        ctx: Interaction = None,
+        ctx: commands.Context = None,
     ):
         self.client = client
         self._bot = client
         self.context = ctx
-        self.dj: Member = ctx.user
+        self.dj: Member = ctx.author
         self.channel = channel
         self._guild = channel.guild if channel else None
 
@@ -335,7 +335,7 @@ class Player(VoiceProtocol):
                 embed.set_author(name=self.get_msg("playerAuthor").format(self.channel.name), icon_url=self.client.user.avatar.url)
                 embed.description = self.get_msg("playerDesc").format(track.title, track.uri, (track.requester.mention if track.requester else "<@605618911471468554>"), (f"<@&{self.settings['dj']}>" if self.settings.get('dj') else f"{self.dj.mention}"))
                 embed.set_image(url=track.thumbnail if track.thumbnail else "https://cdn.discordapp.com/attachments/674788144931012638/823086668445384704/eq-dribbble.gif")
-                embed.set_footer(text=self.get_msg("playerFooter").format(self.queue.count, (self.get_msg("live") if track.is_stream else function.time(track.length)), self.volume, self.get_msg("playerFooter2").format(self.queue.repeat) if self.queue.repeat != "Off" else ""))
+                embed.set_footer(text=self.get_msg("playerFooter").format(self.queue.count, (self.get_msg("live") if track.is_stream else function.time(track.length)), self.volume, self.get_msg("playerFooter2").format(self.queue.repeat.capitalize()) if self.queue._repeat else ""))
             except:
                 embed = Embed(description=self.get_msg("missingTrackInfo"), color=function.embed_color)
         return embed
