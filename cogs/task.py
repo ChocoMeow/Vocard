@@ -4,7 +4,6 @@ import discord
 
 from discord.ext import commands, tasks
 from datetime import datetime
-from io import BytesIO
 
 class Task(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -60,19 +59,12 @@ class Task(commands.Cog):
         function.lang_guilds.clear()
         function.playlist_name.clear()
 
-        if function.error_log:
+        errorFile = function.gen_report()
+        if errorFile:
             report_channel = self.bot.get_channel(function.report_channel_id)
             if report_channel:
-                errorText = ""
-                for guildId, error in function.error_log.items():
-                    errorText += f"Guild ID: {guildId}\n" + "-" * 30 + "\n"
-                    for index, (key, value) in enumerate(error.items() , start=1):
-                        errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
-
-                buffer = BytesIO(errorText.encode('utf-8'))
-                tempFile = discord.File(buffer, filename='report.txt')
                 try:
-                    await report_channel.send(content=f"Report Before: <t:{round(datetime.timestamp(datetime.now()))}:F>", file=tempFile)
+                    await report_channel.send(content=f"Report Before: <t:{round(datetime.timestamp(datetime.now()))}:F>", file=errorFile)
                 except Exception as e:
                     print(f"Report could not be sent (Reason: {e})")
             function.error_log.clear()

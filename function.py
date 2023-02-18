@@ -82,6 +82,7 @@ def settings_setup():
 
     global nodes, embed_color, bot_access_user, emoji_source_raw
     nodes = rawSettings.get("nodes", {})
+    bot_prefix = rawSettings.get("prefix", "")
     embed_color = int(rawSettings.get("embed_color", "0xb3b3b3"), 16)
     bot_access_user = rawSettings.get("bot_access_user", [])
     emoji_source_raw = rawSettings.get("emoji_source_raw", {})
@@ -219,5 +220,18 @@ def formatTime(number:str):
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
 def emoji_source(emoji:str):
-    return emoji_source_raw.get(emoji.lower(), "🔗");
+    return emoji_source_raw.get(emoji.lower(), "🔗")
+
+def gen_report() -> Optional[discord.File]:
+    if error_log:
+        errorText = ""
+        for guildId, error in error_log.items():
+            errorText += f"Guild ID: {guildId}\n" + "-" * 30 + "\n"
+            for index, (key, value) in enumerate(error.items() , start=1):
+                errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
+
+        buffer = BytesIO(errorText.encode('utf-8'))
+        return discord.File(buffer, filename='report.txt')
+
+    return None
 

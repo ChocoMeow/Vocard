@@ -56,6 +56,10 @@ class Vocard(commands.Bot):
         print(f"Python Version: {sys.version}")
         print("------------------")
 
+    async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
+        error = getattr(exception, 'original', exception)
+        if isinstance(error, (commands.CommandNotFound, aiohttp.client_exceptions.ClientOSError)):
+            return
         
         elif isinstance(error, (commands.CommandOnCooldown, commands.MissingPermissions, commands.RangeError, commands.BadArgument)):
             pass
