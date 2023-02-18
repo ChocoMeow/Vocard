@@ -85,7 +85,7 @@ class Player(VoiceProtocol):
         self.joinTime = round(time.time())
         self._volume = self.settings.get('volume', 100)
         self.lang = self.settings.get('lang', 'EN') if self.settings.get('lang', 'EN') in function.langs else "EN"
-        self.queue = eval(self.settings.get("queueType", "Queue"))(5000, self.settings.get("duplicateTrack", True), self.get_msg)
+        self.queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", function.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
 
         self._node = NodePool.get_node()
         self._current: Track = None

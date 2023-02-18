@@ -38,6 +38,7 @@ local_langs = {} #Stores all the localization languages in ./local_langs
 playlist_name = {} #Cache the user's playlist name
 
 bot_prefix = "?" #The default bot prefix
+max_queue = 1000 #The default maximum number of tracks in the queue
 #----------------- Nodes -----------------
 nodes = {}
 
@@ -82,6 +83,8 @@ def settings_setup():
 
     global nodes, embed_color, bot_access_user, emoji_source_raw
     nodes = rawSettings.get("nodes", {})
+    if (new_max_queue := rawSettings.get("default_max_queue", max_queue)):
+        max_queue = new_max_queue
     bot_prefix = rawSettings.get("prefix", "")
     embed_color = int(rawSettings.get("embed_color", "0xb3b3b3"), 16)
     bot_access_user = rawSettings.get("bot_access_user", [])
