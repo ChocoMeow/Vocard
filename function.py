@@ -39,6 +39,8 @@ playlist_name = {} #Cache the user's playlist name
 
 bot_prefix = "?" #The default bot prefix
 max_queue = 1000 #The default maximum number of tracks in the queue
+cooldowns_settings = {} #Stores command cooldown settings
+aliases_settings = {} #Stores command aliases settings
 #----------------- Nodes -----------------
 nodes = {}
 
@@ -81,7 +83,7 @@ def settings_setup():
     with open('./settings.json', encoding="utf8") as json_file:
         rawSettings = json.load(json_file)
 
-    global nodes, embed_color, bot_access_user, emoji_source_raw
+    global nodes, embed_color, bot_access_user, emoji_source_raw, bot_prefix, max_queue, cooldowns_settings, aliases_settings
     nodes = rawSettings.get("nodes", {})
     if (new_max_queue := rawSettings.get("default_max_queue", max_queue)):
         max_queue = new_max_queue
@@ -89,6 +91,8 @@ def settings_setup():
     embed_color = int(rawSettings.get("embed_color", "0xb3b3b3"), 16)
     bot_access_user = rawSettings.get("bot_access_user", [])
     emoji_source_raw = rawSettings.get("emoji_source_raw", {})
+    cooldowns_settings = rawSettings.get("cooldowns", {})
+    aliases_settings = rawSettings.get("aliases", {})
 
 def get_lang(guildid:int, key:str):
     lang = lang_guilds.get(guildid)
@@ -238,3 +242,13 @@ def gen_report() -> Optional[discord.File]:
 
     return None
 
+def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
+    if ctx.author.id in bot_access_user:
+        return None
+    cooldown = cooldowns_settings.get(f"{ctx.command.parent.qualified_name} {ctx.command.name}" if ctx.command.parent else ctx.command.name)
+    if not cooldown:
+        return None
+    return commands.Cooldown(cooldown[0], cooldown[1])
+
+def get_aliases(name: str) -> list:
+    return aliases_settings.get(name, [])
