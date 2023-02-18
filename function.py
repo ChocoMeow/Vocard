@@ -3,10 +3,14 @@ import json
 import aiohttp
 import os
 
+from discord.ext import commands
 from dotenv import load_dotenv
 from random import choice
+from datetime import datetime
 from time import strptime
+from io import BytesIO
 from pymongo import MongoClient
+from typing import Optional
 
 if not os.path.exists("./settings.json"):
     print("Error: Settings file not set!")
@@ -20,15 +24,27 @@ if not (MONGODB_NAME and MONGODB_URL):
     print("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
     exit()
 
-youtube_api_key = os.getenv('YOUTUBE_API_KEY')
-mongodb = MongoClient(MONGODB_URL)
+try:
+    mongodb = MongoClient(host=MONGODB_URL, serverSelectionTimeoutMS=5000)
+    mongodb.server_info()
+    print("Successfully connected to MongoDB!")
+except Exception as e:
+    print("Not able to connect MongoDB! Reason:", e)
+    exit()
+
 collection = mongodb[MONGODB_NAME]['Settings']
 Playlist = mongodb[MONGODB_NAME]['Playlist']
+youtube_api_key = os.getenv('YOUTUBE_API_KEY')
 
 #--------------- Cache Var ---------------
 invite_link = "https://discord.gg/wRCgB7vBQv" #Template of invite link
 embed_color = None
-report_channel_id = int(channel_id) if (channel_id := os.getenv("BUG_REPORT_CHANNEL_ID")) else 0
+
+try:
+    report_channel_id = int(os.getenv("BUG_REPORT_CHANNEL_ID"))
+except:
+    report_channel_id = 0
+
 emoji_source_raw = {} #Stores all source emoji for track
 error_log = {} #Stores error that not a Voicelink Exception
 bot_access_user = [] #Stores bot access user id
@@ -36,7 +52,6 @@ langs = {} #Stores all the languages in ./langs
 lang_guilds = {} #Cache guild language
 local_langs = {} #Stores all the localization languages in ./local_langs 
 playlist_name = {} #Cache the user's playlist name
-
 bot_prefix = "?" #The default bot prefix
 max_queue = 1000 #The default maximum number of tracks in the queue
 cooldowns_settings = {} #Stores command cooldown settings
@@ -110,24 +125,23 @@ async def requests_api(url: str):
 
         return await resp.json(encoding="utf-8")
 
-async def create_account(interaction):
-    if not interaction.user:
+async def create_account(ctx: commands.Context):
+    if not ctx.author:
         return 
     from view import CreateView
     view = CreateView()
     embed=discord.Embed(title="Do you want to create an account on Vocard?", color=embed_color)
-    embed.description = f"> Plan: `Default` | `1` Playlist | `20` tracks in each playlist\n> You are able to upgrade the plan by Type `-shop` on [Vocard support discord]({invite_link})."
+    embed.description = f"> Plan: `Default` | `5` Playlist | `500` tracks in each playlist."
     embed.add_field(name="Terms of Service:", value="‌    ➥ We assure you that all your data on Vocard will not be disclosed to any third party\n"
                                                     "‌    ➥ We will not perform any data analysis on your data\n"
                                                     "‌    ➥ You have the right to immediately stop the services we offer to you\n"
-                                                    "‌    ➥ Please do not abuse our services, such as affecting other users\n"
-                                                    "‌    ➥ Join our support server to get free extra custom playlist and extra 20 tracks per playlist\n", inline=False)
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-    view.response = await interaction.original_response()
+                                                    "‌    ➥ Please do not abuse our services, such as affecting other users\n", inline=False)
+    message = await ctx.reply(embed=embed, view=view, ephemeral=True)
+    view.response = message
     await view.wait()
     if view.value:
         try:
-            Playlist.insert_one({'_id':interaction.user.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
+            Playlist.insert_one({'_id':ctx.author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
         except:
             pass
             
@@ -160,7 +174,7 @@ async def checkroles(userid:int):
 
     return rank, max_p, max_t
 
-async def similar_track(player):
+async def similar_track(player) -> bool:
     trackids = [ track.identifier for track in player.queue.history(incTrack=True) if track.source == 'youtube' ]
     randomTrack = choice(player.queue.history(incTrack=True)[-10:])
     tracks = []
@@ -203,7 +217,7 @@ async def similar_track(player):
 
     return False
 
-def time(millis:int):
+def time(millis:int) -> str:
     seconds=(millis/1000)%60
     minutes=(millis/(1000*60))%60
     hours=(millis/(1000*60*60))%24
@@ -212,7 +226,7 @@ def time(millis:int):
     else:
         return "%02d:%02d" % (minutes, seconds)
 
-def formatTime(number:str):
+def formatTime(number:str) -> Optional[int]:
     try:
         try:
             num = strptime(number, '%M:%S')
