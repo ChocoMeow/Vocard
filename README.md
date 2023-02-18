@@ -67,15 +67,17 @@ MONGODB_NAME = Vocard
 {
     "nodes": {
         "DEFAULT": {
-            "host": "127.0.0.1", 
+            "host": "127.0.0.1",
             "port": 2333,
             "password": "password",
             "secure": false,
             "identifier": "DEFAULT"
         }   
     },
+    "prefix": "?",
     "bot_access_user": [],
     "color_code":"0xb3b3b3",
+    "default_max_queue": 1000,
     "emoji_source_raw": {
         "youtube": "<:youtube:826661982760992778>",
         "youtube music": "<:youtube:826661982760992778>",
@@ -87,15 +89,29 @@ MONGODB_NAME = Vocard
         "apple": "<:applemusic:994844332374884413>",
         "reddit": "<:reddit:996007566863773717>",
         "tiktok": "<:tiktok:996007689798811698>"
+    },
+    "cooldowns": {
+        "connect": [2, 30],
+        "playlist view": [1, 30]
+    },
+    "aliases": {
+        "connect": ["join"],
+        "leave": ["stop", "bye"],
+        "play": ["p"],
+        "view": ["v"]
     }
 }
 ```
 * For `nodes` you have to provide host, port, password and identifier of the [Lavalink Server](https://github.com/freyacodes/Lavalink)
+* For `prefix` you can set the prefix of the bot. (If you don't provide any prefix, the bot will disable the message command).
 * For `bot_access_user` you can pass the [discord user id](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-). Example: `[123456789012345678]`
 * For `color_code` you must pass a [Hexadecimal color code](https://htmlcolorcodes.com/) and add `0x` before the color code. Example: `"0xb3b3b3"`
+* For `default_max_queue` you can set a default maximum number of tracks that can be added to the queue.
 * For `emoji_source_raw` you can change the source emoji of the track with discord emoji like `<:EMOJI_NAME:EMOJI_ID>`
+* For `cooldowns` you can set a custom cooldown in the command. Example: `"command_name": [The total number of tokens available, The length of the cooldown period in seconds]`
+* For `aliases` you can set custom aliases in the command. Example: `"command_name": [alias1, alias2, ...]`
 
 ## How to update?
-1. Run `python update --check` to check if your bot is up to date
-2. Run `python update --start` to start update your bot <br/>
+1. Run `python update.py --check` to check if your bot is up to date
+2. Run `python update.py --start` to start update your bot <br/>
 ***Note: Make sure there are no personal files in the directory! Otherwise it will be deleted.***

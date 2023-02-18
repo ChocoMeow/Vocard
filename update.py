@@ -3,7 +3,7 @@ from io import BytesIO
 
 root_dir = __file__.replace("update.py", "")
 filename = root_dir + "Vocard.zip"
-__version__ = "v2.5.2"
+__version__ = "v2.5.3"
 
 def checkVersion(withMsg = False):
     resp = requests.get("https://api.github.com/repos/ChocoMeow/Vocard/releases/latest")

@@ -1,6 +1,7 @@
 {
     "nodes": {
-        "DEFAULT": {"host": "127.0.0.1",
+        "DEFAULT": {
+            "host": "127.0.0.1",
             "port": 2333,
             "password": "password",
             "secure": false,
