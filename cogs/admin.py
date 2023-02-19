@@ -212,11 +212,10 @@ class Admin(commands.Cog, name="settings"):
         toggle = get_lang(ctx.guild.id, "enabled" if not toggle else "disabled")
         return await ctx.send(get_lang(ctx.guild.id, "toggleDuplicateTrack").format(toggle))
 
-    @settings.command(name="debug", aliases=get_aliases("debug"))
-    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def debug(self, ctx: commands.Context):
-        if ctx.author.id not in function.bot_access_user:
-            return await ctx.send("You are not able to use this command!")
+    @app_commands.command(name="debug")
+    async def debug(self, interaction: discord.Interaction):
+        if interaction.user.id not in function.bot_access_user:
+            return await interaction.response.send_message("You are not able to use this command!")
 
         def clear_code(content):
             if content.startswith("```") and content.endswith("```"):
@@ -225,7 +224,7 @@ class Admin(commands.Cog, name="settings"):
                 return content
 
         modal = DebugModal(title="Debug Panel")
-        await ctx.send(modal=modal)
+        await interaction.response.send_modal(modal)
         await modal.wait()
 
         if modal.values is None:
@@ -238,11 +237,11 @@ class Admin(commands.Cog, name="settings"):
             "commands": commands,
             "voicelink": voicelink,
             "bot": self.bot,
-            "ctx": ctx,
-            "channel": ctx.channel,
-            "author": ctx.user,
-            "guild": ctx.guild,
-            "message": ctx.message,
+            "interaction": interaction,
+            "channel": interaction.channel,
+            "author": interaction.user,
+            "guild": interaction.guild,
+            "message": interaction.message,
             "input": None
         }
 
@@ -257,13 +256,13 @@ class Admin(commands.Cog, name="settings"):
         except Exception as e:
             errormsg = ''.join(
                 traceback.format_exception(e, e, e.__traceback__))
-            return await ctx.send(f"```py\n{errormsg}```")
+            return await interaction.followup.send(f"```py\n{errormsg}```")
 
         string = result.split("\n")
         text = ""
         for index, i in enumerate(string, start=1):
             text += f"{'%03d' % index} | {i}\n"
-        return await ctx.send(f"```{text}```")
+        return await interaction.followup.send(f"```{text}```")
 
 
 async def setup(bot: commands.Bot) -> None:
