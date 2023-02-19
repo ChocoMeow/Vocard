@@ -82,7 +82,8 @@ class HelpView(discord.ui.View):
         return False
 
     def build_embed(self, category: str):
-        if category == "News":
+        category = category.lower()
+        if category == "news":
             embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=function.embed_color)
 
             embed.add_field(name=f"Available Categories: [{2 + len(self.categorys)}]",
@@ -103,11 +104,11 @@ class HelpView(discord.ui.View):
         embed = discord.Embed(title=f"Category: {category}", color=function.embed_color)
         embed.add_field(name=f"Categories: [{2 + len(self.categorys)}]", value="```py\n" + "\n".join(f"👉 {c}" if c == category else f"{i}. {c}" for i, c in enumerate(['News', 'Tutorial'] + self.categorys, start=1)) + "```", inline=True)
 
-        if category == 'Tutorial':
+        if category == 'tutorial':
             embed.description = "How can use Vocard? Some simple commands you should know now after watching this video."
             embed.set_image(url="https://cdn.discordapp.com/attachments/674788144931012638/917656288899514388/final_61aef3aa7836890135c6010c_669380.gif")
         else:
-            cog = [c for _, c in self.bot.cogs.items() if _.capitalize() == category][0]
+            cog = [c for _, c in self.bot.cogs.items() if _ == category][0]
 
             commands = [command for command in cog.walk_commands()]
             embed.description = cog.description

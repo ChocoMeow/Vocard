@@ -19,7 +19,7 @@ from function import (
     get_aliases,
     cooldown_check
 )
-from view import DebugModal
+from view import DebugModal, HelpView
 
 
 class Admin(commands.Cog, name="settings"):
@@ -36,9 +36,14 @@ class Admin(commands.Cog, name="settings"):
 
         return player, settings
     
-    @commands.hybrid_group(name="settings", invoke_without_command=True)
+    @commands.hybrid_group(name="settings",
+                           aliases=get_aliases("settings"),
+                           invoke_without_command=True)
     async def settings(self, ctx: commands.Context):
-        return
+        view = HelpView(self.bot, ctx.author)
+        embed = view.build_embed(self.qualified_name)
+        message = await ctx.send(embed=embed, view=view)
+        view.response = message
     
     @settings.command(name="language", aliases=get_aliases("language"))
     @commands.has_permissions(manage_guild=True)

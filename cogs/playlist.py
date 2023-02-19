@@ -19,7 +19,7 @@ from function import (
 )
 
 from datetime import datetime
-from view import PlaylistView, InboxView
+from view import PlaylistView, InboxView, HelpView
 
 
 def assign_playlistId(existed: list) -> str:
@@ -100,9 +100,14 @@ class Playlists(commands.Cog, name="playlist"):
             return [app_commands.Choice(name=p, value=p) for p in playlists if current in p]
         return [app_commands.Choice(name=p, value=p) for p in playlists]
 
-    @commands.hybrid_group(name="playlist", invoke_without_command=True)
+    @commands.hybrid_group(name="playlist", 
+                           aliases=get_aliases("playlist"),
+                           invoke_without_command=True)
     async def playlist(self, ctx: commands.Context):
-        return
+        view = HelpView(self.bot, ctx.author)
+        embed = view.build_embed(self.qualified_name)
+        message = await ctx.send(embed=embed, view=view)
+        view.response = message
 
     @playlist.command(name="play", aliases=get_aliases("play"))
     @app_commands.describe(
