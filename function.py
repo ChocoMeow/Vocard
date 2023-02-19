@@ -12,27 +12,24 @@ from io import BytesIO
 from pymongo import MongoClient
 from typing import Optional
 
-root_dir = os.path.dirname(__file__)
+root_dir = os.path.dirname(os.path.abspath(__file__))
 
-if not os.path.exists(root_dir + "/settings.json"):
-    print("Error: Settings file not set!")
-    exit()
+if not os.path.exists(os.path.join(root_dir, "settings.json")):
+    raise Exception("Settings file not set!")
 
 #-------------- API Clients --------------
 load_dotenv() #Load .env settings
 MONGODB_NAME = os.getenv('MONGODB_NAME')
 MONGODB_URL = os.getenv('MONGODB_URL')
 if not (MONGODB_NAME and MONGODB_URL):
-    print("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
-    exit()
+    raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
 
 try:
     mongodb = MongoClient(host=MONGODB_URL, serverSelectionTimeoutMS=5000)
     mongodb.server_info()
     print("Successfully connected to MongoDB!")
 except Exception as e:
-    print("Not able to connect MongoDB! Reason:", e)
-    exit()
+    raise Exception("Not able to connect MongoDB! Reason:", e)
 
 collection = mongodb[MONGODB_NAME]['Settings']
 Playlist = mongodb[MONGODB_NAME]['Playlist']
@@ -81,23 +78,23 @@ def update_settings(guildid:int, data, mode="Set"):
     return 
 
 def langs_setup():
-    for language in os.listdir(root_dir + './langs'):
+    for language in os.listdir(os.path.join(root_dir, "langs")):
         if language.endswith('.json'):
-            with open(f'{root_dir}/langs/{language}', encoding="utf8") as json_file:
+            with open(os.path.join(root_dir, "langs", language), encoding="utf8") as json_file:
                 lang = json.load(json_file)
 
             langs[language[:-5]] = lang
     
-    for language in os.listdir(root_dir + './local_langs'):
+    for language in os.listdir(os.path.join(root_dir, "local_langs")):
         if language.endswith('.json'):
-            with open(f'{root_dir}/local_langs/{language}', encoding="utf8") as json_file:
+            with open(os.path.join(root_dir, "local_langs", language), encoding="utf8") as json_file:
                 lang = json.load(json_file)
         
             local_langs[language[:-5]] = lang
     return
 
 def settings_setup():
-    with open(root_dir + '/settings.json', encoding="utf8") as json_file:
+    with open(os.path.join(root_dir, "settings.json"), encoding="utf8") as json_file:
         rawSettings = json.load(json_file)
 
     global nodes, embed_color, bot_access_user, emoji_source_raw, bot_prefix, max_queue, cooldowns_settings, aliases_settings

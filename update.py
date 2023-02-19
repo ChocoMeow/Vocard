@@ -1,8 +1,8 @@
-import requests, zipfile, os, sys, shutil
+import requests, zipfile, os, sys, shutil, traceback
 from io import BytesIO
 
-root_dir = __file__.replace("update.py", "")
-filename = root_dir + "Vocard.zip"
+root_dir = os.path.dirname(os.path.abspath(__file__))
+install_pack_dir = os.path.join(root_dir, "Vocard.zip")
 __version__ = "v2.5.4"
 
 def checkVersion(withMsg = False):
@@ -29,13 +29,13 @@ def unZip(response, version: str):
     zfile.extractall(root_dir)
 
     version = version.replace("v", "")
-    source_dir = root_dir + "Vocard-" + version
+    source_dir = os.path.join(root_dir, f"Vocard-{version}")
     if os.path.exists(source_dir):
         for filename in os.listdir(root_dir):
-            if filename in ["settings.json", ".env", "Vocard-" + version]:
+            if filename in ["settings.json", ".env", f"Vocard-{version}"]:
                 continue
             filename = os.path.join(root_dir, filename)
-            if os.path.isdir(os.path.join(root_dir, filename)):
+            if os.path.isdir(filename):
                 shutil.rmtree(filename)
             else:
                 os.remove(filename)
@@ -46,11 +46,11 @@ def unZip(response, version: str):
 def start():
     try:
         downloadFile()
-        if os.path.exists(filename):
-            os.remove(filename)
+        if os.path.exists(install_pack_dir):
+            os.remove(install_pack_dir)
         print("Update Successfully! Run `python main.py` to start your bot")
     except Exception as e:
-        print(f"Error: {e}")
+        print(traceback.format_exc())
 
 if "--start" in sys.argv:
     start()
