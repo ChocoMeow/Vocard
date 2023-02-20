@@ -27,11 +27,8 @@ from base64 import b64encode
 
 import aiohttp
 
-from .album import Album
+from .objects import Track, Album, Artist, Playlist
 from .exceptions import InvalidSpotifyURL, SpotifyRequestException
-from .playlist import Playlist
-from .track import Track
-from .artist import Artist
 
 GRANT_URL = "https://accounts.spotify.com/api/token"
 REQUEST_URL = "https://api.spotify.com/v1/{type}s/{id}"
@@ -40,7 +37,6 @@ SUGGESTION_URL = "https://api.spotify.com/v1/recommendations?limit={limit}&seed_
 SPOTIFY_URL_REGEX = re.compile(
     r"https?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)"
 )
-
 
 class Client:
     """The base client for the Spotify module of Voicelink.
