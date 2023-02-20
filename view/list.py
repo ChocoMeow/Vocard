@@ -22,9 +22,9 @@ SOFTWARE.
 """
 
 import discord
+import function as func
 
 from math import ceil
-import function
 
 class ListView(discord.ui.View):
     def __init__(self, player, author, isQueue = True):
@@ -40,7 +40,7 @@ class ListView(discord.ui.View):
         self.page = ceil(len(self.tracks) / 7)
         self.current_page = 1
         try:
-            self.time = function.time(sum([track.length for track in self.tracks]))
+            self.time = func.time(sum([track.length for track in self.tracks]))
         except:
             self.time = "∞"
     
@@ -64,11 +64,11 @@ class ListView(discord.ui.View):
         offset = self.current_page * 7
         tracks = self.tracks[(offset-7):offset]
 
-        embed = discord.Embed(title=self.player.get_msg('viewTitle'), color=function.embed_color)
+        embed = discord.Embed(title=self.player.get_msg('viewTitle'), color=func.embed_color)
         embed.description=self.player.get_msg('viewDesc').format(self.player.current.uri, f"```{self.player.current.title}```") if self.player.current else self.player.get_msg('nowplayingDesc').format("None")
         queueText = ""
         for index, track in enumerate(tracks, start=offset - 6):
-            queueText += f"{track.emoji} `{index}.` `[" + (self.player.get_msg("live") if track.is_stream else function.time(track.length)) + f'`] **{track.title[:30]}** ' + (track.requester.mention if track.requester else self.player.client.id) + "\n"
+            queueText += f"{track.emoji} `{index}.` `[" + (self.player.get_msg("live") if track.is_stream else func.time(track.length)) + f'`] **{track.title[:30]}** ' + (track.requester.mention if track.requester else self.player.client.id) + "\n"
         
         embed.add_field(name=self.name, value=queueText) 
         embed.set_footer(text=self.player.get_msg('viewFooter').format(self.current_page, self.page, self.time))

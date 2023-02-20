@@ -4,7 +4,7 @@ import io
 import contextlib
 import textwrap
 import traceback
-import function
+import function as func
 
 from discord import app_commands
 from discord.ext import commands
@@ -155,7 +155,7 @@ class Admin(commands.Cog, name="settings"):
         )
         embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle2'), value=get_lang(ctx.guild.id, 'settingsValue2').format(
             settings.get("queueType", "Queue"),
-            function.max_queue,
+            func.max_queue,
             settings.get("duplicateTrack", True)
         )
         )
@@ -219,7 +219,7 @@ class Admin(commands.Cog, name="settings"):
 
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):
-        if interaction.user.id not in function.bot_access_user:
+        if interaction.user.id not in func.bot_access_user:
             return await interaction.response.send_message("You are not able to use this command!")
 
         def clear_code(content):

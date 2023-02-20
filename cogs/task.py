@@ -1,6 +1,5 @@
-import function
 import voicelink
-import discord
+import function as func
 
 from discord.ext import commands, tasks
 from datetime import datetime
@@ -56,18 +55,18 @@ class Task(commands.Cog):
     
     @tasks.loop(hours=12.0)
     async def cache_cleaner(self):
-        function.lang_guilds.clear()
-        function.playlist_name.clear()
+        func.lang_guilds.clear()
+        func.playlist_name.clear()
 
-        errorFile = function.gen_report()
+        errorFile = func.gen_report()
         if errorFile:
-            report_channel = self.bot.get_channel(function.report_channel_id)
+            report_channel = self.bot.get_channel(func.report_channel_id)
             if report_channel:
                 try:
                     await report_channel.send(content=f"Report Before: <t:{round(datetime.timestamp(datetime.now()))}:F>", file=errorFile)
                 except Exception as e:
                     print(f"Report could not be sent (Reason: {e})")
-            function.error_log.clear()
+            func.error_log.clear()
         
 async def setup(bot: commands.Bot):
     await bot.add_cog(Task(bot))

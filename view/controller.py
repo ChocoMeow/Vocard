@@ -22,6 +22,7 @@ SOFTWARE.
 """
 
 import discord
+import function as func
 
 from discord.ext import commands
 from . import ButtonOnCooldown

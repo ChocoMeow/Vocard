@@ -27,7 +27,6 @@ from discord import Member
 
 class Queue:
     def __init__(self, size:int, duplicateTrack: bool, get_msg):
-
         self._queue = []
         self._position = 0
         self._size = size

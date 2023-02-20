@@ -22,7 +22,7 @@ SOFTWARE.
 """
 
 import discord
-import function
+import function as func
 
 class Select_message(discord.ui.Select):
     def __init__(self, inbox):
@@ -51,7 +51,7 @@ class InboxView(discord.ui.View):
     def build_embed(self):
         embed=discord.Embed(title=f"📭 All {self.author}'s Inbox",
                             description=f'Max Messages: {len(self.inbox)}/10' + '```%0s %2s %20s\n' % ("   ", "ID:", "Title:") + '\n'.join('%0s %2s. %35s'% ('✉️' if mail['type'] == 'invite' else '📢', index, mail['title'][:35] + "...") for index, mail in enumerate(self.inbox, start=1)) + '```',
-                            color=function.embed_color)
+                            color=func.embed_color)
         if self.current:
             embed.add_field(name="Message Info:", value=f"```{self.current['description']}\nSender ID: {self.current['sender']}\nPlaylist ID: {self.current['referId']}\nInvite Time: {self.current['time'].strftime('%d-%m %H:%M:%S')}```")
         return embed
