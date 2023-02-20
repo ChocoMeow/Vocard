@@ -63,8 +63,8 @@ class previous_command(discord.ui.Button):
 
         await interaction.response.send_message(self.player.get_msg("backed").format(interaction.user))
 
-        if self.player.queue.repeat == "Track":
-            self.player.queue.set_repeat("Off")
+        if self.player.queue._repeat == 1:
+            self.player.queue.set_repeat("off")
         
 class resume_command(discord.ui.Button):
     def __init__(self, player):
@@ -130,8 +130,8 @@ class skip_command(discord.ui.Button):
 
         await interaction.response.send_message(self.player.get_msg("skipped").format(interaction.user))
 
-        if self.player.queue.repeat == "Track":
-            self.player.queue.set_repeat("Off")
+        if self.player.queue._repeat == 1:
+            self.player.queue.set_repeat("off")
         await self.player.stop()
 
 class stop_command(discord.ui.Button):
