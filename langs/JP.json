@@ -116,6 +116,7 @@
     "buttonResume": "再開",
     "buttonSkip": "スキップ",
     "buttonLeave": "離れる",
+    "buttonLoop": "繰り返す",
 
     "nowplayingDesc": "**再生中:**\n```{0}```",
     "nowplayingField": "次に:",

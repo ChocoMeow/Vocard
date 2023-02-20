@@ -116,6 +116,7 @@
     "buttonResume": "Resume",
     "buttonSkip": "Skip",
     "buttonLeave": "Leave",
+    "buttonLoop": "Loop",
 
     "nowplayingDesc": "**Now Playing:**\n```{0}```",
     "nowplayingField": "Up Next:",

@@ -116,6 +116,7 @@
     "buttonResume": "Fortsetzen",
     "buttonSkip": "Überspringen",
     "buttonLeave": "Verlassen",
+    "buttonLoop": "wiederholen",
 
     "nowplayingDesc": "**Läuft gerade:**\n```{0}```",
     "nowplayingField": "Als nächstes:",

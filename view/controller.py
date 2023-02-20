@@ -185,6 +185,25 @@ class Add(discord.ui.Button):
         else:
             await interaction.response.send_message(self.player.get_msg("playlistAddError2"), ephemeral=True)
 
+class Loop(discord.ui.Button):
+    def __init__(self, player, style, row):
+        self.player = player
+        self.loopType = {
+            0: "off",
+            1: "track",
+            2: "queue",
+        }
+        super().__init__(emoji="🔁", label=player.get_msg('buttonLoop'), style=style, row=row)
+    
+    async def callback(self, interaction: discord.Interaction):
+        if not await self.player.is_privileged(interaction.user):
+            return await interaction.response.send_message(self.player.get_msg('missingPerms_mode'), ephemeral=True)
+
+        current_repeat = self.player.queue._repeat
+        mode = self.loopType.get((current_repeat + 1)%len(self.loopType), 'off')
+        self.player.queue.set_repeat(mode)
+        await interaction.response.send_message(self.player.get_msg('repeat').format(mode.capitalize()))
+
 class Tracks(discord.ui.Select):
     def __init__(self, player, style, row):
 
@@ -217,6 +236,7 @@ btnType = {
     "skip": Skip,
     "stop": Stop,
     "add": Add,
+    "loop": Loop,
     "tracks": Tracks
 }
 

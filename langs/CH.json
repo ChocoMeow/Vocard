@@ -116,6 +116,7 @@
     "buttonResume": "恢復",
     "buttonSkip": "跳過",
     "buttonLeave": "離開",
+    "buttonLoop": "重複",
 
     "nowplayingDesc": "**現在播放:**\n```{0}```",
     "nowplayingField": "接下來:",

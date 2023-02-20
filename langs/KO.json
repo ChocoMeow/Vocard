@@ -116,6 +116,7 @@
     "buttonResume": "이력서",
     "buttonSkip": "거르다",
     "buttonLeave": "떠나다",
+    "buttonLoop": "반복하다",
 
     "nowplayingDesc": "**지금 재생 중:**\n```{0}```",
     "nowplayingField": "다음으로:",
