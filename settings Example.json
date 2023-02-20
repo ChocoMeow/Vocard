@@ -24,6 +24,10 @@
         "reddit": "<:reddit:996007566863773717>",
         "tiktok": "<:tiktok:996007689798811698>"
     },
+    "controller": [
+        ["back", "resume", "skip", {"stop": "red"}, "add"],
+        ["tracks"]
+    ],
     "cooldowns": {
         "connect": [2, 30],
         "playlist view": [1, 30]

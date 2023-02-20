@@ -30,16 +30,17 @@ from function import (
     get_playlist,
     update_playlist,
     create_account,
-    checkroles
+    checkroles,
 )
+from typing import Dict
 
 def key(interaction: discord.Interaction):
     return interaction.user
     
-class previous_command(discord.ui.Button):
-    def __init__(self, player):
+class Back(discord.ui.Button):
+    def __init__(self, player, style, row):
         self.player = player
-        super().__init__(emoji="⏮️", label=player.get_msg('buttonBack'), style=discord.ButtonStyle.secondary, disabled=False if self.player.queue.history() or not self.player.current else True)
+        super().__init__(emoji="⏮️", label=player.get_msg('buttonBack'), style=style, disabled=False if self.player.queue.history() or not self.player.current else True, row=row)
     
     async def callback(self, interaction: discord.Interaction):
         if not await self.player.is_privileged(interaction.user):
@@ -67,10 +68,10 @@ class previous_command(discord.ui.Button):
         if self.player.queue._repeat == 1:
             self.player.queue.set_repeat("off")
         
-class resume_command(discord.ui.Button):
-    def __init__(self, player):
+class Resume(discord.ui.Button):
+    def __init__(self, player, style, row):
         self.player = player
-        super().__init__(emoji="⏸️", label=player.get_msg('buttonPause'), style=discord.ButtonStyle.secondary, disabled=False if self.player.current else True)
+        super().__init__(emoji="⏸️", label=player.get_msg('buttonPause'), style=style, disabled=False if self.player.current else True, row=row)
     
     async def callback(self, interaction: discord.Interaction):
         if self.player.is_paused:
@@ -106,10 +107,10 @@ class resume_command(discord.ui.Button):
             await self.player.set_pause(True)  
         await interaction.response.edit_message(view=self.view)
 
-class skip_command(discord.ui.Button):
-    def __init__(self, player):
+class Skip(discord.ui.Button):
+    def __init__(self, player, style, row):
         self.player = player
-        super().__init__(emoji="⏭️", label=player.get_msg('buttonSkip'), style=discord.ButtonStyle.secondary)
+        super().__init__(emoji="⏭️", label=player.get_msg('buttonSkip'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_playing:
@@ -135,10 +136,10 @@ class skip_command(discord.ui.Button):
             self.player.queue.set_repeat("off")
         await self.player.stop()
 
-class stop_command(discord.ui.Button):
-    def __init__(self, player):
+class Stop(discord.ui.Button):
+    def __init__(self, player, style, row):
         self.player = player
-        super().__init__(emoji="⏹️", label=player.get_msg('buttonLeave'), style=discord.ButtonStyle.danger)
+        super().__init__(emoji="⏹️", label=player.get_msg('buttonLeave'), style=style, row=row)
     async def callback(self, interaction: discord.Interaction):
         if not await self.player.is_privileged(interaction.user):
             if interaction.user in self.player.stop_votes:
@@ -153,10 +154,10 @@ class stop_command(discord.ui.Button):
         await interaction.response.send_message(self.player.get_msg("left").format(interaction.user))
         await self.player.teardown()
 
-class add_playlist(discord.ui.Button):
-    def __init__(self, player):
+class Add(discord.ui.Button):
+    def __init__(self, player, style, row):
         self.player = player
-        super().__init__(emoji="❤️", style=discord.ButtonStyle.secondary, disabled=False if self.player.current else True)
+        super().__init__(emoji="❤️", style=style, disabled=False if self.player.current else True, row=row)
     
     async def callback(self, interaction: discord.Interaction):
         track = self.player.current
@@ -184,8 +185,8 @@ class add_playlist(discord.ui.Button):
         else:
             await interaction.response.send_message(self.player.get_msg("playlistAddError2"), ephemeral=True)
 
-class Dropdown(discord.ui.Select):
-    def __init__(self, player):
+class Tracks(discord.ui.Select):
+    def __init__(self, player, style, row):
 
         self.player = player
         
@@ -199,6 +200,7 @@ class Dropdown(discord.ui.Select):
             placeholder=player.get_msg("playerDropdown"),
             min_values=1, max_values=1,
             options=options,
+            row=row
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -209,18 +211,39 @@ class Dropdown(discord.ui.Select):
         await self.player.stop()
         await interaction.response.send_message(self.player.get_msg("skipped").format(interaction.user))
 
+btnType = {
+    "back": Back,
+    "resume": Resume,
+    "skip": Skip,
+    "stop": Stop,
+    "add": Add,
+    "tracks": Tracks
+}
+
+btnColor = {
+    "blue": discord.ButtonStyle.primary,
+    "grey": discord.ButtonStyle.secondary,
+    "red": discord.ButtonStyle.danger,
+    "green": discord.ButtonStyle.success
+}
+
 class InteractiveController(discord.ui.View):
     def __init__(self, player):
         super().__init__(timeout=None)
 
         self.player = player
-        self.add_item(previous_command(player))
-        self.add_item(resume_command(player))
-        self.add_item(skip_command(player))
-        self.add_item(stop_command(player))
-        self.add_item(add_playlist(player))
-        if not self.player.queue.is_empty:
-            self.add_item(Dropdown(player))
+        for row, btnRow in enumerate(func.controller_settings):
+            for btn in btnRow:
+                color = ""
+                if isinstance(btn, Dict):
+                    color = list(btn.values())[0]
+                    btn = list(btn.keys())[0]
+                btnClass = btnType.get(btn.lower())
+                style = btnColor.get(color.lower(), btnColor["grey"])
+                if not btnClass or (self.player.queue.is_empty and btn == "tracks"):
+                    continue
+                self.add_item(btnClass(player, style, row))
+
         self.cooldown = commands.CooldownMapping.from_cooldown(2.0, 10.0, key)
             
     async def interaction_check(self, interaction):

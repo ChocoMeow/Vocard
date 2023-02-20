@@ -55,6 +55,8 @@ bot_prefix = "?" #The default bot prefix
 max_queue = 1000 #The default maximum number of tracks in the queue
 cooldowns_settings = {} #Stores command cooldown settings
 aliases_settings = {} #Stores command aliases settings
+controller_settings = {} #Stores the layout of music controller
+
 #----------------- Nodes -----------------
 nodes = {}
 
@@ -97,7 +99,7 @@ def settings_setup():
     with open(os.path.join(root_dir, "settings.json"), encoding="utf8") as json_file:
         rawSettings = json.load(json_file)
 
-    global nodes, embed_color, bot_access_user, emoji_source_raw, bot_prefix, max_queue, cooldowns_settings, aliases_settings
+    global nodes, max_queue, bot_prefix, embed_color, bot_access_user, emoji_source_raw, cooldowns_settings, aliases_settings, controller_settings
     nodes = rawSettings.get("nodes", {})
     if (new_max_queue := rawSettings.get("default_max_queue", max_queue)):
         max_queue = new_max_queue
@@ -107,6 +109,7 @@ def settings_setup():
     emoji_source_raw = rawSettings.get("emoji_source_raw", {})
     cooldowns_settings = rawSettings.get("cooldowns", {})
     aliases_settings = rawSettings.get("aliases", {})
+    controller_settings = rawSettings.get("controller", [["back", "resume", "skip", {"stop": "red"}, "add"], ["tracks"]])
 
 def get_lang(guildid:int, key:str):
     lang = lang_guilds.get(guildid)
