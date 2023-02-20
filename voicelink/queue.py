@@ -35,7 +35,7 @@ class Queue:
         self._duplicateTrack = duplicateTrack
         self.get_msg = get_msg
     
-    async def get(self):
+    def get(self):
         track = None
         try:
             track = self._queue[self._position - 1 if self._repeat == 1 else self._position]
@@ -51,7 +51,7 @@ class Queue:
 
         return track
 
-    async def put(self, item: Track) -> int:
+    def put(self, item: Track) -> int:
         if len(self._queue) >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
         
@@ -62,7 +62,7 @@ class Queue:
         self._queue.append(item)
         return self.count
     
-    async def put_at_front(self, item: Track):
+    def put_at_front(self, item: Track):
         if len(self._queue) >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
         
@@ -72,7 +72,7 @@ class Queue:
 
         return self._queue.insert(self._position, item)
     
-    async def put_at_index(self, index: int, item: Track):
+    def put_at_index(self, index: int, item: Track):
         if len(self._queue) >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
         
@@ -82,7 +82,7 @@ class Queue:
 
         return self._queue.insert(self._position - 1 + index, item)
 
-    async def skipto(self, index: int):
+    def skipto(self, index: int):
         if not 0 < index <= self.count:
             raise OutofList(self.get_msg("voicelinkOutofList"))
         else:

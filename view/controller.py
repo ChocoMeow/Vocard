@@ -226,7 +226,7 @@ class Tracks(discord.ui.Select):
         if not await self.player.is_privileged(interaction.user):
             return await interaction.response.send_message(self.player.get_msg("missingPerms_function"), ephemeral=True)
         
-        await self.player.queue.skipto(int(self.values[0].split(". ")[0]))
+        self.player.queue.skipto(int(self.values[0].split(". ")[0]))
         await self.player.stop()
         await interaction.response.send_message(self.player.get_msg("skipped").format(interaction.user))
 

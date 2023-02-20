@@ -214,7 +214,7 @@ async def similar_track(player) -> bool:
 
     if tracks:
         for track in tracks:
-            await player.queue.put(track)
+            player.queue.put(track)
         return True
 
     return False

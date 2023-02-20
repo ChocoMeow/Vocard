@@ -119,10 +119,10 @@ class Basic(commands.Cog):
         try:
             if isinstance(tracks, voicelink.Playlist):
                 for track in tracks.tracks:
-                    await player.queue.put(track)
+                    player.queue.put(track)
                 await ctx.send(player.get_msg('playlistLoad').format(tracks.name, len(tracks.tracks)))
             else:
-                position = await player.queue.put(tracks[0])
+                position = player.queue.put(tracks[0])
                 await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
         except voicelink.QueueFull as e:
             await ctx.send(e)
@@ -159,10 +159,10 @@ class Basic(commands.Cog):
         try:
             if isinstance(tracks, voicelink.Playlist):
                 for track in tracks.tracks:
-                    await player.queue.put(track)
+                    player.queue.put(track)
                 await ctx.send(player.get_msg('playlistLoad').format(tracks.name, len(tracks.tracks)))
             else:
-                await player.queue.put(tracks[0])
+                player.queue.put(tracks[0])
                 await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, player.queue.count) if player.queue.count >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
         except voicelink.QueueFull as e:
             await ctx.send(e)
@@ -217,7 +217,7 @@ class Basic(commands.Cog):
             msg = ""
             for value in view.values:
                 track = tracks[int(value.split(". ")[0]) - 1]
-                await player.queue.put(track)
+                player.queue.put(track)
                 msg += ((f"`{player.get_msg('live')}`" if track.is_stream else "") + (player.get_msg('trackLoad_pos').format(track.title, track.author, track.formatLength,
                         player.queue.count) if player.queue.count >= 1 else player.get_msg('trackLoad').format(track.title, track.author, track.formatLength)))
             await ctx.send(msg)
@@ -315,7 +315,7 @@ class Basic(commands.Cog):
             return await ctx.send(player.get_msg('nodeReconnect'))
 
         if index:
-            await player.queue.skipto(index)
+            player.queue.skipto(index)
 
         await ctx.send(player.get_msg('skipped').format(ctx.author))
 
