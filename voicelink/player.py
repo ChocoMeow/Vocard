@@ -26,7 +26,7 @@ import function as func
 
 from math import ceil
 from asyncio import sleep
-from view import InteractiveController
+from views import InteractiveController
 from typing import (
     Any,
     Dict,

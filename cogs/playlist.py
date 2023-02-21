@@ -19,7 +19,7 @@ from function import (
 )
 
 from datetime import datetime
-from view import PlaylistView, InboxView, HelpView
+from views import PlaylistView, InboxView, HelpView
 
 
 def assign_playlistId(existed: list) -> str:

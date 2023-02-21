@@ -17,7 +17,7 @@ from function import (
 )
 
 from addons import getLyrics
-from view import SearchView, ListView, LinkView, LyricsView, ChapterView, HelpView
+from views import SearchView, ListView, LinkView, LyricsView, ChapterView, HelpView
 from validators import url
 from random import shuffle
 

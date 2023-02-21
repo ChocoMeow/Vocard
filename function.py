@@ -130,7 +130,7 @@ async def requests_api(url: str):
 async def create_account(ctx: commands.Context):
     if not ctx.author:
         return 
-    from view import CreateView
+    from views import CreateView
     view = CreateView()
     embed=discord.Embed(title="Do you want to create an account on Vocard?", color=embed_color)
     embed.description = f"> Plan: `Default` | `5` Playlist | `500` tracks in each playlist."

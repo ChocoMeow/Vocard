@@ -19,7 +19,7 @@ from function import (
     get_aliases,
     cooldown_check
 )
-from view import DebugModal, HelpView
+from views import DebugModal, HelpView
 
 
 class Admin(commands.Cog, name="settings"):
