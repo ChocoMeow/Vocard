@@ -117,6 +117,10 @@
     "buttonSkip": "거르다",
     "buttonLeave": "떠나다",
     "buttonLoop": "반복하다",
+    "buttonVolumeUp": "볼륨 업",
+    "buttonVolumeDown": "볼륨 낮추기",
+    "buttonVolumeMute": "무음",
+    "buttonVolumeUnmute": "음소거 해제",
 
     "nowplayingDesc": "**지금 재생 중:**\n```{0}```",
     "nowplayingField": "다음으로:",

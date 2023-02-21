@@ -117,6 +117,10 @@
     "buttonSkip": "跳過",
     "buttonLeave": "離開",
     "buttonLoop": "重複",
+    "buttonVolumeUp": "提高音量",
+    "buttonVolumeDown": "減小音量",
+    "buttonVolumeMute": "靜音",
+    "buttonVolumeUnmute": "取消靜音",
 
     "nowplayingDesc": "**現在播放:**\n```{0}```",
     "nowplayingField": "接下來:",

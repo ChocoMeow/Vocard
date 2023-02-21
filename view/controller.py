@@ -204,6 +204,64 @@ class Loop(discord.ui.Button):
         self.player.queue.set_repeat(mode)
         await interaction.response.send_message(self.player.get_msg('repeat').format(mode.capitalize()))
 
+class VolumeUp(discord.ui.Button):
+    def __init__(self, player, style, row):
+        self.player = player
+        super().__init__(emoji="🔊", label=player.get_msg('buttonVolumeUp'), style=style, row=row)
+    
+    async def callback(self, interaction: discord.Interaction):
+        if not await self.player.is_privileged(interaction.user):
+            return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
+        if not self.player.node._available:
+            return await interaction.response.send_message(self.player.get_msg("nodeReconnect"))
+
+        value = value if (value := self.player.volume + 20) <= 150 else 150
+        await self.player.set_volume(value)
+
+        await interaction.response.send_message(self.player.get_msg('setVolume').format(value), ephemeral=True)
+
+class VolumeDown(discord.ui.Button):
+    def __init__(self, player, style, row):
+        self.player = player
+        super().__init__(emoji="🔉", label=player.get_msg('buttonVolumeDown'), style=style, row=row)
+    
+    async def callback(self, interaction: discord.Interaction):
+        if not await self.player.is_privileged(interaction.user):
+            return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
+        if not self.player.node._available:
+            return await interaction.response.send_message(self.player.get_msg("nodeReconnect"))
+
+        value = value if (value := self.player.volume - 20) >= 0 else 150
+        await self.player.set_volume(value)
+
+        await interaction.response.send_message(self.player.get_msg('setVolume').format(value), ephemeral=True)
+
+class VolumeMute(discord.ui.Button):
+    def __init__(self, player, style, row):
+        self.player = player
+        super().__init__(emoji="🔇" if player.volume else "🔈",
+                         label=player.get_msg('buttonVolumeMute' if player.volume else "buttonVolumeUnmute"),
+                         style=style, row=row)
+    
+    async def callback(self, interaction: discord.Interaction):
+        if not await self.player.is_privileged(interaction.user):
+            return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
+        if not self.player.node._available:
+            return await interaction.response.send_message(self.player.get_msg("nodeReconnect"))
+
+        if self.player.volume != 0:
+            value = 0
+            self.emoji = "🔈"
+            self.label = self.player.get_msg("buttonVolumeUnmute")
+        else:
+            value = self.player.settings.get("volume", 100)
+            self.emoji = "🔇"
+            self.label = self.player.get_msg("buttonVolumeMute")
+
+        await self.player.set_volume(value)
+
+        await interaction.response.edit_message(view=self.view)
+
 class Tracks(discord.ui.Select):
     def __init__(self, player, style, row):
 
@@ -237,6 +295,9 @@ btnType = {
     "stop": Stop,
     "add": Add,
     "loop": Loop,
+    "volumeup": VolumeUp,
+    "volumedown": VolumeDown,
+    "volumemute": VolumeMute,
     "tracks": Tracks
 }
 
@@ -267,6 +328,8 @@ class InteractiveController(discord.ui.View):
         self.cooldown = commands.CooldownMapping.from_cooldown(2.0, 10.0, key)
             
     async def interaction_check(self, interaction):
+        if interaction.user.id in func.bot_access_user:
+            return True
         if self.player.channel and interaction.user in self.player.channel.members:
             retry_after = self.cooldown.update_rate_limit(interaction)
             if retry_after:

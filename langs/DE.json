@@ -117,6 +117,10 @@
     "buttonSkip": "Überspringen",
     "buttonLeave": "Verlassen",
     "buttonLoop": "wiederholen",
+    "buttonVolumeUp": "Lauter",
+    "buttonVolumeDown": "Lautstärke runter",
+    "buttonVolumeMute": "Stumm",
+    "buttonVolumeUnmute": "Stummschaltung aufheben",
 
     "nowplayingDesc": "**Läuft gerade:**\n```{0}```",
     "nowplayingField": "Als nächstes:",

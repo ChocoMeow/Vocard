@@ -117,6 +117,10 @@
     "buttonSkip": "スキップ",
     "buttonLeave": "離れる",
     "buttonLoop": "繰り返す",
+    "buttonVolumeUp": "ボリュームアップ",
+    "buttonVolumeDown": "ボリュームダウン",
+    "buttonVolumeMute": "無音",
+    "buttonVolumeUnmute": "ミュート解除",
 
     "nowplayingDesc": "**再生中:**\n```{0}```",
     "nowplayingField": "次に:",

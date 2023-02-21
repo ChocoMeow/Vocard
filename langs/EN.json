@@ -117,6 +117,10 @@
     "buttonSkip": "Skip",
     "buttonLeave": "Leave",
     "buttonLoop": "Loop",
+    "buttonVolumeUp": "Volume Up",
+    "buttonVolumeDown": "Volume Down",
+    "buttonVolumeMute": "Mute",
+    "buttonVolumeUnmute": "Unmute",
 
     "nowplayingDesc": "**Now Playing:**\n```{0}```",
     "nowplayingField": "Up Next:",
