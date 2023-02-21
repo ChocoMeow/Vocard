@@ -365,6 +365,8 @@ class Player(VoiceProtocol):
             pass
     
     async def is_privileged(self, user: Member):
+        if user.id in func.bot_access_user:
+            return True
         if 'dj' in self.settings and self.settings['dj']:
             return user.guild_permissions.manage_guild or (self.settings['dj'] in [role.id for role in user.roles])
         return self.dj.id == user.id or user.guild_permissions.manage_guild

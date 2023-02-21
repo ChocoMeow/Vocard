@@ -143,14 +143,10 @@ class Admin(commands.Cog, name="settings"):
             settings.get('lang', 'EN'),
             settings.get('controller', True),
             f"<@&{settings['dj']}>" if 'dj' in settings else '`None`',
-            settings.get(
-                'votedisable', False),
-            settings.get(
-                '24/7', False),
-            settings.get(
-                'volume', 100),
-            ctime(settings.get(
-                'playTime', 0) * 60 * 1000),
+            settings.get('votedisable', False),
+            settings.get('24/7', False),
+            settings.get('volume', 100),
+            ctime(settings.get('playTime', 0) * 60 * 1000),
             inline=True)
         )
         embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle2'), value=get_lang(ctx.guild.id, 'settingsValue2').format(
@@ -176,7 +172,6 @@ class Admin(commands.Cog, name="settings"):
     async def volume(self, ctx: commands.Context, value: commands.Range[int, 1, 150]):
         "Set the player's volume."
         player: voicelink.Player = ctx.guild.voice_client
-
         if player:
             player.settings['volume'] = value
             await player.set_volume(value)
