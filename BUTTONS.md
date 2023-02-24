@@ -32,9 +32,9 @@ Change the value of `controller` in `settings.json`.
 ```json
 {
     "controller": [
-            ["back", "resume", "skip", {"stop": "red"}, "add"],
-            ["tracks"]
-        ]
+        ["back", "resume", "skip", {"stop": "red"}, "add"],
+        ["tracks"]
+    ]
 }
 ```
 
