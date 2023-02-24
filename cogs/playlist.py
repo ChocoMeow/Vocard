@@ -81,7 +81,7 @@ async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel =
         raise voicelink.VoicelinkException(
             get_lang(ctx.guild.id, 'noPermission'))
 
-    player: voicelink.Player = await channel.connect(cls=voicelink.Player(ctx.box, channel, ctx))
+    player: voicelink.Player = await channel.connect(cls=voicelink.Player(ctx.bot, channel, ctx))
     return player
 
 
