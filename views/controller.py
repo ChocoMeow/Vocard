@@ -53,9 +53,6 @@ class Back(discord.ui.Button):
                 else:
                     return await interaction.response.send_message(self.player.get_msg("backVote").format(interaction.user, len(self.player.previous_votes), required))
 
-        if not self.player.node._available:
-            return await interaction.response.send_message(self.player.get_msg("nodeReconnect"))
-
         if not self.player.is_playing:
             self.player.queue.backto(1)
             await self.player.do_next()
@@ -126,9 +123,6 @@ class Skip(discord.ui.Button):
                     pass
                 else:
                     return await interaction.response.send_message(self.player.get_msg("skipVote").format(interaction.user, len(self.player.skip_votes), required))
-        
-        if not self.player.node._available:
-            return await interaction.response.send_message(self.player.get_msg("nodeReconnect"))
 
         await interaction.response.send_message(self.player.get_msg("skipped").format(interaction.user))
 
@@ -212,8 +206,6 @@ class VolumeUp(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         if not await self.player.is_privileged(interaction.user):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
-        if not self.player.node._available:
-            return await interaction.response.send_message(self.player.get_msg("nodeReconnect"))
 
         value = value if (value := self.player.volume + 20) <= 150 else 150
         await self.player.set_volume(value)
@@ -228,8 +220,6 @@ class VolumeDown(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         if not await self.player.is_privileged(interaction.user):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
-        if not self.player.node._available:
-            return await interaction.response.send_message(self.player.get_msg("nodeReconnect"))
 
         value = value if (value := self.player.volume - 20) >= 0 else 150
         await self.player.set_volume(value)
@@ -246,8 +236,6 @@ class VolumeMute(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         if not await self.player.is_privileged(interaction.user):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
-        if not self.player.node._available:
-            return await interaction.response.send_message(self.player.get_msg("nodeReconnect"))
 
         if self.player.volume != 0:
             value = 0
@@ -328,8 +316,13 @@ class InteractiveController(discord.ui.View):
         self.cooldown = commands.CooldownMapping.from_cooldown(2.0, 10.0, key)
             
     async def interaction_check(self, interaction):
+        if not self.player.node._available:
+            await interaction.response.send_message(self.player.get_msg("nodeReconnect"), ephemeral=True)
+            return False
+
         if interaction.user.id in func.bot_access_user:
             return True
+            
         if self.player.channel and interaction.user in self.player.channel.members:
             retry_after = self.cooldown.update_rate_limit(interaction)
             if retry_after:
