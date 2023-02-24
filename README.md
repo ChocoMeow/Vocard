@@ -114,7 +114,7 @@ MONGODB_NAME = Vocard
 * For `emoji_source_raw` you can change the source emoji of the track with discord emoji like `<:EMOJI_NAME:EMOJI_ID>`
 * For `cooldowns` you can set a custom cooldown in the command. Example: `"command_name": [The total number of tokens available, The length of the cooldown period in seconds]`
 * For `aliases` you can set custom aliases in the command. Example: `"command_name": [alias1, alias2, ...]`
-* For `controller` you can set custom buttons in controller, you have to pass `2D Array` into controller. [Example Here](https://github.com/ChocoMeow/Vocard/BUTTONS.md#examples)
+* For `controller` you can set custom buttons in controller, you have to pass `2D Array` into controller. [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/BUTTONS.md#examples)
 
 ## How to update?
 1. Run `python update.py --check` to check if your bot is up to date
