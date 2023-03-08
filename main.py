@@ -132,4 +132,4 @@ async def app_command_error(interaction: discord.Interaction, error):
 
 if __name__ == "__main__":
     update.checkVersion(withMsg=True)
-    bot.run(os.getenv("TOKEN"))
+    bot.run(os.getenv("TOKEN"), log_handler=None)
