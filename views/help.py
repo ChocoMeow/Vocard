@@ -28,16 +28,16 @@ from os import getenv
 import function as func
 
 class HelpDropdown(discord.ui.Select):
-    def __init__(self, category:list):
+    def __init__(self, categorys:list):
         options = [
             discord.SelectOption(emoji="🆕", label="News", description="View new updates of Vocard."),
             discord.SelectOption(emoji="🕹️", label="Tutorial", description="How to use Vocard."),
         ]
         cog_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"]
-        for category, emoji in zip(category, cog_emojis):
+        for category, emoji in zip(categorys, cog_emojis):
             options.append(discord.SelectOption(emoji=emoji, 
                                                 label=f"{category} Commands",
-                                                description=f"This is {category} Category."))
+                                                description=f"This is {category.lower()} Category."))
     
         super().__init__(
             placeholder="Select Category!",
@@ -56,7 +56,7 @@ class HelpView(discord.ui.View):
         self.author = author
         self.bot = bot
         self.response = None
-        self.categorys = [ category.capitalize() for category in bot.cogs if category not in ["Task", "Nodes"] ]
+        self.categorys = [ name.capitalize() for name, cog in bot.cogs.items() if len([c for c in cog.walk_commands()]) ]
 
         self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.invite_link))
         self.add_item(discord.ui.Button(label='Invite', emoji=':invite:915152589056790589', url='https://discord.com/oauth2/authorize?client_id={}&permissions=2184260928&scope=bot%20applications.commands'.format(getenv('CLIENT_ID'))))
@@ -101,14 +101,14 @@ class HelpView(discord.ui.View):
             
             return embed
 
-        embed = discord.Embed(title=f"Category: {category}", color=func.embed_color)
-        embed.add_field(name=f"Categories: [{2 + len(self.categorys)}]", value="```py\n" + "\n".join(f"👉 {c}" if c == category else f"{i}. {c}" for i, c in enumerate(['News', 'Tutorial'] + self.categorys, start=1)) + "```", inline=True)
+        embed = discord.Embed(title=f"Category: {category.capitalize()}", color=func.embed_color)
+        embed.add_field(name=f"Categories: [{2 + len(self.categorys)}]", value="```py\n" + "\n".join(("👉 " if c == category.capitalize() else f"{i}. ") + c for i, c in enumerate(['News', 'Tutorial'] + self.categorys, start=1)) + "```", inline=True)
 
         if category == 'tutorial':
             embed.description = "How can use Vocard? Some simple commands you should know now after watching this video."
             embed.set_image(url="https://cdn.discordapp.com/attachments/674788144931012638/917656288899514388/final_61aef3aa7836890135c6010c_669380.gif")
         else:
-            cog = [c for _, c in self.bot.cogs.items() if _ == category][0]
+            cog = [c for _, c in self.bot.cogs.items() if _.lower() == category][0]
 
             commands = [command for command in cog.walk_commands()]
             embed.description = cog.description
