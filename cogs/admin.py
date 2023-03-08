@@ -10,7 +10,6 @@ from discord import app_commands
 from discord.ext import commands
 from function import (
     langs,
-    lang_guilds,
     update_settings,
     get_settings,
     get_lang,
@@ -20,7 +19,6 @@ from function import (
     cooldown_check
 )
 from views import DebugModal, HelpView
-
 
 class Admin(commands.Cog, name="settings"):
     def __init__(self, bot) -> None:
@@ -45,6 +43,14 @@ class Admin(commands.Cog, name="settings"):
         message = await ctx.send(embed=embed, view=view)
         view.response = message
     
+    @settings.command(name="prefix", aliases=get_aliases("prefix"))
+    @commands.has_permissions(manage_guild=True)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def prefix(self, ctx: commands.Context, prefix: str):
+        "Change the default prefix for message commands."
+        update_settings(ctx.guild.id, {"prefix": prefix})
+        await ctx.send(get_lang(ctx.guild.id, "setPrefix").format(ctx.prefix, prefix))
+
     @settings.command(name="language", aliases=get_aliases("language"))
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -57,9 +63,8 @@ class Admin(commands.Cog, name="settings"):
         player, settings = self.get_settings(ctx)
         if player:
             player.lang = language
-        lang_guilds[ctx.guild.id] = language
-        update_settings(ctx.guild.id, {'lang': language})
 
+        update_settings(ctx.guild.id, {'lang': language})
         await ctx.send(get_lang(ctx.guild.id, 'changedLanguage').format(language))
 
     @language.autocomplete('language')
@@ -134,12 +139,12 @@ class Admin(commands.Cog, name="settings"):
         "Show all the bot settings in your server."
         player, settings = self.get_settings(ctx)
         embed = discord.Embed(color=embed_color)
-        embed.set_author(name=get_lang(ctx.guild.id, 'settingsMenu').format(
-            ctx.guild.name), icon_url=self.bot.user.display_avatar.url)
+        embed.set_author(name=get_lang(ctx.guild.id, 'settingsMenu').format(ctx.guild.name), icon_url=self.bot.user.display_avatar.url)
         if ctx.guild.icon:
             embed.set_thumbnail(url=ctx.guild.icon.url)
 
         embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle'), value=get_lang(ctx.guild.id, 'settingsValue').format(
+            settings.get('prefix', func.bot_prefix),
             settings.get('lang', 'EN'),
             settings.get('controller', True),
             f"<@&{settings['dj']}>" if 'dj' in settings else '`None`',

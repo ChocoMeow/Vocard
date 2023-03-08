@@ -1,7 +1,7 @@
 import discord
 import sys, os, traceback, aiohttp
 import update
-import function
+import function as func
 
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -9,7 +9,7 @@ from datetime import datetime
 from voicelink import VoicelinkException
 
 load_dotenv()
-function.settings_setup()
+func.settings_setup()
 
 class Translator(discord.app_commands.Translator):
     async def load(self):
@@ -19,8 +19,8 @@ class Translator(discord.app_commands.Translator):
         print("Unload Translator")
     
     async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
-        if str(locale) in function.local_langs:
-            return function.local_langs[str(locale)].get(string.message, None)
+        if str(locale) in func.local_langs:
+            return func.local_langs[str(locale)].get(string.message, None)
         return None
 
 class Vocard(commands.Bot):
@@ -30,13 +30,13 @@ class Vocard(commands.Bot):
             return False
         
         if self.user.mentioned_in(message) and not message.mention_everyone:
-            await message.channel.send(f"My prefix is `{self.command_prefix}`")
-        
+            await message.channel.send(f"My prefix is `{await self.command_prefix(self, message)}`")
+
         await self.process_commands(message)
     
     async def setup_hook(self):
-        function.langs_setup()
-        for module in os.listdir(function.root_dir + '/cogs'):
+        func.langs_setup()
+        for module in os.listdir(func.root_dir + '/cogs'):
             if module.endswith('.py'):
                 try:
                     await self.load_extension(f"cogs.{module[:-3]}")
@@ -89,21 +89,25 @@ class CommandCheck(discord.app_commands.CommandTree):
     
         return await super().interaction_check(interaction)
     
+async def get_prefix(bot, message: discord.Message):
+    settings = func.get_settings(message.guild.id)
+    return settings.get("prefix", func.bot_prefix)
+
 intents = discord.Intents.default()
 intents.members = True
-intents.message_content = True if function.bot_prefix else False
+intents.message_content = True if func.bot_prefix else False
 member_cache = discord.MemberCacheFlags(
     voice=True,
     joined=False
 )
 
-bot = Vocard(command_prefix=function.bot_prefix,
+bot = Vocard(command_prefix=get_prefix,
              help_command=None,
              tree_cls=CommandCheck,
-             chunk_guilds_at_startup = False,
+             chunk_guilds_at_startup=False,
              member_cache_flags=member_cache,
-             activity=discord.Activity(type=discord.ActivityType.listening,name="/help"),
-             case_insensitive = True,
+             activity=discord.Activity(type=discord.ActivityType.listening, name="/help"),
+             case_insensitive=True,
              intents=intents)
 
 @bot.tree.error
@@ -126,5 +130,6 @@ async def app_command_error(interaction: discord.Interaction, error):
     except:
         pass
 
-update.checkVersion(withMsg = True)
-bot.run(os.getenv("TOKEN"), log_handler=None)
+if __name__ == "__main__":
+    update.checkVersion(withMsg=True)
+    bot.run(os.getenv("TOKEN"))

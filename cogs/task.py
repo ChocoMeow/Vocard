@@ -55,7 +55,7 @@ class Task(commands.Cog):
     
     @tasks.loop(hours=12.0)
     async def cache_cleaner(self):
-        func.lang_guilds.clear()
+        func.guild_settings.clear()
         func.playlist_name.clear()
 
         errorFile = func.gen_report()

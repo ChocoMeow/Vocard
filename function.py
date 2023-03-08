@@ -48,7 +48,7 @@ emoji_source_raw = {} #Stores all source emoji for track
 error_log = {} #Stores error that not a Voicelink Exception
 bot_access_user = [] #Stores bot access user id
 langs = {} #Stores all the languages in ./langs
-lang_guilds = {} #Cache guild language
+guild_settings = {} #Cache guild language
 local_langs = {} #Stores all the localization languages in ./local_langs 
 playlist_name = {} #Cache the user's playlist name
 bot_prefix = "?" #The default bot prefix
@@ -61,23 +61,29 @@ controller_settings = {} #Stores the layout of music controller
 nodes = {}
 
 #-------------- Vocard Functions --------------
-def get_settings(guildid:int):
-    settings = collection.find_one({"_id":guildid})
+def get_settings(guild_id:int):
+    settings = guild_settings.get(guild_id, None)
     if not settings:
-        collection.insert_one({"_id":guildid})
-        return {}
+        settings = collection.find_one({"_id":guild_id})
+        if not settings:
+            collection.insert_one({"_id":guild_id})
+            settings = {}
+        guild_settings[guild_id] = settings
     return settings
 
-def update_settings(guildid:int, data, mode="Set"):
+def update_settings(guild_id:int, data: dict, mode="Set"):
+    settings = get_settings(guild_id)
     if mode == "Set":
-        collection.update_one({"_id":guildid}, {"$set":data})
+        for key, value in data.items():
+            if settings.get(key) != value:
+                guild_settings[guild_id][key] = value
+        collection.update_one({"_id":guild_id}, {"$set":data})
     elif mode == "Delete":
-        collection.update_one({"_id":guildid}, {"$unset":data})
-    elif mode == "Add":
-        collection.update_one({"_id":guildid}, {"$push":data})
-    elif mode == "Remove":
-        collection.update_one({"_id":guildid}, {"$pull":data})
-    return 
+        for key, value in data.items():
+            if settings.get(key) != value:
+                del guild_settings[guild_id][key]
+        collection.update_one({"_id":guild_id}, {"$unset":data})
+    return
 
 def langs_setup():
     for language in os.listdir(os.path.join(root_dir, "langs")):
@@ -111,12 +117,8 @@ def settings_setup():
     aliases_settings = rawSettings.get("aliases", {})
     controller_settings = rawSettings.get("controller", [["back", "resume", "skip", {"stop": "red"}, "add"], ["tracks"]])
 
-def get_lang(guildid:int, key:str):
-    lang = lang_guilds.get(guildid)
-    if not lang:
-        settings = get_settings(guildid)
-        lang = lang_guilds[guildid] = settings.get('lang', 'EN')
-    
+def get_lang(guild_id:int, key:str):
+    lang = get_settings(guild_id).get("lang", "EN")
     return langs.get(lang, langs["EN"])[key]
     
 async def requests_api(url: str):
@@ -213,8 +215,7 @@ async def similar_track(player) -> bool:
             return False
 
     if tracks:
-        for track in tracks:
-            player.queue.put(track)
+        await player.add_track(tracks)
         return True
 
     return False
@@ -263,8 +264,8 @@ def emoji_source(emoji:str):
 def gen_report() -> Optional[discord.File]:
     if error_log:
         errorText = ""
-        for guildId, error in error_log.items():
-            errorText += f"Guild ID: {guildId}\n" + "-" * 30 + "\n"
+        for guild_id, error in error_log.items():
+            errorText += f"Guild ID: {guild_id}\n" + "-" * 30 + "\n"
             for index, (key, value) in enumerate(error.items() , start=1):
                 errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
 
