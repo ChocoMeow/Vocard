@@ -30,7 +30,9 @@ from views import InteractiveController
 from typing import (
     Any,
     Dict,
-    Optional
+    Optional,
+    Union,
+    List
 )
 
 from discord import (
