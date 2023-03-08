@@ -149,9 +149,7 @@ class Playlists(commands.Cog, name="playlist"):
 
         if value and 0 < value <= (len(tracks['tracks'])):
             tracks['tracks'] = [tracks['tracks'][value - 1]]
-        for track in tracks['tracks']:
-            player.queue.put(track)
-
+        await player.add_track(tracks['tracks'])
         await ctx.send(get_lang(ctx.guild.id, 'playlistPlay').format(result['playlist']['name'], len(tracks['tracks'][:max_t])))
 
         if not player.is_playing:

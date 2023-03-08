@@ -28,7 +28,6 @@ searchPlatform = {
     "apple": "amsearch",
 }
 
-
 async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel = None) -> voicelink.Player:
     try:
         channel = channel or ctx.author.voice.channel
@@ -42,7 +41,6 @@ async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel =
 
     player: voicelink.Player = await channel.connect(cls=voicelink.Player(ctx.bot, channel, ctx))
     return player
-
 
 async def nowplay(ctx: commands.Context, player: voicelink.Player):
     track = player.current
@@ -118,11 +116,10 @@ class Basic(commands.Cog):
 
         try:
             if isinstance(tracks, voicelink.Playlist):
-                for track in tracks.tracks:
-                    player.queue.put(track)
-                await ctx.send(player.get_msg('playlistLoad').format(tracks.name, len(tracks.tracks)))
+                index = await player.add_track(tracks.tracks)
+                await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
-                position = player.queue.put(tracks[0])
+                position = await player.add_track(tracks[0])
                 await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
         except voicelink.QueueFull as e:
             await ctx.send(e)
@@ -158,12 +155,11 @@ class Basic(commands.Cog):
 
         try:
             if isinstance(tracks, voicelink.Playlist):
-                for track in tracks.tracks:
-                    player.queue.put(track)
-                await ctx.send(player.get_msg('playlistLoad').format(tracks.name, len(tracks.tracks)))
+                index = await player.add_track(tracks.tracks)
+                await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
-                player.queue.put(tracks[0])
-                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, player.queue.count) if player.queue.count >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
+                position = await player.add_track(tracks[0])
+                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
         except voicelink.QueueFull as e:
             await ctx.send(e)
         finally:
@@ -196,8 +192,9 @@ class Basic(commands.Cog):
         if url(query):
             return await ctx.send(player.get_msg('noLinkSupport'), ephemeral=True)
 
+        platform = platform.lower()
         if platform != 'spotify':
-            query_platform = searchPlatform.get(platform.lower(), 'ytsearch') + f":{query}"
+            query_platform = searchPlatform.get(platform, 'ytsearch') + f":{query}"
             tracks = await player.get_tracks(query=query_platform, requester=ctx.author)
         else:
             tracks = await player.spotifySearch(query=query, requester=ctx.author)
@@ -208,7 +205,7 @@ class Basic(commands.Cog):
         query_track = "\n".join(
             f"`{index}.` `[{track.formatLength}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
         embed = discord.Embed(title=player.get_msg('searchTitle').format(query), description=player.get_msg(
-            'searchDesc').format(emoji_source(platform.lower()), platform, len(tracks[0:10]), query_track), color=embed_color)
+            'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=embed_color)
         view = SearchView(tracks=tracks[0:10], lang=player.lang)
         message = await ctx.send(embed=embed, view=view, ephemeral=True)
         view.response = message
@@ -217,9 +214,9 @@ class Basic(commands.Cog):
             msg = ""
             for value in view.values:
                 track = tracks[int(value.split(". ")[0]) - 1]
-                player.queue.put(track)
+                position = await player.add_track(track)
                 msg += ((f"`{player.get_msg('live')}`" if track.is_stream else "") + (player.get_msg('trackLoad_pos').format(track.title, track.author, track.formatLength,
-                        player.queue.count) if player.queue.count >= 1 else player.get_msg('trackLoad').format(track.title, track.author, track.formatLength)))
+                        position) if position >= 1 else player.get_msg('trackLoad').format(track.title, track.author, track.formatLength)))
             await ctx.send(msg)
 
             if not player.is_playing:

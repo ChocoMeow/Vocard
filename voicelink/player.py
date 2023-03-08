@@ -275,18 +275,17 @@ class Player(VoiceProtocol):
         self.stop_votes.clear()
 
         track: Track = self.queue.get()
+
         if not track:
             if self.settings.get("autoplay", False):
                 if await func.similar_track(self):
                     return await self.do_next()
-            if self.settings.get('controller', True):
-                await self.invoke_controller()
-            return
-        try:
-            await self.play(track, start=track.position)
-        except:
-            await sleep(5)
-            return await self.do_next()
+        else:
+            try:
+                await self.play(track, start=track.position)
+            except:
+                await sleep(5)
+                return await self.do_next()
 
         if self.settings.get('controller', True):
             await self.invoke_controller()
@@ -519,6 +518,19 @@ class Player(VoiceProtocol):
             
         return self._current
 
+    async def add_track(self, raw_tracks: Union[Track, List[Track]], at_font: bool = False) -> int:
+        tracks = []
+        try:
+            if (isList := isinstance(raw_tracks, List)):
+                for track in raw_tracks:
+                    self.queue.put_at_front(track) if at_font else self.queue.put(track)  
+                    tracks.append(track)
+            else:
+                position = self.queue.put_at_front(raw_tracks) if at_font else self.queue.put(raw_tracks)
+                tracks.append(raw_tracks)
+        finally:
+            return len(tracks) if isList else position
+        
     async def seek(self, position: float) -> float:
         """Seeks to a position in the currently playing track milliseconds"""
         if position < 0 or position > self._current.original.length:
