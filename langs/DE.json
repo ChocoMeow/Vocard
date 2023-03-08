@@ -171,7 +171,8 @@
     "forward": "Leite den Spieler an **{0}** weiter",
     "rewind": "Spulen Sie den Player auf **{0}** zurück",
     "replay": "Wiederholen des aktuellen Songs.",
-    "moved": "{0} und {1} sind vertauscht",
+    "swapped": "`{0}` und `{1}` sind vertauscht",
+    "moved": "`{0}` nach `{1}` verschoben",
     "autoplay": "Der Autoplay-Modus ist jetzt **{0}**",
 
     "notdj": "Du bist kein DJ. Der aktuelle DJ ist {0}.",

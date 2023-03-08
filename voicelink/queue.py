@@ -122,7 +122,20 @@ class Queue:
         try:
             pos = self._position - 1
             self._queue[pos + num1], self._queue[pos + num2] = self._queue[pos + num2], self._queue[pos + num1]
+            return self._queue[pos + num1], self._queue[pos + num2]
         except IndexError:
+            raise OutofList(self.get_msg("voicelinkOutofList"))
+
+    def move(self, target:int, to:int):
+        if not 0 < target <= self.count or not 0 < to:
+            raise OutofList(self.get_msg("voicelinkOutofList"))
+        
+        try:
+            moveItem = self._queue[self._position + target - 1]
+            self._queue.remove(moveItem)
+            self.put_at_index(to, moveItem)
+            return moveItem
+        except:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
     def remove(self, index:int, index2:int, member: Member = None):

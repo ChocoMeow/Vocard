@@ -222,6 +222,40 @@ class Basic(commands.Cog):
             if not player.is_playing:
                 await player.do_next()
 
+    @commands.hybrid_command(name="playtop", aliases=get_aliases("playtop"))
+    @app_commands.describe(
+        query="Input the name of the song.",
+    )
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def playtop(self, ctx: commands.Context, query: str):
+        "Adds a song with the given url or query on the top of the queue."
+        player: voicelink.Player = ctx.guild.voice_client
+        if not player:
+            player = await connect_channel(ctx)
+
+        if ctx.author not in player.channel.members:
+            if not ctx.author.guild_permissions.manage_guild:
+                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+            
+        tracks = await player.get_tracks(query, requester=ctx.author)
+        if not tracks:
+            return await ctx.send(player.get_msg('noTrackFound'))
+        
+        try:
+            if isinstance(tracks, voicelink.Playlist):
+                index = await player.add_track(tracks.tracks, at_font=True)
+                await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
+            else:
+                position = await player.add_track(tracks[0], at_font=True)
+                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
+        
+        except voicelink.QueueFull as e:
+            await ctx.send(e)
+
+        finally:
+            if not player.is_playing:
+                await player.do_next()
+
     @commands.hybrid_command(name="pause", aliases=get_aliases("pause"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def pause(self, ctx: commands.Context):
@@ -640,13 +674,35 @@ class Basic(commands.Cog):
         player.shuffle_votes.clear()
         await ctx.send(player.get_msg('shuffled'))
 
-    @commands.hybrid_command(name="move", aliases=get_aliases("move"))
+    @commands.hybrid_command(name="swap", aliases=get_aliases("swap"))
     @app_commands.describe(
-        position1="The track to move. Example: 2",
-        position2="The new position to move the track to. Exmaple: 1"
+        position1="The track to swap. Example: 2",
+        position2="The track to swap with position1. Exmaple: 1"
     )
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def move(self, ctx: commands.Context, position1: int, position2: int):
+    async def swap(self, ctx: commands.Context, position1: int, position2: int):
+        "Swaps the specified song to the specified song."
+        player: voicelink.Player = ctx.guild.voice_client
+        if not player:
+            return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
+
+        if ctx.author not in player.channel.members:
+            if not ctx.author.guild_permissions.manage_guild:
+                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+
+        if not await player.is_privileged(ctx.author):
+            return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
+
+        track1, track2 = player.queue.swap(position1, position2)
+        await ctx.send(player.get_msg('swapped').format(track1.title, track2.title))
+
+    @commands.hybrid_command(name="move", aliases=get_aliases("move"))
+    @app_commands.describe(
+        target="The track to move. Example: 2",
+        to="The new position to move the track to. Exmaple: 1"
+    )
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def move(self, ctx: commands.Context, target: int, to: int):
         "Moves the specified song to the specified position."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
@@ -659,8 +715,8 @@ class Basic(commands.Cog):
         if not await player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
-        player.queue.swap(position1, position2)
-        await ctx.send(player.get_msg('moved').format(position1, position2))
+        moved_track = player.queue.move(target, to)
+        await ctx.send(player.get_msg('moved').format(moved_track.title, to))
 
     @commands.hybrid_command(name="lyrics", aliases=get_aliases("lyrics"))
     @app_commands.describe(name="Searches for your query and displays the reutned lyrics.")
