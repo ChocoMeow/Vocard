@@ -1,5 +1,7 @@
 import voicelink
 import asyncio
+import discord
+import json
 import function as func
 
 from os import getenv
