@@ -15,7 +15,8 @@ from function import (
     playlist_name,
     embed_color,
     get_aliases,
-    cooldown_check
+    cooldown_check,
+    connect_channel
 )
 
 from datetime import datetime
@@ -67,23 +68,6 @@ async def search_playlist(url: str, requester: discord.Member, timeNeed=True):
     except:
         return None
     return tracks | ({'time': ctime(time)} if timeNeed else {})
-
-
-async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel = None) -> voicelink.Player:
-    try:
-        channel = channel or ctx.author.voice.channel
-    except:
-        raise voicelink.VoicelinkException(
-            get_lang(ctx.guild.id, 'noChannel'))
-
-    check = channel.permissions_for(ctx.guild.me)
-    if check.connect == False or check.speak == False:
-        raise voicelink.VoicelinkException(
-            get_lang(ctx.guild.id, 'noPermission'))
-
-    player: voicelink.Player = await channel.connect(cls=voicelink.Player(ctx.bot, channel, ctx))
-    return player
-
 
 class Playlists(commands.Cog, name="playlist"):
     def __init__(self, bot: commands.Bot) -> None:

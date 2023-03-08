@@ -13,7 +13,8 @@ from function import (
     get_lang,
     embed_color,
     cooldown_check,
-    get_aliases
+    get_aliases,
+    connect_channel
 )
 
 from addons import getLyrics
@@ -27,20 +28,6 @@ searchPlatform = {
     "soundcloud": "scsearch",
     "apple": "amsearch",
 }
-
-async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel = None) -> voicelink.Player:
-    try:
-        channel = channel or ctx.author.voice.channel
-    except:
-        raise voicelink.VoicelinkException(get_lang(ctx.guild.id, 'noChannel'))
-
-    check = channel.permissions_for(ctx.guild.me)
-    if check.connect == False or check.speak == False:
-        raise voicelink.VoicelinkException(
-            get_lang(ctx.guild.id, 'noPermission'))
-
-    player: voicelink.Player = await channel.connect(cls=voicelink.Player(ctx.bot, channel, ctx))
-    return player
 
 async def nowplay(ctx: commands.Context, player: voicelink.Player):
     track = player.current
@@ -223,9 +210,7 @@ class Basic(commands.Cog):
                 await player.do_next()
 
     @commands.hybrid_command(name="playtop", aliases=get_aliases("playtop"))
-    @app_commands.describe(
-        query="Input the name of the song.",
-    )
+    @app_commands.describe(query="Input a query or a searchable link.")
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def playtop(self, ctx: commands.Context, query: str):
         "Adds a song with the given url or query on the top of the queue."

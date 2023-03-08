@@ -219,6 +219,21 @@ async def similar_track(player) -> bool:
 
     return False
 
+async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel = None):
+    import voicelink
+    try:
+        channel = channel or ctx.author.voice.channel
+    except:
+        raise voicelink.VoicelinkException(get_lang(ctx.guild.id, 'noChannel'))
+
+    check = channel.permissions_for(ctx.guild.me)
+    if check.connect == False or check.speak == False:
+        raise voicelink.VoicelinkException(
+            get_lang(ctx.guild.id, 'noPermission'))
+
+    player: voicelink.Player = await channel.connect(cls=voicelink.Player(ctx.bot, channel, ctx))
+    return player
+
 def time(millis:int) -> str:
     seconds=(millis/1000)%60
     minutes=(millis/(1000*60))%60
