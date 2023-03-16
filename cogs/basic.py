@@ -651,12 +651,8 @@ class Basic(commands.Cog):
                     pass
                 else:
                     return await ctx.send(player.get_msg('shuffleVote').format(ctx.author, len(player.skip_votes), required))
-        replacement = player.queue.tracks()
-        if len(replacement) < 3:
-            return await ctx.send(player.get_msg('shuffleError'))
-        shuffle(replacement)
-        player.queue.replace("Queue", replacement)
-        player.shuffle_votes.clear()
+        
+        player.shuffle("queue")
         await ctx.send(player.get_msg('shuffled'))
 
     @commands.hybrid_command(name="swap", aliases=get_aliases("swap"))

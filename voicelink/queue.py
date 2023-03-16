@@ -111,11 +111,11 @@ class Queue:
     def clear(self):
         del self._queue[self._position:]
 
-    def replace(self, queuetype:str, replacement:list):
-        if queuetype == "Queue":
+    def replace(self, queue_type:str, replacement:list):
+        if queue_type == "queue":
             self.clear()
             self._queue += replacement
-        elif queuetype == "History":
+        elif queue_type == "history":
             self._queue[:self._position] = replacement
     
     def swap(self, num1:int, num2:int):

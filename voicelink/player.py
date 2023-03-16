@@ -55,6 +55,7 @@ from .filters import Filter, Filters
 from .objects import Track
 from .pool import Node, NodePool
 from .queue import Queue, FairQueue
+from random import shuffle
 
 class Player(VoiceProtocol):
     """The base player class for Voicelink.
@@ -555,6 +556,14 @@ class Player(VoiceProtocol):
         self._volume = volume
         return self._volume
 
+    async def shuffle(self, queue_type: str, requester: Member = None):
+        replacement = self.queue.tracks() if queue_type == "queue" else self.queue.history()
+        if len(replacement) < 3:
+            return VoicelinkException(self.get_msg('shuffleError'))
+        
+        shuffle(replacement)
+        self.queue.replace(queue_type, replacement)
+        self.shuffle_votes.clear()
     async def add_filter(self, filter: Filter, fast_apply=False) -> Filters:
         try:
             self._filters.add_filter(filter=filter)
