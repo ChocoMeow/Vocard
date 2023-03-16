@@ -208,6 +208,13 @@ class Player(VoiceProtocol):
         
         return required
 
+    def is_privileged(self, user: Member):
+        if user.id in func.bot_access_user:
+            return True
+        if 'dj' in self.settings and self.settings['dj']:
+            return user.guild_permissions.manage_guild or (self.settings['dj'] in [role.id for role in user.roles])
+        return self.dj.id == user.id or user.guild_permissions.manage_guild
+    
     async def _update_state(self, data: dict):
         state: dict = data.get("state")
         self._last_update = time.time() * 1000
@@ -364,13 +371,6 @@ class Player(VoiceProtocol):
             await self.destroy()
         except:
             pass
-    
-    async def is_privileged(self, user: Member):
-        if user.id in func.bot_access_user:
-            return True
-        if 'dj' in self.settings and self.settings['dj']:
-            return user.guild_permissions.manage_guild or (self.settings['dj'] in [role.id for role in user.roles])
-        return self.dj.id == user.id or user.guild_permissions.manage_guild
 
     async def get_tracks(
         self,

@@ -43,7 +43,7 @@ class Back(discord.ui.Button):
         super().__init__(emoji="⏮️", label=player.get_msg('buttonBack'), style=style, disabled=False if self.player.queue.history() or not self.player.current else True, row=row)
     
     async def callback(self, interaction: discord.Interaction):
-        if not await self.player.is_privileged(interaction.user):
+        if not self.player.is_privileged(interaction.user):
             if interaction.user in self.player.previous_votes:
                 return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
             else:
@@ -72,7 +72,7 @@ class Resume(discord.ui.Button):
     
     async def callback(self, interaction: discord.Interaction):
         if self.player.is_paused:
-            if not await self.player.is_privileged(interaction.user):
+            if not self.player.is_privileged(interaction.user):
                 if interaction.user in self.player.resume_votes:
                     return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
                 else:
@@ -88,7 +88,7 @@ class Resume(discord.ui.Button):
             await self.player.set_pause(False)
         
         else:
-            if not await self.player.is_privileged(interaction.user):
+            if not self.player.is_privileged(interaction.user):
                 if interaction.user in self.player.pause_votes:
                     return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
                 else:
@@ -112,7 +112,7 @@ class Skip(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_playing:
             return 
-        if not await self.player.is_privileged(interaction.user):
+        if not self.player.is_privileged(interaction.user):
             if interaction.user == self.player.current.requester:
                 pass 
             elif interaction.user in self.player.skip_votes:
@@ -135,7 +135,7 @@ class Stop(discord.ui.Button):
         self.player = player
         super().__init__(emoji="⏹️", label=player.get_msg('buttonLeave'), style=style, row=row)
     async def callback(self, interaction: discord.Interaction):
-        if not await self.player.is_privileged(interaction.user):
+        if not self.player.is_privileged(interaction.user):
             if interaction.user in self.player.stop_votes:
                 return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
             else:
@@ -190,7 +190,7 @@ class Loop(discord.ui.Button):
         super().__init__(emoji="🔁", label=player.get_msg('buttonLoop'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
-        if not await self.player.is_privileged(interaction.user):
+        if not self.player.is_privileged(interaction.user):
             return await interaction.response.send_message(self.player.get_msg('missingPerms_mode'), ephemeral=True)
 
         current_repeat = self.player.queue._repeat
@@ -204,7 +204,7 @@ class VolumeUp(discord.ui.Button):
         super().__init__(emoji="🔊", label=player.get_msg('buttonVolumeUp'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
-        if not await self.player.is_privileged(interaction.user):
+        if not self.player.is_privileged(interaction.user):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
 
         value = value if (value := self.player.volume + 20) <= 150 else 150
@@ -218,7 +218,7 @@ class VolumeDown(discord.ui.Button):
         super().__init__(emoji="🔉", label=player.get_msg('buttonVolumeDown'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
-        if not await self.player.is_privileged(interaction.user):
+        if not self.player.is_privileged(interaction.user):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
 
         value = value if (value := self.player.volume - 20) >= 0 else 150
@@ -234,7 +234,7 @@ class VolumeMute(discord.ui.Button):
                          style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
-        if not await self.player.is_privileged(interaction.user):
+        if not self.player.is_privileged(interaction.user):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
 
         if self.player.volume != 0:
@@ -269,7 +269,7 @@ class Tracks(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction):
-        if not await self.player.is_privileged(interaction.user):
+        if not self.player.is_privileged(interaction.user):
             return await interaction.response.send_message(self.player.get_msg("missingPerms_function"), ephemeral=True)
         
         self.player.queue.skipto(int(self.values[0].split(". ")[0]))

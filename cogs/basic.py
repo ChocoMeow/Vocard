@@ -256,7 +256,7 @@ class Basic(commands.Cog):
         if player.is_paused:
             return await ctx.send(player.get_msg('pauseError'))
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             if ctx.author in player.pause_votes:
                 return await ctx.send(player.get_msg('voted'), ephemeral=True)
             else:
@@ -285,7 +285,7 @@ class Basic(commands.Cog):
         if not player.is_paused:
             return await ctx.send(player.get_msg('resumeError'))
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             if ctx.author in player.resume_votes:
                 return await ctx.send(player.get_msg('voted'), ephemeral=True)
             else:
@@ -315,7 +315,7 @@ class Basic(commands.Cog):
         if not player.is_playing:
             return await ctx.send(player.get_msg('skipError'), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             if ctx.author == player.current.requester:
                 pass
             elif ctx.author in player.skip_votes:
@@ -352,7 +352,7 @@ class Basic(commands.Cog):
             if not ctx.author.guild_permissions.manage_guild:
                 return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             if ctx.author in player.previous_votes:
                 return await ctx.send(player.get_msg('voted'), ephemeral=True)
             else:
@@ -392,7 +392,7 @@ class Basic(commands.Cog):
 
         if not player.current:
             return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
         if player.position == 0:
             return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
@@ -453,7 +453,7 @@ class Basic(commands.Cog):
             if not ctx.author.guild_permissions.manage_guild:
                 return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             if ctx.author in player.stop_votes:
                 return await ctx.send(player.get_msg('voted'), ephemeral=True)
             else:
@@ -498,7 +498,7 @@ class Basic(commands.Cog):
             if not ctx.author.guild_permissions.manage_guild:
                 return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_mode'), ephemeral=True)
 
         if mode.lower() not in ['off', 'track', 'queue']:
@@ -523,7 +523,7 @@ class Basic(commands.Cog):
             if not ctx.author.guild_permissions.manage_guild:
                 return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_queue'), ephemeral=True)
 
         queue = queue.lower()
@@ -552,7 +552,7 @@ class Basic(commands.Cog):
             if not ctx.author.guild_permissions.manage_guild:
                 return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_queue'), ephemeral=True)
 
         removedTrack = player.queue.remove(position1, position2, member)
@@ -573,7 +573,7 @@ class Basic(commands.Cog):
 
         if not player.current:
             return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         num = formatTime(position)
@@ -599,7 +599,7 @@ class Basic(commands.Cog):
         if not player.current:
             return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         num = formatTime(position)
@@ -624,7 +624,7 @@ class Basic(commands.Cog):
         if not player.current:
             return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         await player.seek(0)
@@ -642,7 +642,7 @@ class Basic(commands.Cog):
             if not ctx.author.guild_permissions.manage_guild:
                 return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             if ctx.author in player.shuffle_votes:
                 return await ctx.send(player.get_msg('voted'), ephemeral=True)
             else:
@@ -675,7 +675,7 @@ class Basic(commands.Cog):
             if not ctx.author.guild_permissions.manage_guild:
                 return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         track1, track2 = player.queue.swap(position1, position2)
@@ -697,7 +697,7 @@ class Basic(commands.Cog):
             if not ctx.author.guild_permissions.manage_guild:
                 return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         moved_track = player.queue.move(target, to)
@@ -763,7 +763,7 @@ class Basic(commands.Cog):
 
         if not (track := player.current):
             return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         if track.source != 'youtube':
@@ -798,7 +798,7 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if not await player.is_privileged(ctx.author):
+        if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_autoplay'), ephemeral=True)
 
         check = not player.settings.get("autoplay", False)
