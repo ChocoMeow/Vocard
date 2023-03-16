@@ -323,7 +323,7 @@ class InteractiveController(discord.ui.View):
         if interaction.user.id in func.bot_access_user:
             return True
             
-        if self.player.channel and interaction.user in self.player.channel.members:
+        if self.player.channel and self.player.is_user_join(interaction.user):
             retry_after = self.cooldown.update_rate_limit(interaction)
             if retry_after:
                 raise ButtonOnCooldown(retry_after)

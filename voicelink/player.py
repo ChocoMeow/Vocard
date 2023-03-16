@@ -81,7 +81,7 @@ class Player(VoiceProtocol):
         self._bot = client
         self.context = ctx
         self.dj: Member = ctx.author
-        self.channel = channel
+        self.channel: VoiceChannel = channel
         self._guild = channel.guild if channel else None
 
         self.settings: dict = func.get_settings(ctx.guild.id)
@@ -209,12 +209,23 @@ class Player(VoiceProtocol):
         
         return required
 
-    def is_privileged(self, user: Member):
+    def is_user_join(self, user: Member):
+        if user not in self.channel.members:
+            if not user.guild_permissions.manage_guild:
+                return False        
+        return True
+    
+    def is_privileged(self, user: Member, check_user_join: bool = True):
         if user.id in func.bot_access_user:
             return True
+        
+        manage_perm = user.guild_permissions.manage_guild
+        if check_user_join and not self.is_user_join(user):
+            raise VoicelinkException(self.get_msg('notInChannel').format(user.mention, self.channel.mention))
+            
         if 'dj' in self.settings and self.settings['dj']:
-            return user.guild_permissions.manage_guild or (self.settings['dj'] in [role.id for role in user.roles])
-        return self.dj.id == user.id or user.guild_permissions.manage_guild
+            return manage_perm or (self.settings['dj'] in [role.id for role in user.roles])
+        return self.dj.id == user.id or manage_perm
     
     async def _update_state(self, data: dict):
         state: dict = data.get("state")

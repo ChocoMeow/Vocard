@@ -20,7 +20,6 @@ from function import (
 from addons import getLyrics
 from views import SearchView, ListView, LinkView, LyricsView, ChapterView, HelpView
 from validators import url
-from random import shuffle
 
 searchPlatform = {
     "youtube": "ytsearch",
@@ -57,7 +56,6 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
 async def help_autocomplete(ctx: commands.Context, current: str) -> list:
     return [app_commands.Choice(name=c.capitalize(), value=c) for c in ctx.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
-
 class Basic(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -93,9 +91,8 @@ class Basic(commands.Cog):
         if not player:
             player = await connect_channel(ctx)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         tracks = await player.get_tracks(query, requester=ctx.author)
         if not tracks:
@@ -132,9 +129,8 @@ class Basic(commands.Cog):
         if not player:
             player = await connect_channel(ctx)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         tracks = await player.get_tracks(query, requester=ctx.author)
         if not tracks:
@@ -172,9 +168,8 @@ class Basic(commands.Cog):
         if not player:
             player = await connect_channel(ctx)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if url(query):
             return await ctx.send(player.get_msg('noLinkSupport'), ephemeral=True)
@@ -218,9 +213,8 @@ class Basic(commands.Cog):
         if not player:
             player = await connect_channel(ctx)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
             
         tracks = await player.get_tracks(query, requester=ctx.author)
         if not tracks:
@@ -249,10 +243,6 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
         if player.is_paused:
             return await ctx.send(player.get_msg('pauseError'))
 
@@ -277,10 +267,6 @@ class Basic(commands.Cog):
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
-
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if not player.is_paused:
             return await ctx.send(player.get_msg('resumeError'))
@@ -307,10 +293,6 @@ class Basic(commands.Cog):
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
-
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if not player.is_playing:
             return await ctx.send(player.get_msg('skipError'), ephemeral=True)
@@ -348,10 +330,6 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
         if not player.is_privileged(ctx.author):
             if ctx.author in player.previous_votes:
                 return await ctx.send(player.get_msg('voted'), ephemeral=True)
@@ -386,15 +364,10 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
-        if not player.current:
-            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
-        if player.position == 0:
+
+        if not player.current or player.position == 0:
             return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
 
         num = formatTime(position)
@@ -412,9 +385,8 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if player.queue.is_empty:
             return await nowplay(ctx, player)
@@ -430,9 +402,8 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if not player.queue.history():
             return await nowplay(ctx, player)
@@ -448,10 +419,6 @@ class Basic(commands.Cog):
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
-
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if not player.is_privileged(ctx.author):
             if ctx.author in player.stop_votes:
@@ -474,9 +441,8 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         await nowplay(ctx, player)
 
@@ -493,10 +459,6 @@ class Basic(commands.Cog):
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
-
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_mode'), ephemeral=True)
@@ -518,10 +480,6 @@ class Basic(commands.Cog):
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
-
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_queue'), ephemeral=True)
@@ -548,10 +506,6 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_queue'), ephemeral=True)
 
@@ -567,15 +521,12 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
-        if not player.current:
-            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
+        if not player.current:
+            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
+        
         num = formatTime(position)
         if num is None:
             return await ctx.send(player.get_msg('timeFormatError'), ephemeral=True)
@@ -592,16 +543,12 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
-        if not player.current:
-            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
-
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
+        if not player.current:
+            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
+        
         num = formatTime(position)
         if num is None:
             return await ctx.send(player.get_msg('timeFormatError'), ephemeral=True)
@@ -617,16 +564,12 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
-        if not player.current:
-            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
-
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
+        if not player.current:
+            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
+        
         await player.seek(0)
         await ctx.send(player.get_msg('replay'))
 
@@ -638,10 +581,6 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
         if not player.is_privileged(ctx.author):
             if ctx.author in player.shuffle_votes:
                 return await ctx.send(player.get_msg('voted'), ephemeral=True)
@@ -652,7 +591,7 @@ class Basic(commands.Cog):
                 else:
                     return await ctx.send(player.get_msg('shuffleVote').format(ctx.author, len(player.skip_votes), required))
         
-        player.shuffle("queue")
+        await player.shuffle("queue")
         await ctx.send(player.get_msg('shuffled'))
 
     @commands.hybrid_command(name="swap", aliases=get_aliases("swap"))
@@ -666,10 +605,6 @@ class Basic(commands.Cog):
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
-
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
@@ -688,11 +623,7 @@ class Basic(commands.Cog):
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
-
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
+        
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
@@ -729,9 +660,8 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if player.dj.id != ctx.author.id or player.settings.get('dj', False):
             return await ctx.send(player.get_msg('notdj').format(f"<@&{player.settings['dj']}>" if player.settings.get('dj') else player.dj.mention), ephemeral=True)
@@ -753,9 +683,8 @@ class Basic(commands.Cog):
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
 
-        if ctx.author not in player.channel.members:
-            if not ctx.author.guild_permissions.manage_guild:
-                return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
 
         if not (track := player.current):
             return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
@@ -765,8 +694,7 @@ class Basic(commands.Cog):
         if track.source != 'youtube':
             return await ctx.send(player.get_msg('chatpersNotSupport'), ephemeral=True)
 
-        request_uri = "https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id={videoId}&key={key}".format(
-            videoId=track.identifier, key=youtube_api_key)
+        request_uri = "https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id={videoId}&key={key}".format(videoId=track.identifier, key=youtube_api_key)
 
         data = await requests_api(request_uri)
         if not data:
