@@ -570,7 +570,7 @@ class Player(VoiceProtocol):
     async def shuffle(self, queue_type: str, requester: Member = None):
         replacement = self.queue.tracks() if queue_type == "queue" else self.queue.history()
         if len(replacement) < 3:
-            return VoicelinkException(self.get_msg('shuffleError'))
+            raise VoicelinkException(self.get_msg('shuffleError'))
         
         shuffle(replacement)
         self.queue.replace(queue_type, replacement)
