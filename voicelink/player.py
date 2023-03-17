@@ -233,6 +233,12 @@ class Player(VoiceProtocol):
         self._is_connected = state.get("connected")
         self._last_position = state.get("position")
         self._ping = state.get("ping")
+        if self.bot.ipc.connections:
+            await self.send_ws({ "op": "playerUpdate",
+                                "last_update": self._last_update,
+                                "is_connected": self._is_connected,
+                                "last_position": self._last_position
+                                })
 
     async def _dispatch_voice_update(self, voice_data: Dict[str, Any]):
         if {"sessionId", "event"} != self._voice_state.keys():
@@ -310,7 +316,15 @@ class Player(VoiceProtocol):
 
         if self.settings.get('controller', True):
             await self.invoke_controller()
-    
+
+        if self.bot.ipc.connections:
+            await self.send_ws({
+                "op": "trackUpdate", 
+                "current_queue_position": self.queue._position if track else self.queue._position + 1,
+                "track_id": track.track_id if track else None,
+                "is_paused": self._paused
+            })
+
     async def invoke_controller(self):
         if self.updating or not self.channel:
             return
@@ -373,7 +387,9 @@ class Player(VoiceProtocol):
     async def teardown(self):
         timeNow = round(time.time())
         func.update_settings(self.guild.id, {"lastActice": timeNow, "playTime": round(self.settings.get("playTime", 0) + ((timeNow - self.joinTime) / 60), 2)})
-        
+        if self.bot.ipc.connections:
+            await self.send_ws({"op": "playerClose"})
+
         try:
             await self.controller.delete()
         except:
@@ -543,9 +559,12 @@ class Player(VoiceProtocol):
                 position = self.queue.put_at_front(raw_tracks) if at_font else self.queue.put(raw_tracks)
                 tracks.append(raw_tracks)
         finally:
-            return len(tracks) if isList else position
+            if tracks:
+                if self.bot.ipc.connections:
+                    await self.send_ws({"op": "addTrack", "tracks": [track.toDict() for track in tracks]}, tracks[0].requester)
+                return len(tracks) if isList else position
         
-    async def seek(self, position: float) -> float:
+    async def seek(self, position: float, requester: Member = None) -> float:
         """Seeks to a position in the currently playing track milliseconds"""
         if position < 0 or position > self._current.original.length:
             raise TrackInvalidPosition(
@@ -553,17 +572,23 @@ class Player(VoiceProtocol):
             )
 
         await self._node.send(method=0, guild_id=self._guild.id, data={"position": position})
+        if self.bot.ipc.connections:
+            await self.send_ws({"op": "updatePosition", "position": position}, requester)
         return self._position
 
-    async def set_pause(self, pause: bool) -> bool:
+    async def set_pause(self, pause: bool, requester: Member = None) -> bool:
         """Sets the pause state of the currently playing track."""
         await self._node.send(method=0, guild_id=self._guild.id, data={"paused": pause})
+        if self.bot.ipc.connections:
+            await self.send_ws({"op": "updatePause", "pause": pause}, requester)
         self._paused = pause
         return self._paused
 
-    async def set_volume(self, volume: int) -> int:
+    async def set_volume(self, volume: int, requester: Member = None) -> int:
         """Sets the volume of the player as an integer. Lavalink accepts values from 0 to 500."""
         await self._node.send(method=0, guild_id=self._guild.id, data={"volume": volume})
+        if self.bot.ipc.connections:
+            await self.send_ws({"op": "updateVolume", "volume": volume}, requester)
         self._volume = volume
         return self._volume
 
@@ -575,6 +600,16 @@ class Player(VoiceProtocol):
         shuffle(replacement)
         self.queue.replace(queue_type, replacement)
         self.shuffle_votes.clear()
+        if self.bot.ipc.connections:
+            await self.send_ws({
+                "op": "shuffleTrack",
+                "tracks": [track.toDict() for track in self.queue._queue],
+                "verified": {
+                    "index": self.queue._position if queue_type == "queue" else 0,
+                    "track_id": replacement[0].track_id,
+                }
+            }, requester)
+
     async def add_filter(self, filter: Filter, fast_apply=False) -> Filters:
         try:
             self._filters.add_filter(filter=filter)
@@ -626,3 +661,9 @@ class Player(VoiceProtocol):
 
         if self.volume != 100:
             await self.set_volume(self.volume)
+    
+    async def send_ws(self, payload, requester: Member = None):
+            payload['guild_id'] = self.guild.id
+            if requester:
+                payload['requester_id'] = requester.id
+            await self.bot.ipc.send(payload)

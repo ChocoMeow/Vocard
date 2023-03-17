@@ -256,7 +256,7 @@ class Basic(commands.Cog):
                 else:
                     return await ctx.send(player.get_msg('pauseVote').format(ctx.author, len(player.pause_votes), required))
 
-        await player.set_pause(True)
+        await player.set_pause(True, ctx.author)
         player.pause_votes.clear()
         await ctx.send(player.get_msg('paused').format(ctx.author))
 
@@ -281,7 +281,7 @@ class Basic(commands.Cog):
                 else:
                     return await ctx.send(player.get_msg('resumeVote').format(ctx.author, len(player.resume_votes), required))
 
-        await player.set_pause(False)
+        await player.set_pause(False, ctx.author)
         player.resume_votes.clear()
         await ctx.send(player.get_msg('resumed').format(ctx.author))
 
@@ -374,7 +374,7 @@ class Basic(commands.Cog):
         if num is None:
             return await ctx.send(player.get_msg('timeFormatError'), ephemeral=True)
 
-        await player.seek(num)
+        await player.seek(num, ctx.author)
         await ctx.send(player.get_msg('seek').format(position))
 
     @commands.hybrid_command(name="queue", aliases=get_aliases("queue"))
@@ -591,7 +591,7 @@ class Basic(commands.Cog):
                 else:
                     return await ctx.send(player.get_msg('shuffleVote').format(ctx.author, len(player.skip_votes), required))
         
-        await player.shuffle("queue")
+        await player.shuffle("queue", ctx.author)
         await ctx.send(player.get_msg('shuffled'))
 
     @commands.hybrid_command(name="swap", aliases=get_aliases("swap"))
@@ -610,6 +610,11 @@ class Basic(commands.Cog):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         track1, track2 = player.queue.swap(position1, position2)
+        await player.send_ws({
+            "op": "swapTrack",
+            "position1": {"index": position1, "track_id": track1.track_id},
+            "position2": {"index": position2, "track_id": track2.track_id}
+        }, requester=ctx.author)
         await ctx.send(player.get_msg('swapped').format(track1.title, track2.title))
 
     @commands.hybrid_command(name="move", aliases=get_aliases("move"))
@@ -628,6 +633,11 @@ class Basic(commands.Cog):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         moved_track = player.queue.move(target, to)
+        await player.send_ws({
+            "op": "moveTrack",
+            "position": {"index": target, "track_id": moved_track.track_id},
+            "newPosition": {"index": to}
+        }, requester=ctx.author)
         await ctx.send(player.get_msg('moved').format(moved_track.title, to))
 
     @commands.hybrid_command(name="lyrics", aliases=get_aliases("lyrics"))

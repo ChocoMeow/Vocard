@@ -179,7 +179,7 @@ class Admin(commands.Cog, name="settings"):
         player: voicelink.Player = ctx.guild.voice_client
         if player:
             player.settings['volume'] = value
-            await player.set_volume(value)
+            await player.set_volume(value, ctx.author)
 
         update_settings(ctx.guild.id, {'volume': value})
         await ctx.send(get_lang(ctx.guild.id, 'setVolume').format(value))

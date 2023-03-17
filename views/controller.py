@@ -85,7 +85,7 @@ class Resume(discord.ui.Button):
             self.player.resume_votes.clear()
             self.emoji = "⏸️"
             self.label = self.player.get_msg("buttonPause")
-            await self.player.set_pause(False)
+            await self.player.set_pause(False, interaction.user)
         
         else:
             if not self.player.is_privileged(interaction.user):
@@ -101,7 +101,7 @@ class Resume(discord.ui.Button):
             self.player.pause_votes.clear()
             self.emoji = "▶️"
             self.label = self.player.get_msg("buttonResume")
-            await self.player.set_pause(True)  
+            await self.player.set_pause(True, interaction.user)  
         await interaction.response.edit_message(view=self.view)
 
 class Skip(discord.ui.Button):
@@ -208,7 +208,7 @@ class VolumeUp(discord.ui.Button):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
 
         value = value if (value := self.player.volume + 20) <= 150 else 150
-        await self.player.set_volume(value)
+        await self.player.set_volume(value, interaction.user)
 
         await interaction.response.send_message(self.player.get_msg('setVolume').format(value), ephemeral=True)
 
@@ -222,7 +222,7 @@ class VolumeDown(discord.ui.Button):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
 
         value = value if (value := self.player.volume - 20) >= 0 else 150
-        await self.player.set_volume(value)
+        await self.player.set_volume(value, interaction.user)
 
         await interaction.response.send_message(self.player.get_msg('setVolume').format(value), ephemeral=True)
 
@@ -246,7 +246,7 @@ class VolumeMute(discord.ui.Button):
             self.emoji = "🔇"
             self.label = self.player.get_msg("buttonVolumeMute")
 
-        await self.player.set_volume(value)
+        await self.player.set_volume(value, interaction.user)
 
         await interaction.response.edit_message(view=self.view)
 

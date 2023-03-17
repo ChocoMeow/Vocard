@@ -233,6 +233,7 @@ async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel =
             get_lang(ctx.guild.id, 'noPermission'))
 
     player: voicelink.Player = await channel.connect(cls=voicelink.Player(ctx.bot, channel, ctx))
+    await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
     return player
 
 def time(millis:int) -> str:

@@ -46,5 +46,32 @@ class Nodes(commands.Cog):
         await asyncio.sleep(5)
         await player.do_next()
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if member.bot:
+            return
+        
+        is_joined = True
+        if before.channel and after.channel:
+            guild = after.channel.guild.id
+
+        elif not before.channel and after.channel:
+            guild = after.channel.guild.id
+
+        elif before.channel and not after.channel:
+            guild = before.channel.guild.id
+            is_joined = False
+
+        await self.bot.ipc.send({
+            "op": "updateGuild",
+            "user": {
+                "user_id": member.id,
+                "avatar_url": member.avatar.url,
+                "name": member.name,
+            },
+            "guild_id": guild,
+            "is_joined": is_joined
+        })
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Nodes(bot))
