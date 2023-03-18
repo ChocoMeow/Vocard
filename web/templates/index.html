@@ -42,9 +42,16 @@
                 </div>
             </div>
             <div class="right">
-                <div class="account">
-                    <img src="{{ user.avatar.url }}" />
-                    <p>{{ user.username }}</p>
+                <div class="dropdown-container">
+                    <div class="account">
+                        <img src="{{ user.avatar.url }}" />
+                        <p>{{ user.username }}</p>
+                    </div>
+                    <ul>
+                        <a class="dropdown-item" href="logout">
+                            <li><i class="fa-solid fa-right-from-bracket"></i> Log Out</li>
+                        </a>
+                    </ul>
                 </div>
             </div>
         </div>

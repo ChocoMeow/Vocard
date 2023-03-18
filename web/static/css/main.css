@@ -18,6 +18,10 @@ body {
     max-height: 100%;
 }
 
+a {
+    text-decoration: none;
+}
+
 /* width */
 ::-webkit-scrollbar {
     width: 10px;
@@ -38,6 +42,51 @@ body {
     flex-direction: column;
     justify-content: space-between;
     min-height: 100%;
+}
+
+.dropdown-container {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all .1s linear;
+}
+
+.dropdown-container:hover {
+    background-color: rgba(142, 142, 142, 20%);
+}
+
+.dropdown-container:hover ul {
+    opacity: 1;
+}
+
+.dropdown-container ul {
+    list-style: none;
+    position: absolute;
+    padding: .5rem;
+    border-radius: 10px;
+    top: 68px;
+    width: 100%;
+    opacity: 0;
+    background-color: rgba(142, 142, 142, 20%);
+    transition: all .1s linear;
+}
+
+.dropdown-container li {
+    display: flex;
+    padding: .5rem .8rem;
+    justify-content: center;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: all .2s linear;
+    color: #FF0000;
+}
+
+.dropdown-container li:hover {
+    background-color: rgba(142, 142, 142, 30%);
 }
 
 .header {
@@ -167,12 +216,6 @@ body {
     align-items: center;
     border-radius: 12px;
     padding: 10px;
-    transition: all .2s;
-    cursor: pointer;
-}
-
-.header .right .account:hover {
-    background-color: rgba(142, 142, 142, 20%);
 }
 
 .header .right .account img {

@@ -159,6 +159,14 @@ def login():
     }
     return redirect(f'{DISCORD_API_BASE_URL}/oauth2/authorize?{"&".join([f"{k}={v}" for k, v in params.items()])}')
 
+# Logout page
+@app.route('/logout')
+@login_required
+def logout(user: User):
+    session.pop("discord_token", None)
+    
+    return redirect(url_for("home"))
+
 # callback page
 @app.route('/callback')
 def callback():
