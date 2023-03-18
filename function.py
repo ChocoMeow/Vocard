@@ -56,6 +56,7 @@ max_queue = 1000 #The default maximum number of tracks in the queue
 cooldowns_settings = {} #Stores command cooldown settings
 aliases_settings = {} #Stores command aliases settings
 controller_settings = {} #Stores the layout of music controller
+enable_ipc = False #Enable ipc server or not
 
 #----------------- Nodes -----------------
 nodes = {}
@@ -105,11 +106,12 @@ def settings_setup():
     with open(os.path.join(root_dir, "settings.json"), encoding="utf8") as json_file:
         rawSettings = json.load(json_file)
 
-    global nodes, max_queue, bot_prefix, embed_color, bot_access_user, emoji_source_raw, cooldowns_settings, aliases_settings, controller_settings
+    global nodes, max_queue, bot_prefix, embed_color, bot_access_user, emoji_source_raw, cooldowns_settings, aliases_settings, controller_settings, enable_ipc
     nodes = rawSettings.get("nodes", {})
     if (new_max_queue := rawSettings.get("default_max_queue", max_queue)):
         max_queue = new_max_queue
     bot_prefix = rawSettings.get("prefix", "")
+    enable_ipc = rawSettings.get("enable_ipc", False)
     embed_color = int(rawSettings.get("embed_color", "0xb3b3b3"), 16)
     bot_access_user = rawSettings.get("bot_access_user", [])
     emoji_source_raw = rawSettings.get("emoji_source_raw", {})

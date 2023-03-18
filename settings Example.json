@@ -10,6 +10,7 @@
     },
     "prefix": "?",
     "bot_access_user": [],
+    "enable_ipc": false,
     "color_code":"0xb3b3b3",
     "default_max_queue": 1000,
     "emoji_source_raw": {

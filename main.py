@@ -51,7 +51,8 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     print(traceback.format_exc())
 
-        await self.ipc.start()
+        if func.enable_ipc:
+            await self.ipc.start()
 
         await bot.tree.set_translator(Translator())
         await bot.tree.sync()

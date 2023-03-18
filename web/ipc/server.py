@@ -12,12 +12,12 @@ from typing import (
 
 class IPCServer:
     def __init__(
-            self, 
-            bot: commands.Bot,
-            host: str = "127.0.0.1",
-            port: int = 8000,
-            sercet_key: Optional[str] = None
-        ):
+        self, 
+        bot: commands.Bot,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sercet_key: Optional[str] = None
+    ):
         self.bot = bot
         self.host = host
         self.port = port
