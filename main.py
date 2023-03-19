@@ -85,7 +85,7 @@ class Vocard(commands.Bot):
             error = f"```css\n[You are missing argument!]\n{command}\n" + " " * position + "^" * len(ctx.current_parameter.name) + "```"
 
         elif not issubclass(error.__class__, VoicelinkException):
-            error = func.get_lang(ctx.guild.id, "unknownException") + func.invite_link
+            error = func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
             if (guildId := ctx.guild.id) not in func.error_log:
                 func.error_log[guildId] = {}
             func.error_log[guildId][round(datetime.timestamp(datetime.now()))] = str(traceback.format_exc())
