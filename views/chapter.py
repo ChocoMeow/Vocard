@@ -41,7 +41,7 @@ class Dropdown(discord.ui.Select):
         super().__init__(
             placeholder=self.player.get_msg('chaptersDropdown'),
             min_values=1, max_values=1,
-            options=options,
+            options=options[:25],
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -52,6 +52,7 @@ class Dropdown(discord.ui.Select):
             return await self.view.stop_view()
 
         await self.player.seek(position)
+        await interaction.response.send_message(self.player.get_msg('seek').format(formatTime(position)))
 
 class ChapterView(discord.ui.View):
     def __init__(self, player, chapters, author):
@@ -61,7 +62,7 @@ class ChapterView(discord.ui.View):
         self.chapters = chapters
         self.author = author
         self.response = None
-        self.add_item(self.Dropdown(player, chapters))
+        self.add_item(Dropdown(player, chapters))
     
     async def on_error(self, error: Exception, item, interaction) -> None:
         return 
