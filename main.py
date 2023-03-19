@@ -12,7 +12,7 @@ from datetime import datetime
 from voicelink import VoicelinkException
 
 load_dotenv()
-func.settings_setup()
+func.init()
 
 class Translator(discord.app_commands.Translator):
     async def load(self):
@@ -30,7 +30,12 @@ class Vocard(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ipc = IPCServer(self, sercet_key="Vocard")
+        self.ipc = IPCServer(
+            self,
+            func.settings.ipc_server["host"],
+            func.settings.ipc_server["port"],
+            sercet_key="Vocard"
+        )
 
     async def on_message(self, message: discord.Message, /) -> None:
         if message.author.bot or not message.guild:
@@ -51,7 +56,7 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     print(traceback.format_exc())
 
-        if func.enable_ipc:
+        if func.settings.ipc_server["enable"]:
             await self.ipc.start()
 
         await bot.tree.set_translator(Translator())
@@ -101,11 +106,11 @@ class CommandCheck(discord.app_commands.CommandTree):
     
 async def get_prefix(bot, message: discord.Message):
     settings = func.get_settings(message.guild.id)
-    return settings.get("prefix", func.bot_prefix)
+    return settings.get("prefix", func.settings.bot_prefix)
 
 intents = discord.Intents.default()
 intents.members = True
-intents.message_content = True if func.bot_prefix else False
+intents.message_content = True if func.settings.bot_prefix else False
 member_cache = discord.MemberCacheFlags(
     voice=True,
     joined=False
@@ -128,7 +133,7 @@ async def app_command_error(interaction: discord.Interaction, error):
     elif isinstance(error, (discord.app_commands.CommandOnCooldown, discord.app_commands.errors.MissingPermissions)):
         pass
     elif not issubclass(error.__class__, VoicelinkException):
-        error = func.get_lang(interaction.guild_id, "unknownException") + func.invite_link
+        error = func.get_lang(interaction.guild_id, "unknownException") + func.settings.invite_link
         if (guildId := interaction.guild_id) not in func.error_log:
             func.error_log[guildId] = {}
         func.error_log[guildId][round(datetime.timestamp(datetime.now()))] = str(traceback.format_exc())

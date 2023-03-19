@@ -19,7 +19,7 @@ class Nodes(commands.Cog):
     async def start_nodes(self) -> None:
         """Connect and intiate nodes."""
         await self.bot.wait_until_ready()
-        for n in func.nodes.values():
+        for n in func.settings.nodes.values():
             try:
                 await self.voicelink.create_node(bot=self.bot, 
                                                  spotify_client_id=getenv('SPOTIFY_CLIENT_ID'), 

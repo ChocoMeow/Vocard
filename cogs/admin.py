@@ -13,7 +13,7 @@ from function import (
     update_settings,
     get_settings,
     get_lang,
-    embed_color,
+    settings as sett,
     time as ctime,
     get_aliases,
     cooldown_check
@@ -138,13 +138,13 @@ class Admin(commands.Cog, name="settings"):
     async def view(self, ctx: commands.Context):
         "Show all the bot settings in your server."
         player, settings = self.get_settings(ctx)
-        embed = discord.Embed(color=embed_color)
+        embed = discord.Embed(color=sett.embed_color)
         embed.set_author(name=get_lang(ctx.guild.id, 'settingsMenu').format(ctx.guild.name), icon_url=self.bot.user.display_avatar.url)
         if ctx.guild.icon:
             embed.set_thumbnail(url=ctx.guild.icon.url)
 
         embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle'), value=get_lang(ctx.guild.id, 'settingsValue').format(
-            settings.get('prefix', func.bot_prefix),
+            settings.get('prefix', func.settings.bot_prefix),
             settings.get('lang', 'EN'),
             settings.get('controller', True),
             f"<@&{settings['dj']}>" if 'dj' in settings else '`None`',
@@ -156,7 +156,7 @@ class Admin(commands.Cog, name="settings"):
         )
         embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle2'), value=get_lang(ctx.guild.id, 'settingsValue2').format(
             settings.get("queueType", "Queue"),
-            func.max_queue,
+            func.settings.max_queue,
             settings.get("duplicateTrack", True)
         )
         )
@@ -219,7 +219,7 @@ class Admin(commands.Cog, name="settings"):
 
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):
-        if interaction.user.id not in func.bot_access_user:
+        if interaction.user.id not in func.settings.bot_access_user:
             return await interaction.response.send_message("You are not able to use this command!")
 
         def clear_code(content):

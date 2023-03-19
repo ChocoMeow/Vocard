@@ -301,7 +301,7 @@ class InteractiveController(discord.ui.View):
         super().__init__(timeout=None)
 
         self.player = player
-        for row, btnRow in enumerate(func.controller_settings):
+        for row, btnRow in enumerate(func.settings.controller_settings):
             for btn in btnRow:
                 color = ""
                 if isinstance(btn, Dict):
@@ -320,7 +320,7 @@ class InteractiveController(discord.ui.View):
             await interaction.response.send_message(self.player.get_msg("nodeReconnect"), ephemeral=True)
             return False
 
-        if interaction.user.id in func.bot_access_user:
+        if interaction.user.id in func.settings.bot_access_user:
             return True
             
         if self.player.channel and self.player.is_user_join(interaction.user):

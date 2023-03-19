@@ -88,7 +88,7 @@ class Player(VoiceProtocol):
         self.joinTime = round(time.time())
         self._volume = self.settings.get('volume', 100)
         self.lang = self.settings.get('lang', 'EN') if self.settings.get('lang', 'EN') in func.langs else "EN"
-        self.queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
+        self.queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.settings.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
 
         self._node = NodePool.get_node()
         self._current: Track = None
@@ -216,7 +216,7 @@ class Player(VoiceProtocol):
         return True
     
     def is_privileged(self, user: Member, check_user_join: bool = True):
-        if user.id in func.bot_access_user:
+        if user.id in func.settings.bot_access_user:
             return True
         
         manage_perm = user.guild_permissions.manage_guild
@@ -360,18 +360,18 @@ class Player(VoiceProtocol):
         track = self.current
 
         if not track:
-            embed=Embed(title=self.get_msg("noTrackPlaying"), description=f"[Vote](https://top.gg/bot/605618911471468554/vote/) | [Support]({func.invite_link}) | [Invite](https://discord.com/oauth2/authorize?client_id=605618911471468554&permissions=2184260928&scope=bot%20applications.commands) | [Questionnaire](https://forms.gle/UqeeEv4GEdCq9hi3A)", color=func.embed_color)
+            embed=Embed(title=self.get_msg("noTrackPlaying"), description=f"[Vote](https://top.gg/bot/605618911471468554/vote/) | [Support]({func.settings.invite_link}) | [Invite](https://discord.com/oauth2/authorize?client_id=605618911471468554&permissions=2184260928&scope=bot%20applications.commands) | [Questionnaire](https://forms.gle/UqeeEv4GEdCq9hi3A)", color=func.settings.embed_color)
             embed.set_image(url='https://i.imgur.com/dIFBwU7.png')
             
         else:
             try:
-                embed = Embed(color=func.embed_color)
+                embed = Embed(color=func.settings.embed_color)
                 embed.set_author(name=self.get_msg("playerAuthor").format(self.channel.name), icon_url=self.client.user.avatar.url)
                 embed.description = self.get_msg("playerDesc").format(track.title, track.uri, (track.requester.mention if track.requester else "<@605618911471468554>"), (f"<@&{self.settings['dj']}>" if self.settings.get('dj') else f"{self.dj.mention}"))
                 embed.set_image(url=track.thumbnail if track.thumbnail else "https://cdn.discordapp.com/attachments/674788144931012638/823086668445384704/eq-dribbble.gif")
                 embed.set_footer(text=self.get_msg("playerFooter").format(self.queue.count, (self.get_msg("live") if track.is_stream else func.time(track.length)), self.volume, self.get_msg("playerFooter2").format(self.queue.repeat.capitalize()) if self.queue._repeat else ""))
             except:
-                embed = Embed(description=self.get_msg("missingTrackInfo"), color=func.embed_color)
+                embed = Embed(description=self.get_msg("missingTrackInfo"), color=func.settings.embed_color)
         return embed
 
     async def is_position_fresh(self):

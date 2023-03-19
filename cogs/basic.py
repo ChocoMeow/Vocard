@@ -11,7 +11,7 @@ from function import (
     youtube_api_key,
     requests_api,
     get_lang,
-    embed_color,
+    settings,
     cooldown_check,
     get_aliases,
     connect_channel
@@ -36,7 +36,7 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
     upnext = "\n".join(f"`{index}.` `[{track.formatLength}]` [{track.title[:30]}]({track.uri})" for index, track in enumerate(
         player.queue.tracks()[:2], start=2))
     embed = discord.Embed(description=player.get_msg(
-        'nowplayingDesc').format(track.title), color=embed_color)
+        'nowplayingDesc').format(track.title), color=settings.embed_color)
     embed.set_author(name=track.requester if track.requester else ctx.bot,
                      icon_url=track.requester.display_avatar.url if track.requester else ctx.me.display_avatar.url)
 
@@ -187,7 +187,7 @@ class Basic(commands.Cog):
         query_track = "\n".join(
             f"`{index}.` `[{track.formatLength}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
         embed = discord.Embed(title=player.get_msg('searchTitle').format(query), description=player.get_msg(
-            'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=embed_color)
+            'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
         view = SearchView(tracks=tracks[0:10], lang=player.lang)
         message = await ctx.send(embed=embed, view=view, ephemeral=True)
         view.response = message
@@ -759,7 +759,7 @@ class Basic(commands.Cog):
     async def ping(self, ctx: commands.Context):
         "Test if the bot is alive, and see the delay between your commands and my response."
         player: voicelink.Player = ctx.guild.voice_client
-        embed = discord.Embed(color=embed_color)
+        embed = discord.Embed(color=settings.embed_color)
         embed.add_field(name=get_lang(ctx.guild.id, 'pingTitle1'), value=get_lang(ctx.guild.id, 'pingfield1').format(
             "0", "0", self.bot.latency, '😭' if self.bot.latency > 5 else ('😨' if self.bot.latency > 1 else '👌'), "St Louis, MO, United States"))
         if player:

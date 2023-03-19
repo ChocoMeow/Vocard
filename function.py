@@ -11,6 +11,7 @@ from time import strptime
 from io import BytesIO
 from pymongo import MongoClient
 from typing import Optional
+from addons import Settings
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -36,30 +37,18 @@ Playlist = mongodb[MONGODB_NAME]['Playlist']
 youtube_api_key = os.getenv('YOUTUBE_API_KEY')
 
 #--------------- Cache Var ---------------
-invite_link = "https://discord.gg/wRCgB7vBQv" #Template of invite link
-embed_color = None
-
 try:
     report_channel_id = int(os.getenv("BUG_REPORT_CHANNEL_ID"))
 except:
     report_channel_id = 0
 
-emoji_source_raw = {} #Stores all source emoji for track
+settings: Settings
 error_log = {} #Stores error that not a Voicelink Exception
-bot_access_user = [] #Stores bot access user id
 langs = {} #Stores all the languages in ./langs
 guild_settings = {} #Cache guild language
 local_langs = {} #Stores all the localization languages in ./local_langs 
 playlist_name = {} #Cache the user's playlist name
-bot_prefix = "?" #The default bot prefix
-max_queue = 1000 #The default maximum number of tracks in the queue
-cooldowns_settings = {} #Stores command cooldown settings
-aliases_settings = {} #Stores command aliases settings
-controller_settings = {} #Stores the layout of music controller
-enable_ipc = False #Enable ipc server or not
 
-#----------------- Nodes -----------------
-nodes = {}
 
 #-------------- Vocard Functions --------------
 def get_settings(guild_id:int):
@@ -86,38 +75,12 @@ def update_settings(guild_id:int, data: dict, mode="Set"):
         collection.update_one({"_id":guild_id}, {"$unset":data})
     return
 
-def langs_setup():
-    for language in os.listdir(os.path.join(root_dir, "langs")):
-        if language.endswith('.json'):
-            with open(os.path.join(root_dir, "langs", language), encoding="utf8") as json_file:
-                lang = json.load(json_file)
-
-            langs[language[:-5]] = lang
-    
-    for language in os.listdir(os.path.join(root_dir, "local_langs")):
-        if language.endswith('.json'):
-            with open(os.path.join(root_dir, "local_langs", language), encoding="utf8") as json_file:
-                lang = json.load(json_file)
-        
-            local_langs[language[:-5]] = lang
-    return
-
-def settings_setup():
-    with open(os.path.join(root_dir, "settings.json"), encoding="utf8") as json_file:
-        rawSettings = json.load(json_file)
-
-    global nodes, max_queue, bot_prefix, embed_color, bot_access_user, emoji_source_raw, cooldowns_settings, aliases_settings, controller_settings, enable_ipc
-    nodes = rawSettings.get("nodes", {})
-    if (new_max_queue := rawSettings.get("default_max_queue", max_queue)):
-        max_queue = new_max_queue
-    bot_prefix = rawSettings.get("prefix", "")
-    enable_ipc = rawSettings.get("enable_ipc", False)
-    embed_color = int(rawSettings.get("embed_color", "0xb3b3b3"), 16)
-    bot_access_user = rawSettings.get("bot_access_user", [])
-    emoji_source_raw = rawSettings.get("emoji_source_raw", {})
-    cooldowns_settings = rawSettings.get("cooldowns", {})
-    aliases_settings = rawSettings.get("aliases", {})
-    controller_settings = rawSettings.get("controller", [["back", "resume", "skip", {"stop": "red"}, "add"], ["tracks"]])
+def open_json(path: str):
+    try:
+        with open(path, encoding="utf8") as json_file:
+            return json.load(json_file)
+    except:
+        return {}
 
 def get_lang(guild_id:int, key:str):
     lang = get_settings(guild_id).get("lang", "EN")
@@ -131,12 +94,30 @@ async def requests_api(url: str):
 
         return await resp.json(encoding="utf-8")
 
+def init():
+    global settings
+
+    json = open_json(os.path.join(root_dir, "settings.json"))
+    if json:
+        settings = Settings(json)
+
+def langs_setup():
+    for language in os.listdir(os.path.join(root_dir, "langs")):
+        if language.endswith('.json'):
+            langs[language[:-5]] = open_json(os.path.join(root_dir, "langs", language))
+    
+    for language in os.listdir(os.path.join(root_dir, "local_langs")):
+        if language.endswith('.json'):
+            local_langs[language[:-5]] = open_json(os.path.join(root_dir, "local_langs", language))
+
+    return
+
 async def create_account(ctx: commands.Context):
     if not ctx.author:
         return 
     from views import CreateView
     view = CreateView()
-    embed=discord.Embed(title="Do you want to create an account on Vocard?", color=embed_color)
+    embed=discord.Embed(title="Do you want to create an account on Vocard?", color=settings.embed_color)
     embed.description = f"> Plan: `Default` | `5` Playlist | `500` tracks in each playlist."
     embed.add_field(name="Terms of Service:", value="‌    ➥ We assure you that all your data on Vocard will not be disclosed to any third party\n"
                                                     "‌    ➥ We will not perform any data analysis on your data\n"
@@ -262,7 +243,7 @@ def formatTime(number:str) -> Optional[int]:
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
 def emoji_source(emoji:str):
-    return emoji_source_raw.get(emoji.lower(), "🔗")
+    return settings.emoji_source_raw.get(emoji.lower(), "🔗")
 
 def gen_report() -> Optional[discord.File]:
     if error_log:
@@ -278,12 +259,12 @@ def gen_report() -> Optional[discord.File]:
     return None
 
 def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
-    if ctx.author.id in bot_access_user:
+    if ctx.author.id in settings.bot_access_user:
         return None
-    cooldown = cooldowns_settings.get(f"{ctx.command.parent.qualified_name} {ctx.command.name}" if ctx.command.parent else ctx.command.name)
+    cooldown = settings.cooldowns_settings.get(f"{ctx.command.parent.qualified_name} {ctx.command.name}" if ctx.command.parent else ctx.command.name)
     if not cooldown:
         return None
     return commands.Cooldown(cooldown[0], cooldown[1])
 
 def get_aliases(name: str) -> list:
-    return aliases_settings.get(name, [])
+    return settings.aliases_settings.get(name, [])
