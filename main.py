@@ -88,7 +88,7 @@ class Vocard(commands.Bot):
             error = func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
             if (guildId := ctx.guild.id) not in func.error_log:
                 func.error_log[guildId] = {}
-            func.error_log[guildId][round(datetime.timestamp(datetime.now()))] = str(traceback.format_exc())
+            func.error_log[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
 
         try:
             return await ctx.reply(error, ephemeral=True)
@@ -126,8 +126,8 @@ bot = Vocard(command_prefix=get_prefix,
              intents=intents)
 
 @bot.tree.error
-async def app_command_error(interaction: discord.Interaction, error):
-    error = getattr(error, 'original', error)
+async def app_command_error(interaction: discord.Interaction, exception):
+    error = getattr(exception, 'original', exception)
     if isinstance(error, (discord.errors.NotFound, aiohttp.client_exceptions.ClientOSError)):
         return
     elif isinstance(error, (discord.app_commands.CommandOnCooldown, discord.app_commands.errors.MissingPermissions)):
@@ -136,7 +136,7 @@ async def app_command_error(interaction: discord.Interaction, error):
         error = func.get_lang(interaction.guild_id, "unknownException") + func.settings.invite_link
         if (guildId := interaction.guild_id) not in func.error_log:
             func.error_log[guildId] = {}
-        func.error_log[guildId][round(datetime.timestamp(datetime.now()))] = str(traceback.format_exc())
+        func.error_log[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
     try:
         if interaction.response.is_done():
             return await interaction.followup.send(error, ephemeral=True)
