@@ -51,16 +51,26 @@ class Nodes(commands.Cog):
         if member.bot:
             return
         
-        is_joined = True
-        if before.channel and after.channel:
-            guild = after.channel.guild.id
+        if before.channel == after.channel:
+            return
 
-        elif not before.channel and after.channel:
-            guild = after.channel.guild.id
+        player: voicelink.Player = member.guild.voice_client
+        if not player:
+            return
+        
+        guild = member.guild.id
+        is_joined = True
+        
+        if not before.channel and after.channel:
+            if after.channel.id != player.channel.id:
+                return
 
         elif before.channel and not after.channel:
-            guild = before.channel.guild.id
             is_joined = False
+        
+        elif before.channel and after.channel:
+            if after.channel.id != player.channel.id:
+                is_joined = False
 
         await self.bot.ipc.send({
             "op": "updateGuild",
