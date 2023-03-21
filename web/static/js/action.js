@@ -5,7 +5,7 @@ $(document).ready(function () {
     var typingTimer;
     var doneTypingInterval = 2000;
 
-    $('body').click(function(event) {
+    $('body').click(function (event) {
         var $target = $(event.target);
         var $resultList = $target.closest(".search-contrainer");
 
@@ -91,7 +91,7 @@ $(document).ready(function () {
         player.seekTo($(this).val());
     })
 
-    $("#shuffle-button").on('click', function() {
+    $("#shuffle-button").on('click', function () {
         player.shuffle();
     })
 });

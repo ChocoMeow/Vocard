@@ -43,7 +43,8 @@ from discord import (
     StageChannel,
     Member,
     Embed,
-    ui
+    ui,
+    Message
 )
 
 from discord.ext import commands
@@ -85,27 +86,27 @@ class Player(VoiceProtocol):
         self._guild = channel.guild if channel else None
 
         self.settings: dict = func.get_settings(ctx.guild.id)
-        self.joinTime = round(time.time())
-        self._volume = self.settings.get('volume', 100)
-        self.lang = self.settings.get('lang', 'EN') if self.settings.get('lang', 'EN') in func.langs else "EN"
-        self.queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.settings.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
+        self.joinTime: float = round(time.time())
+        self._volume: int = self.settings.get('volume', 100)
+        self.lang: dict = self.settings.get('lang', 'EN') if self.settings.get('lang', 'EN') in func.langs else "EN"
+        self.queue: Queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.settings.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
 
         self._node = NodePool.get_node()
         self._current: Track = None
         self._filters: Filters = Filters()
-        self._paused = False
-        self._is_connected = False
-        self._ping = 0.0
+        self._paused: bool = False
+        self._is_connected: bool = False
+        self._ping: float = 0.0
 
-        self._position = 0
-        self._last_position = 0
-        self._last_update = 0
+        self._position: int = 0
+        self._last_position: int = 0
+        self._last_update: int = 0
         self._ending_track: Optional[Track] = None
 
-        self._voice_state = {}
+        self._voice_state: dict = {}
 
-        self.controller = None
-        self.updating = False
+        self.controller: Message = None
+        self.updating: bool = False
 
         self.pause_votes = set()
         self.resume_votes = set()
@@ -567,9 +568,7 @@ class Player(VoiceProtocol):
     async def seek(self, position: float, requester: Member = None) -> float:
         """Seeks to a position in the currently playing track milliseconds"""
         if position < 0 or position > self._current.original.length:
-            raise TrackInvalidPosition(
-                "Seek position must be between 0 and the track length"
-            )
+            raise TrackInvalidPosition("Seek position must be between 0 and the track length")
 
         await self._node.send(method=0, guild_id=self._guild.id, data={"position": position})
         if self.bot.ipc.connections:
@@ -610,6 +609,27 @@ class Player(VoiceProtocol):
                 }
             }, requester)
 
+    async def set_repeat(self, mode:str = None):
+        if not mode:
+            mode = self.queue._repeat_mode.get((self.queue._repeat + 1)%len(self.queue._repeat_mode), 'off')
+
+        is_found = False
+        for i, m in self.queue._repeat_mode.items():
+            if m == mode.lower():
+                is_found = True
+                self.queue._repeat = i
+                if i == 2:
+                    self._repeat_position = self._position - 1
+                break
+        
+        if not is_found:
+            raise VoicelinkException("Invalid repeat mode.")
+        
+        if self.bot.ipc.connections:
+            await self.send_ws({"op": "repeatTrack", "repeatMode": mode})
+
+        return mode
+    
     async def add_filter(self, filter: Filter, fast_apply=False) -> Filters:
         try:
             self._filters.add_filter(filter=filter)

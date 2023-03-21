@@ -35,7 +35,7 @@ async def skipTo(player, member: Member, data: dict):
         player.queue.skipto(index)
 
     if player.queue._repeat == 1:
-        player.queue.set_repeat("off")
+        await player.set_repeat("off")
     await player.stop()
 
 async def backTo(player, member: Member, data: dict):
@@ -105,14 +105,11 @@ async def shuffleTrack(player, member: Member, data: dict):
     
     await player.shuffle(data.get("type", "queue"), member)
 
-async def updateRepeatMode(player, member: Member, data: dict):
+async def repeatTrack(player, member: Member, data: dict):
     if not player.is_privileged(member):
         return missingPermission(member.id)
     
-    mode = data.get("mode", "off")
-    if mode.lower() not in ['off', 'track', 'queue']:
-        mode = "off"
-    player.queue.set_repeat(mode)
+    await player.set_repeat()
 
 async def updatePause(player, member: Member, data: dict):
     if not player.is_privileged(member):
@@ -140,7 +137,7 @@ methods = {
     "addTracks": addTracks,
     "getTracks": getTracks,
     "shuffleTrack": shuffleTrack,
-    "updateRepeat": updateRepeatMode,
+    "repeatTrack": repeatTrack,
     "updatePause": updatePause,
     "updatePosition": updatePosition,
 }

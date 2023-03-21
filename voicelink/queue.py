@@ -26,13 +26,20 @@ from .objects import Track
 from discord import Member
 
 class Queue:
-    def __init__(self, size:int, duplicateTrack: bool, get_msg):
+    def __init__(self, size:int, duplicate_track: bool, get_msg):
         self._queue = []
         self._position = 0
         self._size = size
         self._repeat = 0
         self._repeat_position = 0
-        self._duplicateTrack = duplicateTrack
+        self._duplicate_track = duplicate_track
+
+        self._repeat_mode = {
+            0: "off",
+            1: "track",
+            2: "queue",
+        }
+
         self.get_msg = get_msg
     
     def get(self):
@@ -55,7 +62,7 @@ class Queue:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
         
-        if not self._duplicateTrack:
+        if not self._duplicate_track:
             if item.uri in [track.uri for track in self._queue]:
                 raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
@@ -66,7 +73,7 @@ class Queue:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
         
-        if not self._duplicateTrack:
+        if not self._duplicate_track:
             if item.uri in [track.uri for track in self._queue]:
                 raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
@@ -77,7 +84,7 @@ class Queue:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
         
-        if not self._duplicateTrack:
+        if not self._duplicate_track:
             if item.uri in [track.uri for track in self._queue]:
                 raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
@@ -94,15 +101,6 @@ class Queue:
             raise OutofList(self.get_msg("voicelinkOutofList"))
         else:
             self._position -= index
-    
-    def set_repeat(self, mode:str):
-        if mode == 'track':
-            self._repeat = 1
-        elif mode == 'queue':
-            self._repeat = 2
-            self._repeat_position = self._position - 1
-        else:
-            self._repeat = 0
 
     def history_clear(self, is_playing: bool):
         self._queue[:self._position - 1 if is_playing else self._position] = []
@@ -173,7 +171,7 @@ class Queue:
     
     @property
     def repeat(self):
-        return "Off" if self._repeat == 0 else ("Track" if self._repeat == 1 else "Queue")
+        return self._repeat_mode.get(self._repeat, "Off").capitalize()
 
     @property
     def is_empty(self):
@@ -184,15 +182,15 @@ class Queue:
         return False
 
 class FairQueue(Queue):
-    def __init__(self, size:int, duplicateTrack: bool, get_msg):
-        super().__init__(size, duplicateTrack, get_msg)
+    def __init__(self, size:int, duplicate_track: bool, get_msg):
+        super().__init__(size, duplicate_track, get_msg)
         self._set = set()
 
     async def put(self, item: Track) -> int:
         if len(self._queue) >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
 
-        if not self._duplicateTrack:
+        if not self._duplicate_track:
             if item.uri in [track.uri for track in self._queue]:
                 raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
