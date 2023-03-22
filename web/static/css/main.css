@@ -143,8 +143,13 @@ a {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .header .center input {
@@ -297,7 +302,7 @@ a {
 
 .main .thumbnail img {
     padding: 1rem;
-    width: 70%;
+    width: 80%;
     height: auto;
 }
 
@@ -407,6 +412,11 @@ a {
     margin-left: .8rem;
     font-size: 20;
     color: gray;
+    transition: color .2s linear;
+}
+
+.player-controller .right i:hover {
+    color: #fff;
 }
 
 .main .queue-list {
@@ -419,6 +429,7 @@ a {
 
 .track {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     cursor: pointer;
     border-radius: .5rem;
@@ -430,7 +441,6 @@ a {
 
 .track:hover {
     background-color: rgba(142, 142, 142, 20%);
-    /* transform: scale(1.02); */
 }
 
 .track.active {
@@ -442,7 +452,8 @@ a {
     justify-content: left;
     align-items: center;
     margin-right: .5rem;
-    flex: 1;
+    max-width: 90%;
+    overflow: hidden;
 }
 
 .track .left i {
@@ -458,14 +469,12 @@ a {
 }
 
 .track .left .info {
-    display: block;
-    max-width: 300px;
     margin-left: .5rem;
+    overflow: hidden;
 }
 
 .track .left .info p {
     text-overflow: ellipsis;
-    white-space: nowrap;
     overflow: hidden;
 }
 
@@ -486,6 +495,10 @@ a {
         flex-direction: column;
         justify-content: center;
         padding: 0;
+    }
+
+    .main .toastContrainer {
+        display: none;
     }
 
     .header .center {
@@ -510,12 +523,6 @@ a {
         padding: 0;
     }
 
-    .main .thumbnail img {
-        padding: 0;
-        width: 80%;
-        height: auto;
-    }
-
     .main .queue-list {
         overflow-y: auto;
         overflow-x: hidden;
@@ -525,18 +532,4 @@ a {
         min-width: 100%;
     }
 
-    .track .left i {
-        margin-right: .5rem;
-        font-size: 15px;
-    }
-
-    .track .left img {
-        padding: 2px;
-        height: 30;
-        border-radius: .2rem;
-    }
-
-    .track .left .info {
-        max-width: 200px;
-    }
 }
