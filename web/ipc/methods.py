@@ -20,6 +20,7 @@ async def initPlayer(player, member: Member, data: dict):
             "name": member.name
         } for member in player.channel.members ],
         "tracks": [ track.toDict() for track in player.queue._queue ],
+        "repeat_mode": player.queue.repeat.lower(),
         "current_queue_position": player.queue._position if player.is_playing else player.queue._position + 1,
         "current_position": 0 or player.position if player.is_playing else 0,
         "is_playing": player.is_playing,
@@ -147,13 +148,12 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
     if not method:
         return
 
-    guild = None
-    member = None
+    guild, member = None, None
     guild_id = data.get("guild_id", None)
     user_id = data.get("user_id", None)
     if guild_id is None:
         user = bot.get_user(user_id)
-        if not user:
+        if not user: 
             return
         
         for g in user.mutual_guilds:

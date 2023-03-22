@@ -91,6 +91,10 @@ $(document).ready(function () {
         player.seekTo($(this).val());
     })
 
+    $("#repeat-button").on('click', function () {
+        player.repeatMode();
+    })
+
     $("#shuffle-button").on('click', function () {
         player.shuffle();
     })

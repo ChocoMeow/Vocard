@@ -36,6 +36,7 @@ const actions = {
         player.isDJ = data['is_dj'];
         player.is_paused = data['is_paused'];
         player.current_position = data['current_position'];
+        player.repeat = data['repeat_mode'];
         data["users"].forEach(user => {
             player.addUser(user);
         })
@@ -151,7 +152,7 @@ const actions = {
         player.showToast(data["requester_id"], `Moved ${element.title} to ${newPosition}`)
     },
 
-    shuffleTrack: function(player, data) {
+    shuffleTrack: function (player, data) {
         var tracks = data["tracks"];
         if (tracks != undefined) {
             player.queue = [];
@@ -163,6 +164,11 @@ const actions = {
             player.initSortable();
             player.showToast(data["requester_id"], "The queue is shuffled.")
         }
+    },
+
+    repeatTrack: function (player, data) {
+        player.repeat = data["repeatMode"];
+    },
     }
 
 }
@@ -188,7 +194,8 @@ class Player {
         this.date = new Date();
         this.queue = [];
         this.users = {};
-        this.searchList = []
+        this.searchList = [];
+        this.repeat = "off";
         this.currentTrack = null;
         this.current_queue_position = 0;
         this.current_position = 0;
@@ -239,7 +246,7 @@ class Player {
     }
 
     addUser(user) {
-        this.users[user['user_id']] = { "avatar_url": user["avatar_url"], "name": user["name"] };
+        this.users[user['user_id']] = { avatar_url: user["avatar_url"], name: user["name"] };
     }
 
     addTrack(tracks) {
@@ -280,6 +287,10 @@ class Player {
         } else {
             this.showToast(this.userId, "Add more songs to the queue before shuffling.");
         }
+    }
+
+    repeatMode() {
+        this.send({ "op": "repeatTrack" })
     }
 
     send(payload) {
@@ -356,7 +367,8 @@ class Player {
             $("#image").attr("src", currentTrack.imageUrl);
             $("#largeImage").attr("src", currentTrack.imageUrl);
         }
-        var play_pause_btn = $("#play-pause-button")
+        var play_pause_btn = $("#play-pause-button");
+        var repeat_btn = $("#repeat-button");
         if (this.is_paused || currentTrack == undefined) {
             play_pause_btn.removeClass('fa-pause').addClass('fa-play');
             if (this.timer.getIsRunning()) {
@@ -365,6 +377,16 @@ class Player {
         } else {
             play_pause_btn.removeClass('fa-play').addClass('fa-pause');
             this.timer.start();
+        }
+
+        repeat_btn.removeClass("fa-repeat-1").addClass("fa-repeat")
+        if (this.repeat == "off") {
+            console.log("running");
+            repeat_btn.css('color', '');
+        } else if (this.repeat == "track") {
+            repeat_btn.css('color', '#fff');
+        } else {
+            repeat_btn.removeClass("fa-repeat").addClass("fa-repeat-1");
         }
     }
 }

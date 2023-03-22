@@ -463,8 +463,6 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_mode'), ephemeral=True)
 
-        if mode.lower() not in ['off', 'track', 'queue']:
-            mode = "off"
         await player.set_repeat(mode)
         await ctx.send(player.get_msg('repeat').format(mode.capitalize()))
 
