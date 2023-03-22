@@ -73,6 +73,8 @@ class Vocard(commands.Bot):
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
         error = getattr(exception, 'original', exception)
+        if ctx.interaction:
+            error = getattr(error, 'original', error)
         if isinstance(error, (commands.CommandNotFound, aiohttp.client_exceptions.ClientOSError)):
             return
 
@@ -124,26 +126,6 @@ bot = Vocard(command_prefix=get_prefix,
              activity=discord.Activity(type=discord.ActivityType.listening, name="/help"),
              case_insensitive=True,
              intents=intents)
-
-@bot.tree.error
-async def app_command_error(interaction: discord.Interaction, exception):
-    error = getattr(exception, 'original', exception)
-    if isinstance(error, (discord.errors.NotFound, aiohttp.client_exceptions.ClientOSError)):
-        return
-    elif isinstance(error, (discord.app_commands.CommandOnCooldown, discord.app_commands.errors.MissingPermissions)):
-        pass
-    elif not issubclass(error.__class__, VoicelinkException):
-        error = func.get_lang(interaction.guild_id, "unknownException") + func.settings.invite_link
-        if (guildId := interaction.guild_id) not in func.error_log:
-            func.error_log[guildId] = {}
-        func.error_log[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-    try:
-        if interaction.response.is_done():
-            return await interaction.followup.send(error, ephemeral=True)
-
-        return await interaction.response.send_message(error, ephemeral=True)
-    except:
-        pass
 
 if __name__ == "__main__":
     bot.run(os.getenv("TOKEN"), log_handler=None)
