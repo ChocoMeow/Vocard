@@ -84,7 +84,7 @@ def message_handler(data: dict):
                     "user": {
                         "user_id": user.id,
                         "avatar_url": user.avatar.url,
-                        "name": user.display_name
+                        "name": user.username
                     },
                     "is_joined": True
                 }, to=user.sid)
