@@ -169,6 +169,10 @@ const actions = {
     repeatTrack: function (player, data) {
         player.repeat = data["repeatMode"];
     },
+
+    errorMsg: function (player, data) {
+        var level = data["level"];
+        player.showToast(level, data["msg"]);
     }
 
 }
@@ -323,7 +327,13 @@ class Player {
     }
 
     showToast(userId, msg) {
-        var user = this.users[userId];
+        if (userId == "info") {
+            var user = { avatar_url: "/static/img/info.png", name: "Info" }
+        } else if (userId == "error") {
+            var user = { avatar_url: "/static/img/error.png", name: "Error" }
+        } else {
+            var user = this.users[userId];
+        }
         if (user != null) {
             var $element = $(`<div class="toast"><img src=${user['avatar_url']} alt="user-icon"/><div class="content"><p class="username">${user['name']}</p><p class="message">${msg}</p></div></div>`)
             $(".toastContrainer").append($element)

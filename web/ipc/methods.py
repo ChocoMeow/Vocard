@@ -5,7 +5,7 @@ from discord import Member
 from discord.ext import commands
 
 def missingPermission(user_id:int):
-    payload = {"op": "missingPermission", "msg": "Only the DJ or admins may use this funciton!"}
+    payload = {"op": "errorMsg", "level": "info", "msg": "Only the DJ or admins may use this funciton!"}
     payload["user_id"] = user_id
     return payload
 
@@ -176,5 +176,11 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
         resp: dict = await method(player, member, data)
         if resp:
             await websocket.send(json.dumps(resp))
-    except:
-        return
+    except Exception as e:
+        payload = {
+            "op": "errorMsg",
+            "level": "info",
+            "msg": e,
+            "user_id": member.id
+        }
+        await websocket.send(json.dumps(payload))
