@@ -196,8 +196,8 @@ class Player(VoiceProtocol):
     def ping(self) -> float:
         return round(self._ping / 1000, 2)
     
-    def get_msg(self, mKey: str) -> str:
-        return func.langs.get(self.lang, func.langs["EN"])[mKey]
+    def get_msg(self, mKey: str, lang: str = None) -> str:
+        return func.langs.get(lang if lang else self.lang, func.langs["EN"])[mKey]
 
     def required(self, leave=False):
         if self.settings.get('votedisable'):
