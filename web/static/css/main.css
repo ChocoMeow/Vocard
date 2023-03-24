@@ -16,6 +16,7 @@ body {
     user-select: none;
     white-space: nowrap;
     max-height: 100%;
+    overflow-x: hidden;
 }
 
 a {
@@ -50,7 +51,7 @@ a {
     position: relative;
     cursor: pointer;
     border-radius: 10px;
-    transition: all .1s linear;
+    transition: all .1s ease-in-out;
 }
 
 .dropdown-container:hover {
@@ -70,7 +71,7 @@ a {
     width: 100%;
     opacity: 0;
     background-color: rgba(142, 142, 142, 20%);
-    transition: all .1s linear;
+    transition: all .1s ease-in-out;
 }
 
 .dropdown-container li {
@@ -81,7 +82,7 @@ a {
     justify-content: space-between;
     font-size: 14px;
     border-radius: 4px;
-    transition: all .2s linear;
+    transition: all .2s ease-in-out;
     color: #FF0000;
 }
 
@@ -139,7 +140,7 @@ a {
     border-top: 3px solid #c9cbcc;
     width: 20px;
     height: 20px;
-    animation: spin 1s linear infinite;
+    animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin {
@@ -250,7 +251,7 @@ a {
     border-radius: 10px;
     overflow: hidden;
     transform: translateX(-100%);
-    animation: moveRight .5s linear forwards;
+    animation: moveRight .5s ease-in-out forwards;
 }
 
 @keyframes moveRight {
@@ -267,7 +268,7 @@ a {
     width: 100%;
     height: 3px;
     background-color: azure;
-    animation: anim 6s linear forwards;
+    animation: anim 6s ease-in-out forwards;
 }
 
 @keyframes anim {
@@ -412,7 +413,7 @@ a {
     margin-left: .8rem;
     font-size: 20;
     color: gray;
-    transition: color .2s linear;
+    transition: color .2s ease-in-out;
 }
 
 .player-controller .right i:hover {
@@ -488,6 +489,58 @@ a {
     width: 90%;
     padding: 1rem;
     max-height: 300px;
+}
+
+.users-bar {
+    position: absolute;
+    right: 0;
+    background-color: rgb(37, 37, 37);
+    width: 350px;
+    max-width: 400px;
+    height: 100%;
+    overflow: hidden;
+    padding: 1.5rem 1rem;
+    transform: translateX(100%);
+    transition: all .5s ease-in-out;
+}
+
+.users-bar.active {
+    transform: translateX(0);
+}
+
+.users-bar .info {
+    padding: 0 .5rem;
+    margin-bottom: 1rem;
+}
+
+.users-bar .info h5 {
+    color: rgba(142, 142, 142);
+    ;
+}
+
+.users-container {
+    width: 100%;
+    overflow-y: auto;
+}
+
+.user {
+    padding: .5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .5rem;
+}
+
+.user .left {
+    display: flex;
+    align-items: center;
+}
+
+.user img {
+    width: 35px;
+    height: auto;
+    border-radius: 8px;
+    margin-right: .5rem;
 }
 
 @media (max-width: 935px) {

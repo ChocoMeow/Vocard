@@ -37,6 +37,7 @@ const actions = {
         player.is_paused = data['is_paused'];
         player.current_position = data['current_position'];
         player.repeat = data['repeat_mode'];
+        player.channelName = data["channel_name"]
         data["users"].forEach(user => {
             player.addUser(user);
         })
@@ -102,6 +103,7 @@ const actions = {
             if (player.users.hasOwnProperty(user["user_id"])) {
                 player.showToast(user["user_id"], "Left your channel!");
                 delete player.users[user['user_id']];
+                player.updateUser();
             }
         }
     },
@@ -228,6 +230,7 @@ class Player {
     init() {
         this.queue = []
         this.currentTrack = null;
+        this.users = [];
         $('#sortable').empty();
         this.updateInfo();
     }
@@ -238,6 +241,7 @@ class Player {
             var track = this.queue[i];
             $("#sortable").append(`<li><div class="track"><div class="left"><i class="fa-solid fa-bars handle"></i><img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p>${this.msToReadableTime(track.length)}</p></div></li>`)
         }
+        this.updateCurrentQueuePos();
     }
 
     updateCurrentQueuePos(pos) {
@@ -259,8 +263,15 @@ class Player {
 
     addUser(user) {
         this.users[user['user_id']] = { avatar_url: user["avatar_url"], name: user["name"] };
+        this.updateUser();
     }
 
+    updateUser() {
+        $("#users-container").empty();
+        for (const [id, user] of Object.entries(this.users)) {
+            $("#users-container").append(`<li class="user"><div class="left"><img src=${user.avatar_url} /><p>${user.name}</p></div><i class="fa-solid fa-microphone"></i></li>`)
+        };
+    }
     addTrack(tracks) {
         for (var i in tracks) {
             var track = new Track(tracks[i]);
@@ -297,7 +308,7 @@ class Player {
         if ((this.queue.length - this.current_queue_position) > 3) {
             this.send({ "op": "shuffleTrack" });
         } else {
-            this.showToast(this.userId, "Add more songs to the queue before shuffling.");
+            this.showToast("info", "Add more songs to the queue before shuffling.");
         }
     }
 
@@ -385,6 +396,7 @@ class Player {
             $("#image").attr("src", currentTrack.imageUrl);
             $("#largeImage").attr("src", currentTrack.imageUrl);
         }
+        $("#channel-name").text((this.channelName == "") ? "Not Found" : this.channelName);
         var play_pause_btn = $("#play-pause-button");
         var repeat_btn = $("#repeat-button");
         if (this.is_paused || currentTrack == undefined) {
@@ -399,7 +411,6 @@ class Player {
 
         repeat_btn.removeClass("fa-repeat-1").addClass("fa-repeat")
         if (this.repeat == "off") {
-            console.log("running");
             repeat_btn.css('color', '');
         } else if (this.repeat == "track") {
             repeat_btn.css('color', '#fff');
@@ -407,4 +418,5 @@ class Player {
             repeat_btn.removeClass("fa-repeat").addClass("fa-repeat-1");
         }
     }
+
 }

@@ -7,11 +7,18 @@ $(document).ready(function () {
 
     $('body').click(function (event) {
         var $target = $(event.target);
-        var $resultList = $target.closest(".search-contrainer");
 
-        if (!$resultList.is('.search-contrainer') && $('#search-result-list').css("display") != 'none') {
+        if (!$target.closest(".search-contrainer").is('.search-contrainer') && $('#search-result-list').css("display") != 'none') {
             $("#search-result-list").fadeOut(200);
         }
+
+        if (!$target.closest(".users-bar").is('.users-bar') &&
+            !$target.closest("#users-button").is('#users-button') &&
+            $(".users-bar").hasClass("active")) {
+            $(".users-bar").removeClass("active");
+            $("#users-button").css({ "color": "" });
+        }
+
     });
 
     $(function () {
@@ -98,4 +105,16 @@ $(document).ready(function () {
     $("#shuffle-button").on('click', function () {
         player.shuffle();
     })
+
+    $("#users-button").on('click', function () {
+        const userBar = $(".users-bar")
+        userBar.toggleClass("active");
+        if (userBar.hasClass("active")) {
+            $(this).css({ "color": "#fff" });
+        } else {
+            $(this).css({ "color": "" });
+        }
+
+    })
+
 });

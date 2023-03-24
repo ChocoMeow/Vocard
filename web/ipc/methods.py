@@ -30,6 +30,7 @@ async def initPlayer(player, member: Member, data: dict):
         } for member in player.channel.members ],
         "tracks": [ track.toDict() for track in player.queue._queue ],
         "repeat_mode": player.queue.repeat.lower(),
+        "channel_name": player.channel.name,
         "current_queue_position": player.queue._position if player.is_playing else player.queue._position + 1,
         "current_position": 0 or player.position if player.is_playing else 0,
         "is_playing": player.is_playing,
