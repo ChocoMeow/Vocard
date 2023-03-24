@@ -184,6 +184,7 @@ class Track {
         this.imageUrl = object["thumbnail"];
         this.length = object["info"]["length"];
         this.track_id = object["track_id"];
+        this.uri = object["info"]["uri"];
     }
 }
 
@@ -207,6 +208,8 @@ class Player {
         this.volume = 100;
         this.last_update = 0;
         this.is_connected = true;
+
+        this.channelName = "";
     }
 
     handleMessage(data) {
@@ -238,14 +241,19 @@ class Player {
     }
 
     updateCurrentQueuePos(pos) {
-        this.current_queue_position = pos - 1;
+        if (pos != undefined) {
+            this.current_queue_position = pos - 1;
+        }
         this.currentTrack = this.queue[this.current_queue_position];
 
         $('#sortable li div').removeClass('active');
         const li = $(`#sortable li:eq(${this.current_queue_position})`);
         li.find('div').addClass('active');
-        $('.queue-list').animate({ scrollTop: li.position().top - $('.queue-list').position().top }, 'slow');
-
+        
+        const queue = $('.queue-list') 
+        if (queue.prop('scrollHeight') > queue.prop('clientHeight')) {
+            queue.animate({ scrollTop: li.position().top - queue.position().top }, 'slow');
+        }
         return this.currentTrack;
     }
 

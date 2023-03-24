@@ -9,6 +9,15 @@ def missingPermission(user_id:int):
     payload["user_id"] = user_id
     return payload
 
+def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str = "info"):
+    payload = {"op": "errorMsg", "level": level}
+    if user_id:
+        payload["user_id"]: user_id
+    if guild_id:
+        payload["guild_id"]: guild_id
+
+    return payload
+
 async def initPlayer(player, member: Member, data: dict):
     return {
         "op": "initPlayer",
@@ -29,8 +38,17 @@ async def initPlayer(player, member: Member, data: dict):
 
 async def skipTo(player, member: Member, data: dict):
     if not player.is_privileged(member):
-        return missingPermission(member.id)
-    
+        if member == player.current.requester:
+            pass
+        elif member in player.skip_votes:
+            return error_msg(player.get_msg('voted', 'EN'), user_id=member.id)
+        else:
+            player.skip_votes.add(member)
+            if len(player.skip_votes) >= (required := player.required()):
+                pass
+            else:
+                return error_msg(player.get_msg('skipVote', 'EN').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
+
     index = data.get("index", 1)
     if index > 1:
         player.queue.skipto(index)
@@ -41,7 +59,17 @@ async def skipTo(player, member: Member, data: dict):
 
 async def backTo(player, member: Member, data: dict):
     if not player.is_privileged(member):
-        return missingPermission(member.id)
+        if member == player.current.requester:
+            pass
+
+        elif member in player.skip_votes:
+            return error_msg(player.get_msg('voted', 'EN'), user_id=member.id)
+        else:
+            player.skip_votes.add(member)
+            if len(player.skip_votes) >= (required := player.required()):
+                pass
+            else:
+                return error_msg(player.get_msg('backVote', 'EN').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
     
     index = data.get("index", 1)
     if not player.is_playing:
@@ -102,7 +130,15 @@ async def getTracks(player, member: Member, data: dict):
     
 async def shuffleTrack(player, member: Member, data: dict):
     if not player.is_privileged(member):
-        return missingPermission(member.id)
+
+        if member in player.shuffle_votes:
+            return error_msg(player.get_msg('voted'), user_id=member.id) 
+        else:
+            player.shuffle_votes.add(member)
+            if len(player.shuffle_votes) >= (required := player.required()):
+                pass
+            else:
+                return error_msg(player.get_msg('shuffleVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
     
     await player.shuffle(data.get("type", "queue"), member)
 
@@ -117,10 +153,31 @@ async def updatePause(player, member: Member, data: dict):
         return missingPermission(member.id)
     
     pause = data.get("pause", True)
+    if not player.is_privileged(member):
+        if pause:
+            if member in player.pause_votes:
+                return error_msg(player.get_msg('voted'), user_id=member.id)
+            else:
+                player.pause_votes.add(member)
+                if len(player.pause_votes) >= (required := player.required()):
+                    pass
+                else:
+                    return error_msg(player.get_msg('pauseVote').format(member, len(player.pause_votes), required), guild_id=player.guild.id)
+        else:
+            if member in player.resume_votes:
+                return error_msg(player.get_msg('voted'), user_id=member.id)
+            else:
+                player.resume_votes.add(member)
+                if len(player.resume_votes) >= (required := player.required()):
+                    pass
+                else:
+                    return error_msg(player.get_msg('resumeVote').format(member, len(player.resume_votes), required), guild_id=player.guild.id)
+    
     if pause:
         player.pause_votes.clear()
     else:
         player.resume_votes.clear()
+
     await player.set_pause(pause, member)
 
 async def updatePosition(player, member: Member, data: dict):
@@ -179,7 +236,7 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
     except Exception as e:
         payload = {
             "op": "errorMsg",
-            "level": "info",
+            "level": "error",
             "msg": e,
             "user_id": member.id
         }
