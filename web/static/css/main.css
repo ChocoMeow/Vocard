@@ -444,6 +444,14 @@ a {
     background-color: rgba(142, 142, 142, 20%);
 }
 
+.track:hover .time {
+    display: none;
+}
+
+.track:hover i.action {
+    display: block;
+}
+
 .track.active {
     background-color: rgba(142, 142, 142, 30%);
 }
@@ -457,10 +465,23 @@ a {
     overflow: hidden;
 }
 
-.track .left i {
+.track i {
     cursor: move;
     margin-right: 1rem;
     font-size: 20px;
+}
+
+.track i.action {
+    display: none;
+    padding: .5rem 1rem;
+    border-radius: 50%;
+    margin-right: 0;
+    cursor: pointer;
+    transition: background-color .2s;
+}
+
+.track i.action:hover {
+    background-color: rgba(157, 157, 157, 50%);
 }
 
 .track .left img {
@@ -541,6 +562,34 @@ a {
     height: auto;
     border-radius: 8px;
     margin-right: .5rem;
+}
+
+.context-menu {
+    display: none;
+    position: absolute;
+}
+
+.context-menu ul {
+    list-style: none;
+    padding: .5rem;
+    border-radius: .5rem;
+    background-color: rgb(37, 37, 37);
+}
+
+.context-menu li {
+    padding: .5rem;
+    border-radius: .3rem;
+    cursor: pointer;
+    transition: background-color .2s;
+}
+
+.context-menu li:hover {
+    padding: .5rem;
+    background-color: rgb(98, 98, 98);
+}
+
+.context-menu i {
+    margin-right: .8rem;
 }
 
 @media (max-width: 935px) {

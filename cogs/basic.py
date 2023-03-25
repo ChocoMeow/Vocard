@@ -507,8 +507,17 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_queue'), ephemeral=True)
 
-        removedTrack = player.queue.remove(position1, position2, member)
-        await ctx.send(player.get_msg('removed').format(removedTrack))
+        removedTrack = player.queue.remove(position1, position2, member=member)
+
+        if self.bot.ipc.connections and removedTrack:
+            await player.send_ws({
+                "op": "removeTrack",
+                "positions": [track["position"] for track in removedTrack],
+                "track_ids": [track["track"].track_id for track in removedTrack],
+                "current_queue_position": player.queue._position
+            }, requester=ctx.author)
+
+        await ctx.send(player.get_msg('removed').format(len(removedTrack)))
 
     @commands.hybrid_command(name="forward", aliases=get_aliases("forward"))
     @app_commands.describe(position="Input a amount that you to forward to. Exmaple: 1:20")

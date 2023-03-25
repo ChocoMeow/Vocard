@@ -138,19 +138,25 @@ class Queue:
 
     def remove(self, index:int, index2:int, member: Member = None):
         pos = self._position - 1
-        if not index2:
+
+        if index2 is None:
             index2 = index
-        count = 0
+
+        if index2 < index:
+            temp = index
+            index = index2
+            index2 = temp
+
         try:
-            for track in self._queue[pos + index: pos + index2 + 1]:
+            count = []
+            for i, track in enumerate(self._queue[pos + index: pos + index2 + 1], start=0):
                 if member:
-                    if track.requester == member:
-                        self._queue.remove(track)
-                        count += 1
-                    continue
-                else:
-                    self._queue.remove(track)
-                    count += 1
+                    if track.requester != member:
+                        continue
+            
+                self._queue.remove(track)
+                count.append({"position": pos + index + i, "track": track})
+
             return count
         except:
             raise OutofList(self.get_msg("voicelinkOutofList"))

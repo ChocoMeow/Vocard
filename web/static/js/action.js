@@ -1,6 +1,7 @@
 $(document).ready(function () {
     const player = new Player(userId);
     var startPos = null;
+    var selectedTrack = null;
 
     var typingTimer;
     var doneTypingInterval = 2000;
@@ -19,6 +20,11 @@ $(document).ready(function () {
             $("#users-button").css({ "color": "" });
         }
 
+        if (!$target.closest(".action").is(".action") &&
+            !$target.closest("#context-menu li").is("#context-menu li") &&
+            $("#context-menu").css("display") != "none") {
+            $("#context-menu").fadeOut(200);
+        }
     });
 
     $(function () {
@@ -40,9 +46,15 @@ $(document).ready(function () {
         });
     });
 
-    $('#sortable').on('click', 'li', function () {
+    $('#sortable').on('click', 'li', function (event) {
         var index = $(this).index();
         var position = player.current_queue_position;
+
+        if ($(event.target).hasClass('action')) {
+            selectedTrack = {position: index, track: player.queue[index]};
+            $("#context-menu").css({ "left": `${event.pageX - 150}px`, "top": `${event.pageY + 30}px` }).fadeIn(200);
+            return
+        }
 
         if (index < position) {
             player.backTo(position - index);
@@ -117,4 +129,13 @@ $(document).ready(function () {
 
     })
 
+    $("#remove-track-button").on('click', function() {
+        player.removeTrack(selectedTrack?.position, selectedTrack?.track)
+        $("#context-menu").fadeOut(200);
+    })
+
+    $("#copy-track-button").on('click', function() {
+        navigator.clipboard.writeText(selectedTrack?.track.uri);
+        $("#context-menu").fadeOut(200);
+    })
 });

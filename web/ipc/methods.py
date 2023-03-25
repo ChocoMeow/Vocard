@@ -159,6 +159,29 @@ async def repeatTrack(player, member: Member, data: dict):
     
     await player.set_repeat()
 
+async def removeTrack(player, member: Member, data: dict):
+    if not player.is_privileged(member):
+        return missingPermission(member.id)
+    
+    position = data.get("position")
+    verify_id = data.get("track_id")
+
+    track = player.queue._queue[position]
+    if track.track_id == verify_id:
+        player.queue._queue.remove(track)
+
+    if position < player.queue._position:
+         player.queue._position -= 1
+
+    return {
+        "op": "removeTrack", 
+        "positions": [position],
+        "track_ids": [track.track_id],
+        "current_queue_position": player.queue._position,
+        "requester_id": member.id,
+        "guild_id": player.guild.id
+    }
+        
 async def updatePause(player, member: Member, data: dict):
     if not player.is_privileged(member):
         return missingPermission(member.id)
@@ -207,6 +230,7 @@ methods = {
     "getTracks": getTracks,
     "shuffleTrack": shuffleTrack,
     "repeatTrack": repeatTrack,
+    "removeTrack": removeTrack,
     "updatePause": updatePause,
     "updatePosition": updatePosition,
 }

@@ -172,6 +172,37 @@ const actions = {
         player.repeat = data["repeatMode"];
     },
 
+    removeTrack: function (player, data) {
+        const positions = data["positions"];
+        const trackIds = data["track_ids"];
+        var removeTracks = []
+        var newQueue = [];
+
+        player.queue.forEach((track, index) => {
+            if (positions.includes(index)) {
+                if (trackIds.includes(track.track_id)) {
+                    console.log("removed" + index);
+                    removeTracks.push(track);
+                } else {
+                    return player.send({ "op": "initPlayer" })
+                }
+            } else {
+                newQueue.push(track);
+            }
+        })
+
+        player.queue = newQueue;
+        player.initSortable();
+
+        if (removeTracks.length == 1) {
+            var msg = `Removed ${removeTracks[0].title} from the queue.`;
+        } else {
+            var msg = `Removed ${removeTracks.length} tracks from the queue.`;
+        }
+
+        player.showToast(data["requester_id"], msg);
+    },
+
     errorMsg: function (player, data) {
         var level = data["level"];
         player.showToast(level, data["msg"]);
@@ -239,7 +270,7 @@ class Player {
         $('#sortable').empty();
         for (var i in this.queue) {
             var track = this.queue[i];
-            $("#sortable").append(`<li><div class="track"><div class="left"><i class="fa-solid fa-bars handle"></i><img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p>${this.msToReadableTime(track.length)}</p></div></li>`)
+            $("#sortable").append(`<li><div class="track"><div class="left"><i class="fa-solid fa-bars handle"></i><img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
         }
         this.updateCurrentQueuePos();
     }
@@ -276,7 +307,7 @@ class Player {
         for (var i in tracks) {
             var track = new Track(tracks[i]);
             this.queue.push(track);
-            $("#sortable").append(`<li><div class="track"><div class="left"><i class="fa-solid fa-bars handle"></i><img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p>${this.msToReadableTime(track.length)}</p></div></li>`)
+            $("#sortable").append(`<li><div class="track"><div class="left"><i class="fa-solid fa-bars handle"></i><img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
         }
     }
 
@@ -290,6 +321,18 @@ class Player {
         $ul.children().eq(to).before($li);
 
         this.send({ "op": "moveTrack", "position": target, "newPosition": to })
+    }
+
+    removeTrack(position, track) {
+        var rawTrack = this.queue[position];
+        if (position == this.current_queue_position) {
+            return this.showToast("error", "You are not allow to remove playing track!");
+        }
+        if (rawTrack.track_id == track.track_id) {
+            this.send({"op": "removeTrack", "position": position, "track_id": track.track_id});
+        } else {
+            this.showToast("error", "Track not found!");
+        }
     }
 
     togglePause() {
