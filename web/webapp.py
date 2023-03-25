@@ -14,7 +14,7 @@ import threading
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "aNOwneoiniowefn"
+app.secret_key = os.getenv("SERCET_KEY")
 socketio = SocketIO(app)
 
 # Discord OAuth2 credentials
@@ -26,7 +26,7 @@ DISCORD_API_BASE_URL = 'https://discord.com/api'
 USERS = {}
 
 def start_ipc_client(loop):
-    client = IPCClient(secret_key="Vocard")
+    client = IPCClient(secret_key=app.secret_key)
     asyncio.set_event_loop(loop)
     loop.run_until_complete(client.connect())
 
@@ -34,7 +34,7 @@ def create_ipc_client():
     loop = asyncio.new_event_loop()
     threading.Thread(target=start_ipc_client,
                      args=(loop,), daemon=True).start()
-    return IPCClient(secret_key="Vocard", callback=message_handler)
+    return IPCClient(secret_key=app.secret_key, callback=message_handler)
 
 def get_user(user_id: int):
     for user in USERS.values():

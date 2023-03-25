@@ -32,9 +32,9 @@ class Vocard(commands.Bot):
 
         self.ipc = IPCServer(
             self,
-            func.settings.ipc_server["host"],
-            func.settings.ipc_server["port"],
-            sercet_key="Vocard"
+            host=func.settings.ipc_server["host"],
+            port=func.settings.ipc_server["port"],
+            sercet_key=os.getenv("SERCET_KEY")
         )
 
     async def on_message(self, message: discord.Message, /) -> None:
