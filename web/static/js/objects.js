@@ -281,6 +281,14 @@ class Player {
     }
 
     moveTrack(target, to) {
+        let element = this.queue.splice(target, 1)[0];
+        this.queue.splice(to, 0, element);
+
+        const $ul = $('#sortable');
+        const $li = $ul.children().eq(position);
+        $li.detach();
+        $ul.children().eq(to).before($li);
+
         this.send({ "op": "moveTrack", "position": target, "newPosition": to })
     }
 

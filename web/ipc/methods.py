@@ -91,6 +91,16 @@ async def moveTrack(player, member: Member, data: dict):
     moveItem = player.queue._queue[position]
     player.queue._queue.remove(moveItem)
     player.queue._queue.insert(new_position, moveItem)
+    
+    if position > c and new_position <= c:
+        player.queue._position += 1
+
+    elif position < c and new_position >= c:
+        player.queue._position -= 1
+    
+    elif position == c:
+        player.queue._position = new_position + 1
+
     return {
         "op": "moveTrack",
         "position": {
@@ -238,7 +248,7 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
         payload = {
             "op": "errorMsg",
             "level": "error",
-            "msg": e,
+            "msg": str(e),
             "user_id": member.id
         }
         await websocket.send(json.dumps(payload))
