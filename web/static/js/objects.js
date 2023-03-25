@@ -89,6 +89,8 @@ const actions = {
 
     updateGuild: function (player, data) {
         const user = data["user"];
+        player.channelName = data["channel_name"];
+        
         if (user["user_id"] == player.userId) {
             if (data['is_joined']) {
                 player.send({ "op": "initPlayer" });

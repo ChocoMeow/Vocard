@@ -79,6 +79,7 @@ class Nodes(commands.Cog):
                 "avatar_url": member.avatar.url,
                 "name": member.name,
             },
+            "channel_name": member.voice.channel.name if is_joined else "",
             "guild_id": guild,
             "is_joined": is_joined
         })
