@@ -26,7 +26,7 @@ from .objects import Track
 from discord import Member
 
 class Queue:
-    def __init__(self, size:int, duplicate_track: bool, get_msg):
+    def __init__(self, size: int, duplicate_track: bool, get_msg):
         self._queue = []
         self._position = 0
         self._size = size
@@ -41,11 +41,12 @@ class Queue:
         }
 
         self.get_msg = get_msg
-    
+
     def get(self):
         track = None
         try:
-            track = self._queue[self._position - 1 if self._repeat == 1 else self._position]
+            track = self._queue[self._position -
+                                1 if self._repeat == 1 else self._position]
             if self._repeat != 1:
                 self._position += 1
         except:
@@ -61,29 +62,29 @@ class Queue:
     def put(self, item: Track) -> int:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
-        
+
         if not self._duplicate_track:
             if item.uri in [track.uri for track in self._queue]:
                 raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
         self._queue.append(item)
         return self.count
-    
+
     def put_at_front(self, item: Track):
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
-        
+
         if not self._duplicate_track:
             if item.uri in [track.uri for track in self._queue]:
                 raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
         self._queue.insert(self._position, item)
         return 1
-    
+
     def put_at_index(self, index: int, item: Track):
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
-        
+
         if not self._duplicate_track:
             if item.uri in [track.uri for track in self._queue]:
                 raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
@@ -95,7 +96,7 @@ class Queue:
             raise OutofList(self.get_msg("voicelinkOutofList"))
         else:
             self._position += index - 1
-    
+
     def backto(self, index: int):
         if not self._position - index >= 0:
             raise OutofList(self.get_msg("voicelinkOutofList"))
@@ -109,14 +110,14 @@ class Queue:
     def clear(self):
         del self._queue[self._position:]
 
-    def replace(self, queue_type:str, replacement:list):
+    def replace(self, queue_type: str, replacement: list):
         if queue_type == "queue":
             self.clear()
             self._queue += replacement
         elif queue_type == "history":
             self._queue[:self._position] = replacement
-    
-    def swap(self, num1:int, num2:int):
+
+    def swap(self, num1: int, num2: int):
         try:
             pos = self._position - 1
             self._queue[pos + num1], self._queue[pos + num2] = self._queue[pos + num2], self._queue[pos + num1]
@@ -124,10 +125,10 @@ class Queue:
         except IndexError:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
-    def move(self, target:int, to:int):
+    def move(self, target: int, to: int):
         if not 0 < target <= self.count or not 0 < to:
             raise OutofList(self.get_msg("voicelinkOutofList"))
-        
+
         try:
             moveItem = self._queue[self._position + target - 1]
             self._queue.remove(moveItem)
@@ -136,7 +137,7 @@ class Queue:
         except:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
-    def remove(self, index:int, index2:int, member: Member = None):
+    def remove(self, index: int, index2: int = None, member: Member = None):
         pos = self._position - 1
 
         if index2 is None:
@@ -160,7 +161,7 @@ class Queue:
             return count
         except:
             raise OutofList(self.get_msg("voicelinkOutofList"))
-            
+
     def history(self, incTrack: bool = False) -> list:
         if incTrack:
             return self._queue[:self._position]
@@ -174,7 +175,7 @@ class Queue:
     @property
     def count(self):
         return len(self._queue[self._position:])
-    
+
     @property
     def repeat(self):
         return self._repeat_mode.get(self._repeat, "Off").capitalize()
@@ -187,8 +188,9 @@ class Queue:
             return True
         return False
 
+
 class FairQueue(Queue):
-    def __init__(self, size:int, duplicate_track: bool, get_msg):
+    def __init__(self, size: int, duplicate_track: bool, get_msg):
         super().__init__(size, duplicate_track, get_msg)
         self._set = set()
 
@@ -209,7 +211,7 @@ class FairQueue(Queue):
         self._set.clear()
         for track in tracks[lastIndex:]:
             if track.requester in self._set:
-                break;
+                break
             lastIndex += 1
             self._set.add(track.requester)
         await self.put_at_index(lastIndex, item)
