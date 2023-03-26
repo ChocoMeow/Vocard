@@ -1,4 +1,4 @@
-import websockets, json
+import websockets, json, asyncio
 from uuid import uuid4
 
 class IPCClient:
@@ -17,13 +17,23 @@ class IPCClient:
         self.callback = callback
         self.id = uuid4()
 
-    async def connect(self):
-        self.websocket = await websockets.connect(f"ws://{self.host}:{self.port}", extra_headers={"Client-Id": str(self.id)})
-        await self.start_receiver()
+    async def connect_and_reconnect(self):
+        while True:
+            await self.connect()
+            print("Reconnect in next 10s!")
+            await asyncio.sleep(10)
 
+    async def connect(self):
+        try:
+            self.websocket = await websockets.connect(f"ws://{self.host}:{self.port}", extra_headers={"Client-Id": str(self.id)})
+            await self.start_receiver()
+        except:
+            pass
+            
     async def send(self, message, user):
         if not self.websocket:
-            await self.connect()
+            return
+        
         data = json.loads(message)
 
         payload = {
@@ -34,6 +44,7 @@ class IPCClient:
         await self.websocket.send(json.dumps(payload))
 
     async def receive(self):
+        print("Connected ipc server!")
         async for message in self.websocket:
             if self.callback:
                 data = json.loads(message)

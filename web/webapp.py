@@ -28,7 +28,7 @@ USERS = {}
 def start_ipc_client(loop):
     client = IPCClient(secret_key=app.secret_key)
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(client.connect())
+    loop.run_until_complete(client.connect_and_reconnect())
 
 def create_ipc_client():
     loop = asyncio.new_event_loop()

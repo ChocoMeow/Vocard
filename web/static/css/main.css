@@ -516,17 +516,15 @@ a {
     position: absolute;
     right: 0;
     background-color: rgb(37, 37, 37);
-    width: 350px;
-    max-width: 400px;
+    width: 0px;
     height: 100%;
     overflow: hidden;
-    padding: 1.5rem 1rem;
-    transform: translateX(100%);
     transition: all .5s ease-in-out;
 }
 
 .users-bar.active {
-    transform: translateX(0);
+    width: 350px;
+    padding: 1.5rem 1rem;
 }
 
 .users-bar .info {

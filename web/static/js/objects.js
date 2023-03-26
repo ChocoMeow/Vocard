@@ -225,7 +225,7 @@ class Track {
 
 class Player {
     constructor(userId) {
-        this.socket = new Socket('http://127.0.0.1:5000');
+        this.socket = new Socket(`http://${window.location.hostname}:${window.location.port}`);
         this.socket.connect(this);
         this.socket.addMessageListener((msg) => this.handleMessage(msg));
         this.timer = new Timer(() => this.updateTime(), 1000);
