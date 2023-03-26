@@ -540,6 +540,7 @@ a {
 .users-container {
     width: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .user {

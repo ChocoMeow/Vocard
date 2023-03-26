@@ -16,6 +16,7 @@ class IPCClient:
         self.secret_key = secret_key
         self.callback = callback
         self.id = uuid4()
+        self.is_connected = False
 
     async def connect_and_reconnect(self):
         while True:
@@ -28,11 +29,12 @@ class IPCClient:
             self.websocket = await websockets.connect(f"ws://{self.host}:{self.port}", extra_headers={"Client-Id": str(self.id)})
             await self.start_receiver()
         except:
+            self.is_connected = False
             pass
             
     async def send(self, message, user):
-        if not self.websocket:
-            return
+        if not self.is_connected:
+            await self.connect_and_reconnect()
         
         data = json.loads(message)
 
@@ -45,6 +47,7 @@ class IPCClient:
 
     async def receive(self):
         print("Connected ipc server!")
+        self.is_connected = True
         async for message in self.websocket:
             if self.callback:
                 data = json.loads(message)

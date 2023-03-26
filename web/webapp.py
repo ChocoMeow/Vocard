@@ -25,17 +25,6 @@ DISCORD_API_BASE_URL = 'https://discord.com/api'
 
 USERS = {}
 
-def start_ipc_client(loop):
-    client = IPCClient(secret_key=app.secret_key)
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(client.connect_and_reconnect())
-
-def create_ipc_client():
-    loop = asyncio.new_event_loop()
-    threading.Thread(target=start_ipc_client,
-                     args=(loop,), daemon=True).start()
-    return IPCClient(secret_key=app.secret_key, callback=message_handler)
-
 def get_user(user_id: int):
     for user in USERS.values():
         if user.id == user_id:
@@ -55,6 +44,7 @@ def user_leave_room(guild_id: int, user: User) -> None:
     user.guild_id = None
 
 def message_handler(data: dict):
+    print(data)
     op = data.get("op")
 
     user_id = data.get("user_id", None)
@@ -110,7 +100,7 @@ def message_handler(data: dict):
 
         emit('message', data, room=guild_id, skip_sid=skip_sids)
 
-ipc_client = create_ipc_client()
+ipc_client = IPCClient(secret_key=app.secret_key, callback=message_handler)
 
 def login_required(func):
 
@@ -204,7 +194,6 @@ def handle_disconnect(user: User):
 @login_required
 def handle_message(user: User, msg):
     asyncio.run(ipc_client.send(msg, user))
-
 
 if __name__ == '__main__':
     socketio.run(app, host="127.0.0.1", port=5000)
