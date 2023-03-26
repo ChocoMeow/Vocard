@@ -44,7 +44,6 @@ def user_leave_room(guild_id: int, user: User) -> None:
     user.guild_id = None
 
 def message_handler(data: dict):
-    print(data)
     op = data.get("op")
 
     user_id = data.get("user_id", None)
