@@ -66,7 +66,7 @@ MONGODB_NAME = Vocard
 | TOKEN | Your Discord bot token [(Discord Portal)](https://discord.com/developers/applications) |
 | CLIENT_ID | Your Discord bot client id [(Discord Portal)](https://discord.com/developers/applications) |
 | CLIENT_SECRET_ID | Your Discord bot client secret id [(Discord Portal)](https://discord.com/developers/applications) ***(optional)*** |
-| SERCET_KEY | Secret key for dashboard [(Discord Portal)](https://discord.com/developers/applications) ***(optional)*** |
+| SERCET_KEY | Secret key for dashboard ***(optional)*** |
 | BUG_REPORT_CHANNEL_ID | All the error messages will send to this text channel ***(optional)*** |
 | SPOTIFY_CLIENT_ID | Your Spoity client id [(Spotify Portal)](https://developer.spotify.com/dashboard/applications) ***(optional)*** |
 | SPOTIFY_CLIENT_SECRET | Your Spoity client sercret id [(Spotify Portal)](https://developer.spotify.com/dashboard/applications) ***(optional)*** |
