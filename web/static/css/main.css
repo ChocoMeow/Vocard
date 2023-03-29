@@ -46,47 +46,55 @@ a {
 }
 
 .dropdown-container {
-    display: flex;
-    flex-direction: column;
     position: relative;
+    display: inline-block;
+    padding: 10px;
+    border-radius: 10px 10px 0 0;
     cursor: pointer;
-    border-radius: 10px;
-    transition: all .1s ease-in-out;
 }
 
 .dropdown-container:hover {
     background-color: rgba(142, 142, 142, 20%);
 }
 
-.dropdown-container:hover ul {
-    opacity: 1;
-}
-
-.dropdown-container ul {
-    list-style: none;
-    position: absolute;
-    padding: .5rem;
-    border-radius: 10px;
-    top: 68px;
-    width: 100%;
-    opacity: 0;
+.dropdown-container:hover .dropdown-item {
+    display: block;
     background-color: rgba(142, 142, 142, 20%);
-    transition: all .1s ease-in-out;
 }
 
-.dropdown-container li {
+.dropdown-content {
     display: flex;
-    padding: .5rem .8rem;
-    justify-content: center;
     align-items: center;
-    justify-content: space-between;
-    font-size: 14px;
-    border-radius: 4px;
-    transition: all .2s ease-in-out;
-    color: #FF0000;
 }
 
-.dropdown-container li:hover {
+.dropdown-content img {
+    height: 40px;
+    border-radius: 50%;
+    margin-right: .6rem;
+}
+
+.dropdown-item {
+    display: none;
+    position: absolute;
+    left: 0;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 0 0 10px 10px;
+    width: 100%;
+    font-size: 15px;
+}
+
+.dropdown-item a {
+    display: block;
+    padding: .5rem 1rem;
+    border-radius: 8px;
+}
+
+.dropdown-item i {
+    margin-right: .6rem;
+}
+
+.dropdown-item a:hover {
     background-color: rgba(142, 142, 142, 30%);
 }
 
@@ -215,19 +223,6 @@ a {
     height: 50px;
     border-radius: 4px;
     margin-right: .5rem;
-}
-
-.header .right .account {
-    display: flex;
-    align-items: center;
-    border-radius: 12px;
-    padding: 10px;
-}
-
-.header .right .account img {
-    border-radius: 2rem;
-    height: 40;
-    margin-right: .6rem;
 }
 
 .main {
@@ -515,6 +510,7 @@ a {
 .users-bar {
     position: absolute;
     right: 0;
+    padding: 1.5rem 0;
     background-color: rgb(37, 37, 37);
     width: 0px;
     height: 100%;
