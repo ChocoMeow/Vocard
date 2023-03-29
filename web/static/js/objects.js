@@ -100,7 +100,9 @@ const actions = {
         }
         if (data['is_joined']) {
             player.addUser(user);
-            player.showToast(user["user_id"], "Joined your channel!");
+            if (user["user_id"] != player.userId) {
+                player.showToast(user["user_id"], "Joined your channel!");
+            }
         } else {
             if (player.users.hasOwnProperty(user["user_id"])) {
                 player.showToast(user["user_id"], "Left your channel!");
@@ -183,7 +185,9 @@ const actions = {
         player.queue.forEach((track, index) => {
             if (positions.includes(index)) {
                 if (trackIds.includes(track.track_id)) {
-                    console.log("removed" + index);
+                    if (index < player.current_queue_position) {
+                        player.current_queue_position -= 1;
+                    }
                     removeTracks.push(track);
                 } else {
                     return player.send({ "op": "initPlayer" })
@@ -314,6 +318,7 @@ class Player {
     }
 
     moveTrack(target, to) {
+        const c = this.current_queue_position;
         let element = this.queue.splice(target, 1)[0];
         this.queue.splice(to, 0, element);
 
@@ -322,6 +327,14 @@ class Player {
         $li.detach();
         $ul.children().eq(to).before($li);
 
+        if (target > c && to <= c) {
+            this.current_queue_position += 1;
+        } else if (target < c && to >= c) {
+            this.current_queue_position -= 1;
+        } else if (target == c) {
+            this.current_queue_position = to;
+        }
+        
         this.send({ "op": "moveTrack", "position": target, "newPosition": to })
     }
 
