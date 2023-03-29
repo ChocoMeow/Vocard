@@ -34,7 +34,8 @@ async def initPlayer(player, member: Member, data: dict):
         "current_queue_position": player.queue._position if player.is_playing else player.queue._position + 1,
         "current_position": 0 or player.position if player.is_playing else 0,
         "is_playing": player.is_playing,
-        "is_paused": player.is_paused
+        "is_paused": player.is_paused,
+        "is_dj": player.is_privileged(member, check_user_join=False)
     }
 
 async def skipTo(player, member: Member, data: dict):

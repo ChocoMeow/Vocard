@@ -37,10 +37,12 @@ const actions = {
         player.is_paused = data['is_paused'];
         player.current_position = data['current_position'];
         player.repeat = data['repeat_mode'];
-        player.channelName = data["channel_name"]
+        player.channelName = data["channel_name"];
         data["users"].forEach(user => {
             player.addUser(user);
         })
+
+        $("#sortable").sortable("option", "disabled", !player.isDJ);
     },
 
     playerUpdate: function (player, data) {
