@@ -40,8 +40,9 @@ async def initPlayer(player, member: Member, data: dict):
 
 async def skipTo(player, member: Member, data: dict):
     if not player.is_privileged(member):
-        if member == player.current.requester:
+        if player.current and member == player.current.requester:
             pass
+
         elif member in player.skip_votes:
             return error_msg(player.get_msg('voted', 'EN'), user_id=member.id)
         else:
@@ -61,7 +62,7 @@ async def skipTo(player, member: Member, data: dict):
 
 async def backTo(player, member: Member, data: dict):
     if not player.is_privileged(member):
-        if member == player.current.requester:
+        if player.current and member == player.current.requester:
             pass
 
         elif member in player.skip_votes:
@@ -184,9 +185,6 @@ async def removeTrack(player, member: Member, data: dict):
     }
         
 async def updatePause(player, member: Member, data: dict):
-    if not player.is_privileged(member):
-        return missingPermission(member.id)
-    
     pause = data.get("pause", True)
     if not player.is_privileged(member):
         if pause:
