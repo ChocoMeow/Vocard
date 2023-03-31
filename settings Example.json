@@ -12,6 +12,11 @@
     "bot_access_user": [],
     "color_code":"0xb3b3b3",
     "default_max_queue": 1000,
+    "ipc_server": {
+        "host": "127.0.0.1",
+        "port": 8000,
+        "enable": false
+    },
     "emoji_source_raw": {
         "youtube": "<:youtube:826661982760992778>",
         "youtube music": "<:youtube:826661982760992778>",

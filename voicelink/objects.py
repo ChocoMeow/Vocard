@@ -83,6 +83,13 @@ class Track:
         self.is_seekable = info.get("isSeekable", True)
         self.position = info.get("position", 0)
 
+    def toDict(self):
+        return {
+            "track_id": self.track_id,
+            "info": self.info,
+            "thumbnail": self.thumbnail
+        }
+    
     def __eq__(self, other):
         if not isinstance(other, Track):
             return False

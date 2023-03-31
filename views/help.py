@@ -58,7 +58,7 @@ class HelpView(discord.ui.View):
         self.response = None
         self.categorys = [ name.capitalize() for name, cog in bot.cogs.items() if len([c for c in cog.walk_commands()]) ]
 
-        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.invite_link))
+        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.settings.invite_link))
         self.add_item(discord.ui.Button(label='Invite', emoji=':invite:915152589056790589', url='https://discord.com/oauth2/authorize?client_id={}&permissions=2184260928&scope=bot%20applications.commands'.format(getenv('CLIENT_ID'))))
         self.add_item(discord.ui.Button(label='Github', url='https://github.com/ChocoMeow/Vocard'))
         self.add_item(discord.ui.Button(label='Donate', emoji=':patreon:913397909024800878', url='https://www.patreon.com/Vocard'))
@@ -84,7 +84,7 @@ class HelpView(discord.ui.View):
     def build_embed(self, category: str):
         category = category.lower()
         if category == "news":
-            embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=func.embed_color)
+            embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=func.settings.embed_color)
 
             embed.add_field(name=f"Available Categories: [{2 + len(self.categorys)}]",
                             value="```py\n👉 News\n2. Tutorial\n{}```".format("".join(f"{i}. {c}\n" for i, c in enumerate(self.categorys, start=3))),
@@ -101,7 +101,7 @@ class HelpView(discord.ui.View):
             
             return embed
 
-        embed = discord.Embed(title=f"Category: {category.capitalize()}", color=func.embed_color)
+        embed = discord.Embed(title=f"Category: {category.capitalize()}", color=func.settings.embed_color)
         embed.add_field(name=f"Categories: [{2 + len(self.categorys)}]", value="```py\n" + "\n".join(("👉 " if c == category.capitalize() else f"{i}. ") + c for i, c in enumerate(['News', 'Tutorial'] + self.categorys, start=1)) + "```", inline=True)
 
         if category == 'tutorial':

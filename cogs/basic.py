@@ -11,7 +11,7 @@ from function import (
     youtube_api_key,
     requests_api,
     get_lang,
-    embed_color,
+    settings,
     cooldown_check,
     get_aliases,
     connect_channel
@@ -36,7 +36,7 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
     upnext = "\n".join(f"`{index}.` `[{track.formatLength}]` [{track.title[:30]}]({track.uri})" for index, track in enumerate(
         player.queue.tracks()[:2], start=2))
     embed = discord.Embed(description=player.get_msg(
-        'nowplayingDesc').format(track.title), color=embed_color)
+        'nowplayingDesc').format(track.title), color=settings.embed_color)
     embed.set_author(name=track.requester if track.requester else ctx.bot,
                      icon_url=track.requester.display_avatar.url if track.requester else ctx.me.display_avatar.url)
 
@@ -187,7 +187,7 @@ class Basic(commands.Cog):
         query_track = "\n".join(
             f"`{index}.` `[{track.formatLength}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
         embed = discord.Embed(title=player.get_msg('searchTitle').format(query), description=player.get_msg(
-            'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=embed_color)
+            'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
         view = SearchView(tracks=tracks[0:10], lang=player.lang)
         message = await ctx.send(embed=embed, view=view, ephemeral=True)
         view.response = message
@@ -256,7 +256,7 @@ class Basic(commands.Cog):
                 else:
                     return await ctx.send(player.get_msg('pauseVote').format(ctx.author, len(player.pause_votes), required))
 
-        await player.set_pause(True)
+        await player.set_pause(True, ctx.author)
         player.pause_votes.clear()
         await ctx.send(player.get_msg('paused').format(ctx.author))
 
@@ -281,7 +281,7 @@ class Basic(commands.Cog):
                 else:
                     return await ctx.send(player.get_msg('resumeVote').format(ctx.author, len(player.resume_votes), required))
 
-        await player.set_pause(False)
+        await player.set_pause(False, ctx.author)
         player.resume_votes.clear()
         await ctx.send(player.get_msg('resumed').format(ctx.author))
 
@@ -318,7 +318,7 @@ class Basic(commands.Cog):
         await ctx.send(player.get_msg('skipped').format(ctx.author))
 
         if player.queue._repeat == 1:
-            player.queue.set_repeat("off")
+            await player.queue.set_repeat("off")
         await player.stop()
 
     @commands.hybrid_command(name="back", aliases=get_aliases("back"))
@@ -353,7 +353,7 @@ class Basic(commands.Cog):
         await ctx.send(player.get_msg('backed').format(ctx.author))
 
         if player.queue._repeat == 1:
-            player.queue.set_repeat("off")
+            await player.queue.set_repeat("off")
 
     @commands.hybrid_command(name="seek", aliases=get_aliases("seek"))
     @app_commands.describe(position="Input position. Exmaple: 1:20.")
@@ -374,7 +374,7 @@ class Basic(commands.Cog):
         if num is None:
             return await ctx.send(player.get_msg('timeFormatError'), ephemeral=True)
 
-        await player.seek(num)
+        await player.seek(num, ctx.author)
         await ctx.send(player.get_msg('seek').format(position))
 
     @commands.hybrid_command(name="queue", aliases=get_aliases("queue"))
@@ -463,9 +463,7 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_mode'), ephemeral=True)
 
-        if mode.lower() not in ['off', 'track', 'queue']:
-            mode = "off"
-        player.queue.set_repeat(mode)
+        await player.set_repeat(mode)
         await ctx.send(player.get_msg('repeat').format(mode.capitalize()))
 
     @commands.hybrid_command(name="clear", aliases=get_aliases("clear"))
@@ -509,8 +507,17 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await ctx.send(player.get_msg('missingPerms_queue'), ephemeral=True)
 
-        removedTrack = player.queue.remove(position1, position2, member)
-        await ctx.send(player.get_msg('removed').format(removedTrack))
+        removedTrack = player.queue.remove(position1, position2, member=member)
+
+        if player.is_ipc_connected and removedTrack:
+            await player.send_ws({
+                "op": "removeTrack",
+                "positions": [track["position"] for track in removedTrack],
+                "track_ids": [track["track"].track_id for track in removedTrack],
+                "current_queue_position": player.queue._position
+            }, requester=ctx.author)
+
+        await ctx.send(player.get_msg('removed').format(len(removedTrack)))
 
     @commands.hybrid_command(name="forward", aliases=get_aliases("forward"))
     @app_commands.describe(position="Input a amount that you to forward to. Exmaple: 1:20")
@@ -591,7 +598,7 @@ class Basic(commands.Cog):
                 else:
                     return await ctx.send(player.get_msg('shuffleVote').format(ctx.author, len(player.skip_votes), required))
         
-        await player.shuffle("queue")
+        await player.shuffle("queue", ctx.author)
         await ctx.send(player.get_msg('shuffled'))
 
     @commands.hybrid_command(name="swap", aliases=get_aliases("swap"))
@@ -610,6 +617,11 @@ class Basic(commands.Cog):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         track1, track2 = player.queue.swap(position1, position2)
+        await player.send_ws({
+            "op": "swapTrack",
+            "position1": {"index": position1, "track_id": track1.track_id},
+            "position2": {"index": position2, "track_id": track2.track_id}
+        }, requester=ctx.author)
         await ctx.send(player.get_msg('swapped').format(track1.title, track2.title))
 
     @commands.hybrid_command(name="move", aliases=get_aliases("move"))
@@ -628,6 +640,11 @@ class Basic(commands.Cog):
             return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
 
         moved_track = player.queue.move(target, to)
+        await player.send_ws({
+            "op": "moveTrack",
+            "position": {"index": target, "track_id": moved_track.track_id},
+            "newPosition": {"index": to}
+        }, requester=ctx.author)
         await ctx.send(player.get_msg('moved').format(moved_track.title, to))
 
     @commands.hybrid_command(name="lyrics", aliases=get_aliases("lyrics"))
@@ -749,7 +766,7 @@ class Basic(commands.Cog):
     async def ping(self, ctx: commands.Context):
         "Test if the bot is alive, and see the delay between your commands and my response."
         player: voicelink.Player = ctx.guild.voice_client
-        embed = discord.Embed(color=embed_color)
+        embed = discord.Embed(color=settings.embed_color)
         embed.add_field(name=get_lang(ctx.guild.id, 'pingTitle1'), value=get_lang(ctx.guild.id, 'pingfield1').format(
             "0", "0", self.bot.latency, '😭' if self.bot.latency > 5 else ('😨' if self.bot.latency > 1 else '👌'), "St Louis, MO, United States"))
         if player:

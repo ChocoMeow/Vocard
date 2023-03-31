@@ -64,7 +64,7 @@ class ListView(discord.ui.View):
         offset = self.current_page * 7
         tracks = self.tracks[(offset-7):offset]
 
-        embed = discord.Embed(title=self.player.get_msg('viewTitle'), color=func.embed_color)
+        embed = discord.Embed(title=self.player.get_msg('viewTitle'), color=func.settings.embed_color)
         embed.description=self.player.get_msg('viewDesc').format(self.player.current.uri, f"```{self.player.current.title}```") if self.player.current else self.player.get_msg('nowplayingDesc').format("None")
         queueText = ""
         for index, track in enumerate(tracks, start=offset - 6):

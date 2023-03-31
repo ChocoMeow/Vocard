@@ -19,7 +19,7 @@ class Nodes(commands.Cog):
     async def start_nodes(self) -> None:
         """Connect and intiate nodes."""
         await self.bot.wait_until_ready()
-        for n in func.nodes.values():
+        for n in func.settings.nodes.values():
             try:
                 await self.voicelink.create_node(bot=self.bot, 
                                                  spotify_client_id=getenv('SPOTIFY_CLIENT_ID'), 
@@ -45,6 +45,44 @@ class Nodes(commands.Cog):
             pass
         await asyncio.sleep(5)
         await player.do_next()
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if member.bot:
+            return
+        
+        if before.channel == after.channel:
+            return
+
+        player: voicelink.Player = member.guild.voice_client
+        if not player:
+            return
+        
+        guild = member.guild.id
+        is_joined = True
+        
+        if not before.channel and after.channel:
+            if after.channel.id != player.channel.id:
+                return
+
+        elif before.channel and not after.channel:
+            is_joined = False
+        
+        elif before.channel and after.channel:
+            if after.channel.id != player.channel.id:
+                is_joined = False
+
+        await self.bot.ipc.send({
+            "op": "updateGuild",
+            "user": {
+                "user_id": member.id,
+                "avatar_url": member.avatar.url,
+                "name": member.name,
+            },
+            "channel_name": member.voice.channel.name if is_joined else "",
+            "guild_id": guild,
+            "is_joined": is_joined
+        })
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Nodes(bot))

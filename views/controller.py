@@ -63,7 +63,7 @@ class Back(discord.ui.Button):
         await interaction.response.send_message(self.player.get_msg("backed").format(interaction.user))
 
         if self.player.queue._repeat == 1:
-            self.player.queue.set_repeat("off")
+            await self.player.set_repeat("off")
         
 class Resume(discord.ui.Button):
     def __init__(self, player, style, row):
@@ -85,7 +85,7 @@ class Resume(discord.ui.Button):
             self.player.resume_votes.clear()
             self.emoji = "⏸️"
             self.label = self.player.get_msg("buttonPause")
-            await self.player.set_pause(False)
+            await self.player.set_pause(False, interaction.user)
         
         else:
             if not self.player.is_privileged(interaction.user):
@@ -101,7 +101,7 @@ class Resume(discord.ui.Button):
             self.player.pause_votes.clear()
             self.emoji = "▶️"
             self.label = self.player.get_msg("buttonResume")
-            await self.player.set_pause(True)  
+            await self.player.set_pause(True, interaction.user)  
         await interaction.response.edit_message(view=self.view)
 
 class Skip(discord.ui.Button):
@@ -127,7 +127,7 @@ class Skip(discord.ui.Button):
         await interaction.response.send_message(self.player.get_msg("skipped").format(interaction.user))
 
         if self.player.queue._repeat == 1:
-            self.player.queue.set_repeat("off")
+            await self.player.set_repeat("off")
         await self.player.stop()
 
 class Stop(discord.ui.Button):
@@ -182,20 +182,13 @@ class Add(discord.ui.Button):
 class Loop(discord.ui.Button):
     def __init__(self, player, style, row):
         self.player = player
-        self.loopType = {
-            0: "off",
-            1: "track",
-            2: "queue",
-        }
         super().__init__(emoji="🔁", label=player.get_msg('buttonLoop'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
             return await interaction.response.send_message(self.player.get_msg('missingPerms_mode'), ephemeral=True)
 
-        current_repeat = self.player.queue._repeat
-        mode = self.loopType.get((current_repeat + 1)%len(self.loopType), 'off')
-        self.player.queue.set_repeat(mode)
+        mode = await self.player.set_repeat()
         await interaction.response.send_message(self.player.get_msg('repeat').format(mode.capitalize()))
 
 class VolumeUp(discord.ui.Button):
@@ -208,7 +201,7 @@ class VolumeUp(discord.ui.Button):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
 
         value = value if (value := self.player.volume + 20) <= 150 else 150
-        await self.player.set_volume(value)
+        await self.player.set_volume(value, interaction.user)
 
         await interaction.response.send_message(self.player.get_msg('setVolume').format(value), ephemeral=True)
 
@@ -222,7 +215,7 @@ class VolumeDown(discord.ui.Button):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
 
         value = value if (value := self.player.volume - 20) >= 0 else 150
-        await self.player.set_volume(value)
+        await self.player.set_volume(value, interaction.user)
 
         await interaction.response.send_message(self.player.get_msg('setVolume').format(value), ephemeral=True)
 
@@ -246,7 +239,7 @@ class VolumeMute(discord.ui.Button):
             self.emoji = "🔇"
             self.label = self.player.get_msg("buttonVolumeMute")
 
-        await self.player.set_volume(value)
+        await self.player.set_volume(value, interaction.user)
 
         await interaction.response.edit_message(view=self.view)
 
@@ -301,7 +294,7 @@ class InteractiveController(discord.ui.View):
         super().__init__(timeout=None)
 
         self.player = player
-        for row, btnRow in enumerate(func.controller_settings):
+        for row, btnRow in enumerate(func.settings.controller_settings):
             for btn in btnRow:
                 color = ""
                 if isinstance(btn, Dict):
@@ -320,7 +313,7 @@ class InteractiveController(discord.ui.View):
             await interaction.response.send_message(self.player.get_msg("nodeReconnect"), ephemeral=True)
             return False
 
-        if interaction.user.id in func.bot_access_user:
+        if interaction.user.id in func.settings.bot_access_user:
             return True
             
         if self.player.channel and self.player.is_user_join(interaction.user):

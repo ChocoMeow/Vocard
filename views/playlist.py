@@ -88,7 +88,7 @@ class PlaylistView(discord.ui.View):
         offset = self.current_page * 7
         tracks = self.current['tracks'][(offset-7):offset]
 
-        embed = discord.Embed(title=func.get_lang(self.guildID, 'playlistView'), color=func.embed_color)
+        embed = discord.Embed(title=func.get_lang(self.guildID, 'playlistView'), color=func.settings.embed_color)
 
         embed.description= func.get_lang(self.guildID, 'playlistViewDesc').format(self.current['name'], self.current['id'], len(self.current['tracks']), self.current.get('owner', "None"), self.current['type'])
         
@@ -163,7 +163,7 @@ class CreateView(discord.ui.View):
         self.value = None
         self.response = None
         self.add_item(agree())
-        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.invite_link))
+        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.settings.invite_link))
 
     async def on_timeout(self):
         for child in self.children:

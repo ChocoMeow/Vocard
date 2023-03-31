@@ -13,7 +13,7 @@ from function import (
     update_inbox,
     get_lang,
     playlist_name,
-    embed_color,
+    settings,
     get_aliases,
     cooldown_check,
     connect_channel
@@ -179,7 +179,7 @@ class Playlists(commands.Cog, name="playlist"):
         embed = discord.Embed(title=get_lang(ctx.guild.id, 'playlistViewTitle').format(ctx.author.name),
                               description='```%0s %4s %10s %10s %10s\n' % tuple(get_lang(ctx.guild.id, 'playlistViewHeaders')) + '\n'.join(
                                   '%0s %3s. %10s %10s %10s' % (info['emoji'], info['id'], f"[{info['time']}]", info['name'], len(info['tracks'])) for info in results) + '```',
-                              color=embed_color)
+                              color=settings.embed_color)
         embed.add_field(name=get_lang(ctx.guild.id, 'playlistMaxP'),
                         value=f"➥ {len(user)}/{max_p}", inline=True)
         embed.add_field(name=get_lang(ctx.guild.id,

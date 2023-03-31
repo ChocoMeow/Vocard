@@ -43,7 +43,8 @@ from discord import (
     StageChannel,
     Member,
     Embed,
-    ui
+    ui,
+    Message
 )
 
 from discord.ext import commands
@@ -83,29 +84,30 @@ class Player(VoiceProtocol):
         self.dj: Member = ctx.author
         self.channel: VoiceChannel = channel
         self._guild = channel.guild if channel else None
+        self._ipc_connection: bool = False
 
         self.settings: dict = func.get_settings(ctx.guild.id)
-        self.joinTime = round(time.time())
-        self._volume = self.settings.get('volume', 100)
-        self.lang = self.settings.get('lang', 'EN') if self.settings.get('lang', 'EN') in func.langs else "EN"
-        self.queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
+        self.joinTime: float = round(time.time())
+        self._volume: int = self.settings.get('volume', 100)
+        self.lang: dict = self.settings.get('lang', 'EN') if self.settings.get('lang', 'EN') in func.langs else "EN"
+        self.queue: Queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.settings.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
 
         self._node = NodePool.get_node()
         self._current: Track = None
         self._filters: Filters = Filters()
-        self._paused = False
-        self._is_connected = False
-        self._ping = 0.0
+        self._paused: bool = False
+        self._is_connected: bool = False
+        self._ping: float = 0.0
 
-        self._position = 0
-        self._last_position = 0
-        self._last_update = 0
+        self._position: int = 0
+        self._last_position: int = 0
+        self._last_update: int = 0
         self._ending_track: Optional[Track] = None
 
-        self._voice_state = {}
+        self._voice_state: dict = {}
 
-        self.controller = None
-        self.updating = False
+        self.controller: Message = None
+        self.updating: bool = False
 
         self.pause_votes = set()
         self.resume_votes = set()
@@ -195,8 +197,8 @@ class Player(VoiceProtocol):
     def ping(self) -> float:
         return round(self._ping / 1000, 2)
     
-    def get_msg(self, mKey: str) -> str:
-        return func.langs.get(self.lang, func.langs["EN"])[mKey]
+    def get_msg(self, mKey: str, lang: str = None) -> str:
+        return func.langs.get(lang if lang else self.lang, func.langs["EN"])[mKey]
 
     def required(self, leave=False):
         if self.settings.get('votedisable'):
@@ -209,14 +211,18 @@ class Player(VoiceProtocol):
         
         return required
 
+    @property
+    def is_ipc_connected(self) -> bool:
+        return bool(self._ipc_connection and len(self.bot.ipc.connections))
+    
     def is_user_join(self, user: Member):
         if user not in self.channel.members:
             if not user.guild_permissions.manage_guild:
                 return False        
         return True
     
-    def is_privileged(self, user: Member, check_user_join: bool = True):
-        if user.id in func.bot_access_user:
+    def is_privileged(self, user: Member, check_user_join: bool = True) -> bool:
+        if user.id in func.settings.bot_access_user:
             return True
         
         manage_perm = user.guild_permissions.manage_guild
@@ -227,12 +233,19 @@ class Player(VoiceProtocol):
             return manage_perm or (self.settings['dj'] in [role.id for role in user.roles])
         return self.dj.id == user.id or manage_perm
     
-    async def _update_state(self, data: dict):
+    async def _update_state(self, data: dict) -> None:
         state: dict = data.get("state")
         self._last_update = time.time() * 1000
         self._is_connected = state.get("connected")
         self._last_position = state.get("position")
         self._ping = state.get("ping")
+        if self.is_ipc_connected:
+            await self.send_ws({
+                "op": "playerUpdate",
+                "last_update": self._last_update,
+                "is_connected": self._is_connected,
+                "last_position": self._last_position
+            })
 
     async def _dispatch_voice_update(self, voice_data: Dict[str, Any]):
         if {"sessionId", "event"} != self._voice_state.keys():
@@ -310,7 +323,15 @@ class Player(VoiceProtocol):
 
         if self.settings.get('controller', True):
             await self.invoke_controller()
-    
+
+        if self.is_ipc_connected:
+            await self.send_ws({
+                "op": "trackUpdate", 
+                "current_queue_position": self.queue._position if track else self.queue._position + 1,
+                "track_id": track.track_id if track else None,
+                "is_paused": self._paused
+            })
+
     async def invoke_controller(self):
         if self.updating or not self.channel:
             return
@@ -346,18 +367,18 @@ class Player(VoiceProtocol):
         track = self.current
 
         if not track:
-            embed=Embed(title=self.get_msg("noTrackPlaying"), description=f"[Vote](https://top.gg/bot/605618911471468554/vote/) | [Support]({func.invite_link}) | [Invite](https://discord.com/oauth2/authorize?client_id=605618911471468554&permissions=2184260928&scope=bot%20applications.commands) | [Questionnaire](https://forms.gle/UqeeEv4GEdCq9hi3A)", color=func.embed_color)
+            embed=Embed(title=self.get_msg("noTrackPlaying"), description=f"[Vote](https://top.gg/bot/605618911471468554/vote/) | [Support]({func.settings.invite_link}) | [Invite](https://discord.com/oauth2/authorize?client_id=605618911471468554&permissions=2184260928&scope=bot%20applications.commands) | [Questionnaire](https://forms.gle/UqeeEv4GEdCq9hi3A)", color=func.settings.embed_color)
             embed.set_image(url='https://i.imgur.com/dIFBwU7.png')
             
         else:
             try:
-                embed = Embed(color=func.embed_color)
+                embed = Embed(color=func.settings.embed_color)
                 embed.set_author(name=self.get_msg("playerAuthor").format(self.channel.name), icon_url=self.client.user.avatar.url)
                 embed.description = self.get_msg("playerDesc").format(track.title, track.uri, (track.requester.mention if track.requester else "<@605618911471468554>"), (f"<@&{self.settings['dj']}>" if self.settings.get('dj') else f"{self.dj.mention}"))
                 embed.set_image(url=track.thumbnail if track.thumbnail else "https://cdn.discordapp.com/attachments/674788144931012638/823086668445384704/eq-dribbble.gif")
                 embed.set_footer(text=self.get_msg("playerFooter").format(self.queue.count, (self.get_msg("live") if track.is_stream else func.time(track.length)), self.volume, self.get_msg("playerFooter2").format(self.queue.repeat.capitalize()) if self.queue._repeat else ""))
             except:
-                embed = Embed(description=self.get_msg("missingTrackInfo"), color=func.embed_color)
+                embed = Embed(description=self.get_msg("missingTrackInfo"), color=func.settings.embed_color)
         return embed
 
     async def is_position_fresh(self):
@@ -373,7 +394,9 @@ class Player(VoiceProtocol):
     async def teardown(self):
         timeNow = round(time.time())
         func.update_settings(self.guild.id, {"lastActice": timeNow, "playTime": round(self.settings.get("playTime", 0) + ((timeNow - self.joinTime) / 60), 2)})
-        
+        if self.is_ipc_connected:
+            await self.send_ws({"op": "playerClose"})
+
         try:
             await self.controller.delete()
         except:
@@ -543,27 +566,34 @@ class Player(VoiceProtocol):
                 position = self.queue.put_at_front(raw_tracks) if at_font else self.queue.put(raw_tracks)
                 tracks.append(raw_tracks)
         finally:
-            return len(tracks) if isList else position
+            if tracks:
+                if self.is_ipc_connected:
+                    await self.send_ws({"op": "addTrack", "tracks": [track.toDict() for track in tracks]}, tracks[0].requester)
+                return len(tracks) if isList else position
         
-    async def seek(self, position: float) -> float:
+    async def seek(self, position: float, requester: Member = None) -> float:
         """Seeks to a position in the currently playing track milliseconds"""
         if position < 0 or position > self._current.original.length:
-            raise TrackInvalidPosition(
-                "Seek position must be between 0 and the track length"
-            )
+            raise TrackInvalidPosition("Seek position must be between 0 and the track length")
 
         await self._node.send(method=0, guild_id=self._guild.id, data={"position": position})
+        if self.is_ipc_connected:
+            await self.send_ws({"op": "updatePosition", "position": position}, requester)
         return self._position
 
-    async def set_pause(self, pause: bool) -> bool:
+    async def set_pause(self, pause: bool, requester: Member = None) -> bool:
         """Sets the pause state of the currently playing track."""
         await self._node.send(method=0, guild_id=self._guild.id, data={"paused": pause})
+        if self.is_ipc_connected:
+            await self.send_ws({"op": "updatePause", "pause": pause}, requester)
         self._paused = pause
         return self._paused
 
-    async def set_volume(self, volume: int) -> int:
+    async def set_volume(self, volume: int, requester: Member = None) -> int:
         """Sets the volume of the player as an integer. Lavalink accepts values from 0 to 500."""
         await self._node.send(method=0, guild_id=self._guild.id, data={"volume": volume})
+        if self.is_ipc_connected:
+            await self.send_ws({"op": "updateVolume", "volume": volume}, requester)
         self._volume = volume
         return self._volume
 
@@ -575,6 +605,37 @@ class Player(VoiceProtocol):
         shuffle(replacement)
         self.queue.replace(queue_type, replacement)
         self.shuffle_votes.clear()
+        if self.is_ipc_connected:
+            await self.send_ws({
+                "op": "shuffleTrack",
+                "tracks": [track.toDict() for track in self.queue._queue],
+                "verified": {
+                    "index": self.queue._position if queue_type == "queue" else 0,
+                    "track_id": replacement[0].track_id,
+                }
+            }, requester)
+
+    async def set_repeat(self, mode:str = None):
+        if not mode:
+            mode = self.queue._repeat_mode.get((self.queue._repeat + 1)%len(self.queue._repeat_mode), 'off')
+
+        is_found = False
+        for i, m in self.queue._repeat_mode.items():
+            if m == mode.lower():
+                is_found = True
+                self.queue._repeat = i
+                if i == 2:
+                    self._repeat_position = self._position - 1
+                break
+        
+        if not is_found:
+            raise VoicelinkException("Invalid repeat mode.")
+        
+        if self.is_ipc_connected:
+            await self.send_ws({"op": "repeatTrack", "repeatMode": mode})
+
+        return mode
+    
     async def add_filter(self, filter: Filter, fast_apply=False) -> Filters:
         try:
             self._filters.add_filter(filter=filter)
@@ -626,3 +687,9 @@ class Player(VoiceProtocol):
 
         if self.volume != 100:
             await self.set_volume(self.volume)
+    
+    async def send_ws(self, payload, requester: Member = None):
+            payload['guild_id'] = self.guild.id
+            if requester:
+                payload['requester_id'] = requester.id
+            await self.bot.ipc.send(payload)
