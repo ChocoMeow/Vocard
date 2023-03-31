@@ -1,8 +1,8 @@
 import json
-import voicelink
 
 from discord import Member
 from discord.ext import commands
+from voicelink import Player, Track, Playlist
 
 def missingPermission(user_id:int):
     payload = {"op": "errorMsg", "level": "info", "msg": "Only the DJ or admins may use this funciton!"}
@@ -18,7 +18,8 @@ def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str
 
     return payload
 
-async def initPlayer(player, member: Member, data: dict):
+async def initPlayer(player: Player, member: Member, data: dict):
+    player._ipc_connection = True
     return {
         "op": "initPlayer",
         "guild_id": player.guild.id,
@@ -38,7 +39,7 @@ async def initPlayer(player, member: Member, data: dict):
         "is_dj": player.is_privileged(member, check_user_join=False)
     }
 
-async def skipTo(player, member: Member, data: dict):
+async def skipTo(player: Player, member: Member, data: dict):
     if not player.is_privileged(member):
         if player.current and member == player.current.requester:
             pass
@@ -60,7 +61,7 @@ async def skipTo(player, member: Member, data: dict):
         await player.set_repeat("off")
     await player.stop()
 
-async def backTo(player, member: Member, data: dict):
+async def backTo(player: Player, member: Member, data: dict):
     if not player.is_privileged(member):
         if player.current and member == player.current.requester:
             pass
@@ -82,7 +83,7 @@ async def backTo(player, member: Member, data: dict):
         player.queue.backto(index + 1)
         await player.stop()
 
-async def moveTrack(player, member: Member, data: dict):
+async def moveTrack(player: Player, member: Member, data: dict):
     if not player.is_privileged(member):
         return missingPermission(member.id)
 
@@ -117,9 +118,9 @@ async def moveTrack(player, member: Member, data: dict):
         "skip_users": [member.id]
     }
 
-async def addTracks(player, member: Member, data: dict): 
+async def addTracks(player: Player, member: Member, data: dict): 
     raw_tracks = data.get("tracks", [])
-    tracks = [voicelink.Track(
+    tracks = [Track(
                 track_id=track["track_id"], 
                 info=track["info"],
                 requester=member
@@ -130,7 +131,7 @@ async def addTracks(player, member: Member, data: dict):
     if not player.is_playing:
         await player.do_next()
 
-async def getTracks(player, member: Member, data: dict):
+async def getTracks(player: Player, member: Member, data: dict):
     query = data.get("query", None)
     if query:
         payload = {"op": "getTracks", "user_id": member.id}
@@ -141,7 +142,7 @@ async def getTracks(player, member: Member, data: dict):
         payload["tracks"] = [ track.toDict() for track in tracks ]
         return payload
     
-async def shuffleTrack(player, member: Member, data: dict):
+async def shuffleTrack(player: Player, member: Member, data: dict):
     if not player.is_privileged(member):
 
         if member in player.shuffle_votes:
@@ -155,13 +156,13 @@ async def shuffleTrack(player, member: Member, data: dict):
     
     await player.shuffle(data.get("type", "queue"), member)
 
-async def repeatTrack(player, member: Member, data: dict):
+async def repeatTrack(player: Player, member: Member, data: dict):
     if not player.is_privileged(member):
         return missingPermission(member.id)
     
     await player.set_repeat()
 
-async def removeTrack(player, member: Member, data: dict):
+async def removeTrack(player: Player, member: Member, data: dict):
     if not player.is_privileged(member):
         return missingPermission(member.id)
     
@@ -184,7 +185,7 @@ async def removeTrack(player, member: Member, data: dict):
         "guild_id": player.guild.id
     }
         
-async def updatePause(player, member: Member, data: dict):
+async def updatePause(player: Player, member: Member, data: dict):
     pause = data.get("pause", True)
     if not player.is_privileged(member):
         if pause:
@@ -213,7 +214,7 @@ async def updatePause(player, member: Member, data: dict):
 
     await player.set_pause(pause, member)
 
-async def updatePosition(player, member: Member, data: dict):
+async def updatePosition(player: Player, member: Member, data: dict):
     if not player.is_privileged(member):
         return missingPermission(member.id)
     
@@ -260,7 +261,7 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
     if not guild:
         return
     
-    player = guild.voice_client
+    player: Player = guild.voice_client
     if not player or not Member:
         return
     try:
