@@ -509,7 +509,7 @@ class Basic(commands.Cog):
 
         removedTrack = player.queue.remove(position1, position2, member=member)
 
-        if self.bot.ipc.connections and removedTrack:
+        if player.is_ipc_connected and removedTrack:
             await player.send_ws({
                 "op": "removeTrack",
                 "positions": [track["position"] for track in removedTrack],

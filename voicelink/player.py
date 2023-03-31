@@ -84,6 +84,7 @@ class Player(VoiceProtocol):
         self.dj: Member = ctx.author
         self.channel: VoiceChannel = channel
         self._guild = channel.guild if channel else None
+        self._ipc_connection: bool = False
 
         self.settings: dict = func.get_settings(ctx.guild.id)
         self.joinTime: float = round(time.time())
@@ -210,6 +211,10 @@ class Player(VoiceProtocol):
         
         return required
 
+    @property
+    def is_ipc_connected(self) -> bool:
+        return bool(self._ipc_connection and len(self.bot.ipc.connections))
+    
     def is_user_join(self, user: Member):
         if user not in self.channel.members:
             if not user.guild_permissions.manage_guild:
@@ -318,7 +323,7 @@ class Player(VoiceProtocol):
         if self.settings.get('controller', True):
             await self.invoke_controller()
 
-        if self.bot.ipc.connections:
+        if self.is_ipc_connected:
             await self.send_ws({
                 "op": "trackUpdate", 
                 "current_queue_position": self.queue._position if track else self.queue._position + 1,
@@ -388,7 +393,7 @@ class Player(VoiceProtocol):
     async def teardown(self):
         timeNow = round(time.time())
         func.update_settings(self.guild.id, {"lastActice": timeNow, "playTime": round(self.settings.get("playTime", 0) + ((timeNow - self.joinTime) / 60), 2)})
-        if self.bot.ipc.connections:
+        if self.is_ipc_connected:
             await self.send_ws({"op": "playerClose"})
 
         try:
@@ -561,7 +566,7 @@ class Player(VoiceProtocol):
                 tracks.append(raw_tracks)
         finally:
             if tracks:
-                if self.bot.ipc.connections:
+                if self.is_ipc_connected:
                     await self.send_ws({"op": "addTrack", "tracks": [track.toDict() for track in tracks]}, tracks[0].requester)
                 return len(tracks) if isList else position
         
@@ -571,14 +576,14 @@ class Player(VoiceProtocol):
             raise TrackInvalidPosition("Seek position must be between 0 and the track length")
 
         await self._node.send(method=0, guild_id=self._guild.id, data={"position": position})
-        if self.bot.ipc.connections:
+        if self.is_ipc_connected:
             await self.send_ws({"op": "updatePosition", "position": position}, requester)
         return self._position
 
     async def set_pause(self, pause: bool, requester: Member = None) -> bool:
         """Sets the pause state of the currently playing track."""
         await self._node.send(method=0, guild_id=self._guild.id, data={"paused": pause})
-        if self.bot.ipc.connections:
+        if self.is_ipc_connected:
             await self.send_ws({"op": "updatePause", "pause": pause}, requester)
         self._paused = pause
         return self._paused
@@ -586,7 +591,7 @@ class Player(VoiceProtocol):
     async def set_volume(self, volume: int, requester: Member = None) -> int:
         """Sets the volume of the player as an integer. Lavalink accepts values from 0 to 500."""
         await self._node.send(method=0, guild_id=self._guild.id, data={"volume": volume})
-        if self.bot.ipc.connections:
+        if self.is_ipc_connected:
             await self.send_ws({"op": "updateVolume", "volume": volume}, requester)
         self._volume = volume
         return self._volume
@@ -599,7 +604,7 @@ class Player(VoiceProtocol):
         shuffle(replacement)
         self.queue.replace(queue_type, replacement)
         self.shuffle_votes.clear()
-        if self.bot.ipc.connections:
+        if self.is_ipc_connected:
             await self.send_ws({
                 "op": "shuffleTrack",
                 "tracks": [track.toDict() for track in self.queue._queue],
@@ -625,7 +630,7 @@ class Player(VoiceProtocol):
         if not is_found:
             raise VoicelinkException("Invalid repeat mode.")
         
-        if self.bot.ipc.connections:
+        if self.is_ipc_connected:
             await self.send_ws({"op": "repeatTrack", "repeatMode": mode})
 
         return mode
