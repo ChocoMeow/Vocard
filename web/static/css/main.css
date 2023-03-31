@@ -325,6 +325,7 @@ a {
     transform: translate3d(0px, 0px, 0) scale(1);
     opacity: var(0.6);
     border-radius: inherit;
+    transition: all 1s ease-in-out;
 }
 
 .player-controller {
