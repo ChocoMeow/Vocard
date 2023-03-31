@@ -3,6 +3,7 @@ import sys
 import os
 import traceback
 import aiohttp
+import update
 import function as func
 
 from discord.ext import commands
@@ -128,4 +129,5 @@ bot = Vocard(command_prefix=get_prefix,
              intents=intents)
 
 if __name__ == "__main__":
+    update.checkVersion(withMsg=True)
     bot.run(os.getenv("TOKEN"), log_handler=None)
