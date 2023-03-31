@@ -51,7 +51,7 @@ $(document).ready(function () {
         var position = player.current_queue_position;
 
         if ($(event.target).hasClass('action')) {
-            selectedTrack = {position: index, track: player.queue[index]};
+            selectedTrack = { position: index, track: player.queue[index] };
             $("#context-menu").css({ "left": `${event.pageX - 150}px`, "top": `${event.pageY + 30}px` }).fadeIn(200);
             return
         }
@@ -129,12 +129,12 @@ $(document).ready(function () {
 
     })
 
-    $("#remove-track-button").on('click', function() {
+    $("#remove-track-button").on('click', function () {
         player.removeTrack(selectedTrack?.position, selectedTrack?.track)
         $("#context-menu").fadeOut(200);
     })
 
-    $("#copy-track-button").on('click', function() {
+    $("#copy-track-button").on('click', function () {
         navigator.clipboard.writeText(selectedTrack?.track.uri);
         $("#context-menu").fadeOut(200);
     })

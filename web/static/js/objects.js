@@ -31,9 +31,9 @@ class Timer {
 const actions = {
     initPlayer: function (player, data) {
         player.init();
+        player.isDJ = data['is_dj'];
         player.addTrack(data["tracks"]);
         player.updateCurrentQueuePos(data['current_queue_position']);
-        player.isDJ = data['is_dj'];
         player.is_paused = data['is_paused'];
         player.current_position = data['current_position'];
         player.repeat = data['repeat_mode'];
@@ -92,7 +92,7 @@ const actions = {
     updateGuild: function (player, data) {
         const user = data["user"];
         player.channelName = data["channel_name"];
-        
+
         if (user["user_id"] == player.userId) {
             if (data['is_joined']) {
                 player.send({ "op": "initPlayer" });
@@ -231,7 +231,7 @@ class Track {
 
 class Player {
     constructor(userId) {
-        this.socket = new Socket(`http://${window.location.hostname}:${window.location.port}`);
+        this.socket = new Socket(`${window.location.protocol}//${window.location.hostname}:${window.location.port}`);
         this.socket.connect(this);
         this.socket.addMessageListener((msg) => this.handleMessage(msg));
         this.timer = new Timer(() => this.updateTime(), 1000);
@@ -278,7 +278,7 @@ class Player {
         $('#sortable').empty();
         for (var i in this.queue) {
             var track = this.queue[i];
-            $("#sortable").append(`<li><div class="track"><div class="left"><i class="fa-solid fa-bars handle"></i><img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
+            $("#sortable").append(`<li><div class="track"><div class="left">${(this.isDJ) ? '<i class="fa-solid fa-bars handle"></i>' : ''}<img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
         }
         this.updateCurrentQueuePos();
     }
@@ -292,8 +292,8 @@ class Player {
         $('#sortable li div').removeClass('active');
         const li = $(`#sortable li:eq(${this.current_queue_position})`);
         li.find('div').addClass('active');
-        
-        const queue = $('.queue-list') 
+
+        const queue = $('.queue-list')
         if (queue.prop('scrollHeight') > queue.prop('clientHeight')) {
             queue.animate({ scrollTop: li.position().top - queue.position().top }, 'slow');
         }
@@ -315,7 +315,7 @@ class Player {
         for (var i in tracks) {
             var track = new Track(tracks[i]);
             this.queue.push(track);
-            $("#sortable").append(`<li><div class="track"><div class="left"><i class="fa-solid fa-bars handle"></i><img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
+            $("#sortable").append(`<li><div class="track"><div class="left">${(this.isDJ) ? '<i class="fa-solid fa-bars handle"></i>' : ''}<img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
         }
     }
 
@@ -336,7 +336,7 @@ class Player {
         } else if (target == c) {
             this.current_queue_position = to;
         }
-        
+
         this.send({ "op": "moveTrack", "position": target, "newPosition": to })
     }
 
@@ -346,7 +346,7 @@ class Player {
             return this.showToast("error", "You are not allow to remove playing track!");
         }
         if (rawTrack.track_id == track.track_id) {
-            this.send({"op": "removeTrack", "position": position, "track_id": track.track_id});
+            this.send({ "op": "removeTrack", "position": position, "track_id": track.track_id });
         } else {
             this.showToast("error", "Track not found!");
         }

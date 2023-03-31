@@ -23,6 +23,11 @@ a {
     text-decoration: none;
 }
 
+:root {
+    --grey: rgba(142, 142, 142, 20%);
+    --grey-hover: rgba(142, 142, 142, 30%);
+}
+
 /* width */
 ::-webkit-scrollbar {
     width: 10px;
@@ -45,6 +50,14 @@ a {
     min-height: 100%;
 }
 
+.box {
+    position: absolute;
+    opacity: 20%;
+    border-radius: 40%;
+    filter: blur(60px);
+    transition: all 2s ease-in-out;
+}
+
 .dropdown-container {
     position: relative;
     display: inline-block;
@@ -54,12 +67,12 @@ a {
 }
 
 .dropdown-container:hover {
-    background-color: rgba(142, 142, 142, 20%);
+    background-color: var(--grey);
 }
 
 .dropdown-container:hover .dropdown-item {
     display: block;
-    background-color: rgba(142, 142, 142, 20%);
+    background-color: var(--grey);
 }
 
 .dropdown-content {
@@ -78,7 +91,7 @@ a {
     position: absolute;
     left: 0;
     margin-top: 10px;
-    padding: 10px;
+    padding: 5px;
     border-radius: 0 0 10px 10px;
     width: 100%;
     font-size: 15px;
@@ -95,7 +108,7 @@ a {
 }
 
 .dropdown-item a:hover {
-    background-color: rgba(142, 142, 142, 30%);
+    background-color: var(--grey-hover);
 }
 
 .header {
@@ -105,6 +118,7 @@ a {
     align-items: center;
     position: sticky;
     top: 0;
+    z-index: 2;
 }
 
 .header .left {
@@ -121,16 +135,16 @@ a {
 }
 
 .header .left p:hover {
-    background-color: rgba(142, 142, 142, 20%);
+    background-color: var(--grey);
 }
 
-.header .center .search-contrainer {
+.header .center .search-container {
     display: flex;
     justify-content: center;
     position: relative;
 }
 
-.header .center .search-contrainer .search-bar {
+.header .center .search-container .search-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -195,7 +209,7 @@ a {
 }
 
 .header .search-result:hover {
-    background-color: rgba(142, 142, 142, 20%);
+    background-color: var(--grey);
 }
 
 .header .search-result-left {
@@ -203,14 +217,13 @@ a {
     align-items: center;
     overflow: hidden;
     margin-right: .6rem;
-    max-width: 90%;
+    max-width: 85%;
 }
 
 .header .search-result-info p.info {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-
 }
 
 .header .search-result-info p.desc {
@@ -235,6 +248,7 @@ a {
 .main .toastContrainer {
     position: absolute;
     left: 2%;
+    z-index: 2;
 }
 
 .toastContrainer .toast {
@@ -242,7 +256,7 @@ a {
     position: relative;
     padding: .8rem;
     margin-top: 1rem;
-    background-color: rgba(142, 142, 142, 30%);
+    background-color: var(--grey-hover);
     border-radius: 10px;
     overflow: hidden;
     transform: translateX(-100%);
@@ -291,6 +305,7 @@ a {
 
 .main .thumbnail {
     display: flex;
+    position: relative;
     justify-content: center;
     align-items: center;
     flex: 1;
@@ -298,13 +313,24 @@ a {
 
 .main .thumbnail img {
     padding: 1rem;
-    width: 80%;
+    width: 75%;
     height: auto;
+    z-index: 1;
+}
+
+.main .thumbnail-background {
+    position: absolute;
+    padding: 1rem;
+    filter: blur(80px);
+    transform: translate3d(0px, 0px, 0) scale(1);
+    opacity: var(0.6);
+    border-radius: inherit;
 }
 
 .player-controller {
     position: sticky;
     bottom: 0;
+    z-index: 2;
 }
 
 .progress-bar-container {
@@ -436,7 +462,7 @@ a {
 }
 
 .track:hover {
-    background-color: rgba(142, 142, 142, 20%);
+    background-color: var(--grey);
 }
 
 .track:hover .time {
@@ -448,7 +474,7 @@ a {
 }
 
 .track.active {
-    background-color: rgba(142, 142, 142, 30%);
+    background-color: var(--grey-hover);
 }
 
 .track .left {
@@ -504,6 +530,7 @@ a {
     list-style: none;
     width: 90%;
     padding: 1rem;
+    padding-bottom: 5rem;
     max-height: 300px;
 }
 
@@ -530,7 +557,6 @@ a {
 
 .users-bar .info h5 {
     color: rgba(142, 142, 142);
-    ;
 }
 
 .users-container {

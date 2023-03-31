@@ -139,6 +139,9 @@ async def getTracks(player: Player, member: Member, data: dict):
         if not tracks:
             return payload
         
+        if isinstance(tracks, Playlist):
+            tracks = [ track for track in tracks.tracks[:20] ]
+
         payload["tracks"] = [ track.toDict() for track in tracks ]
         return payload
     

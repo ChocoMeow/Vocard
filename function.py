@@ -3,6 +3,7 @@ import json
 import aiohttp
 import os
 
+from importlib import import_module
 from discord.ext import commands
 from dotenv import load_dotenv
 from random import choice
@@ -204,7 +205,7 @@ async def similar_track(player) -> bool:
     return False
 
 async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel = None):
-    import voicelink
+    voicelink = import_module("voicelink");
     try:
         channel = channel or ctx.author.voice.channel
     except:

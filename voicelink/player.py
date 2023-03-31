@@ -221,7 +221,7 @@ class Player(VoiceProtocol):
                 return False        
         return True
     
-    def is_privileged(self, user: Member, check_user_join: bool = True):
+    def is_privileged(self, user: Member, check_user_join: bool = True) -> bool:
         if user.id in func.settings.bot_access_user:
             return True
         
@@ -233,18 +233,19 @@ class Player(VoiceProtocol):
             return manage_perm or (self.settings['dj'] in [role.id for role in user.roles])
         return self.dj.id == user.id or manage_perm
     
-    async def _update_state(self, data: dict):
+    async def _update_state(self, data: dict) -> None:
         state: dict = data.get("state")
         self._last_update = time.time() * 1000
         self._is_connected = state.get("connected")
         self._last_position = state.get("position")
         self._ping = state.get("ping")
-        if self.bot.ipc.connections:
-            await self.send_ws({ "op": "playerUpdate",
-                                "last_update": self._last_update,
-                                "is_connected": self._is_connected,
-                                "last_position": self._last_position
-                                })
+        if self.is_ipc_connected:
+            await self.send_ws({
+                "op": "playerUpdate",
+                "last_update": self._last_update,
+                "is_connected": self._is_connected,
+                "last_position": self._last_position
+            })
 
     async def _dispatch_voice_update(self, voice_data: Dict[str, Any]):
         if {"sessionId", "event"} != self._voice_state.keys():
