@@ -462,7 +462,7 @@ class Player {
             $("#author").text(currentTrack.author);
             $("#length").text(this.msToReadableTime(currentTrack.length));
             $("#image").attr("src", currentTrack.imageUrl);
-            $("#largeImage").attr("src", currentTrack.imageUrl);
+            $("#largeImage").attr("src", `${window.location.protocol}//${window.location.hostname}:${window.location.port}/` + currentTrack.imageUrl);
         }
         $("#channel-name").text((this.channelName == "") ? "Not Found" : this.channelName);
         var play_pause_btn = $("#play-pause-button");

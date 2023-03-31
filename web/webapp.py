@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, session, request, render_template, abort
+from flask import Flask, redirect, url_for, session, request, render_template, abort, Response, stream_with_context
 from flask_socketio import SocketIO, emit, join_room, leave_room, rooms, disconnect
 from ipc import IPCClient
 from objects import User
@@ -110,8 +110,7 @@ def login_required(func):
             return redirect(url_for('login'))
 
         if token not in USERS:
-            resp = requests_api(f'{DISCORD_API_BASE_URL}/users/@me',
-                                headers={'Authorization': f'Bearer {token}'})
+            resp = requests_api(f'{DISCORD_API_BASE_URL}/users/@me', headers={'Authorization': f'Bearer {token}'})
             if resp:
                 user = USERS[token] = User(resp)
             else:
@@ -129,6 +128,17 @@ def requests_api(url: str, headers=None):
         return False
 
     return resp.json()
+
+@app.route('/<path:url>', methods=["GET"])
+def proxy(url):
+    request = requests.get(url, stream=True)
+    response = Response(
+        stream_with_context(request.iter_content()),
+        content_type=request.headers['content-type'],
+        status=request.status_code
+    )
+    response.headers['Access-Control-Allow-Origin'] = "*"
+    return response
 
 # home page
 @app.route('/')
