@@ -68,7 +68,7 @@ class Admin(commands.Cog, name="settings"):
         await ctx.send(get_lang(ctx.guild.id, 'changedLanguage').format(language))
 
     @language.autocomplete('language')
-    async def autocomplete_callback(self, ctx: commands.Context, current: str) -> list:
+    async def autocomplete_callback(self, interaction: discord.Interaction, current: str) -> list:
         if current:
             return [app_commands.Choice(name=lang, value=lang) for lang in langs.keys() if current.upper() in lang]
         return [app_commands.Choice(name=lang, value=lang) for lang in langs.keys()]

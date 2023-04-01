@@ -52,10 +52,6 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
 
     return await ctx.send(embed=embed, view=LinkView(player.get_msg('nowplayingLink').format(track.source), track.emoji, track.uri))
 
-
-async def help_autocomplete(ctx: commands.Context, current: str) -> list:
-    return [app_commands.Choice(name=c.capitalize(), value=c) for c in ctx.bot.cogs if c not in ["Nodes", "Task"] and current in c]
-
 class Basic(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -69,6 +65,9 @@ class Basic(commands.Cog):
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command(
             self.ctx_menu.name, type=self.ctx_menu.type)
+
+    async def help_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
+        return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
