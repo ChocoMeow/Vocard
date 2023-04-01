@@ -9,7 +9,6 @@ import json
 import os
 import asyncio
 import functools
-import threading
 
 load_dotenv()
 

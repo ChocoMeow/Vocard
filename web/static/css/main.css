@@ -544,6 +544,7 @@ a {
     height: 100%;
     overflow: hidden;
     transition: all .5s ease-in-out;
+    z-index: 2;
 }
 
 .users-bar.active {
