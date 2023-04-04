@@ -214,7 +214,7 @@ class VolumeDown(discord.ui.Button):
         if not self.player.is_privileged(interaction.user):
             return interaction.response.send_message(self.player.get_msg("missingPerms_function"))
 
-        value = value if (value := self.player.volume - 20) >= 0 else 150
+        value = value if (value := self.player.volume - 20) >= 0 else 0
         await self.player.set_volume(value, interaction.user)
 
         await interaction.response.send_message(self.player.get_msg('setVolume').format(value), ephemeral=True)
