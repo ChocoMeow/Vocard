@@ -243,6 +243,45 @@ class VolumeMute(discord.ui.Button):
 
         await interaction.response.edit_message(view=self.view)
 
+class AutoPlay(discord.ui.Button):
+    def __init__(self, player, style, row):
+        self.player = player
+        super().__init__(emoji="💡",
+                         label=player.get_msg('buttonAutoPlay'),
+                         style=style, row=row)
+    
+    async def callback(self, interaction: discord.Interaction):
+        if not self.player.is_privileged(interaction.user):
+            return interaction.response.send_message(self.player.get_msg("missingPerms_autoplay"), ephemeral=True)
+
+        check = not self.player.settings.get("autoplay", False)
+        self.player.settings['autoplay'] = check
+        await interaction.response.send_message(self.player.get_msg('autoplay').format(self.player.get_msg('enabled') if check else self.player.get_msg('disabled')))
+
+        if not self.player.is_playing:
+            await self.player.do_next()
+
+class Shuffle(discord.ui.Button):
+    def __init__(self, player, style, row):
+        self.player = player
+        super().__init__(emoji="🔀",
+                         label=player.get_msg('buttonShuffle'),
+                         style=style, row=row)
+    
+    async def callback(self, interaction: discord.Interaction):
+        if not self.player.is_privileged(interaction.user):
+            if interaction.user in self.player.shuffle_votes:
+                return await interaction.response.send_message(self.player.get_msg('voted'), ephemeral=True)
+            else:
+                self.player.shuffle_votes.add(interaction.user)
+                if len(self.player.shuffle_votes) >= (required := self.player.required()):
+                    pass
+                else:
+                    return await interaction.response.send_message(self.player.get_msg('shuffleVote').format(interaction.user, len(self.player.skip_votes), required))
+        
+        await self.player.shuffle("queue", interaction.user)
+        await interaction.response.send_message(self.player.get_msg('shuffled'))
+
 class Tracks(discord.ui.Select):
     def __init__(self, player, style, row):
 
@@ -279,7 +318,9 @@ btnType = {
     "volumeup": VolumeUp,
     "volumedown": VolumeDown,
     "volumemute": VolumeMute,
-    "tracks": Tracks
+    "tracks": Tracks,
+    "autoplay": AutoPlay,
+    "shuffle": Shuffle
 }
 
 btnColor = {
@@ -327,9 +368,10 @@ class InteractiveController(discord.ui.View):
 
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
         if isinstance(error, ButtonOnCooldown):
-            try:
-                sec = int(error.retry_after)
-                await interaction.response.send_message(f"You're on cooldown for {sec} second{'' if sec == 1 else 's'}!", ephemeral=True)
-            except:
-                return
+            sec = int(error.retry_after)
+            await interaction.response.send_message(f"You're on cooldown for {sec} second{'' if sec == 1 else 's'}!", ephemeral=True)
+        
+        elif isinstance(error, Exception):
+            await interaction.response.send_message(error)
+            
         return

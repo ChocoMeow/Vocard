@@ -122,6 +122,8 @@
     "buttonVolumeDown": "減小音量",
     "buttonVolumeMute": "靜音",
     "buttonVolumeUnmute": "取消靜音",
+    "buttonAutoPlay": "自動播放",
+    "buttonShuffle": "洗牌",
 
     "nowplayingDesc": "**現在播放:**\n```{0}```",
     "nowplayingField": "接下來:",
