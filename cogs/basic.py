@@ -58,7 +58,7 @@ class Basic(commands.Cog):
         self.description = "This category is available to anyone on this server. Voting is required in certain commands."
         self.ctx_menu = app_commands.ContextMenu(
             name="play",
-            callback=self._play,
+            callback=self._play
         )
         self.bot.tree.add_command(self.ctx_menu)
 
@@ -111,39 +111,45 @@ class Basic(commands.Cog):
                 await player.do_next()
 
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def _play(self, ctx: commands.Context, message: discord.Message):
+    async def _play(self, interaction: discord.Interaction, message: discord.Message):
         query = ""
+
         if message.content:
             url = re.findall(
                 "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", message.content)
             if url:
                 query = url[0]
+
         elif message.attachments:
             query = message.attachments[0].url
 
         if not query:
-            return await ctx.send(get_lang(ctx.guild.id, key="noPlaySource"), ephemeral=True)
+            return await interaction.response.send_message(get_lang(interaction.guild.id, key="noPlaySource"), ephemeral=True)
 
-        player: voicelink.Player = ctx.guild.voice_client
+        player: voicelink.Player = interaction.guild.voice_client
         if not player:
-            player = await connect_channel(ctx)
+            player = await connect_channel(interaction)
 
-        if not player.is_user_join(ctx.author):
-            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(interaction.user):
+            return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)
 
-        tracks = await player.get_tracks(query, requester=ctx.author)
+        tracks = await player.get_tracks(query, requester=interaction.user)
         if not tracks:
-            return await ctx.send(player.get_msg('noTrackFound'))
+            return await interaction.response.send_message(player.get_msg('noTrackFound'))
 
         try:
             if isinstance(tracks, voicelink.Playlist):
                 index = await player.add_track(tracks.tracks)
-                await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
+                await interaction.response.send_message(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 position = await player.add_track(tracks[0])
-                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
+                await interaction.response.send_message((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
         except voicelink.QueueFull as e:
-            await ctx.send(e)
+            await interaction.response.send_message(e)
+        
+        except Exception as e:
+            return await interaction.response.send_message(e, ephemeral=True)
+
         finally:
             if not player.is_playing:
                 await player.do_next()

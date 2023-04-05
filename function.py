@@ -11,7 +11,7 @@ from datetime import datetime
 from time import strptime
 from io import BytesIO
 from pymongo import MongoClient
-from typing import Optional
+from typing import Optional, Union
 from addons import Settings
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
@@ -204,20 +204,24 @@ async def similar_track(player) -> bool:
 
     return False
 
-async def connect_channel(ctx: commands.Context, channel: discord.VoiceChannel = None):
+async def connect_channel(ctx: Union[commands.Context, discord.Interaction], channel: discord.VoiceChannel = None):
     voicelink = import_module("voicelink");
     try:
-        channel = channel or ctx.author.voice.channel
+        channel = channel or ctx.author.voice.channel if isinstance(ctx, commands.Context) else ctx.user.voice.channel
     except:
         raise voicelink.VoicelinkException(get_lang(ctx.guild.id, 'noChannel'))
 
     check = channel.permissions_for(ctx.guild.me)
     if check.connect == False or check.speak == False:
-        raise voicelink.VoicelinkException(
-            get_lang(ctx.guild.id, 'noPermission'))
+        raise voicelink.VoicelinkException(get_lang(ctx.guild.id, 'noPermission'))
 
-    player: voicelink.Player = await channel.connect(cls=voicelink.Player(ctx.bot, channel, ctx))
-    await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+    player: voicelink.Player = await channel.connect(cls=voicelink.Player(
+            ctx.bot if isinstance(ctx, commands.Context) else ctx.client, channel, ctx
+        ))
+    
+    if player.is_ipc_connected:
+        await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+
     return player
 
 def time(millis:int) -> str:
