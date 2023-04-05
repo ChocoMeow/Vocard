@@ -113,8 +113,9 @@ def langs_setup():
 
     return
 
-async def create_account(ctx: commands.Context):
-    if not ctx.author:
+async def create_account(ctx: Union[commands.Context, discord.Interaction]):
+    author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
+    if not author:
         return 
     from views import CreateView
     view = CreateView()
@@ -124,12 +125,16 @@ async def create_account(ctx: commands.Context):
                                                     "‌    ➥ We will not perform any data analysis on your data\n"
                                                     "‌    ➥ You have the right to immediately stop the services we offer to you\n"
                                                     "‌    ➥ Please do not abuse our services, such as affecting other users\n", inline=False)
-    message = await ctx.reply(embed=embed, view=view, ephemeral=True)
+    if isinstance(ctx, commands.Context):
+        message = await ctx.reply(embed=embed, view=view, ephemeral=True)
+    else:
+        message = await ctx.response.send_message(embed=embed, view=view, ephemeral=True)
+        
     view.response = message
     await view.wait()
     if view.value:
         try:
-            Playlist.insert_one({'_id':ctx.author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
+            Playlist.insert_one({'_id':author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
         except:
             pass
             
