@@ -5,14 +5,13 @@ import os
 
 from importlib import import_module
 from discord.ext import commands
-from dotenv import load_dotenv
 from random import choice
 from datetime import datetime
 from time import strptime
 from io import BytesIO
 from pymongo import MongoClient
 from typing import Optional, Union
-from addons import Settings
+from addons import Settings, TOKENS
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,36 +19,28 @@ if not os.path.exists(os.path.join(root_dir, "settings.json")):
     raise Exception("Settings file not set!")
 
 #-------------- API Clients --------------
-load_dotenv() #Load .env settings
-MONGODB_NAME = os.getenv('MONGODB_NAME')
-MONGODB_URL = os.getenv('MONGODB_URL')
-if not (MONGODB_NAME and MONGODB_URL):
+tokens: TOKENS = TOKENS();
+
+if not (tokens.mongodb_name and tokens.mongodb_url):
     raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
 
 try:
-    mongodb = MongoClient(host=MONGODB_URL, serverSelectionTimeoutMS=5000)
+    mongodb = MongoClient(host=tokens.mongodb_url, serverSelectionTimeoutMS=5000)
     mongodb.server_info()
     print("Successfully connected to MongoDB!")
 except Exception as e:
     raise Exception("Not able to connect MongoDB! Reason:", e)
 
-collection = mongodb[MONGODB_NAME]['Settings']
-Playlist = mongodb[MONGODB_NAME]['Playlist']
-youtube_api_key = os.getenv('YOUTUBE_API_KEY')
+collection = mongodb[tokens.mongodb_name]['Settings']
+Playlist = mongodb[tokens.mongodb_name]['Playlist']
 
 #--------------- Cache Var ---------------
-try:
-    report_channel_id = int(os.getenv("BUG_REPORT_CHANNEL_ID"))
-except:
-    report_channel_id = 0
-
 settings: Settings
 error_log = {} #Stores error that not a Voicelink Exception
 langs = {} #Stores all the languages in ./langs
 guild_settings = {} #Cache guild language
 local_langs = {} #Stores all the localization languages in ./local_langs 
 playlist_name = {} #Cache the user's playlist name
-
 
 #-------------- Vocard Functions --------------
 def get_settings(guild_id:int):
@@ -178,7 +169,7 @@ async def similar_track(player) -> bool:
         if randomTrack.source != 'youtube':
             return False
 
-        if not youtube_api_key:
+        if not tokens.youtube_api_key:
             return False
         
         request_url = "https://youtube.googleapis.com/youtube/v3/search?part={part}&relatedToVideoId={videoId}&type={type}&videoCategoryId={videoCategoryId}&key={key}".format(
@@ -186,7 +177,7 @@ async def similar_track(player) -> bool:
             videoId=randomTrack.identifier,
             type="video",
             videoCategoryId="10",
-            key=youtube_api_key
+            key=tokens.youtube_api_key
         )
 
         try:

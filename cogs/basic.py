@@ -8,9 +8,9 @@ from function import (
     time as ctime,
     formatTime,
     emoji_source,
-    youtube_api_key,
     requests_api,
     get_lang,
+    tokens,
     settings,
     cooldown_check,
     get_aliases,
@@ -716,7 +716,7 @@ class Basic(commands.Cog):
         if track.source != 'youtube':
             return await ctx.send(player.get_msg('chatpersNotSupport'), ephemeral=True)
 
-        request_uri = "https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id={videoId}&key={key}".format(videoId=track.identifier, key=youtube_api_key)
+        request_uri = "https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id={videoId}&key={key}".format(videoId=track.identifier, key=tokens.youtube_api_key)
 
         data = await requests_api(request_uri)
         if not data:

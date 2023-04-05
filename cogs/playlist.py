@@ -22,19 +22,16 @@ from function import (
 from datetime import datetime
 from views import PlaylistView, InboxView, HelpView
 
-
 def assign_playlistId(existed: list) -> str:
     for i in range(200, 210):
         if str(i) not in existed:
             return str(i)
-
 
 async def check_playlist_perms(userid: int, authorid: int, dId: str) -> dict:
     playlist = await get_playlist(authorid, 'playlist', dId)
     if not playlist or userid not in playlist['perms']['read']:
         return {}
     return playlist
-
 
 async def check_playlist(ctx: commands.Context, name: str = None, full: bool = False, share: bool = True) -> dict:
     user = await get_playlist(ctx.author.id, 'playlist')
@@ -55,7 +52,6 @@ async def check_playlist(ctx: commands.Context, name: str = None, full: bool = F
                     return {'playlist': None, 'position': index, 'id': data}
             return {'playlist': playlist, 'position': index, 'id': data}
     return {'playlist': None, 'position': None, 'id': None}
-
 
 async def search_playlist(url: str, requester: discord.Member, timeNeed=True):
     try:

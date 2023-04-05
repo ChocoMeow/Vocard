@@ -1,10 +1,8 @@
 import voicelink
 import asyncio
 import discord
-import json
 import function as func
 
-from os import getenv
 from discord.ext import commands
 
 class Nodes(commands.Cog):
@@ -22,8 +20,8 @@ class Nodes(commands.Cog):
         for n in func.settings.nodes.values():
             try:
                 await self.voicelink.create_node(bot=self.bot, 
-                                                 spotify_client_id=getenv('SPOTIFY_CLIENT_ID'), 
-                                                 spotify_client_secret=getenv('SPOTIFY_CLIENT_SECRET'),
+                                                 spotify_client_id=func.tokens.spotify_client_id, 
+                                                 spotify_client_secret=func.tokens.spotify_client_secret,
                                                  **n)
             except:
                 print(f'Node {n["identifier"]} is not able to connect!')
