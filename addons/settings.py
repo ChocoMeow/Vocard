@@ -13,6 +13,7 @@ class Settings:
         self.cooldowns_settings = settings.get("cooldowns", {})
         self.aliases_settings = settings.get("aliases", {})
         self.controller_settings = settings.get("controller", [["back", "resume", "skip", {"stop": "red"}, "add"], ["tracks"]])
+        self.lyrics_platform = settings.get("lyrics_platform", "A_ZLyrics").lower()
         self.ipc_server = settings.get("ipc_server", {
                 "host": "127.0.0.1",
                 "port": 8000,

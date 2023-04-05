@@ -17,7 +17,7 @@ from function import (
     connect_channel
 )
 
-from addons import getLyrics
+from addons import lyricsPlatform
 from views import SearchView, ListView, LinkView, LyricsView, ChapterView, HelpView
 from validators import url
 
@@ -664,12 +664,12 @@ class Basic(commands.Cog):
                 return await ctx.send(get_lang(ctx.guild.id, 'noTrackPlaying'), ephemeral=True)
             name = player.current.title + " " + player.current.author
         await ctx.defer()
-        song = await getLyrics(name)
+
+        song = await lyricsPlatform.get(settings.lyrics_platform)().getLyrics(name)
         if not song:
             return await ctx.send(get_lang(ctx.guild.id, 'lyricsNotFound'), ephemeral=True)
 
-        view = LyricsView(name=name, source={_: re.findall(
-            r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
+        view = LyricsView(name=name, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
         message = await ctx.send(embed=view.build_embed(), view=view)
         view.response = message
 
