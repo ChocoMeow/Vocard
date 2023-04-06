@@ -44,7 +44,8 @@ from discord import (
     Member,
     Embed,
     ui,
-    Message
+    Message,
+    Interaction
 )
 
 from discord.ext import commands
@@ -76,12 +77,12 @@ class Player(VoiceProtocol):
         self, 
         client: Optional[Client] = None, 
         channel: Optional[VoiceChannel] = None, 
-        ctx: commands.Context = None,
+        ctx: Union[commands.Context, Interaction] = None,
     ):
         self.client = client
         self._bot = client
         self.context = ctx
-        self.dj: Member = ctx.author
+        self.dj: Member = ctx.user if isinstance(ctx, Interaction) else ctx.author
         self.channel: VoiceChannel = channel
         self._guild = channel.guild if channel else None
         self._ipc_connection: bool = False

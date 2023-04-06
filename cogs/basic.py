@@ -8,16 +8,16 @@ from function import (
     time as ctime,
     formatTime,
     emoji_source,
-    youtube_api_key,
     requests_api,
     get_lang,
+    tokens,
     settings,
     cooldown_check,
     get_aliases,
     connect_channel
 )
 
-from addons import getLyrics
+from addons import lyricsPlatform
 from views import SearchView, ListView, LinkView, LyricsView, ChapterView, HelpView
 from validators import url
 
@@ -52,23 +52,22 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
 
     return await ctx.send(embed=embed, view=LinkView(player.get_msg('nowplayingLink').format(track.source), track.emoji, track.uri))
 
-
-async def help_autocomplete(ctx: commands.Context, current: str) -> list:
-    return [app_commands.Choice(name=c.capitalize(), value=c) for c in ctx.bot.cogs if c not in ["Nodes", "Task"] and current in c]
-
 class Basic(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.description = "This category is available to anyone on this server. Voting is required in certain commands."
         self.ctx_menu = app_commands.ContextMenu(
             name="play",
-            callback=self._play,
+            callback=self._play
         )
         self.bot.tree.add_command(self.ctx_menu)
 
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command(
             self.ctx_menu.name, type=self.ctx_menu.type)
+
+    async def help_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
+        return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
@@ -112,39 +111,45 @@ class Basic(commands.Cog):
                 await player.do_next()
 
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def _play(self, ctx: commands.Context, message: discord.Message):
+    async def _play(self, interaction: discord.Interaction, message: discord.Message):
         query = ""
+
         if message.content:
             url = re.findall(
                 "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", message.content)
             if url:
                 query = url[0]
+
         elif message.attachments:
             query = message.attachments[0].url
 
         if not query:
-            return await ctx.send(get_lang(ctx.guild.id, key="noPlaySource"), ephemeral=True)
+            return await interaction.response.send_message(get_lang(interaction.guild.id, key="noPlaySource"), ephemeral=True)
 
-        player: voicelink.Player = ctx.guild.voice_client
+        player: voicelink.Player = interaction.guild.voice_client
         if not player:
-            player = await connect_channel(ctx)
+            player = await connect_channel(interaction)
 
-        if not player.is_user_join(ctx.author):
-            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        if not player.is_user_join(interaction.user):
+            return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)
 
-        tracks = await player.get_tracks(query, requester=ctx.author)
+        tracks = await player.get_tracks(query, requester=interaction.user)
         if not tracks:
-            return await ctx.send(player.get_msg('noTrackFound'))
+            return await interaction.response.send_message(player.get_msg('noTrackFound'))
 
         try:
             if isinstance(tracks, voicelink.Playlist):
                 index = await player.add_track(tracks.tracks)
-                await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
+                await interaction.response.send_message(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 position = await player.add_track(tracks[0])
-                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
+                await interaction.response.send_message((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)))
         except voicelink.QueueFull as e:
-            await ctx.send(e)
+            await interaction.response.send_message(e)
+        
+        except Exception as e:
+            return await interaction.response.send_message(e, ephemeral=True)
+
         finally:
             if not player.is_playing:
                 await player.do_next()
@@ -659,12 +664,12 @@ class Basic(commands.Cog):
                 return await ctx.send(get_lang(ctx.guild.id, 'noTrackPlaying'), ephemeral=True)
             name = player.current.title + " " + player.current.author
         await ctx.defer()
-        song = await getLyrics(name)
+
+        song = await lyricsPlatform.get(settings.lyrics_platform)().getLyrics(name)
         if not song:
             return await ctx.send(get_lang(ctx.guild.id, 'lyricsNotFound'), ephemeral=True)
 
-        view = LyricsView(name=name, source={_: re.findall(
-            r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
+        view = LyricsView(name=name, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
         message = await ctx.send(embed=view.build_embed(), view=view)
         view.response = message
 
@@ -711,7 +716,7 @@ class Basic(commands.Cog):
         if track.source != 'youtube':
             return await ctx.send(player.get_msg('chatpersNotSupport'), ephemeral=True)
 
-        request_uri = "https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id={videoId}&key={key}".format(videoId=track.identifier, key=youtube_api_key)
+        request_uri = "https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id={videoId}&key={key}".format(videoId=track.identifier, key=tokens.youtube_api_key)
 
         data = await requests_api(request_uri)
         if not data:

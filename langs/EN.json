@@ -122,6 +122,8 @@
     "buttonVolumeDown": "Volume Down",
     "buttonVolumeMute": "Mute",
     "buttonVolumeUnmute": "Unmute",
+    "buttonAutoPlay": "Autoplay",
+    "buttonShuffle": "Shuffle",
 
     "nowplayingDesc": "**Now Playing:**\n```{0}```",
     "nowplayingField": "Up Next:",

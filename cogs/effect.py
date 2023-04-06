@@ -27,8 +27,8 @@ class Effect(commands.Cog):
         self.bot = bot
         self.description = "This category is only available to DJ on this server. (You can setdj on your server by /settings setdj <DJ ROLE>)"
 
-    async def effect_autocomplete(self, ctx: commands.Context, current: str) -> list:
-        player: voicelink.Player = ctx.guild.voice_client
+    async def effect_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
+        player: voicelink.Player = interaction.guild.voice_client
         if not player:
             return []
         if current:

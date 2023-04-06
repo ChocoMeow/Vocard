@@ -8,11 +8,9 @@ import function as func
 
 from discord.ext import commands
 from web import IPCServer
-from dotenv import load_dotenv
 from datetime import datetime
 from voicelink import VoicelinkException
 
-load_dotenv()
 func.init()
 
 class Translator(discord.app_commands.Translator):
@@ -35,7 +33,7 @@ class Vocard(commands.Bot):
             self,
             host=func.settings.ipc_server["host"],
             port=func.settings.ipc_server["port"],
-            sercet_key=os.getenv("SERCET_KEY")
+            sercet_key=func.tokens.sercet_key
         )
 
     async def on_message(self, message: discord.Message, /) -> None:
@@ -71,6 +69,8 @@ class Vocard(commands.Bot):
         print(f"Discord Version: {discord.__version__}")
         print(f"Python Version: {sys.version}")
         print("------------------")
+
+        func.tokens.client_id = self.user.id
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
         error = getattr(exception, 'original', exception)
@@ -130,4 +130,4 @@ bot = Vocard(command_prefix=get_prefix,
 
 if __name__ == "__main__":
     update.checkVersion(withMsg=True)
-    bot.run(os.getenv("TOKEN"), log_handler=None)
+    bot.run(func.tokens.token, log_handler=None)

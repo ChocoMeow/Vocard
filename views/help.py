@@ -24,7 +24,6 @@ SOFTWARE.
 import discord
 from discord.ext import commands
 
-from os import getenv
 import function as func
 
 class HelpDropdown(discord.ui.Select):
@@ -59,7 +58,7 @@ class HelpView(discord.ui.View):
         self.categorys = [ name.capitalize() for name, cog in bot.cogs.items() if len([c for c in cog.walk_commands()]) ]
 
         self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.settings.invite_link))
-        self.add_item(discord.ui.Button(label='Invite', emoji=':invite:915152589056790589', url='https://discord.com/oauth2/authorize?client_id={}&permissions=2184260928&scope=bot%20applications.commands'.format(getenv('CLIENT_ID'))))
+        self.add_item(discord.ui.Button(label='Invite', emoji=':invite:915152589056790589', url='https://discord.com/oauth2/authorize?client_id={}&permissions=2184260928&scope=bot%20applications.commands'.format(func.tokens.client_id)))
         self.add_item(discord.ui.Button(label='Github', url='https://github.com/ChocoMeow/Vocard'))
         self.add_item(discord.ui.Button(label='Donate', emoji=':patreon:913397909024800878', url='https://www.patreon.com/Vocard'))
         self.add_item(HelpDropdown(self.categorys))

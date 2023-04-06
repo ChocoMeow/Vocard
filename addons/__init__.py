@@ -1,2 +1,2 @@
-from .lyrics import getLyrics
-from .settings import Settings
+from .lyrics import lyricsPlatform
+from .settings import Settings, TOKENS

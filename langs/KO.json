@@ -122,6 +122,8 @@
     "buttonVolumeDown": "볼륨 낮추기",
     "buttonVolumeMute": "무음",
     "buttonVolumeUnmute": "음소거 해제",
+    "buttonAutoPlay": "자동 재생",
+    "buttonShuffle": "혼합",
 
     "nowplayingDesc": "**지금 재생 중:**\n```{0}```",
     "nowplayingField": "다음으로:",

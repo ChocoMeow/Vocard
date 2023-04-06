@@ -67,8 +67,7 @@ $(document).ready(function () {
 
     $('body').click(function (event) {
         var $target = $(event.target);
-
-        if (!$target.closest(".search-contrainer").is('.search-contrainer') && $('#search-result-list').css("display") != 'none') {
+        if (!$target.closest(".search-container").length && !$target.is("#search-input") && $('#search-result-list').css("display") != 'none') {
             $("#search-result-list").fadeOut(200);
         }
 

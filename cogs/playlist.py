@@ -22,19 +22,16 @@ from function import (
 from datetime import datetime
 from views import PlaylistView, InboxView, HelpView
 
-
 def assign_playlistId(existed: list) -> str:
     for i in range(200, 210):
         if str(i) not in existed:
             return str(i)
-
 
 async def check_playlist_perms(userid: int, authorid: int, dId: str) -> dict:
     playlist = await get_playlist(authorid, 'playlist', dId)
     if not playlist or userid not in playlist['perms']['read']:
         return {}
     return playlist
-
 
 async def check_playlist(ctx: commands.Context, name: str = None, full: bool = False, share: bool = True) -> dict:
     user = await get_playlist(ctx.author.id, 'playlist')
@@ -56,7 +53,6 @@ async def check_playlist(ctx: commands.Context, name: str = None, full: bool = F
             return {'playlist': playlist, 'position': index, 'id': data}
     return {'playlist': None, 'position': None, 'id': None}
 
-
 async def search_playlist(url: str, requester: discord.Member, timeNeed=True):
     try:
         tracks = await voicelink.NodePool.get_node().get_tracks(url, requester=requester)
@@ -74,19 +70,21 @@ class Playlists(commands.Cog, name="playlist"):
         self.bot = bot
         self.description = "This is the Vocard playlist system. You can save your favorites and use Vocard to play on any server."
 
-    async def playlist_autocomplete(self, ctx: commands.Context, current: str) -> list:
-        playlists = playlist_name.get(str(ctx.author.id), None)
+    async def playlist_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
+        playlists = playlist_name.get(str(interaction.user.id), None)
         if not playlists:
-            playlists_raw = await get_playlist(ctx.author.id, 'playlist')
-            playlists = playlist_name[str(ctx.author.id)] = [
+            playlists_raw = await get_playlist(interaction.user.id, 'playlist')
+            playlists = playlist_name[str(interaction.user.id)] = [
                 value['name'] for value in playlists_raw.values()] if playlists_raw else []
         if current:
             return [app_commands.Choice(name=p, value=p) for p in playlists if current in p]
         return [app_commands.Choice(name=p, value=p) for p in playlists]
 
-    @commands.hybrid_group(name="playlist", 
-                           aliases=get_aliases("playlist"),
-                           invoke_without_command=True)
+    @commands.hybrid_group(
+        name="playlist", 
+        aliases=get_aliases("playlist"),
+        invoke_without_command=True
+    )
     async def playlist(self, ctx: commands.Context):
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(self.qualified_name)

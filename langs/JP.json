@@ -122,6 +122,8 @@
     "buttonVolumeDown": "ボリュームダウン",
     "buttonVolumeMute": "無音",
     "buttonVolumeUnmute": "ミュート解除",
+    "buttonAutoPlay": "自動再生",
+    "buttonShuffle": "シャッフル",
 
     "nowplayingDesc": "**再生中:**\n```{0}```",
     "nowplayingField": "次に:",
