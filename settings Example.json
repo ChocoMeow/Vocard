@@ -9,6 +9,9 @@
         }   
     },
     "prefix": "?",
+    "activity":[
+        {"listen": "/help"}
+    ],
     "bot_access_user": [],
     "color_code":"0xb3b3b3",
     "default_max_queue": 1000,

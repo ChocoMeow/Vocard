@@ -119,14 +119,16 @@ member_cache = discord.MemberCacheFlags(
     joined=False
 )
 
-bot = Vocard(command_prefix=get_prefix,
-             help_command=None,
-             tree_cls=CommandCheck,
-             chunk_guilds_at_startup=False,
-             member_cache_flags=member_cache,
-             activity=discord.Activity(type=discord.ActivityType.listening, name="/help"),
-             case_insensitive=True,
-             intents=intents)
+bot = Vocard(
+    command_prefix=get_prefix,
+    help_command=None,
+    tree_cls=CommandCheck,
+    chunk_guilds_at_startup=False,
+    member_cache_flags=member_cache,
+    activity=discord.Activity(type=discord.ActivityType.listening, name="Starting..."),
+    case_insensitive=True,
+    intents=intents
+)
 
 if __name__ == "__main__":
     update.checkVersion(withMsg=True)

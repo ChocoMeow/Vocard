@@ -7,6 +7,7 @@ class Settings:
         self.nodes = settings.get("nodes", {})
         self.max_queue = settings.get("default_max_queue", 1000)
         self.bot_prefix = settings.get("prefix", "")
+        self.activity = settings.get("activity", [{"listen": "/help"}])
         self.embed_color = int(settings.get("embed_color", "0xb3b3b3"), 16)
         self.bot_access_user = settings.get("bot_access_user", [])
         self.emoji_source_raw = settings.get("emoji_source_raw", {})
