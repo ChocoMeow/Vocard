@@ -197,11 +197,11 @@ class Playlists(commands.Cog, name="playlist"):
     async def create(self, ctx: commands.Context, name: str, link: str = None):
         "Create your custom playlist."
         if len(name) > 10:
-            return await ctx.response.send_message(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
         isLinkType = True if link else False
         rank, max_p, max_t = await checkroles(ctx.author.id)
         if isLinkType and rank != "Gold":
-            return await ctx.response.send_message(get_lang(ctx.guild.id, 'playlistCreateError'), ephemeral=True)
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistCreateError'), ephemeral=True)
         user = await check_playlist(ctx, full=True)
         if not user:
             return await create_account(ctx)
@@ -253,9 +253,9 @@ class Playlists(commands.Cog, name="playlist"):
     async def share(self, ctx: commands.Context, member: discord.Member, name: str):
         "Share your custom playlist with your friends."
         if member.id == ctx.author.id:
-            return await ctx.response.send_message(get_lang(ctx.guild.id, 'playlistSendErrorPlayer'), ephemeral=True)
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistSendErrorPlayer'), ephemeral=True)
         if member.bot:
-            return await ctx.response.send_message(get_lang(ctx.guild.id, 'playlistSendErrorBot'), ephemeral=True)
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistSendErrorBot'), ephemeral=True)
         result = await check_playlist(ctx, name.lower(), share=False)
         if not result:
             return await create_account(ctx)
@@ -289,9 +289,9 @@ class Playlists(commands.Cog, name="playlist"):
     async def rename(self, ctx: commands.Context, name: str, newname: str) -> None:
         "Rename your custom playlist."
         if len(newname) > 10:
-            return await ctx.response.send_message(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
         if name.lower() == newname.lower():
-            return await ctx.response.send_message(get_lang(ctx.guild.id, 'playlistSameName'), ephemeral=True)
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistSameName'), ephemeral=True)
         user = await check_playlist(ctx, full=True)
         if not user:
             return await create_account(ctx)
@@ -317,11 +317,11 @@ class Playlists(commands.Cog, name="playlist"):
         if user is None:
             return await create_account(ctx)
         if not user['inbox']:
-            return await ctx.response.send_message(get_lang(ctx.guild.id, 'inboxNoMsg'), ephemeral=True)
+            return await ctx.send(get_lang(ctx.guild.id, 'inboxNoMsg'), ephemeral=True)
 
         inbox = user['inbox'].copy()
         view = InboxView(ctx.author.name, user['inbox'])
-        message = await ctx.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
+        message = await ctx.send(embed=view.build_embed(), view=view, ephemeral=True)
         view.response = message
         await view.wait()
 
