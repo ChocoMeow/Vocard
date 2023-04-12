@@ -220,7 +220,7 @@ class Playlists(commands.Cog, name="playlist"):
         data = {'uri': link, 'perms': {'read': []}, 'name': name, 'type': 'link'} if isLinkType else {
             'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
         await update_playlist(ctx.author.id, {f"playlist.{assign_playlistId([data for data in user])}": data})
-        await ctx.send(get_lang(ctx.guild.id, 'playlistCreated'))
+        await ctx.send(get_lang(ctx.guild.id, 'playlistCreated').format(name))
 
     @playlist.command(name="delete", aliases=get_aliases("delete"))
     @app_commands.describe(name="The name of the playlist.")

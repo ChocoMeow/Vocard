@@ -22,8 +22,8 @@ $(document).ready(function () {
                 $(".thumbnail-background").css({
                     "background": `linear-gradient(-132deg, ${colors[0]}, ${colors[1]}, ${colors[2]}, ${colors[3]})`,
                     "width": "70%",
-                    "padding-bottom": "70%"
-                })
+                    "padding-bottom": "70%",
+                });
             })
             .catch(error => { return });
 
