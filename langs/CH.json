@@ -106,10 +106,6 @@
     "playlistrepeated": "您的播放列表中已經有相同的曲目！",
     "playlistAdded": "❤️ 將 **{0}** 添加到 {1} 的播放列表 [`{2}`]！",
 
-    "playerAuthor": "音樂控制器 | {0}",
-    "playerDesc": "**現在播放: ```[{0}]```\n鏈接: [點擊我]({1}) | 請求者: {2} | DJ: {3}**",
-    "playerFooter": "隊列長度: {0} | 時長: {1} | 音量: {2}% {3}",
-    "playerFooter2": "| 重複: {0}",
     "playerDropdown": "選擇要跳到的歌曲...",
 
     "buttonBack": "後退",

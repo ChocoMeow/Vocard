@@ -106,10 +106,6 @@
     "playlistrepeated": "Es gibt bereits denselben Titel in Ihrer Playlist!",
     "playlistAdded": "❤️ **{0}** zur Playlist [`{2}`] von {1} hinzugefügt!",
 
-    "playerAuthor": "Musik-Controller | {0}",
-    "playerDesc": "**Läuft gerade: ```[{0}]```\nLink: [Klick mich]({1}) | Anforderer: {2} | DJ: {3}**",
-    "playerFooter": "Warteschlangelänge: {0} | Dauer: {1} | Lautstärke: {2}% {3}",
-    "playerFooter2": "| Wiederholen: {0}",
     "playerDropdown": "Wählen Sie einen Song aus, zudem Sie springen möchten...",
 
     "buttonBack": "Zurück",

@@ -57,6 +57,7 @@ from .filters import Filter, Filters
 from .objects import Track
 from .pool import Node, NodePool
 from .queue import Queue, FairQueue
+from .placeholders import Placeholders
 from random import shuffle
 
 class Player(VoiceProtocol):
@@ -365,21 +366,50 @@ class Player(VoiceProtocol):
         self.updating = False
 
     async def build_embed(self):
-        track = self.current
-
-        if not track:
-            embed=Embed(title=self.get_msg("noTrackPlaying"), description=f"[Vote](https://top.gg/bot/605618911471468554/vote/) | [Support]({func.settings.invite_link}) | [Invite](https://discord.com/oauth2/authorize?client_id=605618911471468554&permissions=2184260928&scope=bot%20applications.commands) | [Questionnaire](https://forms.gle/UqeeEv4GEdCq9hi3A)", color=func.settings.embed_color)
-            embed.set_image(url='https://i.imgur.com/dIFBwU7.png')
-            
+        if self.current:
+            raw = func.settings.controller.get("embeds", {}).get("active")
         else:
-            try:
-                embed = Embed(color=func.settings.embed_color)
-                embed.set_author(name=self.get_msg("playerAuthor").format(self.channel.name), icon_url=self.client.user.avatar.url)
-                embed.description = self.get_msg("playerDesc").format(track.title, track.uri, (track.requester.mention if track.requester else "<@605618911471468554>"), (f"<@&{self.settings['dj']}>" if self.settings.get('dj') else f"{self.dj.mention}"))
-                embed.set_image(url=track.thumbnail if track.thumbnail else "https://cdn.discordapp.com/attachments/674788144931012638/823086668445384704/eq-dribbble.gif")
-                embed.set_footer(text=self.get_msg("playerFooter").format(self.queue.count, (self.get_msg("live") if track.is_stream else func.time(track.length)), self.volume, self.get_msg("playerFooter2").format(self.queue.repeat.capitalize()) if self.queue._repeat else ""))
-            except:
-                embed = Embed(description=self.get_msg("missingTrackInfo"), color=func.settings.embed_color)
+            raw = func.settings.controller.get("embeds", {}).get("inactive")
+        
+        if not raw:
+            return
+        
+        ph = Placeholders(self)
+        try:
+            embed = Embed()
+            if author := raw.get("author"):
+                embed.set_author(
+                    name = ph.replace(author.get("name")),
+                    url = ph.replace(author.get("url")),
+                    icon_url = ph.replace(author.get("icon_url"))
+                )
+            
+            if header := raw.get("header"):
+                embed.title = ph.replace(header.get("title"))
+                embed.url = ph.replace(header.get("url"))
+
+            if fields := raw.get("fields", []):
+                for f in fields:
+                    embed.add_field(name=ph.replace(f.get("name")), value=ph.replace(f.get("value")))
+
+            if footer := raw.get("footer"):
+                embed.set_footer(
+                    text = ph.replace(footer.get("text")),
+                    icon_url =  ph.replace(footer.get("icon_url"))
+                ) 
+
+            if thumbnail := raw.get("thumbnail"):
+                embed.set_thumbnail(url = ph.replace(thumbnail))
+            
+            if image := raw.get("image"):
+                embed.set_image(url = ph.replace(image))
+
+            embed.description = ph.replace(raw.get("description"))
+            embed.color = int(ph.replace(raw.get("color")))
+
+        except:
+            embed = Embed(description=self.get_msg("missingTrackInfo"), color=func.settings.embed_color)
+
         return embed
 
     async def is_position_fresh(self):

@@ -33,10 +33,34 @@
         "reddit": "<:reddit:996007566863773717>",
         "tiktok": "<:tiktok:996007689798811698>"
     },
-    "controller": [
-        ["back", "resume", "skip", {"stop": "red"}, "add"],
-        ["tracks"]
-    ],
+    "default_controller": {
+        "embeds": {
+            "active": {
+                "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
+                "footer": {
+                    "text": "Queue Length: @@queue_length@@ | Duration: @@duration@@ | Volume: @@volume@@% {{loop_mode!=Off ?? | Repeat: @@loop_mode@@}}"
+                },
+                "image": "@@track_thumbnail@@",
+                "author": {
+                    "name": "Music Controller | @@channel_name@@",
+                    "icon_url": "@@bot_icon@@"
+                },
+                "color": "@@default_embed_color@@"
+            },
+            "inactive": {
+                "header": {
+                    "title": "There are no songs playing right now"
+                },
+                "description": "[Support](@@server_invite_link@@) | [Invite](@@invite_link@@) | [Questionnaire](https://forms.gle/Qm8vjBfg2kp13YGD7)",
+                "image": "https://i.imgur.com/dIFBwU7.png",
+                "color": "@@default_embed_color@@"
+            }
+        },
+        "default_buttons": [
+            ["back", "resume", "skip", {"stop": "red"}, "add"],
+            ["tracks"]
+        ]
+    },
     "cooldowns": {
         "connect": [2, 30],
         "playlist view": [1, 30]

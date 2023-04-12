@@ -106,10 +106,6 @@
     "playlistrepeated": "There is already the same track in your playlist!",
     "playlistAdded": "❤️ Added **{0}** into {1}'s playlist [`{2}`]!",
 
-    "playerAuthor": "Music Controller | {0}",
-    "playerDesc": "**Now Playing: ```[{0}]```\nLink: [Click Me]({1}) | Requester: {2} | DJ: {3}**",
-    "playerFooter": "Queue Length: {0} | Duration: {1} | Volume: {2}% {3}",
-    "playerFooter2": "| Repeat: {0}",
     "playerDropdown": "Select a song to skip to ...",
 
     "buttonBack": "Back",

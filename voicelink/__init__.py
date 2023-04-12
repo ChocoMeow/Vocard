@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__version__ = "0.9"
+__version__ = "1.0"
 __author__ = 'Vocard Development, Choco'
 __license__ = "MIT"
 __copyright__ = "Copyright 2023 (c) Vocard Development, Choco"
@@ -34,3 +34,4 @@ from .objects import *
 from .player import Player
 from .pool import *
 from .queue import *
+from placeholders import Placeholders

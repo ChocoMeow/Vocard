@@ -106,10 +106,6 @@
     "playlistrepeated": "재생 목록에 이미 같은 트랙이 있습니다!",
     "playlistAdded": "❤️ **{0}**을 {1}의 재생목록 [`{2}`]에 추가했습니다!",
 
-    "playerAuthor": "음악 컨트롤러 | {0}",
-    "playerDesc": "**지금 재생 중: ```[{0}]```\n링크: [클릭 해주세요]({1}) | 요청자: {2} | DJ: {3}**",
-    "playerFooter": "대기열 길이: {0} | 지속: {1} | 무게: {2}% {3}",
-    "playerFooter2": "| 반복하다: {0}",
     "playerDropdown": "건너뛸 노래 선택 ...",
 
     "buttonBack": "뒤",
