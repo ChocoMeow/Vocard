@@ -5,9 +5,9 @@
 # Vocard (Discord Music Bot)
 > Vocard is a simple custom Disocrd Music Bot built with Python & [discord.py](https://discordpy.readthedocs.io/en/stable/)
 
-# Demo (Bot & Dashboard)
-* [Discord Bot](https://discord.com/api/oauth2/authorize?client_id=890399639008866355&permissions=36708608&scope=bot%20applications.commands)
-* [Dashboard](http://vocard.xyz)
+Demo:
+[Discord Bot Demo](https://discord.com/api/oauth2/authorize?client_id=890399639008866355&permissions=36708608&scope=bot%20applications.commands),
+[Dashboard Demo](http://vocard.xyz)
 
 ## Tutorial
 Click on the image below to watch the tutorial on Youtube.
@@ -110,10 +110,34 @@ MONGODB_NAME = Vocard
         "reddit": "<:reddit:996007566863773717>",
         "tiktok": "<:tiktok:996007689798811698>"
     },
-    "controller": [
-        ["back", "resume", "skip", {"stop": "red"}, "add"],
-        ["tracks"]
-    ],
+    "default_controller": {
+        "embeds": {
+            "active": {
+                "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
+                "footer": {
+                    "text": "Queue Length: @@queue_length@@ | Duration: @@duration@@ | Volume: @@volume@@% {{loop_mode!=Off ?? | Repeat: @@loop_mode@@}}"
+                },
+                "image": "@@track_thumbnail@@",
+                "author": {
+                    "name": "Music Controller | @@channel_name@@",
+                    "icon_url": "@@bot_icon@@"
+                },
+                "color": "@@default_embed_color@@"
+            },
+            "inactive": {
+                "header": {
+                    "title": "There are no songs playing right now"
+                },
+                "description": "[Support](@@server_invite_link@@) | [Invite](@@invite_link@@) | [Questionnaire](https://forms.gle/Qm8vjBfg2kp13YGD7)",
+                "image": "https://i.imgur.com/dIFBwU7.png",
+                "color": "@@default_embed_color@@"
+            }
+        },
+        "default_buttons": [
+            ["back", "resume", "skip", {"stop": "red"}, "add"],
+            ["tracks"]
+        ]
+    },
     "cooldowns": {
         "connect": [2, 30],
         "playlist view": [1, 30]
@@ -136,9 +160,9 @@ MONGODB_NAME = Vocard
 * For `emoji_source_raw` you can change the source emoji of the track with discord emoji like `<:EMOJI_NAME:EMOJI_ID>`
 * For `cooldowns` you can set a custom cooldown in the command. Example: `"command_name": [The total number of tokens available, The length of the cooldown period in seconds]`
 * For `aliases` you can set custom aliases in the command. Example: `"command_name": [alias1, alias2, ...]`
-* For `controller` you can set custom buttons in controller, you have to pass `2D Array` into controller. [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/BUTTONS.md#examples)
+* For `default_controller` you can set custom embeds and buttons in controller, [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#buttons)
 
-## How to update?
+## How to update? (For Windows and Linux)
 1. Run `python update.py --check` to check if your bot is up to date
 2. Run `python update.py --start` to start update your bot <br/>
 ***Note: Make sure there are no personal files in the directory! Otherwise it will be deleted.***
