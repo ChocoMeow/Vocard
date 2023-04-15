@@ -89,6 +89,9 @@ MONGODB_NAME = Vocard
         }   
     },
     "prefix": "?",
+    "activity":[
+        {"listen": "/help"}
+    ],
     "bot_access_user": [],
     "color_code":"0xb3b3b3",
     "default_max_queue": 1000,
@@ -152,6 +155,7 @@ MONGODB_NAME = Vocard
 ```
 * For `nodes` you have to provide host, port, password and identifier of the [Lavalink Server](https://github.com/freyacodes/Lavalink)
 * For `prefix` you can set the prefix of the bot. (If you don't provide any prefix, the bot will disable the message command).
+* For `activity` you can set the activity of the bot. [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#bot-activity-activity-are-updated-every-10-minutes)
 * For `bot_access_user` you can pass the [discord user id](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-). Example: `[123456789012345678]`
 * For `color_code` you must pass a [Hexadecimal color code](https://htmlcolorcodes.com/) and add `0x` before the color code. Example: `"0xb3b3b3"`
 * For `default_max_queue` you can set a default maximum number of tracks that can be added to the queue.
@@ -160,7 +164,7 @@ MONGODB_NAME = Vocard
 * For `emoji_source_raw` you can change the source emoji of the track with discord emoji like `<:EMOJI_NAME:EMOJI_ID>`
 * For `cooldowns` you can set a custom cooldown in the command. Example: `"command_name": [The total number of tokens available, The length of the cooldown period in seconds]`
 * For `aliases` you can set custom aliases in the command. Example: `"command_name": [alias1, alias2, ...]`
-* For `default_controller` you can set custom embeds and buttons in controller, [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#buttons)
+* For `default_controller` you can set custom embeds and buttons in controller, [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#controller-embeds)
 
 ## How to update? (For Windows and Linux)
 1. Run `python update.py --check` to check if your bot is up to date
