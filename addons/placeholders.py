@@ -6,7 +6,7 @@ class Placeholders:
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.voicelink = import_module("voicelink")
-        self.placeholders = {
+        self.variables = {
             "guilds": self.guilds_count,
             "users": self.users_count,
             "players": self.players_count,
@@ -33,7 +33,7 @@ class Placeholders:
         keys = findall(r'@@(.*?)@@', msg)
 
         for key in keys:
-            value = self.placeholders.get(key.lower(), None)
+            value = self.variables.get(key.lower(), None)
             if value is None:
                 continue
 
