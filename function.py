@@ -3,7 +3,6 @@ import json
 import aiohttp
 import os
 
-from importlib import import_module
 from discord.ext import commands
 from random import choice
 from datetime import datetime
@@ -199,26 +198,6 @@ async def similar_track(player) -> bool:
         return True
 
     return False
-
-async def connect_channel(ctx: Union[commands.Context, discord.Interaction], channel: discord.VoiceChannel = None):
-    voicelink = import_module("voicelink");
-    try:
-        channel = channel or ctx.author.voice.channel if isinstance(ctx, commands.Context) else ctx.user.voice.channel
-    except:
-        raise voicelink.VoicelinkException(get_lang(ctx.guild.id, 'noChannel'))
-
-    check = channel.permissions_for(ctx.guild.me)
-    if check.connect == False or check.speak == False:
-        raise voicelink.VoicelinkException(get_lang(ctx.guild.id, 'noPermission'))
-
-    player: voicelink.Player = await channel.connect(cls=voicelink.Player(
-            ctx.bot if isinstance(ctx, commands.Context) else ctx.client, channel, ctx
-        ))
-    
-    if player.is_ipc_connected:
-        await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
-
-    return player
 
 def time(millis:int) -> str:
     seconds=(millis/1000)%60

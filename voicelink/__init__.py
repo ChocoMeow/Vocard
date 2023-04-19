@@ -31,7 +31,7 @@ from .events import *
 from .exceptions import *
 from .filters import *
 from .objects import *
-from .player import Player
+from .player import Player, connect_channel
 from .pool import *
 from .queue import *
 from .placeholders import Placeholders, build_embed

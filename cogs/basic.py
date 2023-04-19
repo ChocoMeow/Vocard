@@ -13,8 +13,7 @@ from function import (
     tokens,
     settings,
     cooldown_check,
-    get_aliases,
-    connect_channel
+    get_aliases
 )
 
 from addons import lyricsPlatform
@@ -75,7 +74,7 @@ class Basic(commands.Cog):
     async def connect(self, ctx: commands.Context, channel: discord.VoiceChannel = None) -> None:
         "Connect to a voice channel."
         try:
-            player = await connect_channel(ctx, channel)
+            player = await voicelink.connect_channel(ctx, channel)
         except discord.errors.ClientException:
             return await ctx.send(get_lang(ctx.guild.id, "alreadyConnected"))
 
@@ -88,7 +87,7 @@ class Basic(commands.Cog):
         "Loads your input and added it to the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
-            player = await connect_channel(ctx)
+            player = await voicelink.connect_channel(ctx)
 
         if not player.is_user_join(ctx.author):
             return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
@@ -128,7 +127,7 @@ class Basic(commands.Cog):
 
         player: voicelink.Player = interaction.guild.voice_client
         if not player:
-            player = await connect_channel(interaction)
+            player = await voicelink.connect_channel(interaction)
 
         if not player.is_user_join(interaction.user):
             return await interaction.response.send_message(player.get_msg('notInChannel').format(interaction.user.mention, player.channel.mention), ephemeral=True)
@@ -171,7 +170,7 @@ class Basic(commands.Cog):
         "Loads your input and added it to the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
-            player = await connect_channel(ctx)
+            player = await voicelink.connect_channel(ctx)
 
         if not player.is_user_join(ctx.author):
             return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
@@ -216,7 +215,7 @@ class Basic(commands.Cog):
         "Adds a song with the given url or query on the top of the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
-            player = await connect_channel(ctx)
+            player = await voicelink.connect_channel(ctx)
 
         if not player.is_user_join(ctx.author):
             return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)

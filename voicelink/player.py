@@ -60,6 +60,25 @@ from .queue import Queue, FairQueue
 from .placeholders import Placeholders, build_embed
 from random import shuffle
 
+async def connect_channel(ctx: Union[commands.Context, Interaction], channel: VoiceChannel = None):
+    try:
+        channel = channel or ctx.author.voice.channel if isinstance(ctx, commands.Context) else ctx.user.voice.channel
+    except:
+        raise VoicelinkException(func.get_lang(ctx.guild.id, 'noChannel'))
+
+    check = channel.permissions_for(ctx.guild.me)
+    if check.connect == False or check.speak == False:
+        raise VoicelinkException(func.get_lang(ctx.guild.id, 'noPermission'))
+
+    player: Player = await channel.connect(cls=Player(
+            ctx.bot if isinstance(ctx, commands.Context) else ctx.client, channel, ctx
+        ))
+    
+    if player.is_ipc_connected:
+        await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+
+    return player
+
 class Player(VoiceProtocol):
     """The base player class for Voicelink.
        In order to initiate a player, you must pass it in as a cls when you connect to a channel.

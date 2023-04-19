@@ -15,8 +15,7 @@ from function import (
     playlist_name,
     settings,
     get_aliases,
-    cooldown_check,
-    connect_channel
+    cooldown_check
 )
 
 from datetime import datetime
@@ -111,7 +110,7 @@ class Playlists(commands.Cog, name="playlist"):
 
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
-            player = await connect_channel(ctx)
+            player = await voicelink.connect_channel(ctx)
 
         if result['playlist']['type'] == 'link':
             tracks = await search_playlist(result['playlist']['uri'], ctx.author, timeNeed=False)
