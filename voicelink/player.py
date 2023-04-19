@@ -57,7 +57,7 @@ from .filters import Filter, Filters
 from .objects import Track
 from .pool import Node, NodePool
 from .queue import Queue, FairQueue
-from .placeholders import Placeholders
+from .placeholders import Placeholders, build_embed
 from random import shuffle
 
 class Player(VoiceProtocol):
@@ -117,6 +117,8 @@ class Player(VoiceProtocol):
         self.previous_votes = set()
         self.shuffle_votes = set()
         self.stop_votes = set()
+
+        self.ph = Placeholders(self)
 
     def __repr__(self):
         return (
@@ -366,51 +368,10 @@ class Player(VoiceProtocol):
         self.updating = False
 
     async def build_embed(self):
-        if self.current:
-            raw = func.settings.controller.get("embeds", {}).get("active")
-        else:
-            raw = func.settings.controller.get("embeds", {}).get("inactive")
+        controller = self.settings.get("default_controller", func.settings.controller).get("embeds", {})
+        raw = controller.get("active" if self.current else "inactive", {})
         
-        if not raw:
-            return
-        
-        ph = Placeholders(self)
-        try:
-            embed = Embed()
-            if author := raw.get("author"):
-                embed.set_author(
-                    name = ph.replace(author.get("name")),
-                    url = ph.replace(author.get("url")),
-                    icon_url = ph.replace(author.get("icon_url"))
-                )
-            
-            if header := raw.get("header"):
-                embed.title = ph.replace(header.get("title"))
-                embed.url = ph.replace(header.get("url"))
-
-            if fields := raw.get("fields", []):
-                for f in fields:
-                    embed.add_field(name=ph.replace(f.get("name")), value=ph.replace(f.get("value")))
-
-            if footer := raw.get("footer"):
-                embed.set_footer(
-                    text = ph.replace(footer.get("text")),
-                    icon_url =  ph.replace(footer.get("icon_url"))
-                ) 
-
-            if thumbnail := raw.get("thumbnail"):
-                embed.set_thumbnail(url = ph.replace(thumbnail))
-            
-            if image := raw.get("image"):
-                embed.set_image(url = ph.replace(image))
-
-            embed.description = ph.replace(raw.get("description"))
-            embed.color = int(ph.replace(raw.get("color")))
-
-        except:
-            embed = Embed(description=self.get_msg("missingTrackInfo"), color=func.settings.embed_color)
-
-        return embed
+        return build_embed(raw, self.ph)
 
     async def is_position_fresh(self):
         try:

@@ -34,4 +34,4 @@ from .objects import *
 from .player import Player
 from .pool import *
 from .queue import *
-from placeholders import Placeholders
+from .placeholders import Placeholders, build_embed

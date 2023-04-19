@@ -29,8 +29,8 @@ class Settings:
                     "color": "@@default_embed_color@@"
                 },
                 "inactive": {
-                    "header": {
-                        "title": "There are no songs playing right now"
+                    "title": {
+                        "name": "There are no songs playing right now"
                     },
                     "description": "[Support](@@server_invite_link@@) | [Invite](@@invite_link@@) | [Questionnaire](https://forms.gle/Qm8vjBfg2kp13YGD7)",
                     "image": "https://i.imgur.com/dIFBwU7.png",
