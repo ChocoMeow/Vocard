@@ -1,5 +1,6 @@
 import discord
 import function as func
+import copy
 
 from typing import List
 
@@ -43,8 +44,8 @@ class EmbedBuilderView(discord.ui.View):
         self.author: discord.Member = author
         self.response: discord.Message = None
 
-        self.original_data: dict = data.copy()
-        self.data: dict = data.copy()
+        self.original_data: dict = copy.deepcopy(data)
+        self.data: dict = copy.deepcopy(data)
         self.embedType: str = "active"
 
         self.ph: Placeholders = Placeholders()
@@ -106,14 +107,17 @@ class EmbedBuilderView(discord.ui.View):
         await modal.wait()
 
         v = modal.values
-        data["description"] = v["description"]
-        data["color"] = v["color"]
+        try:
+            data["description"] = v["description"]
+            data["color"] = int(v["color"], 16)
 
-        if "title" not in data:
-            data["title"] = {}
+            if "title" not in data:
+                data["title"] = {}
 
-        data["title"]["name"] = v['title']
-        data["title"]["url"] = v['url']
+            data["title"]["name"] = v['title']
+            data["title"]["url"] = v['url']
+        except:
+            pass
 
         return await interaction.edit_original_response(embed=self.build_embed())
 
@@ -314,10 +318,14 @@ class EmbedBuilderView(discord.ui.View):
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, row=1)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        
-        self.data = self.original_data.copy()
+    @discord.ui.button(label="Reset", style=discord.ButtonStyle.red, row=1)
+    async def reset(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.data.update(copy.deepcopy(self.original_data))
         return await interaction.response.edit_message(embed=self.build_embed())
+
+    @discord.ui.button(emoji='🗑️', row=1)
+    async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.response.delete()
+        self.stop()
 
         

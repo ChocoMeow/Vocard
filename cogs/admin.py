@@ -144,7 +144,7 @@ class Admin(commands.Cog, name="settings"):
             embed.set_thumbnail(url=ctx.guild.icon.url)
 
         embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle'), value=get_lang(ctx.guild.id, 'settingsValue').format(
-            settings.get('prefix', func.settings.bot_prefix),
+            settings.get('prefix', func.settings.bot_prefix) or "None",
             settings.get('lang', 'EN'),
             settings.get('controller', True),
             f"<@&{settings['dj']}>" if 'dj' in settings else '`None`',
@@ -225,7 +225,7 @@ class Admin(commands.Cog, name="settings"):
         player, settings = self.get_settings(ctx)
         controller_settings = settings.get("default_controller", func.settings.controller)
 
-        view = EmbedBuilderView(ctx.author, controller_settings.get("embeds"))
+        view = EmbedBuilderView(ctx.author, controller_settings.get("embeds").copy())
         message = await ctx.send(embed=view.build_embed(), view=view)
         view.response = message
 
