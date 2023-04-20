@@ -335,7 +335,7 @@ class InteractiveController(discord.ui.View):
         super().__init__(timeout=None)
 
         self.player = player
-        for row, btnRow in enumerate(func.settings.controller_settings):
+        for row, btnRow in enumerate(func.settings.controller.get("default_buttons")):
             for btn in btnRow:
                 color = ""
                 if isinstance(btn, Dict):

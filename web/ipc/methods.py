@@ -265,8 +265,9 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
         return
     
     player: Player = guild.voice_client
-    if not player or not Member:
+    if not player or not member:
         return
+        
     try:
         resp: dict = await method(player, member, data)
         if resp:

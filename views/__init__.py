@@ -14,3 +14,4 @@ from .playlist import PlaylistView, CreateView
 from .inbox import InboxView
 from .link import LinkView
 from .debug import DebugModal
+from .embedBuilder import EmbedBuilderView

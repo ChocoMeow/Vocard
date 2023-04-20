@@ -57,7 +57,27 @@ from .filters import Filter, Filters
 from .objects import Track
 from .pool import Node, NodePool
 from .queue import Queue, FairQueue
+from .placeholders import Placeholders, build_embed
 from random import shuffle
+
+async def connect_channel(ctx: Union[commands.Context, Interaction], channel: VoiceChannel = None):
+    try:
+        channel = channel or ctx.author.voice.channel if isinstance(ctx, commands.Context) else ctx.user.voice.channel
+    except:
+        raise VoicelinkException(func.get_lang(ctx.guild.id, 'noChannel'))
+
+    check = channel.permissions_for(ctx.guild.me)
+    if check.connect == False or check.speak == False:
+        raise VoicelinkException(func.get_lang(ctx.guild.id, 'noPermission'))
+
+    player: Player = await channel.connect(cls=Player(
+            ctx.bot if isinstance(ctx, commands.Context) else ctx.client, channel, ctx
+        ))
+    
+    if player.is_ipc_connected:
+        await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+
+    return player
 
 class Player(VoiceProtocol):
     """The base player class for Voicelink.
@@ -116,6 +136,8 @@ class Player(VoiceProtocol):
         self.previous_votes = set()
         self.shuffle_votes = set()
         self.stop_votes = set()
+
+        self.ph = Placeholders(self)
 
     def __repr__(self):
         return (
@@ -365,22 +387,10 @@ class Player(VoiceProtocol):
         self.updating = False
 
     async def build_embed(self):
-        track = self.current
-
-        if not track:
-            embed=Embed(title=self.get_msg("noTrackPlaying"), description=f"[Vote](https://top.gg/bot/605618911471468554/vote/) | [Support]({func.settings.invite_link}) | [Invite](https://discord.com/oauth2/authorize?client_id=605618911471468554&permissions=2184260928&scope=bot%20applications.commands) | [Questionnaire](https://forms.gle/UqeeEv4GEdCq9hi3A)", color=func.settings.embed_color)
-            embed.set_image(url='https://i.imgur.com/dIFBwU7.png')
-            
-        else:
-            try:
-                embed = Embed(color=func.settings.embed_color)
-                embed.set_author(name=self.get_msg("playerAuthor").format(self.channel.name), icon_url=self.client.user.avatar.url)
-                embed.description = self.get_msg("playerDesc").format(track.title, track.uri, (track.requester.mention if track.requester else "<@605618911471468554>"), (f"<@&{self.settings['dj']}>" if self.settings.get('dj') else f"{self.dj.mention}"))
-                embed.set_image(url=track.thumbnail if track.thumbnail else "https://cdn.discordapp.com/attachments/674788144931012638/823086668445384704/eq-dribbble.gif")
-                embed.set_footer(text=self.get_msg("playerFooter").format(self.queue.count, (self.get_msg("live") if track.is_stream else func.time(track.length)), self.volume, self.get_msg("playerFooter2").format(self.queue.repeat.capitalize()) if self.queue._repeat else ""))
-            except:
-                embed = Embed(description=self.get_msg("missingTrackInfo"), color=func.settings.embed_color)
-        return embed
+        controller = self.settings.get("default_controller", func.settings.controller).get("embeds", {})
+        raw = controller.get("active" if self.current else "inactive", {})
+        
+        return build_embed(raw, self.ph)
 
     async def is_position_fresh(self):
         try:

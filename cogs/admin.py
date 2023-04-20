@@ -18,7 +18,7 @@ from function import (
     get_aliases,
     cooldown_check
 )
-from views import DebugModal, HelpView
+from views import DebugModal, HelpView, EmbedBuilderView
 
 class Admin(commands.Cog, name="settings"):
     def __init__(self, bot) -> None:
@@ -144,7 +144,7 @@ class Admin(commands.Cog, name="settings"):
             embed.set_thumbnail(url=ctx.guild.icon.url)
 
         embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle'), value=get_lang(ctx.guild.id, 'settingsValue').format(
-            settings.get('prefix', func.settings.bot_prefix),
+            settings.get('prefix', func.settings.bot_prefix) or "None",
             settings.get('lang', 'EN'),
             settings.get('controller', True),
             f"<@&{settings['dj']}>" if 'dj' in settings else '`None`',
@@ -216,6 +216,18 @@ class Admin(commands.Cog, name="settings"):
         update_settings(ctx.guild.id, {'duplicateTrack': not toggle})
         toggle = get_lang(ctx.guild.id, "enabled" if not toggle else "disabled")
         return await ctx.send(get_lang(ctx.guild.id, "toggleDuplicateTrack").format(toggle))
+    
+    @settings.command(name="customcontroller", aliases=get_aliases("customcontroller"))
+    @commands.has_permissions(manage_guild=True)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def customController(self, ctx: commands.Context):
+        "Customizes music controller embeds."
+        player, settings = self.get_settings(ctx)
+        controller_settings = settings.get("default_controller", func.settings.controller)
+
+        view = EmbedBuilderView(ctx.author, controller_settings.get("embeds").copy())
+        message = await ctx.send(embed=view.build_embed(), view=view)
+        view.response = message
 
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):

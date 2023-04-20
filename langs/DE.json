@@ -67,7 +67,7 @@
     "overPlaylistCreation": "Sie können nicht mehr als `{0}` Wiedergabelisten erstellen!",
     "playlistExists": "Playlist [`{0}`] existiert bereits.",
     "playlistNotInvaildUrl": "Bitte geben Sie einen gültigen Link oder öffentlichen Spotify- oder YouTube-Playlist-Link ein.",
-    "playlistCreated": "Sie haben die Wiedergabeliste „{0}“ erstellt. Geben Sie /playlist view ein, um weitere Informationen zu erhalten.",
+    "playlistCreated": "Sie haben die Wiedergabeliste `{0}` erstellt. Geben Sie /playlist view ein, um weitere Informationen zu erhalten.",
     "playlistRenamed": "Sie haben `{0}` in `{1}` umbenannt.",
     "playlistLimitTrack": "Sie haben die Grenze erreicht! Du kannst deiner Playlist nur `{0}` Songs hinzufügen.",
     "playlistPlaylistLink": "Sie dürfen keinen Playlist-Link verwenden.",
@@ -106,10 +106,6 @@
     "playlistrepeated": "Es gibt bereits denselben Titel in Ihrer Playlist!",
     "playlistAdded": "❤️ **{0}** zur Playlist [`{2}`] von {1} hinzugefügt!",
 
-    "playerAuthor": "Musik-Controller | {0}",
-    "playerDesc": "**Läuft gerade: ```[{0}]```\nLink: [Klick mich]({1}) | Anforderer: {2} | DJ: {3}**",
-    "playerFooter": "Warteschlangelänge: {0} | Dauer: {1} | Lautstärke: {2}% {3}",
-    "playerFooter2": "| Wiederholen: {0}",
     "playerDropdown": "Wählen Sie einen Song aus, zudem Sie springen möchten...",
 
     "buttonBack": "Zurück",
