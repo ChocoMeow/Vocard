@@ -60,7 +60,9 @@ Valuables
 | track_name | The name of the track currently playing. |
 | track_url | The url of the track currently playing. |
 | track_thumbnail | The thumbnail of the track currently playing. |
-| requester | The name of the requester of the currently playing track. |
+| requester | The mention name of the requester of the currently playing track. |
+| requester_name | The name of the requester of the currently playing track. |
+| requester_avatar | The avatar url of the requester of the currently playing track. |
 | queue_length | Number of queue lengths |
 | volume | Music volume. |
 | dj | DJ role. `(It can be a user or role)` |
@@ -69,6 +71,9 @@ Valuables
 | bot_icon | The avatar of the bot. |
 | server_invite_link | The invite url of the support server |
 | invite_link | The invite url of the bot. |
+
+Expression
+> {{ EXPRESSION ?? TRUE // FALSE }}
 
 ## Examples
 Change the value of `default_controller` in `settings.json`.
@@ -93,8 +98,8 @@ Change the value of `default_controller` in `settings.json`.
             "color": "@@default_embed_color@@"
         },
         "inactive": {
-            "header": {
-                "title": "There are no songs playing right now"
+            "title": {
+                "name": "There are no songs playing right now"
             },
             "description": "[Support](@@server_invite_link@@) | [Invite](@@invite_link@@) | [Questionnaire](https://forms.gle/Qm8vjBfg2kp13YGD7)",
             "image": "https://i.imgur.com/dIFBwU7.png",
