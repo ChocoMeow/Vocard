@@ -20,6 +20,8 @@ class Placeholders:
                 "track_url": self.track_url,
                 "track_thumbnail": self.track_thumbnail,
                 "requester": self.requester,
+                "requester_name": self.requester_name,
+                "requester_avatar": self.requester_avatar,
                 "duration": self.duration,
                 "queue_length": self.queue_length,
                 "volume": self.volume,
@@ -37,18 +39,19 @@ class Placeholders:
                 "track_url": "http://example.com",
                 "track_thumbnail": "https://i.imgur.com/dIFBwU7.png",
                 "requester": "<@12345678>",
+                "requester_name": "Test",
+                "requester_avatar": "https://i.imgur.com/dIFBwU7.png",
                 "duration": "00:00",
                 "queue_length": 0,
                 "volume": 100,
                 "dj": "<@12345678>",
                 "loop_mode": "Off",
                 "default_embed_color": self.default_embed_color,
-                "bot_icon": "",
+                "bot_icon": "https://i.imgur.com/dIFBwU7.png",
                 "server_invite_link": func.settings.invite_link,
                 "invite_link": f"https://discord.com/oauth2/authorize?client_id={func.tokens.client_id}&permissions=2184260928&scope=bot%20applications.commands"
             }
         
-    
     def channel_name(self) -> str:
         if not self.player.channel:
             return "None"
@@ -81,6 +84,24 @@ class Placeholders:
             return requester.mention
         else:
             return self.player._bot.user.mention
+    
+    def requester_name(self) -> str:
+        if self.player.current is None:
+            return "None"
+        
+        if requester := self.player.current.requester:
+            return requester.name
+        else:
+            return self.player._bot.user.name
+        
+    def requester_avatar(self) -> str:
+        if self.player.current is None:
+            return "None"
+        
+        if requester := self.player.current.requester:
+            return requester.display_avatar.url
+        else:
+            return self.player._bot.user.display_avatar.url
     
     def duration(self) -> str:
         track = self.player.current
