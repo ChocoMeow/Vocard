@@ -457,13 +457,19 @@ class Player {
             $("#length").text("00:00");
             $("#image").removeAttr('src');
             $("#largeImage").removeAttr('src');
+            $(".thumbnail-background").css("background", "")
         } else {
             $("#title").text(currentTrack.title);
             $("#author").text(currentTrack.author);
             $("#length").text(this.msToReadableTime(currentTrack.length));
             $("#image").attr("src", currentTrack.imageUrl);
-            $("#largeImage").attr("src", `${window.location.protocol}//${window.location.hostname}:${window.location.port}/` + currentTrack.imageUrl);
+
+            var image = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/` + currentTrack.imageUrl
+            if ($("#largeImage").attr("src") != image) {
+                $("#largeImage").attr("src", image);
+            }
         }
+
         $("#channel-name").text((this.channelName == "") ? "Not Found" : this.channelName);
         var play_pause_btn = $("#play-pause-button");
         var repeat_btn = $("#repeat-button");
