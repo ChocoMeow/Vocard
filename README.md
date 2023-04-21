@@ -93,7 +93,7 @@ MONGODB_NAME = Vocard
         {"listen": "/help"}
     ],
     "bot_access_user": [],
-    "color_code":"0xb3b3b3",
+    "embed_color":"0xb3b3b3",
     "default_max_queue": 1000,
     "lyrics_platform": "A_ZLyrics",
     "ipc_server": {
