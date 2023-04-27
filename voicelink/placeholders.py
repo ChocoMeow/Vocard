@@ -129,7 +129,7 @@ class Placeholders:
         return func.settings.embed_color
 
     def bot_icon(self) -> str:
-        return self.player._bot.user.display_avatar
+        return self.player._bot.user.display_avatar.url
     
     def check_callable(self, value):
         return str(value()) if callable(value) else str(value)
