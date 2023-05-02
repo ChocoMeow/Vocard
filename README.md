@@ -157,7 +157,7 @@ MONGODB_NAME = Vocard
 * For `prefix` you can set the prefix of the bot. (If you don't provide any prefix, the bot will disable the message command).
 * For `activity` you can set the activity of the bot. [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#bot-activity-activity-are-updated-every-10-minutes)
 * For `bot_access_user` you can pass the [discord user id](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-). Example: `[123456789012345678]`
-* For `color_code` you must pass a [Hexadecimal color code](https://htmlcolorcodes.com/) and add `0x` before the color code. Example: `"0xb3b3b3"`
+* For `embed_color` you must pass a [Hexadecimal color code](https://htmlcolorcodes.com/) and add `0x` before the color code. Example: `"0xb3b3b3"`
 * For `default_max_queue` you can set a default maximum number of tracks that can be added to the queue.
 * For `lyrics_platform` you can set lyrics search engine (e.g. `A_ZLyrics`, `Genius`)<br>**NOTE: If you are using Genius as your lyrics search engine, you must install the lyricsgenius module (`pip install lyricsgenius`)**
 * For `ipc_server` you can set the host, password and enable of the ipc server.

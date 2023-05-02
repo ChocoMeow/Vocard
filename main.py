@@ -40,7 +40,7 @@ class Vocard(commands.Bot):
         if message.author.bot or not message.guild:
             return False
 
-        if self.user.mentioned_in(message) and not message.mention_everyone:
+        if self.user.id in message.raw_mentions and not message.mention_everyone:
             prefix = await self.command_prefix(self, message)
             if not prefix:
                 return await message.channel.send("I don't have a bot prefix set.")
