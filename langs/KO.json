@@ -120,6 +120,8 @@
     "buttonVolumeUnmute": "음소거 해제",
     "buttonAutoPlay": "자동재생",
     "buttonShuffle": "셔플",
+    "buttonForward": "앞으로",
+    "buttonRewind": "뒤로",
 
     "nowplayingDesc": "**현재 재생중인 곡:**\n```{0}```",
     "nowplayingField": "다음 곡:",

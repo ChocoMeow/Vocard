@@ -120,6 +120,8 @@
     "buttonVolumeUnmute": "Activar Sonido",
     "buttonAutoPlay": "Reproducción Automática",
     "buttonShuffle": "Aleatorio",
+    "buttonForward": "Adelante",
+    "buttonRewind": "Atrás",
 
     "nowplayingDesc": "**Reproduciendo ahora:**\n```{0}```",
     "nowplayingField": "A continuación:",

@@ -120,6 +120,8 @@
     "buttonVolumeUnmute": "取消靜音",
     "buttonAutoPlay": "自動播放",
     "buttonShuffle": "隨機播放",
+    "buttonForward": "前進",
+    "buttonRewind": "後退",
 
     "nowplayingDesc": "**現在播放:**\n```{0}```",
     "nowplayingField": "接下來播放:",

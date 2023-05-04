@@ -120,6 +120,8 @@
     "buttonVolumeUnmute": "消音を解除",
     "buttonAutoPlay": "自動再生",
     "buttonShuffle": "シャッフル",
+    "buttonForward": "進む",
+    "buttonRewind": "戻る",
 
     "nowplayingDesc": "**現在再生中：**\n```{0}```",
     "nowplayingField": "次に再生する曲：",

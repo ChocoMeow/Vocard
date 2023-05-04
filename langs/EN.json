@@ -120,6 +120,8 @@
     "buttonVolumeUnmute": "Unmute",
     "buttonAutoPlay": "Autoplay",
     "buttonShuffle": "Shuffle",
+    "buttonForward": "Forward",
+    "buttonRewind": "Rewind",
 
     "nowplayingDesc": "**Now Playing:**\n```{0}```",
     "nowplayingField": "Up Next:",

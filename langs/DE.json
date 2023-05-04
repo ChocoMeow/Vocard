@@ -120,6 +120,8 @@
     "buttonVolumeUnmute": "Stummschaltung aufheben",
     "buttonAutoPlay": "Autoplay",
     "buttonShuffle": "Mischen",
+    "buttonForward": "Vorwärts",
+    "buttonRewind": "Rückwärts",
 
     "nowplayingDesc": "**Jetzt abspielen:**\n```{0}```",
     "nowplayingField": "Als nächstes:",
