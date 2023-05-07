@@ -298,7 +298,7 @@ class Forward(discord.ui.Button):
         if not self.player.current:
             return await interaction.response.send_message(self.player.get_msg('noTrackPlaying'), ephemeral=True)
 
-        await self.player.seek(self.player.position + 10000)
+        await self.player.seek(self.player.position + 30000)
         await interaction.response.send_message(self.player.get_msg('forward').format(func.time(self.player.position + 10000)))
 
 class Rewind(discord.ui.Button):
@@ -316,7 +316,7 @@ class Rewind(discord.ui.Button):
         if not self.player.current:
             return await interaction.response.send_message(self.player.get_msg('noTrackPlaying'), ephemeral=True)
 
-        position = 0 if (value := (self.player.position - 10000)) <= 0 else value
+        position = 0 if (value := (self.player.position - 30000)) <= 0 else value
         
         await self.player.seek(position)
         await interaction.response.send_message(self.player.get_msg('rewind').format(func.time(position)))
