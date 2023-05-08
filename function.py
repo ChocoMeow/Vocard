@@ -73,6 +73,16 @@ def open_json(path: str):
     except:
         return {}
 
+def update_json(path: str, new_data: dict) -> None:
+    data = open_json(path)
+    if not data:
+        return
+    
+    data.update(new_data)
+
+    with open(path, "w") as json_file:
+        json.dump(data, json_file, indent=4)
+
 def get_lang(guild_id:int, key:str):
     lang = get_settings(guild_id).get("lang", "EN")
     return langs.get(lang, langs["EN"])[key]
@@ -234,8 +244,10 @@ def gen_report() -> Optional[discord.File]:
                 errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
 
         buffer = BytesIO(errorText.encode('utf-8'))
-        return discord.File(buffer, filename='report.txt')
+        file = discord.File(buffer, filename='report.txt')
+        buffer.close()
 
+        return file        
     return None
 
 def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:

@@ -58,11 +58,14 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     print(traceback.format_exc())
 
-        if func.settings.ipc_server["enable"]:
+        if func.settings.ipc_server.get("enable", False):
             await self.ipc.start()
 
-        await bot.tree.set_translator(Translator())
-        await bot.tree.sync()
+        if not func.settings.version or func.settings.version != update.__version__:
+            func.update_json(func.root_dir + "/settings.json", new_data={"version": update.__version__})
+
+            await bot.tree.set_translator(Translator())
+            await bot.tree.sync()
 
     async def on_ready(self):
         print("------------------")
