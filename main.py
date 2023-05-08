@@ -40,7 +40,7 @@ class Vocard(commands.Bot):
         if message.author.bot or not message.guild:
             return False
 
-        if self.user.mentioned_in(message) and not message.mention_everyone:
+        if self.user.id in message.raw_mentions and not message.mention_everyone:
             prefix = await self.command_prefix(self, message)
             if not prefix:
                 return await message.channel.send("I don't have a bot prefix set.")
@@ -58,11 +58,14 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     print(traceback.format_exc())
 
-        if func.settings.ipc_server["enable"]:
+        if func.settings.ipc_server.get("enable", False):
             await self.ipc.start()
 
-        await bot.tree.set_translator(Translator())
-        await bot.tree.sync()
+        if not func.settings.version or func.settings.version != update.__version__:
+            func.update_json(func.root_dir + "/settings.json", new_data={"version": update.__version__})
+
+            await bot.tree.set_translator(Translator())
+            await bot.tree.sync()
 
     async def on_ready(self):
         print("------------------")

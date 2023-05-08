@@ -26,7 +26,7 @@ async def initPlayer(player: Player, member: Member, data: dict):
         "user_id": data.get("user_id"),
         "users": [{
             "user_id": member.id,
-            "avatar_url": member.avatar.url,
+            "avatar_url": member.display_avatar.url,
             "name": member.name
         } for member in player.channel.members ],
         "tracks": [ track.toDict() for track in player.queue._queue ],

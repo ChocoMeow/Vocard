@@ -127,6 +127,8 @@ Buttons
 | VolumeMute | Mute or unmute the player. |
 | Autoplay | Enable or disable autoplay mode. |
 | Shuffle | Randomizes the tracks in the queue. |
+| Forward | Forward 30 seconds in the current track. |
+| Rewind | Rewind 30 seconds in the current track. |
 | Tracks | If there are tracks in the queue, a drop-down list will be appear. Up to 10 tracks. `(This will take one row)`|
 
 Colors

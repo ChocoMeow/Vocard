@@ -49,6 +49,7 @@ class Settings:
                 "enable": False
             }
         )
+        self.version = settings.get("version", "")
 
 class TOKENS:
     def __init__(self) -> None:

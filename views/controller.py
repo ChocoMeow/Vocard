@@ -31,6 +31,7 @@ from function import (
     update_playlist,
     create_account,
     checkroles,
+    formatTime
 )
 from typing import Dict
 
@@ -282,6 +283,44 @@ class Shuffle(discord.ui.Button):
         await self.player.shuffle("queue", interaction.user)
         await interaction.response.send_message(self.player.get_msg('shuffled'))
 
+class Forward(discord.ui.Button):
+    def __init__(self, player, style, row):
+        self.player = player
+        super().__init__(emoji="⏩",
+                         label=player.get_msg('buttonForward'),
+                         disabled=False if self.player.current else True,
+                         style=style, row=row)
+        
+    async def callback(self, interaction: discord.Interaction):
+        if not self.player.is_privileged(interaction.user):
+            return await interaction.response.send_message(self.player.get_msg('missingPerms_pos'), ephemeral=True)
+
+        if not self.player.current:
+            return await interaction.response.send_message(self.player.get_msg('noTrackPlaying'), ephemeral=True)
+
+        await self.player.seek(self.player.position + 30000)
+        await interaction.response.send_message(self.player.get_msg('forward').format(func.time(self.player.position + 10000)))
+
+class Rewind(discord.ui.Button):
+    def __init__(self, player, style, row):
+        self.player = player
+        super().__init__(emoji="⏪",
+                         label=player.get_msg('buttonRewind'),
+                         disabled=False if self.player.current else True,
+                         style=style, row=row)
+        
+    async def callback(self, interaction: discord.Interaction):
+        if not self.player.is_privileged(interaction.user):
+            return await interaction.response.send_message(self.player.get_msg('missingPerms_pos'), ephemeral=True)
+
+        if not self.player.current:
+            return await interaction.response.send_message(self.player.get_msg('noTrackPlaying'), ephemeral=True)
+
+        position = 0 if (value := (self.player.position - 30000)) <= 0 else value
+        
+        await self.player.seek(position)
+        await interaction.response.send_message(self.player.get_msg('rewind').format(func.time(position)))
+
 class Tracks(discord.ui.Select):
     def __init__(self, player, style, row):
 
@@ -320,7 +359,9 @@ btnType = {
     "volumemute": VolumeMute,
     "tracks": Tracks,
     "autoplay": AutoPlay,
-    "shuffle": Shuffle
+    "shuffle": Shuffle,
+    "forward": Forward,
+    "rewind": Rewind
 }
 
 btnColor = {
