@@ -12,25 +12,25 @@ $(document).ready(function () {
     img.crossOrigin = "Anonymous";
     img.onload = function () {
         try {
-            const context = canvas.getContext('2d', {willReadFrequently: true});
+            const context = canvas.getContext('2d', { willReadFrequently: true });
             const width = canvas.width = img.width;
             const height = canvas.height = Math.round(img.height * 0.7); // set canvas height to 80% of image height
             const startY = Math.round((img.height - height) / 2); // calculate starting Y coordinate to center the canvas
             context.drawImage(img, 0, startY, width, height, 0, 0, width, height);
             getMainColorsFromImage(4)
-            .then(colors => {
-                $(".thumbnail-background").css({
-                    "background": `linear-gradient(-132deg, ${colors[0]}, ${colors[1]}, ${colors[2]}, ${colors[3]})`,
-                    "width": "70%",
-                    "padding-bottom": "70%",
-                });
-            })
-            .catch(error => { return });
+                .then(colors => {
+                    $(".thumbnail-background").css({
+                        "background": `linear-gradient(-132deg, ${colors[0]}, ${colors[1]}, ${colors[2]}, ${colors[3]})`,
+                        "width": "70%",
+                        "padding-bottom": "70%",
+                    });
+                })
+                .catch(error => { return });
 
-        } catch(e) {
-            
+        } catch (e) {
+
         }
-        
+
     }
 
     function getMainColorsFromImage(numColors) {
@@ -196,4 +196,5 @@ $(document).ready(function () {
         navigator.clipboard.writeText(selectedTrack?.track.uri);
         $("#context-menu").fadeOut(200);
     })
+
 });

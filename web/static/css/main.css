@@ -448,6 +448,7 @@ a {
     flex: 1;
     display: flex;
     justify-content: center;
+    z-index: 1;
 }
 
 .track {

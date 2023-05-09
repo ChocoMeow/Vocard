@@ -226,6 +226,7 @@ class Track {
         this.length = object["info"]["length"];
         this.track_id = object["track_id"];
         this.uri = object["info"]["uri"];
+        this.source = object["info"]["sourceName"];
     }
 }
 
@@ -463,8 +464,13 @@ class Player {
             $("#author").text(currentTrack.author);
             $("#length").text(this.msToReadableTime(currentTrack.length));
             $("#image").attr("src", currentTrack.imageUrl);
+            
+            var image = "";
+            if (currentTrack.source == "youtube") {
+                image += `${window.location.protocol}//${window.location.hostname}:${window.location.port}/`;
+            }
+            image += currentTrack.imageUrl;
 
-            var image = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/` + currentTrack.imageUrl
             if ($("#largeImage").attr("src") != image) {
                 $("#largeImage").attr("src", image);
             }
