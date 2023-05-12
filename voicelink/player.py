@@ -74,8 +74,7 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
             ctx.bot if isinstance(ctx, commands.Context) else ctx.client, channel, ctx
         ))
     
-    if player.is_ipc_connected:
-        await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+    await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
 
     return player
 

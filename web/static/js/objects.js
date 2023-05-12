@@ -456,8 +456,13 @@ class Player {
             $("#author").text("");
             $("#position").text("00:00");
             $("#length").text("00:00");
-            $("#image").fadeOut(200);
-            $("#largeImage").fadeOut(200);
+            $("#image").fadeOut(function () {
+                $(this).removeAttr("src");
+            });
+            $("#largeImage").fadeOut(function () {
+                $(this).removeAttr("src");
+            });
+            $(".thumbnail-background").fadeOut(200);
         } else {
             $("#title").text(currentTrack.title);
             $("#author").text(currentTrack.author);
@@ -471,8 +476,10 @@ class Player {
             image += currentTrack.imageUrl;
 
             if ($("#largeImage").attr("src") != image) {
-                $(".thumbnail-background").fadeOut(200);
-                $("#largeImage").fadeOut(200).attr("src", image);
+                $(".thumbnail-background").fadeOut(100);
+                $("#largeImage").fadeOut(function() {
+                    $(this).attr("src", image);
+                });
             }
         }
 

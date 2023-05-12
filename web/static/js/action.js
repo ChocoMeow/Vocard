@@ -19,11 +19,13 @@ $(document).ready(function () {
             context.drawImage(img, 0, startY, width, height, 0, 0, width, height);
             getMainColorsFromImage(4)
                 .then(colors => {
-                    $(".thumbnail-background").css({
+                    var bg = $(".thumbnail-background");
+                    bg.css({
                         "background": `linear-gradient(-132deg, ${colors[0]}, ${colors[1]}, ${colors[2]}, ${colors[3]})`,
                         "width": "70%",
                         "padding-bottom": "70%",
-                    }).fadeIn(200);
+                    });
+                    bg.fadeIn(200);
                     $("#largeImage").fadeIn(200);
                 })
                 .catch(error => { return });
