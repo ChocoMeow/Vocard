@@ -20,15 +20,16 @@
         integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
 </head>
 
 <body>
-    <script> const userId = "{{ user.id }}"</script>
+    <script> const userId = "{{ user.id }}"; </script>
     <div class="container">
         <div class="header">
             <div class="left">
-                <p>Home</p>
-                <p>Playlist</p>
+                <p id="homeBtn">Home</p>
+                <p id="playlistBtn">Playlist</p>
             </div>
             <div class="center">
                 <div class="search-container">
@@ -55,10 +56,10 @@
             </div>
         </div>
 
-        <div class="main">
+        <div class="main" id="main">
             <div class="toastContrainer"></div>
             <div class="thumbnail">
-                <img id="largeImage" />
+                <img id="largeImage" alt="" />
                 <div class="thumbnail-background"></div>
             </div>
             <div class="queue-list">

@@ -23,7 +23,8 @@ $(document).ready(function () {
                         "background": `linear-gradient(-132deg, ${colors[0]}, ${colors[1]}, ${colors[2]}, ${colors[3]})`,
                         "width": "70%",
                         "padding-bottom": "70%",
-                    });
+                    }).fadeIn(200);
+                    $("#largeImage").fadeIn(200);
                 })
                 .catch(error => { return });
 

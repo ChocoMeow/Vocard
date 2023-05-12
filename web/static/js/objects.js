@@ -456,15 +456,14 @@ class Player {
             $("#author").text("");
             $("#position").text("00:00");
             $("#length").text("00:00");
-            $("#image").removeAttr('src');
-            $("#largeImage").removeAttr('src');
-            $(".thumbnail-background").css("background", "")
+            $("#image").fadeOut(200);
+            $("#largeImage").fadeOut(200);
         } else {
             $("#title").text(currentTrack.title);
             $("#author").text(currentTrack.author);
             $("#length").text(this.msToReadableTime(currentTrack.length));
-            $("#image").attr("src", currentTrack.imageUrl);
-            
+            $("#image").attr("src", currentTrack.imageUrl).fadeIn(200);
+
             var image = "";
             if (currentTrack.source == "youtube") {
                 image += `${window.location.protocol}//${window.location.hostname}:${window.location.port}/`;
@@ -472,7 +471,8 @@ class Player {
             image += currentTrack.imageUrl;
 
             if ($("#largeImage").attr("src") != image) {
-                $("#largeImage").attr("src", image);
+                $(".thumbnail-background").fadeOut(200);
+                $("#largeImage").fadeOut(200).attr("src", image);
             }
         }
 
