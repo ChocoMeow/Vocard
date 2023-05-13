@@ -456,18 +456,14 @@ class Player {
             $("#author").text("");
             $("#position").text("00:00");
             $("#length").text("00:00");
-            $("#image").fadeOut(function () {
-                $(this).removeAttr("src");
-            });
-            $("#largeImage").fadeOut(function () {
-                $(this).removeAttr("src");
-            });
+            $("#image").fadeOut(100, function () { $(this).removeAttr("src"); });
+            $("#largeImage").fadeOut(100, function () { $(this).removeAttr("src"); });
             $(".thumbnail-background").fadeOut(200);
+
         } else {
             $("#title").text(currentTrack.title);
             $("#author").text(currentTrack.author);
             $("#length").text(this.msToReadableTime(currentTrack.length));
-            $("#image").attr("src", currentTrack.imageUrl).fadeIn(200);
 
             var image = "";
             if (currentTrack.source == "youtube") {
@@ -477,8 +473,12 @@ class Player {
 
             if ($("#largeImage").attr("src") != image) {
                 $(".thumbnail-background").fadeOut(100);
-                $("#largeImage").fadeOut(function() {
+                $("#largeImage").fadeOut(function () {
                     $(this).attr("src", image);
+                    
+                });
+                $("#image").fadeOut(function() {
+                    $(this).attr("src", currentTrack.imageUrl);
                 });
             }
         }

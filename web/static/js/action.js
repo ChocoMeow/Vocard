@@ -1,6 +1,7 @@
 $(document).ready(function () {
     const player = new Player(userId);
-    const img = document.getElementById("largeImage");
+    const largeImage = document.getElementById("largeImage");
+    const img = document.getElementById("image");
     const canvas = document.createElement('canvas');
 
     var startPos = null;
@@ -9,31 +10,34 @@ $(document).ready(function () {
     var typingTimer;
     var doneTypingInterval = 2000;
 
-    img.crossOrigin = "Anonymous";
-    img.onload = function () {
+    largeImage.crossOrigin = "Anonymous";
+    largeImage.onload = function () {
         try {
             const context = canvas.getContext('2d', { willReadFrequently: true });
-            const width = canvas.width = img.width;
-            const height = canvas.height = Math.round(img.height * 0.7); // set canvas height to 80% of image height
-            const startY = Math.round((img.height - height) / 2); // calculate starting Y coordinate to center the canvas
-            context.drawImage(img, 0, startY, width, height, 0, 0, width, height);
+            const width = canvas.width = largeImage.width;
+            const height = canvas.height = Math.round(largeImage.height * 0.7);
+            const startY = Math.round((largeImage.height - height) / 2);
+            context.drawImage(largeImage, 0, startY, width, height, 0, 0, width, height);
             getMainColorsFromImage(4)
                 .then(colors => {
                     var bg = $(".thumbnail-background");
                     bg.css({
                         "background": `linear-gradient(-132deg, ${colors[0]}, ${colors[1]}, ${colors[2]}, ${colors[3]})`,
                         "width": "70%",
-                        "padding-bottom": "70%",
+                        "padding-bottom": `${largeImage.naturalHeight / largeImage.naturalWidth * 70}%`,
                     });
                     bg.fadeIn(200);
                     $("#largeImage").fadeIn(200);
                 })
                 .catch(error => { return });
 
-        } catch (e) {
+        } catch (e) {}
+    }
 
-        }
-
+    img.onload = function () {
+        try {
+            $("#image").fadeIn(200);
+        } catch (e) {}
     }
 
     function getMainColorsFromImage(numColors) {

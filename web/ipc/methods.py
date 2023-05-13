@@ -1,8 +1,14 @@
 import json
 
-from discord import Member
+from discord import Member, VoiceChannel
 from discord.ext import commands
-from voicelink import Player, Track, Playlist
+from voicelink import Player, Track, Playlist, connect_channel
+
+class TempCtx():
+    def __init__(self, author: Member, channel: VoiceChannel) -> None:
+        self.author = author
+        self.channel = channel
+        self.guild = channel.guild
 
 def missingPermission(user_id:int):
     payload = {"op": "errorMsg", "level": "info", "msg": "Only the DJ or admins may use this funciton!"}
@@ -17,6 +23,18 @@ def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str
         payload["guild_id"]: guild_id
 
     return payload
+
+async def connect_channel(member: Member, bot: commands.Bot):
+    if not member.voice:
+        return
+
+    channel = member.voice.channel
+    try:
+        player: Player = await channel.connect(cls=Player(bot, channel, TempCtx(member, channel)))
+        await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+        return player
+    except:
+        return
 
 async def initPlayer(player: Player, member: Member, data: dict):
     player._ipc_connection = True
@@ -133,6 +151,7 @@ async def addTracks(player: Player, member: Member, data: dict):
 
 async def getTracks(player: Player, member: Member, data: dict):
     query = data.get("query", None)
+
     if query:
         payload = {"op": "getTracks", "user_id": member.id}
         tracks = await player.get_tracks(query, requester=member)
@@ -224,6 +243,9 @@ async def updatePosition(player: Player, member: Member, data: dict):
     position = data.get("position");
     await player.seek(position, member);
 
+async def closeConnection(player: Player, member: Member, data: dict):
+    player._ipc_connection = False
+
 methods = {
     "initPlayer": initPlayer,
     "skipTo": skipTo,
@@ -261,13 +283,15 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
         guild = bot.get_guild(guild_id)
         member = guild.get_member(user_id)
     
-    if not guild:
+    if not guild or not member:
         return
     
     player: Player = guild.voice_client
-    if not player or not member:
-        return
-        
+    if not player:
+        if method.__name__ != "getTracks":
+            return
+        player: Player = await connect_channel(member, bot)
+
     try:
         resp: dict = await method(player, member, data)
         if resp:

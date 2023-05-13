@@ -321,7 +321,7 @@ a {
 .main .thumbnail-background {
     position: absolute;
     padding: 1rem;
-    filter: blur(80px);
+    filter: blur(50px);
     transform: translate3d(0px, 0px, 0) scale(1);
     opacity: var(0.6);
     border-radius: inherit;
