@@ -28,6 +28,119 @@ class Timer {
     }
 }
 
+class DataInput {
+    #pos = 0;
+    #buf = Uint8Array;
+    #view = DataView;
+
+    constructor(bytes) {
+        if (typeof bytes === "string") {
+            var decodedString = atob(bytes);
+            var bytes = new Uint8Array(decodedString.length);
+            for (var i = 0; i < decodedString.length; i++) {
+                bytes[i] = decodedString.charCodeAt(i);
+            }
+        }
+        this.#buf = bytes;
+        this.#view = new DataView(bytes.buffer);
+    }
+
+    #_advance(bytes) {
+        if (this.#pos + bytes > this.#buf.length) {
+            throw new Error("");
+        }
+        const p = this.#pos;
+        this.#pos += bytes;
+        return p;
+    }
+
+    readByte() {
+        return this.#buf[this.#_advance(1)];
+    }
+
+    readBoolean() {
+        return this.readByte()
+    }
+
+    readUnsignedShort() {
+        return this.#view.getUint16(this.#_advance(2), false);
+    }
+
+    readInt() {
+        return this.#view.getInt32(this.#_advance(4), false);
+    }
+
+    readLong() {
+        const msb = this.#view.getInt32(this.#_advance(4), false);
+        const lsb = this.#view.getUint32(this.#_advance(4), false);
+        return BigInt(msb) << 32n | BigInt(lsb);
+    }
+
+    readUTF() {
+        const len = this.readUnsignedShort();
+        const start = this.#_advance(len);
+        return new window.TextDecoder().decode(this.#buf.slice(start, start + len));
+    }
+}
+
+class Track {
+    constructor(object) {
+        this.title = object.title;
+        this.author = object.author;
+        this.source = object.source;
+        this.identifier = object.identifier;
+        if (object.thumbnail == undefined) {
+            if (this.source == "youtube") {
+                this.imageUrl = `https://img.youtube.com/vi/${this.identifier}/hqdefault.jpg`
+            } else {
+                this.imageUrl = "https://cdn.discordapp.com/attachments/674788144931012638/823086668445384704/eq-dribbble.gif";
+            }
+        } else {
+            this.imageUrl = object.thumbnail;
+        }
+        
+        this.length = Number(object.length);
+        this.track_id = object.track_id;
+        this.uri = object.uri;
+    }
+}
+
+const decoders = [
+    undefined,
+    undefined,
+    (input, track_id) => {
+        const title = input.readUTF();
+        const author = input.readUTF();
+        const length = input.readLong();
+        const identifier = input.readUTF();
+        const isStream = input.readBoolean();
+        const uri = input.readBoolean() ? input.readUTF() : null;
+        const source = input.readUTF();
+
+        return {track_id, title, author, length, identifier, isStream, uri, thumbnail: null, source, position: 0n };
+    },
+    (input, track_id) => {
+        const title = input.readUTF();
+        const author = input.readUTF();
+        const length = input.readLong();
+        const identifier = input.readUTF();
+        const isStream = input.readBoolean();
+        const uri = input.readBoolean() ? input.readUTF() : null;
+        const thumbnail = input.readBoolean() ? input.readUTF() : null;
+        const source = input.readUTF();
+
+        return {track_id, title, author, length, identifier, isStream, uri, thumbnail, source, position: 0n };
+    }
+]
+function decode(track_id) {
+    const input = new DataInput(track_id);
+    const flags = input.readInt();
+    const version = input.readByte();
+
+    const decoder = decoders[version]; 
+    return new Track(decoder(input, track_id));
+}
+
 const actions = {
     initPlayer: function (player, data) {
         player.init();
