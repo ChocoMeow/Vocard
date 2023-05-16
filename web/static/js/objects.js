@@ -176,7 +176,7 @@ const actions = {
         player.addTrack(data["tracks"]);
         var tracks = data["tracks"];
         if (tracks.length == 1) {
-            var msg = `Added ${tracks[0]['info']['title']} songs into the queue.`
+            var msg = `Added ${decode(tracks[0]).title} songs into the queue.`
         } else {
             var msg = `Added ${tracks.length} into the queue.`
         }
@@ -190,7 +190,7 @@ const actions = {
             resultList.empty();
             player.searchList = tracks;
             for (var i in tracks) {
-                var track = new Track(tracks[i]);
+                var track = decode(tracks[i])
                 resultList.append(`<li class="search-result"><div class="search-result-left"><img src=${track.imageUrl} /><div class="search-result-info"><p class="info">${track.title}</p><p class="desc">${track.author}</p></div></div><p>${player.msToReadableTime(track.length)}</p></li>`)
             }
         }
@@ -331,18 +331,6 @@ const actions = {
 
 }
 
-class Track {
-    constructor(object) {
-        this.title = object["info"]["title"];
-        this.author = object["info"]["author"];
-        this.imageUrl = object["thumbnail"];
-        this.length = object["info"]["length"];
-        this.track_id = object["track_id"];
-        this.uri = object["info"]["uri"];
-        this.source = object["info"]["sourceName"];
-    }
-}
-
 class Player {
     constructor(userId) {
         this.socket = new Socket(`${window.location.protocol}//${window.location.hostname}:${window.location.port}`);
@@ -427,7 +415,7 @@ class Player {
     }
     addTrack(tracks) {
         for (var i in tracks) {
-            var track = new Track(tracks[i]);
+            var track = decode(tracks[i])
             this.queue.push(track);
             $("#sortable").append(`<li><div class="track"><div class="left">${(this.isDJ) ? '<i class="fa-solid fa-bars handle"></i>' : ''}<img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
         }

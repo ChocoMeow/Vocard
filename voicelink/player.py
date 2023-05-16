@@ -446,7 +446,6 @@ class Player(VoiceProtocol):
                     track_id=track.id,
                     requester=requester,
                     search_type=SearchType.ytsearch,
-                    spotify=True,
                     spotify_track=track,
                     info={
                         "title": track.name,
@@ -470,7 +469,6 @@ class Player(VoiceProtocol):
         return [ Track(
                     track_id=track.id,
                     search_type=SearchType.ytsearch,
-                    spotify=True,
                     spotify_track=track,
                     info={
                         "title": track.name,
@@ -578,7 +576,7 @@ class Player(VoiceProtocol):
         finally:
             if tracks:
                 if self.is_ipc_connected:
-                    await self.send_ws({"op": "addTrack", "tracks": [track.toDict() for track in tracks]}, tracks[0].requester)
+                    await self.send_ws({"op": "addTrack", "tracks": [track.track_id for track in tracks]}, tracks[0].requester)
                 return len(tracks) if isList else position
         
     async def seek(self, position: float, requester: Member = None) -> float:
@@ -618,7 +616,7 @@ class Player(VoiceProtocol):
         if self.is_ipc_connected:
             await self.send_ws({
                 "op": "shuffleTrack",
-                "tracks": [track.toDict() for track in self.queue._queue],
+                "tracks": [track.track_id for track in self.queue._queue],
                 "verified": {
                     "index": self.queue._position if queue_type == "queue" else 0,
                     "track_id": replacement[0].track_id,

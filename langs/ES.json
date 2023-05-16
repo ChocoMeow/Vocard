@@ -63,7 +63,6 @@
     "playlistShare": "Lo siento! Esta lista de reproducción se ha compartido con `{0}`.",
     "playlistSent": "Lo siento! Ya ha enviado una invitación antes.",
     "noPlaylistAcc": "`{0}` no ha creado una cuenta de lista de reproducción.",
-    "playlistCreateError": "Lo siento! No puede crear este tipo de lista de reproducción.",
     "overPlaylistCreation": "¡No puede crear más de `{0}` listas de reproducción!",
     "playlistExists": "La lista de reproducción [`{0}`] ya existe.",
     "playlistNotInvaildUrl": "Ingrese un enlace válido o un enlace público de lista de reproducción de Spotify o YouTube.",

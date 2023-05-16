@@ -33,6 +33,8 @@ from function import (
     time as ctime
 )
 
+from .formatter import encode
+
 YOUTUBE_REGEX = re.compile(r'(https?://)?(www\.)?youtube\.(com|nl)/watch\?v=([-\w]+)')
 class Track:
     """The base track object. Returns critical track information needed for parsing by Lavalink.
@@ -42,29 +44,30 @@ class Track:
     def __init__(
         self,
         *,
-        track_id: str,
+        track_id: str = None,
         info: dict,
         requester: Member,
-        spotify: bool = False,
         search_type: SearchType = SearchType.ytsearch,
         spotify_track = None,
     ):
         self.track_id = track_id
         self.info = info
-        self.spotify = spotify
-        if self.spotify:
-            self.artistId: Optional[list] = info.get("artistId")
 
-        self.original: Optional[Track] = None if spotify else self
-        self._search_type = SearchType.ytmsearch if spotify else search_type
-        self.spotify_track = spotify_track
-
+        self.identifier = info.get("identifier")
         self.title = info.get("title", "Unknown")
         self.author = info.get("author", "Unknown")
         self.uri = info.get("uri", "https://discord.com/application-directory/605618911471468554")
-        self.identifier = info.get("identifier")
+        self.source = info.get("sourceName", extract(self.uri).domain)
+        self.spotify = True if self.source == "spotify" else False
+        if self.spotify:
+            self.artistId: Optional[list] = info.get("artistId")
+
+        self.original: Optional[Track] = None if self.spotify else self
+        self._search_type = SearchType.ytmsearch if self.spotify else search_type
+        self.spotify_track = spotify_track
+
         self.thumbnail = None
-        self.source = extract(self.uri).domain
+        
         self.emoji = emoji_source(self.source)
         
         if info.get("thumbnail"):
@@ -83,12 +86,18 @@ class Track:
         self.is_seekable = info.get("isSeekable", True)
         self.position = info.get("position", 0)
 
+        if not track_id:
+            self.track_id = encode(self)
+            
     def toDict(self):
         return {
             "track_id": self.track_id,
             "info": self.info,
             "thumbnail": self.thumbnail
         }
+    
+    def encode(self):
+        return encode(self)
     
     def __eq__(self, other):
         if not isinstance(other, Track):
@@ -101,7 +110,6 @@ class Track:
 
     def __repr__(self):
         return f"<Voicelink.track title={self.title!r} uri=<{self.uri!r}> length={self.length}>"
-
 
 class Playlist:
     """The base playlist object.

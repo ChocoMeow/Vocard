@@ -63,7 +63,6 @@
     "playlistShare": "抱歉！此播放清單已與 {0} 共享。",
     "playlistSent": "抱歉！你已發送過邀請。",
     "noPlaylistAcc": "{0} 沒有建立播放清單帳戶。",
-    "playlistCreateError": "抱歉！你無法建立此類型的播放清單！",
     "overPlaylistCreation": "你不能建立超過 `{0}` 個播放清單！",
     "playlistExists": "播放清單 [`{0}`] 已存在。",
     "playlistNotInvaildUrl": "請輸入有效的連結或公開的 Spotify 或 YouTube 播放清單連結。",

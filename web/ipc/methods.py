@@ -2,7 +2,7 @@ import json
 
 from discord import Member, VoiceChannel
 from discord.ext import commands
-from voicelink import Player, Track, Playlist, connect_channel
+from voicelink import Player, Track, Playlist, connect_channel, decode
 
 class TempCtx():
     def __init__(self, author: Member, channel: VoiceChannel) -> None:
@@ -47,7 +47,7 @@ async def initPlayer(player: Player, member: Member, data: dict):
             "avatar_url": member.display_avatar.url,
             "name": member.name
         } for member in player.channel.members ],
-        "tracks": [ track.toDict() for track in player.queue._queue ],
+        "tracks": [ track.track_id for track in player.queue._queue ],
         "repeat_mode": player.queue.repeat.lower(),
         "channel_name": player.channel.name,
         "current_queue_position": player.queue._position if player.is_playing else player.queue._position + 1,
@@ -139,10 +139,10 @@ async def moveTrack(player: Player, member: Member, data: dict):
 async def addTracks(player: Player, member: Member, data: dict): 
     raw_tracks = data.get("tracks", [])
     tracks = [Track(
-                track_id=track["track_id"], 
-                info=track["info"],
+                track_id=track_id, 
+                info=decode(track_id),
                 requester=member
-            ) for track in raw_tracks]
+            ) for track_id in raw_tracks]
 
     await player.add_track(tracks)
 
@@ -159,9 +159,9 @@ async def getTracks(player: Player, member: Member, data: dict):
             return payload
         
         if isinstance(tracks, Playlist):
-            tracks = [ track for track in tracks.tracks[:20] ]
+            tracks = [ track for track in tracks.tracks[:50] ]
 
-        payload["tracks"] = [ track.toDict() for track in tracks ]
+        payload["tracks"] = [ track.track_id for track in tracks ]
         return payload
     
 async def shuffleTrack(player: Player, member: Member, data: dict):

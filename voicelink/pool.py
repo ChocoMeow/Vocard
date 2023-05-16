@@ -402,10 +402,9 @@ class Node:
             if isinstance(spotify_results, spotify.Track):
                 return [
                     Track(
-                        track_id=spotify_results.id,
+                        track_id=None,
                         requester=requester,
                         search_type=search_type,
-                        spotify=True,
                         spotify_track=spotify_results,
                         info={
                             "title": spotify_results.name,
@@ -424,10 +423,9 @@ class Node:
 
             tracks = [
                 Track(
-                    track_id=track.id,
+                    track_id=None,
                     requester=requester,
                     search_type=search_type,
-                    spotify=True,
                     spotify_track=track,
                     info={
                         "title": track.name,
@@ -467,7 +465,7 @@ class Node:
 
             return [
                 Track(
-                    track_id=track["track"],
+                    track_id=None,
                     info={
                         "title": discord_url.group("file"),
                         "author": "Unknown",
