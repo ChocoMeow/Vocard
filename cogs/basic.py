@@ -779,6 +779,5 @@ class Basic(commands.Cog):
 
         await ctx.send(embed=embed)
 
-
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Basic(bot))

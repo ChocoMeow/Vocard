@@ -180,7 +180,7 @@ class TrackDecoder:
             "identifier": body_reader.read_utf(),
             "is_stream": body_reader.read_bool(),
             "uri": body_reader.read_optional_utf(),
-            "thumbnail": None if version <= 2 else body_reader.read_optional_utf(),
+            "thumbnail": None if version != 0 else body_reader.read_optional_utf(),
             "sourceName": body_reader.read_utf(),
             "position": body_reader.read_long()
         }
@@ -189,7 +189,7 @@ class TrackEncoder:
     def encode(self, stream: MessageOutput, track) -> None:
         body_writer = stream.start()
 
-        body_writer.write_byte(3)
+        body_writer.write_byte(0)
         body_writer.write_utf(track.title)
         body_writer.write_utf(track.author)
         body_writer.write_long(track.length)

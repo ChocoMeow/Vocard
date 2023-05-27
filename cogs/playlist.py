@@ -386,7 +386,9 @@ class Playlists(commands.Cog, name="playlist"):
             return await ctx.send(get_lang(ctx.guild.id, 'playlistPositionNotFound').format(position, name))
 
         await update_playlist(ctx.author.id, {f'playlist.{result["id"]}.tracks': result['playlist']['tracks'][position - 1]}, pull=True, mode=False)
-        await ctx.send(get_lang(ctx.guild.id, 'playlistRemoved').format(result['playlist']['tracks'][position - 1]['info']['title'], ctx.author, name))
+        
+        track = voicelink.decode(result['playlist']['tracks'][position - 1])
+        await ctx.send(get_lang(ctx.guild.id, 'playlistRemoved').format(track.get("title"), ctx.author, name))
 
     @playlist.command(name="clear", aliases=get_aliases("clear"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -404,7 +406,6 @@ class Playlists(commands.Cog, name="playlist"):
 
         await update_playlist(ctx.author.id, {f'playlist.{result["id"]}.tracks': []})
         await ctx.send(get_lang(ctx.guild.id, 'playlistClear').format(name))
-
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Playlists(bot))

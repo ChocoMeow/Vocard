@@ -64,8 +64,8 @@ class Vocard(commands.Bot):
         if not func.settings.version or func.settings.version != update.__version__:
             func.update_json(func.root_dir + "/settings.json", new_data={"version": update.__version__})
 
-            await bot.tree.set_translator(Translator())
-            await bot.tree.sync()
+            await self.tree.set_translator(Translator())
+            await self.tree.sync()
 
     async def on_ready(self):
         print("------------------")

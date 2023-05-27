@@ -20,10 +20,8 @@ def missingPermission(user_id:int):
 def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str = "info"):
     payload = {"op": "errorMsg", "level": level, "msg": msg}
     if user_id:
-        payload["user_id"]: user_id
         payload["user_id"] = user_id
     if guild_id:
-        payload["guild_id"]: guild_id
         payload["guild_id"] = guild_id
 
     return payload
