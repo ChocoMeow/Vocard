@@ -3,9 +3,11 @@ $(document).ready(function () {
     const largeImage = document.getElementById("largeImage");
     const img = document.getElementById("image");
     const canvas = document.createElement('canvas');
+    const $positionInfo = $('.position-info');
 
     var startPos = null;
     var selectedTrack = null;
+    var selectedPlaylistId = null;
 
     var typingTimer;
     var doneTypingInterval = 2000;
@@ -31,13 +33,13 @@ $(document).ready(function () {
                 })
                 .catch(error => { return });
 
-        } catch (e) {}
+        } catch (e) { }
     }
 
     img.onload = function () {
         try {
             $("#image").fadeIn(200);
-        } catch (e) {}
+        } catch (e) { }
     }
 
     function getMainColorsFromImage(numColors) {
@@ -72,23 +74,63 @@ $(document).ready(function () {
         });
     }
 
+    $("#seek-bar").on('mousemove', function (e) {
+        var position = e.pageX - $(this).offset().left;
+        var duration = $(this).width();
+        var percentage = (position / duration) * 100;
+
+        var time = player.msToReadableTime(percentage * player.currentTrack?.length / 100);
+        $positionInfo.text(time).css({
+            left: e.pageX - $positionInfo.outerWidth() / 2,
+        });
+    });
+
     $('body').click(function (event) {
         var $target = $(event.target);
         if (!$target.closest(".search-container").length && !$target.is("#search-input") && $('#search-result-list').css("display") != 'none') {
             $("#search-result-list").fadeOut(200);
         }
 
-        if (!$target.closest(".users-bar").is('.users-bar') &&
-            !$target.closest("#users-button").is('#users-button') &&
+        else if (!$target.closest(".users-bar").is('.users-bar') &&
+            !$target.closest("#users-btn").is('#users-btn') &&
             $(".users-bar").hasClass("active")) {
             $(".users-bar").removeClass("active");
-            $("#users-button").css({ "color": "" });
+            $("#users-btn").css({ "color": "" });
         }
 
-        if (!$target.closest(".action").is(".action") &&
+        else if (!$target.closest(".action").is(".action") &&
             !$target.closest("#context-menu li").is("#context-menu li") &&
             $("#context-menu").css("display") != "none") {
             $("#context-menu").fadeOut(200);
+        }
+
+        else if ($target.closest(".images").is(".images")) {
+            selectedPlaylistId = $target.closest(".playlist").data("value");
+
+            if ($target.closest(".action").is(".action")) {
+                const $contextMenu = $("#playlist-context-menu")
+
+                const menuHeight = $contextMenu.outerHeight();
+                const windowHeight = $(window).height();
+                const topPosition = event.pageY + 30;
+                if (topPosition + menuHeight > windowHeight) {
+                    // If the menu would go out of the page, position it above the btn instead
+                    $contextMenu.css({ "left": `${event.pageX - 130}px`, "top": `${event.pageY - menuHeight - 30}px` }).fadeIn(200);
+                } else {
+                    $contextMenu.css({ "left": `${event.pageX - 130}px`, "top": `${topPosition}px` }).fadeIn(200);
+                }
+            } else if ($target.closest(".play").is(".play")) {
+                if (selectedPlaylistId in player.playlists) {
+                    if ("tracks" in player.playlists[selectedPlaylistId]) {
+                        player.send({ "op": "addTracks", "tracks": player.playlists[selectedPlaylistId]["tracks"] });
+                    }
+                }
+            }
+        }
+
+        if (!$target.closest(".action").is(".action") &&
+            $("#playlist-context-menu").css("display") != "none") {
+            $("#playlist-context-menu").fadeOut(200);
         }
     });
 
@@ -117,8 +159,16 @@ $(document).ready(function () {
 
         if ($(event.target).hasClass('action')) {
             selectedTrack = { position: index, track: player.queue[index] };
-            $("#context-menu").css({ "left": `${event.pageX - 150}px`, "top": `${event.pageY + 30}px` }).fadeIn(200);
-            return
+            const menuHeight = $("#context-menu").outerHeight();
+            const windowHeight = $(window).height();
+            const topPosition = event.pageY + 30;
+            if (topPosition + menuHeight > windowHeight) {
+                // If the menu would go out of the page, position it above the btn instead
+                $("#context-menu").css({ "left": `${event.pageX - 130}px`, "top": `${event.pageY - menuHeight - 30}px` }).fadeIn(200);
+            } else {
+                $("#context-menu").css({ "left": `${event.pageX - 130}px`, "top": `${topPosition}px` }).fadeIn(200);
+            }
+            return;
         }
 
         if (index < position) {
@@ -134,7 +184,7 @@ $(document).ready(function () {
         var index = $(this).index();
         var track = player.searchList[index];
         if (track != undefined) {
-            player.send({ "op": "addTracks", "tracks": [track] })
+            player.send({ "op": "addTracks", "tracks": [track] });
         }
         $("#search-result-list").fadeOut(200);
     })
@@ -159,15 +209,15 @@ $(document).ready(function () {
         }
     })
 
-    $('#play-pause-button').on('click', function () {
+    $('#play-pause-btn').on('click', function () {
         player.togglePause();
     });
 
-    $('#skip-button').on('click', function () {
+    $('#skip-btn').on('click', function () {
         player.skipTo();
     });
 
-    $('#back-button').on('click', function () {
+    $('#back-btn').on('click', function () {
         player.backTo();
     });
 
@@ -175,15 +225,15 @@ $(document).ready(function () {
         player.seekTo($(this).val());
     })
 
-    $("#repeat-button").on('click', function () {
+    $("#repeat-btn").on('click', function () {
         player.repeatMode();
     })
 
-    $("#shuffle-button").on('click', function () {
+    $("#shuffle-btn").on('click', function () {
         player.shuffle();
     })
 
-    $("#users-button").on('click', function () {
+    $("#users-btn").on('click', function () {
         const userBar = $(".users-bar")
         userBar.toggleClass("active");
         if (userBar.hasClass("active")) {
@@ -194,14 +244,51 @@ $(document).ready(function () {
 
     })
 
-    $("#remove-track-button").on('click', function () {
+    $("#auto-play").on("click", function () {
+        var checkbox = $(this).is(':checked');
+        player.send({ "op": "toggleAutoplay", "status": checkbox })
+    });
+
+    $("#remove-track-btn").on('click', function () {
         player.removeTrack(selectedTrack?.position, selectedTrack?.track)
         $("#context-menu").fadeOut(200);
     })
 
-    $("#copy-track-button").on('click', function () {
+    $("#copy-track-btn").on('click', function () {
         navigator.clipboard.writeText(selectedTrack?.track.uri);
         $("#context-menu").fadeOut(200);
     })
 
+    $("#homeBtn").on('click', function () {
+        $("#playlists").fadeOut(200, function () {
+            $("#main").fadeIn(200);
+        });
+
+    })
+
+    $("#playlistBtn").on('click', function () {
+        $("#main").fadeOut(200, function () {
+            if (player.playlists == null) {
+                player.send({ "op": "getPlaylists" });
+            }
+            $("#playlists").fadeIn(200);
+        });
+
+    })
+
+    $("#like-btn").on('click', function () {
+        var currentTrack = player.currentTrack;
+        if (currentTrack != undefined) {
+            if (currentTrack.isStream) {
+                return player.showToast("error", "You are not allowed to add streaming videos to your playlist!");
+            }
+            if ($(this).hasClass("fa-regular")) {
+                $(this).removeClass("fa-regular").addClass("fa-solid");
+                player.send({"op": "addPlaylistTrack", "track": currentTrack.track_id, "pId": "200"})
+            } else {
+                $(this).removeClass("fa-solid").addClass("fa-regular");
+                player.send({"op": "removePlaylistTrack", "track": currentTrack.track_id, "pId": "200"})
+            }
+        }
+    })
 });

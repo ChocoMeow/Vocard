@@ -1,8 +1,10 @@
-import json
+import json, function as func
+
+from typing import List
 
 from discord import Member, VoiceChannel
 from discord.ext import commands
-from voicelink import Player, Track, Playlist, connect_channel, decode
+from voicelink import Player, Track, Playlist, NodePool, connect_channel, decode
 
 class TempCtx():
     def __init__(self, author: Member, channel: VoiceChannel) -> None:
@@ -16,11 +18,13 @@ def missingPermission(user_id:int):
     return payload
 
 def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str = "info"):
-    payload = {"op": "errorMsg", "level": level}
+    payload = {"op": "errorMsg", "level": level, "msg": msg}
     if user_id:
         payload["user_id"]: user_id
+        payload["user_id"] = user_id
     if guild_id:
         payload["guild_id"]: guild_id
+        payload["guild_id"] = guild_id
 
     return payload
 
@@ -54,7 +58,8 @@ async def initPlayer(player: Player, member: Member, data: dict):
         "current_position": 0 or player.position if player.is_playing else 0,
         "is_playing": player.is_playing,
         "is_paused": player.is_paused,
-        "is_dj": player.is_privileged(member, check_user_join=False)
+        "is_dj": player.is_privileged(member, check_user_join=False),
+        "autoplay": player.settings.get("autoplay", False)
     }
 
 async def skipTo(player: Player, member: Member, data: dict):
@@ -243,21 +248,95 @@ async def updatePosition(player: Player, member: Member, data: dict):
     position = data.get("position");
     await player.seek(position, member);
 
+async def toggleAutoplay(player: Player, member: Member, data: dict):
+    if not player.is_privileged(member):
+        return error_msg(player.get_msg('missingPerms_autoplay'))
+
+    check = data.get("status", False)
+    player.settings['autoplay'] = check
+
+    if not player.is_playing:
+        await player.do_next()
+
+    return {
+        "op": "toggleAutoplay",
+        "status": check,
+        "requester_id": member.id
+    }
+
 async def closeConnection(player: Player, member: Member, data: dict):
     player._ipc_connection = False
 
+async def getPlaylists(member: Member, data: dict):
+    playlists: dict = await func.get_playlist(member.id, "playlist")
+    if not playlists:
+        return
+
+    for pId, pList in playlists.copy().items():
+        if "type" in pList:
+            if pList["type"] == "link":
+                tracks: Playlist = await NodePool.get_node().get_tracks(pList["uri"], requester=member)
+                if tracks:
+                    playlists[pId]["tracks"] = [ track.track_id for track in tracks.tracks ]
+
+            elif pList["type"] == "share":
+                playlist = await func.get_playlist(pList["user"], "playlist", pList["referId"])
+                if playlist:
+                    if member.id not in playlist["perms"]["read"]:
+                        await func.update_playlist(member.id, {f"playlist.{pId}": 1}, mode=False)
+                        del playlists[pId]
+                        continue
+                    playlists[pId]["tracks"] = playlist["tracks"]
+            
+    return {
+        "op": "getPlaylists",
+        "playlists": playlists,
+        "user_id": member.id
+    }
+
+async def addPlaylistTrack(member: Member, data: dict):
+    track_id = data.get("track")
+    pId = data.get("pId")
+    if not track_id or not pId:
+        return
+    
+    playlist: dict = await func.get_playlist(member.id, 'playlist', pId)
+    if not playlist:
+        return
+    
+    rank, max_p, max_t = await func.checkroles(member.id)
+    if len(playlist["tracks"]) >= max_t:
+        return error_msg(func.get_lang(member.guild.id, "playlistlimited").format(max_t), user_id=member.id)
+
+    if track_id in playlist['tracks']:
+        return error_msg(func.get_lang(member.guild.id, "playlistrepeated"), user_id=member.id)
+    
+    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id}, push=True)
+
+async def removePlaylistTrack(member: Member, data: dict):
+    track_id = data.get("track")
+    pId = data.get("pId")
+    if not track_id or not pId:
+        return
+    
+    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id }, pull=True, mode=False)
+
 methods = {
-    "initPlayer": initPlayer,
-    "skipTo": skipTo,
-    "backTo": backTo,
-    "moveTrack": moveTrack,
-    "addTracks": addTracks,
-    "getTracks": getTracks,
-    "shuffleTrack": shuffleTrack,
-    "repeatTrack": repeatTrack,
-    "removeTrack": removeTrack,
-    "updatePause": updatePause,
-    "updatePosition": updatePosition,
+    "initPlayer": [initPlayer, False],
+    "skipTo": [skipTo, False],
+    "backTo": [backTo, False],
+    "moveTrack": [moveTrack, False],
+    "addTracks": [addTracks, True],
+    "getTracks": [getTracks, True],
+    "shuffleTrack": [shuffleTrack, False],
+    "repeatTrack": [repeatTrack, False],
+    "removeTrack": [removeTrack, False],
+    "updatePause": [updatePause, False],
+    "updatePosition": [updatePosition, False],
+    "toggleAutoplay": [toggleAutoplay, False],
+    "getPlaylists": [getPlaylists, False],
+    "addPlaylistTrack": [addPlaylistTrack, False],
+    "removePlaylistTrack": [removePlaylistTrack, False]
 }
 
 async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
@@ -268,6 +347,9 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
     guild, member = None, None
     guild_id = data.get("guild_id", None)
     user_id = data.get("user_id", None)
+    if not user_id:
+        return
+    
     if guild_id is None:
         user = bot.get_user(user_id)
         if not user: 
@@ -278,24 +360,32 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
             if m.voice and m.voice.channel:
                 guild = g
                 member = m
-
+                break
     else:
         guild = bot.get_guild(guild_id)
         member = guild.get_member(user_id)
     
-    if not guild or not member:
+    if not member:
         return
-    
-    player: Player = guild.voice_client
-    if not player:
-        if method.__name__ != "getTracks":
-            return
-        player: Player = await connect_channel(member, bot)
 
     try:
-        resp: dict = await method(player, member, data)
+        if 'player' in method[0].__code__.co_varnames:
+            if not guild:
+                return
+            
+            player: Player = guild.voice_client
+            if not player:
+                if not method[1]:
+                    return
+                player: Player = await connect_channel(member, bot)
+
+            resp: dict = await method[0](player, member, data)
+        else:
+            resp: dict = await method[0](member, data)
+
         if resp:
             await websocket.send(json.dumps(resp))
+
     except Exception as e:
         payload = {
             "op": "errorMsg",

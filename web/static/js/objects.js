@@ -98,7 +98,7 @@ class Track {
         } else {
             this.imageUrl = object.thumbnail;
         }
-        
+        this.isStream = object.isStream;
         this.length = Number(object.length);
         this.track_id = object.track_id;
         this.uri = object.uri;
@@ -106,19 +106,6 @@ class Track {
 }
 
 const decoders = [
-    undefined,
-    undefined,
-    (input, track_id) => {
-        const title = input.readUTF();
-        const author = input.readUTF();
-        const length = input.readLong();
-        const identifier = input.readUTF();
-        const isStream = input.readBoolean();
-        const uri = input.readBoolean() ? input.readUTF() : null;
-        const source = input.readUTF();
-
-        return {track_id, title, author, length, identifier, isStream, uri, thumbnail: null, source, position: 0n };
-    },
     (input, track_id) => {
         const title = input.readUTF();
         const author = input.readUTF();
@@ -129,7 +116,19 @@ const decoders = [
         const thumbnail = input.readBoolean() ? input.readUTF() : null;
         const source = input.readUTF();
 
-        return {track_id, title, author, length, identifier, isStream, uri, thumbnail, source, position: 0n };
+        return { track_id, title, author, length, identifier, isStream, uri, thumbnail, source, position: 0n };
+    },
+    undefined,
+    (input, track_id) => {
+        const title = input.readUTF();
+        const author = input.readUTF();
+        const length = input.readLong();
+        const identifier = input.readUTF();
+        const isStream = input.readBoolean();
+        const uri = input.readBoolean() ? input.readUTF() : null;
+        const source = input.readUTF();
+
+        return { track_id, title, author, length, identifier, isStream, uri, thumbnail: null, source, position: 0n };
     }
 ]
 function decode(track_id) {
@@ -137,7 +136,7 @@ function decode(track_id) {
     const flags = input.readInt();
     const version = input.readByte();
 
-    const decoder = decoders[version]; 
+    const decoder = decoders[version];
     return new Track(decoder(input, track_id));
 }
 
@@ -151,6 +150,7 @@ const actions = {
         player.current_position = data['current_position'];
         player.repeat = data['repeat_mode'];
         player.channelName = data["channel_name"];
+        player.autoplay = data["autoplay"];
         data["users"].forEach(user => {
             player.addUser(user);
         })
@@ -324,11 +324,49 @@ const actions = {
         player.showToast(data["requester_id"], msg);
     },
 
-    errorMsg: function (player, data) {
-        var level = data["level"];
-        player.showToast(level, data["msg"]);
-    }
+    toggleAutoplay: function (player, data) {
+        var status = data["status"];
+        player.autoplay = status;
+    },
 
+    errorMsg: function (player, data) {
+        console.log("hello")
+        player.showToast(data["level"], data["msg"]);
+    },
+
+    getPlaylists: function (player, data) {
+        const playlists = data["playlists"]
+        player.playlists = playlists;
+
+        $("#playlists-grid").empty();
+        for (let key in playlists) {
+            const pList = playlists[key];
+            let pDiv = $(`<div class="playlist" data-value="${key}">`);
+            let iDiv = $("<div class='images'>");
+            let infoDiv = $("<div class='info'>");
+
+            if (pList["tracks"] === 0) {
+                continue;
+            } else {
+                for (let i = 0; i < 4; i++) {
+                    if (pList["tracks"][i] == undefined) {
+                        continue;
+                    }
+                    var track = decode(pList["tracks"][i])
+                    let img = $("<img>").attr("src", track.imageUrl);
+                    iDiv.append(img);
+
+                }
+            }
+            iDiv.append(`<i class="fa-solid fa-ellipsis-vertical action"></i>`);
+            iDiv.append(`<i class="fa-solid fa-play play"></i>`);
+            pDiv.append(iDiv);
+            infoDiv.append(`<p>${pList["name"]}</p>`);
+            infoDiv.append(`<p class="desc">${pList["type"]} • ${pList["tracks"].length} Tracks</p>`);
+            pDiv.append(infoDiv);
+            $("#playlists-grid").append(pDiv);
+        }
+    }
 }
 
 class Player {
@@ -351,8 +389,10 @@ class Player {
         this.volume = 100;
         this.last_update = 0;
         this.is_connected = true;
+        this.autoplay = false;
 
         this.channelName = "";
+        this.playlists = null;
     }
 
     handleMessage(data) {
@@ -553,8 +593,7 @@ class Player {
     updateInfo() {
         var currentTrack = this.currentTrack;
         if (currentTrack == undefined) {
-            $("#title").text("");
-            $("#author").text("");
+            $(".control-container .center").fadeOut();
             $("#position").text("00:00");
             $("#length").text("00:00");
             $("#image").fadeOut(100, function () { $(this).removeAttr("src"); });
@@ -564,7 +603,9 @@ class Player {
         } else {
             $("#title").text(currentTrack.title);
             $("#author").text(currentTrack.author);
+            $(".control-container .center").fadeIn();
             $("#length").text(this.msToReadableTime(currentTrack.length));
+            $("#auto-play").prop('checked', this.autoplay);
 
             var image = "";
             if (currentTrack.source == "youtube") {
@@ -576,17 +617,25 @@ class Player {
                 $(".thumbnail-background").fadeOut(100);
                 $("#largeImage").fadeOut(function () {
                     $(this).attr("src", image);
-                    
+
                 });
-                $("#image").fadeOut(function() {
+                $("#image").fadeOut(function () {
                     $(this).attr("src", currentTrack.imageUrl);
                 });
+
+                if (this.playlists != null) {
+                    if (this.playlists["200"]["tracks"].includes(currentTrack.track_id)) {
+                        $("#like-btn").removeClass("fa-regular").addClass("fa-solid");
+                    } else {
+                        $("#like-btn").removeClass("fa-solid").addClass("fa-regular");
+                    }
+                }
             }
         }
 
         $("#channel-name").text((this.channelName == "") ? "Not Found" : this.channelName);
-        var play_pause_btn = $("#play-pause-button");
-        var repeat_btn = $("#repeat-button");
+        var play_pause_btn = $("#play-pause-btn");
+        var repeat_btn = $("#repeat-btn");
         if (this.is_paused || currentTrack == undefined) {
             play_pause_btn.removeClass('fa-pause').addClass('fa-play');
             if (this.timer.getIsRunning()) {

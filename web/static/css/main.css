@@ -119,6 +119,8 @@ a {
     position: sticky;
     top: 0;
     z-index: 2;
+    background-color: transparent;
+    transition: background-color 0.5s ease;
 }
 
 .header .left {
@@ -126,7 +128,7 @@ a {
 }
 
 .header .left p {
-    font-size: 20;
+    font-size: 20px;
     padding: 12px;
     border-radius: 10px;
     margin: 0rem 0.4rem;
@@ -245,7 +247,7 @@ a {
     justify-content: space-around;
 }
 
-.main .toastContrainer {
+.toastContrainer {
     position: absolute;
     left: 2%;
     z-index: 2;
@@ -334,9 +336,24 @@ a {
     z-index: 2;
 }
 
+.player-controller:hover .seek-bar {
+    height: 9px;
+}
+
 .progress-bar-container {
     position: relative;
     width: 100%;
+}
+
+.position-info {
+    position: absolute;
+    top: -30px;
+    left: 0;
+    display: none;
+}
+
+.progress-bar-container:hover .position-info {
+    display: block;
 }
 
 .seek-bar {
@@ -347,10 +364,6 @@ a {
     cursor: pointer;
     overflow: hidden;
     background-color: rgb(73, 73, 73);
-}
-
-.seek-bar:hover {
-    height: 8px;
 }
 
 .seek-bar::-webkit-slider-thumb {
@@ -383,11 +396,11 @@ a {
     cursor: pointer;
     padding: 5px;
     margin-left: .8rem;
-    font-size: 20;
+    font-size: 20px;
 }
 
-.player-controller .left .control #play-pause-button {
-    font-size: 30;
+.player-controller .left .control #play-pause-btn {
+    font-size: 30px;
 }
 
 .player-controller .left .position {
@@ -412,13 +425,30 @@ a {
 }
 
 .player-controller .center .data {
-    margin-left: 1rem;
+    overflow: hidden;
+    margin: 0 1rem;
+}
+
+.player-controller .center .data p {
+    text-overflow: ellipsis;
     overflow: hidden;
 }
 
 .player-controller .center .desc {
     color: grey;
-    font-size: 13;
+    font-size: 13px;
+}
+
+.player-controller .center i {
+    cursor: pointer;
+    padding: 5px;
+    font-size: 20px;
+    color: gray;
+    transition: color .2s ease-in-out;
+}
+
+.player-controller .center i:hover {
+    color: #fff;
 }
 
 .player-controller .right {
@@ -433,7 +463,7 @@ a {
     cursor: pointer;
     padding: 5px;
     margin-left: .8rem;
-    font-size: 20;
+    font-size: 20px;
     color: gray;
     transition: color .2s ease-in-out;
 }
@@ -442,18 +472,41 @@ a {
     color: #fff;
 }
 
+.main .list {
+    flex: 1;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    overflow: hidden;
+}
+
+.main .auto-play {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0 1rem;
+}
+
 .main .queue-list {
+    flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    flex: 1;
     display: flex;
     justify-content: center;
-    z-index: 1;
+}
+
+.main .queue-list ul {
+    list-style: none;
+    width: 95%;
+    max-height: 300px;
 }
 
 .track {
     display: flex;
     justify-content: space-between;
+    max-width: 100%;
     align-items: center;
     cursor: pointer;
     border-radius: .5rem;
@@ -507,6 +560,11 @@ a {
     background-color: rgba(157, 157, 157, 50%);
 }
 
+.track i:active {
+    transform: scale(0.85);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
 .track .left img {
     padding: 5px;
     height: 50;
@@ -525,15 +583,7 @@ a {
 
 .track .left .info p.desc {
     color: grey;
-    font-size: 13;
-}
-
-.main .queue-list ul {
-    list-style: none;
-    width: 90%;
-    padding: 1rem;
-    padding-bottom: 5rem;
-    max-height: 300px;
+    font-size: 13px;
 }
 
 .users-bar {
@@ -591,30 +641,214 @@ a {
 .context-menu {
     display: none;
     position: absolute;
-    z-index: 1;
+    z-index: 2;
 }
 
 .context-menu ul {
     list-style: none;
-    padding: .5rem;
-    border-radius: .5rem;
+    min-width: 150px;
+    padding: .5rem 0;
+    border-radius: .3rem;
     background-color: rgb(37, 37, 37);
 }
 
 .context-menu li {
-    padding: .5rem;
-    border-radius: .3rem;
+    padding: .5rem 1rem;
     cursor: pointer;
     transition: background-color .2s;
+    font-size: 14px;
 }
 
 .context-menu li:hover {
-    padding: .5rem;
     background-color: rgb(98, 98, 98);
 }
 
 .context-menu i {
     margin-right: .8rem;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--grey-hover);
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: #2196F3;
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked+.slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.playlists {
+    flex-grow: 1;
+    padding: 0rem 4rem;
+}
+
+.playlists-grid {
+    display: grid;
+    grid-gap: 1.5rem;
+    padding: 2rem;
+    grid-template-rows: repeat(auto-fit, 250px);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 200px));
+    grid-auto-rows: 250px;
+}
+
+.images {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    width: 200px;
+    border-radius: .5rem;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+    opacity: 0;
+    animation: created 1s ease-in-out forwards;
+}
+
+.images img {
+    width: 50%;
+    height: 50%;
+    object-fit: cover;
+}
+
+.images i.action {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none;
+    color: white;
+    cursor: pointer;
+    margin: .5rem;
+    padding: .5rem .9rem;
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+.images i.play {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin: 1rem;
+    padding: .7rem .84rem;
+    display: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    transition: all 0.2s ease-in-out;
+}
+
+.images::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-shadow: inset 0px 10px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.images:hover::before {
+    opacity: 1;
+}
+
+.images:hover i {
+    display: block;
+    text-align: center;
+    border-radius: 3rem;
+}
+
+.images i.action:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+}
+
+.images i.action:active {
+    transform: scale(0.85);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.images i.play:hover {
+    transform: scale(1.2);
+}
+
+.images i.play:active {
+    transform: scale(0.85);
+    box-shadow: 0 0 10px rgba(230, 230, 230, 0.3);
+}
+
+.playlist .info {
+    margin-top: .5rem;
+}
+.playlist .info p {
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.playlist .info p.desc {
+    font-size: 14px;
+    color: gray;
+}
+
+@keyframes created {
+    100% {
+        opacity: 1;
+    }
 }
 
 @media (max-width: 935px) {
@@ -624,7 +858,7 @@ a {
         padding: 0;
     }
 
-    .main .toastContrainer {
+    .toastContrainer {
         display: none;
     }
 
@@ -642,6 +876,19 @@ a {
 
     ul {
         width: 100%;
+    }
+
+    .playlists-grid {
+        grid-gap: 1rem;
+        padding: 1rem;
+        grid-template-rows: repeat(auto-fit, 200px);
+        grid-template-columns: repeat(auto-fit, minmax(150px, 150px));
+        grid-auto-rows: 200px;
+    }
+
+    .images {
+        height: 150px;
+        width: 150px;
     }
 }
 

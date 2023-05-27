@@ -183,7 +183,7 @@ def callback():
     response = requests.post(f'{DISCORD_API_BASE_URL}/oauth2/token', data=data)
     token_data = json.loads(response.content.decode('utf-8'))
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(days=20)
+    app.permanent_session_lifetime = timedelta(days=30)
     session['discord_token'] = token_data.get("access_token")
 
     return redirect(url_for("home"))
