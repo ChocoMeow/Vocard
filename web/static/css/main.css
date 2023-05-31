@@ -123,6 +123,10 @@ a {
     transition: background-color 0.5s ease;
 }
 
+.header.active {
+    background-color: #020202;
+}
+
 .header .left {
     display: flex;
 }
@@ -730,6 +734,7 @@ input:checked+.slider:before {
 .playlists {
     flex-grow: 1;
     padding: 0rem 4rem;
+    transition: all 0.2s ease-in-out;
 }
 
 .playlists-grid {
@@ -878,12 +883,18 @@ input:checked+.slider:before {
         width: 100%;
     }
 
+    .playlists {
+        padding: 0 1rem;
+    }
+
     .playlists-grid {
         grid-gap: 1rem;
         padding: 1rem;
         grid-template-rows: repeat(auto-fit, 200px);
         grid-template-columns: repeat(auto-fit, minmax(150px, 150px));
         grid-auto-rows: 200px;
+        justify-content: center;
+        align-items: center;
     }
 
     .images {

@@ -37,7 +37,7 @@ class DataInput {
         if (typeof bytes === "string") {
             var decodedString = atob(bytes);
             var bytes = new Uint8Array(decodedString.length);
-            for (var i = 0; i < decodedString.length; i++) {
+            for (let i = 0; i < decodedString.length; i++) {
                 bytes[i] = decodedString.charCodeAt(i);
             }
         }
@@ -165,7 +165,7 @@ const actions = {
     },
 
     trackUpdate: function (player, data) {
-        var track = player.updateCurrentQueuePos(data['current_queue_position']);
+        let track = player.updateCurrentQueuePos(data['current_queue_position']);
         player.is_paused = data['is_paused'];
         if (track?.track_id != data["track_id"]) {
             player.send({ "op": "initPlayer" })
@@ -184,13 +184,13 @@ const actions = {
     },
 
     getTracks: function (player, data) {
-        var tracks = data["tracks"];
+        let tracks = data["tracks"];
         if (tracks != undefined) {
             const resultList = $("#search-result-list");
             resultList.empty();
             player.searchList = tracks;
-            for (var i in tracks) {
-                var track = decode(tracks[i])
+            for (let i in tracks) {
+                let track = decode(tracks[i])
                 resultList.append(`<li class="search-result"><div class="search-result-left"><img src=${track.imageUrl} /><div class="search-result-info"><p class="info">${track.title}</p><p class="desc">${track.author}</p></div></div><p>${player.msToReadableTime(track.length)}</p></li>`)
             }
         }
@@ -229,11 +229,10 @@ const actions = {
 
     updatePause: function (player, data) {
         player.is_paused = data['pause'];
-        var msg = "";
         if (data["pause"]) {
-            msg = "Paused the player."
+            var msg = "Paused the player."
         } else {
-            msg = "Resumed the player."
+            var msg = "Resumed the player."
         }
         player.showToast(data["requester_id"], msg)
     },
@@ -243,10 +242,10 @@ const actions = {
     },
 
     swapTrack: function (player, data) {
-        var index1 = player.current_queue_position + data['position2']["index"];
-        var index2 = player.current_queue_position + data['position1']["index"];
-        var track1 = player.queue[index1];
-        var track2 = player.queue[index2];
+        let index1 = player.current_queue_position + data['position2']["index"];
+        let index2 = player.current_queue_position + data['position1']["index"];
+        let track1 = player.queue[index1];
+        let track2 = player.queue[index2];
 
         if (track1?.track_id != data['position1']["track_id"] || track2?.track_id != data['position2']["track_id"]) {
             return player.send({ "op": "initPlayer" });
@@ -274,12 +273,11 @@ const actions = {
     },
 
     shuffleTrack: function (player, data) {
-        var tracks = data["tracks"];
+        let tracks = data["tracks"];
         if (tracks != undefined) {
             player.queue = [];
             tracks.forEach(rawTrack => {
-
-                var track = new Track(rawTrack);
+                let track = new Track(rawTrack);
                 player.queue.push(track);
             });
             player.initSortable();
@@ -330,42 +328,13 @@ const actions = {
     },
 
     errorMsg: function (player, data) {
-        console.log("hello")
         player.showToast(data["level"], data["msg"]);
     },
 
     getPlaylists: function (player, data) {
         const playlists = data["playlists"]
         player.playlists = playlists;
-
-        $("#playlists-grid").empty();
-        for (let key in playlists) {
-            const pList = playlists[key];
-            let pDiv = $(`<div class="playlist" data-value="${key}">`);
-            let iDiv = $("<div class='images'>");
-            let infoDiv = $("<div class='info'>");
-
-            if (pList["tracks"] === 0) {
-                continue;
-            } else {
-                for (let i = 0; i < 4; i++) {
-                    if (pList["tracks"][i] == undefined) {
-                        continue;
-                    }
-                    var track = decode(pList["tracks"][i])
-                    let img = $("<img>").attr("src", track.imageUrl);
-                    iDiv.append(img);
-
-                }
-            }
-            iDiv.append(`<i class="fa-solid fa-ellipsis-vertical action"></i>`);
-            iDiv.append(`<i class="fa-solid fa-play play"></i>`);
-            pDiv.append(iDiv);
-            infoDiv.append(`<p>${pList["name"]}</p>`);
-            infoDiv.append(`<p class="desc">${pList["type"]} • ${pList["tracks"].length} Tracks</p>`);
-            pDiv.append(infoDiv);
-            $("#playlists-grid").append(pDiv);
-        }
+        player.updatePlaylists();
     }
 }
 
@@ -454,8 +423,8 @@ class Player {
         };
     }
     addTrack(tracks) {
-        for (var i in tracks) {
-            var track = decode(tracks[i])
+        for (let i in tracks) {
+            let track = decode(tracks[i])
             this.queue.push(track);
             $("#sortable").append(`<li><div class="track"><div class="left">${(this.isDJ) ? '<i class="fa-solid fa-bars handle"></i>' : ''}<img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
         }
@@ -483,7 +452,7 @@ class Player {
     }
 
     removeTrack(position, track) {
-        var rawTrack = this.queue[position];
+        let rawTrack = this.queue[position];
         if (position == this.current_queue_position) {
             return this.showToast("error", "You are not allow to remove playing track!");
         }
@@ -510,7 +479,7 @@ class Player {
         if (this.currentTrack == undefined) {
             return;
         }
-        var position = tempPosition / 500 * this.currentTrack.length;
+        let position = tempPosition / 500 * this.currentTrack.length;
         this.send({ "op": "updatePosition", "position": position });
     }
 
@@ -527,7 +496,7 @@ class Player {
     }
 
     send(payload) {
-        var json = JSON.stringify(payload)
+        let json = JSON.stringify(payload)
         this.socket.send(json);
     }
 
@@ -564,7 +533,7 @@ class Player {
             var user = this.users[userId];
         }
         if (user != null) {
-            var $element = $(`<div class="toast"><img src=${user['avatar_url']} alt="user-icon"/><div class="content"><p class="username">${user['name']}</p><p class="message">${msg}</p></div></div>`)
+            let $element = $(`<div class="toast"><img src=${user['avatar_url']} alt="user-icon"/><div class="content"><p class="username">${user['name']}</p><p class="message">${msg}</p></div></div>`)
             $(".toastContrainer").append($element)
 
             setTimeout(function () {
@@ -586,14 +555,15 @@ class Player {
         this.current_position += 1000;
         $("#position").text(this.msToReadableTime(this.current_position));
 
-        var time = (this.current_position / this.currentTrack?.length) * 500;
+        let time = (this.current_position / this.currentTrack?.length) * 500;
         $("#seek-bar").val(time);
     }
 
     updateInfo() {
-        var currentTrack = this.currentTrack;
+        let currentTrack = this.currentTrack;
         if (currentTrack == undefined) {
-            $(".control-container .center").fadeOut();
+            $("#title").text("");
+            $("#author").text("");
             $("#position").text("00:00");
             $("#length").text("00:00");
             $("#image").fadeOut(100, function () { $(this).removeAttr("src"); });
@@ -603,11 +573,10 @@ class Player {
         } else {
             $("#title").text(currentTrack.title);
             $("#author").text(currentTrack.author);
-            $(".control-container .center").fadeIn();
             $("#length").text(this.msToReadableTime(currentTrack.length));
             $("#auto-play").prop('checked', this.autoplay);
 
-            var image = "";
+            let image = "";
             if (currentTrack.source == "youtube") {
                 image += `${window.location.protocol}//${window.location.hostname}:${window.location.port}/`;
             }
@@ -634,8 +603,8 @@ class Player {
         }
 
         $("#channel-name").text((this.channelName == "") ? "Not Found" : this.channelName);
-        var play_pause_btn = $("#play-pause-btn");
-        var repeat_btn = $("#repeat-btn");
+        let play_pause_btn = $("#play-pause-btn");
+        let repeat_btn = $("#repeat-btn");
         if (this.is_paused || currentTrack == undefined) {
             play_pause_btn.removeClass('fa-pause').addClass('fa-play');
             if (this.timer.getIsRunning()) {
@@ -656,4 +625,35 @@ class Player {
         }
     }
 
+    updatePlaylists() {
+        $("#playlists-grid").empty();
+        for (let key in this.playlists) {
+            const pList = this.playlists[key];
+            let pDiv = $(`<div class="playlist" data-value="${key}">`);
+            let iDiv = $("<div class='images'>");
+            let infoDiv = $("<div class='info'>");
+
+            if (pList["tracks"] === 0) {
+                continue;
+            } else {
+                for (let i = 0; i < 4; i++) {
+                    if (pList["tracks"][i] == undefined) {
+                        continue;
+                    }
+                    let track = decode(pList["tracks"][i])
+                    let img = $("<img>").attr("src", track.imageUrl);
+                    iDiv.append(img);
+
+                }
+            }
+            iDiv.append(`<i class="fa-solid fa-ellipsis-vertical action"></i>`);
+            iDiv.append(`<i class="fa-solid fa-play play"></i>`);
+            pDiv.append(iDiv);
+            infoDiv.append(`<p>${pList["name"]}</p>`);
+            infoDiv.append(`<p class="desc">${pList["type"]} • ${pList["tracks"].length} Tracks</p>`);
+            pDiv.append(infoDiv);
+            $("#playlists-grid").append(pDiv);
+            $("#playlists-tracks").empty()
+        }
+    }
 }

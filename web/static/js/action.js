@@ -8,6 +8,7 @@ $(document).ready(function () {
     var startPos = null;
     var selectedTrack = null;
     var selectedPlaylistId = null;
+    var selectedPlaylistTrack = null;
 
     var typingTimer;
     var doneTypingInterval = 2000;
@@ -22,7 +23,7 @@ $(document).ready(function () {
             context.drawImage(largeImage, 0, startY, width, height, 0, 0, width, height);
             getMainColorsFromImage(4)
                 .then(colors => {
-                    var bg = $(".thumbnail-background");
+                    let bg = $(".thumbnail-background");
                     bg.css({
                         "background": `linear-gradient(-132deg, ${colors[0]}, ${colors[1]}, ${colors[2]}, ${colors[3]})`,
                         "width": "70%",
@@ -75,18 +76,19 @@ $(document).ready(function () {
     }
 
     $("#seek-bar").on('mousemove', function (e) {
-        var position = e.pageX - $(this).offset().left;
-        var duration = $(this).width();
-        var percentage = (position / duration) * 100;
+        let position = e.pageX - $(this).offset().left;
+        let duration = $(this).width();
+        let percentage = (position / duration) * 100;
 
-        var time = player.msToReadableTime(percentage * player.currentTrack?.length / 100);
+        let time = player.msToReadableTime(percentage * player.currentTrack?.length / 100);
         $positionInfo.text(time).css({
             left: e.pageX - $positionInfo.outerWidth() / 2,
         });
     });
 
     $('body').click(function (event) {
-        var $target = $(event.target);
+        let $target = $(event.target);
+
         if (!$target.closest(".search-container").length && !$target.is("#search-input") && $('#search-result-list').css("display") != 'none') {
             $("#search-result-list").fadeOut(200);
         }
@@ -96,15 +98,29 @@ $(document).ready(function () {
             $(".users-bar").hasClass("active")) {
             $(".users-bar").removeClass("active");
             $("#users-btn").css({ "color": "" });
-        }
 
-        else if (!$target.closest(".action").is(".action") &&
-            !$target.closest("#context-menu li").is("#context-menu li") &&
-            $("#context-menu").css("display") != "none") {
-            $("#context-menu").fadeOut(200);
-        }
+        } else if ($target.closest(".action").is(".action") &&
+            $target.closest(".playlists-tracks").is(".playlists-tracks")) {
 
-        else if ($target.closest(".images").is(".images")) {
+            selectedPlaylistTrack = $target.closest(".track").data("value");
+            const $contextMenu = $("#context-menu");
+            const menuHeight = $contextMenu.outerHeight();
+            const windowHeight = $(window).height();
+            const topPosition = event.pageY + 30;
+            if (topPosition + menuHeight > windowHeight) {
+                // If the menu would go out of the page, position it above the btn instead
+                $contextMenu.css({ "left": `${event.pageX - 130}px`, "top": `${event.pageY - menuHeight - 30}px` }).fadeIn(200);
+            } else {
+                $contextMenu.css({ "left": `${event.pageX - 130}px`, "top": `${topPosition}px` }).fadeIn(200);
+            }
+
+        } else if ($target.closest(".playlists-tracks").is(".playlists-tracks") &&
+            $target.closest(".track").is(".track")) {
+
+            const track_id = $target.closest(".track").data("value");
+            player.send({ "op": "addTracks", "tracks": [track_id] })
+
+        } else if ($target.closest(".playlist").is(".playlist")) {
             selectedPlaylistId = $target.closest(".playlist").data("value");
 
             if ($target.closest(".action").is(".action")) {
@@ -122,13 +138,33 @@ $(document).ready(function () {
             } else if ($target.closest(".play").is(".play")) {
                 if (selectedPlaylistId in player.playlists) {
                     if ("tracks" in player.playlists[selectedPlaylistId]) {
-                        player.send({ "op": "addTracks", "tracks": player.playlists[selectedPlaylistId]["tracks"] });
+                        if (player.playlists[selectedPlaylistId]['tracks'].length != 0) {
+                            player.send({ "op": "addTracks", "tracks": player.playlists[selectedPlaylistId]["tracks"] });
+                        }
+                    }
+                }
+            } else {
+                const $pTracks = $("#playlists-tracks");
+                if (selectedPlaylistId in player.playlists) {
+                    $pTracks.empty();
+                    for (const track_id of player.playlists[selectedPlaylistId]["tracks"]) {
+                        const track = decode(track_id);
+
+                        let $trackDiv = $(`<div class="track" data-value=${track_id} ><div class="left">${(this.isDJ) ? '<i class="fa-solid fa-bars handle"></i>' : ''}<img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${player.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div>`);
+                        $pTracks.append($trackDiv);
                     }
                 }
             }
         }
 
         if (!$target.closest(".action").is(".action") &&
+            !$target.closest("#context-menu li").is("#context-menu li") &&
+            $("#context-menu").css("display") != "none") {
+            $("#context-menu").fadeOut(200);
+        }
+
+        if (!$target.closest(".action").is(".action") ||
+            !$target.closest(".images").is(".images") &&
             $("#playlist-context-menu").css("display") != "none") {
             $("#playlist-context-menu").fadeOut(200);
         }
@@ -144,7 +180,7 @@ $(document).ready(function () {
             },
             stop: function (event, ui) {
                 if (startPos != null) {
-                    var newPos = ui.item.index();
+                    let newPos = ui.item.index();
                     if (startPos != newPos) {
                         player.moveTrack(startPos, newPos)
                     }
@@ -154,8 +190,8 @@ $(document).ready(function () {
     });
 
     $('#sortable').on('click', 'li', function (event) {
-        var index = $(this).index();
-        var position = player.current_queue_position;
+        let index = $(this).index();
+        let position = player.current_queue_position;
 
         if ($(event.target).hasClass('action')) {
             selectedTrack = { position: index, track: player.queue[index] };
@@ -181,8 +217,8 @@ $(document).ready(function () {
     })
 
     $('#search-result-list').on('click', 'li', function () {
-        var index = $(this).index();
-        var track = player.searchList[index];
+        let index = $(this).index();
+        let track = player.searchList[index];
         if (track != undefined) {
             player.send({ "op": "addTracks", "tracks": [track] });
         }
@@ -193,7 +229,7 @@ $(document).ready(function () {
         clearTimeout(typingTimer);
         $("#search-loader").fadeIn(200);
         typingTimer = setTimeout(function () {
-            var input = $('#search-input').val();
+            let input = $('#search-input').val();
             if (input.replace(/\s+/g, '') != "") {
                 player.send({ "op": "getTracks", "query": input })
             } else {
@@ -245,23 +281,62 @@ $(document).ready(function () {
     })
 
     $("#auto-play").on("click", function () {
-        var checkbox = $(this).is(':checked');
+        let checkbox = $(this).is(':checked');
         player.send({ "op": "toggleAutoplay", "status": checkbox })
     });
 
     $("#remove-track-btn").on('click', function () {
-        player.removeTrack(selectedTrack?.position, selectedTrack?.track)
+        if ($("#main").css("display") == "none") {
+            if (selectedPlaylistId != null && selectedPlaylistId != null && player.playlists != null) {
+                const playlist = player.playlists[selectedPlaylistId];
+                if (playlist["type"] == "playlist") {
+                    player.send({ "op": "removePlaylistTrack", "pId": selectedPlaylistId, "track_id": selectedPlaylistTrack, "pType": playlist["type"] })
+                    let index = playlist["tracks"].indexOf(selectedPlaylistTrack);
+                    if (index !== -1) {
+                        playlist["tracks"].splice(index, 1);
+                    }
+                    $(`div [data-value=${selectedPlaylistTrack}]`).remove();
+                }
+            }
+        } else {
+            player.removeTrack(selectedTrack?.position, selectedTrack?.track)
+        }
         $("#context-menu").fadeOut(200);
     })
 
     $("#copy-track-btn").on('click', function () {
-        navigator.clipboard.writeText(selectedTrack?.track.uri);
+        if ($("#main").css("display") == "none") {
+            if (selectedPlaylistTrack != null) {
+                const track = decode(selectedPlaylistTrack);
+                navigator.clipboard.writeText(track.uri);
+            }
+        } else {
+            navigator.clipboard.writeText(selectedTrack?.track.uri);
+        }
         $("#context-menu").fadeOut(200);
+    })
+
+    $("#remove-playlist-btn").on('click', function () {
+        if (player.playlists != null && selectedPlaylistId in player.playlists) {
+            if (selectedPlaylistId != 200) {
+                playlist = player.playlists[selectedPlaylistId];
+                console.log(player.playlists);
+                let payload = { "op": "removePlaylist", "pId": selectedPlaylistId }
+                if (playlist['type'] == "share") {
+                    payload["refer_user"] = playlist["user"];
+                    payload["isShare"] = true;
+                }
+                player.send(payload);
+                delete player.playlists[selectedPlaylistId];
+                player.updatePlaylists();
+            }
+        }
     })
 
     $("#homeBtn").on('click', function () {
         $("#playlists").fadeOut(200, function () {
             $("#main").fadeIn(200);
+            $(".header").removeClass("active");
         });
 
     })
@@ -272,22 +347,22 @@ $(document).ready(function () {
                 player.send({ "op": "getPlaylists" });
             }
             $("#playlists").fadeIn(200);
+            $(".header").addClass("active");
         });
-
     })
 
     $("#like-btn").on('click', function () {
-        var currentTrack = player.currentTrack;
+        let currentTrack = player.currentTrack;
         if (currentTrack != undefined) {
             if (currentTrack.isStream) {
                 return player.showToast("error", "You are not allowed to add streaming videos to your playlist!");
             }
             if ($(this).hasClass("fa-regular")) {
                 $(this).removeClass("fa-regular").addClass("fa-solid");
-                player.send({"op": "addPlaylistTrack", "track": currentTrack.track_id, "pId": "200"})
+                player.send({ "op": "addPlaylistTrack", "track_id": currentTrack.track_id, "pId": "200" })
             } else {
                 $(this).removeClass("fa-solid").addClass("fa-regular");
-                player.send({"op": "removePlaylistTrack", "track": currentTrack.track_id, "pId": "200"})
+                player.send({ "op": "removePlaylistTrack", "track_id": currentTrack.track_id, "pId": "200" })
             }
         }
     })

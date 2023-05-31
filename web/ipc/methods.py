@@ -292,6 +292,19 @@ async def getPlaylists(member: Member, data: dict):
         "user_id": member.id
     }
 
+async def removePlaylist(member: Member, data:dict): 
+    pId = data.get("pId")
+    isShare = data.get("isShare", False)
+
+    if pId == 200:
+        return
+
+    if isShare:
+        refer_user = data.get("refer_user")
+        await func.update_playlist(refer_user, {f"playlist.{pId}.perms.read": member.id}, pull=True, mode=False)
+
+    await func.update_playlist(member.id, {f'playlist.{pId}': 1}, mode=False)
+
 async def addPlaylistTrack(member: Member, data: dict):
     track_id = data.get("track")
     pId = data.get("pId")
@@ -333,6 +346,7 @@ methods = {
     "updatePosition": [updatePosition, False],
     "toggleAutoplay": [toggleAutoplay, False],
     "getPlaylists": [getPlaylists, False],
+    "removePlaylist": [removePlaylist, False],
     "addPlaylistTrack": [addPlaylistTrack, False],
     "removePlaylistTrack": [removePlaylistTrack, False]
 }
