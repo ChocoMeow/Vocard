@@ -1,7 +1,5 @@
 import json, function as func
 
-from typing import List
-
 from discord import Member, VoiceChannel
 from discord.ext import commands
 from voicelink import Player, Track, Playlist, NodePool, connect_channel, decode
@@ -52,7 +50,7 @@ async def initPlayer(player: Player, member: Member, data: dict):
         "tracks": [ track.track_id for track in player.queue._queue ],
         "repeat_mode": player.queue.repeat.lower(),
         "channel_name": player.channel.name,
-        "current_queue_position": player.queue._position if player.is_playing else player.queue._position + 1,
+        "current_queue_position": player.queue._position if player._current else player.queue._position + 1,
         "current_position": 0 or player.position if player.is_playing else 0,
         "is_playing": player.is_playing,
         "is_paused": player.is_paused,
@@ -284,7 +282,12 @@ async def getPlaylists(member: Member, data: dict):
                         await func.update_playlist(member.id, {f"playlist.{pId}": 1}, mode=False)
                         del playlists[pId]
                         continue
-                    playlists[pId]["tracks"] = playlist["tracks"]
+
+                    if playlist['type'] == 'link':
+                        tracks: Playlist = await NodePool.get_node().get_tracks(playlist["uri"], requester=member)
+                        playlists[pId]["tracks"] = [ track.track_id for track in tracks.tracks ]
+                    else:
+                        playlists[pId]["tracks"] = playlist["tracks"]
             
     return {
         "op": "getPlaylists",
@@ -306,7 +309,7 @@ async def removePlaylist(member: Member, data:dict):
     await func.update_playlist(member.id, {f'playlist.{pId}': 1}, mode=False)
 
 async def addPlaylistTrack(member: Member, data: dict):
-    track_id = data.get("track")
+    track_id = data.get("track_id")
     pId = data.get("pId")
     if not track_id or not pId:
         return
@@ -314,6 +317,9 @@ async def addPlaylistTrack(member: Member, data: dict):
     playlist: dict = await func.get_playlist(member.id, 'playlist', pId)
     if not playlist:
         return
+    
+    if playlist["type"] != "playlist":
+        return error_msg(func.get_lang(member.guild.id, 'playlistNotAllow'), user_id=member.id)
     
     rank, max_p, max_t = await func.checkroles(member.id)
     if len(playlist["tracks"]) >= max_t:
@@ -325,7 +331,7 @@ async def addPlaylistTrack(member: Member, data: dict):
     await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id}, push=True)
 
 async def removePlaylistTrack(member: Member, data: dict):
-    track_id = data.get("track")
+    track_id = data.get("track_id")
     pId = data.get("pId")
     if not track_id or not pId:
         return
