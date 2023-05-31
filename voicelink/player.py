@@ -443,7 +443,7 @@ class Player(VoiceProtocol):
             raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
             
         return [ Track(
-                    track_id=track.id,
+                    track_id=None,
                     requester=requester,
                     search_type=SearchType.ytsearch,
                     spotify_track=track,
@@ -462,12 +462,12 @@ class Player(VoiceProtocol):
                 )
                 for track in tracks ]
 
-    async def spotifyRelatedTrack(self, seed_artists: str, seed_tracks: str):
+    async def spotifyRelatedTrack(self, seed_tracks: str, *, seed_artists: str = None):
         
-        tracks = await self._node._spotify_client.similar_track(seed_artists=seed_artists, seed_tracks=seed_tracks)
+        tracks = await self._node._spotify_client.similar_track(seed_tracks=seed_tracks, seed_artists=seed_artists)
 
         return [ Track(
-                    track_id=track.id,
+                    track_id=None,
                     search_type=SearchType.ytsearch,
                     spotify_track=track,
                     info={
