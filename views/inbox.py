@@ -48,6 +48,11 @@ class InboxView(discord.ui.View):
         self.current = None
         self.add_item(Select_message(inbox))
 
+    async def interaction_check(self, interaction):
+        if interaction.user == self.author:
+            return True
+        return False
+    
     def build_embed(self):
         embed=discord.Embed(title=f"📭 All {self.author}'s Inbox",
                             description=f'Max Messages: {len(self.inbox)}/10' + '```%0s %2s %20s\n' % ("   ", "ID:", "Title:") + '\n'.join('%0s %2s. %35s'% ('✉️' if mail['type'] == 'invite' else '📢', index, mail['title'][:35] + "...") for index, mail in enumerate(self.inbox, start=1)) + '```',
