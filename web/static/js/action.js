@@ -283,6 +283,7 @@ $(document).ready(function () {
     $("#auto-play").on("click", function () {
         let checkbox = $(this).is(':checked');
         player.send({ "op": "toggleAutoplay", "status": checkbox })
+        player.autoplay = checkbox;
     });
 
     $("#remove-track-btn").on('click', function () {
