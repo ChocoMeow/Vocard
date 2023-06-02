@@ -7,7 +7,7 @@
 
 Demo:
 [Discord Bot Demo](https://discord.com/api/oauth2/authorize?client_id=890399639008866355&permissions=36708608&scope=bot%20applications.commands),
-[Dashboard Demo](http://vocard.xyz)
+[Dashboard Demo](https://vocard.xyz)
 
 ## Tutorial
 Click on the image below to watch the tutorial on Youtube.
@@ -30,7 +30,7 @@ Click on the image below to watch the tutorial on Youtube.
 [![Run on Repl.it](https://replit.com/badge/github/ChocoMeow/Vocard)](https://replit.com/new/github/ChocoMeow/Vocard)
 
 ## Requirements
-* [Python 3.8+](https://www.python.org/downloads/)
+* [Python 3.10+](https://www.python.org/downloads/)
 * [Modules in requirements](https://github.com/ChocoMeow/Vocard/blob/main/requirements.txt)
 * [Lavalink Server (Requires 3.7.0+)](https://github.com/freyacodes/Lavalink)
 
