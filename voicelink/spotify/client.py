@@ -34,7 +34,6 @@ GRANT_URL = "https://accounts.spotify.com/api/token"
 REQUEST_URL = "https://api.spotify.com/v1/{type}s/{id}"
 SEARCH_URL = "https://api.spotify.com/v1/search?q={query}&type={type}&limit={limit}"
 SUGGESTION_URL = "https://api.spotify.com/v1/recommendations?limit={limit}&seed_tracks={seed_tracks}"
-SUGGESTION_URL_WITH_ART = "https://api.spotify.com/v1/recommendations?limit={limit}&seed_artists={seed_artists}&seed_tracks={seed_tracks}"
 SPOTIFY_URL_REGEX = re.compile(
     r"https?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)"
 )
@@ -88,15 +87,12 @@ class Client:
 
         return [ Track(track) for track in data['tracks']['items'] ]
 
-    async def similar_track(self, seed_tracks: str, *, seed_artists: str = None, limit: int = 5) -> list:
+    async def similar_track(self, seed_tracks: str, *, limit: int = 5) -> list:
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
         
-        if not seed_artists:
-            request_url = SUGGESTION_URL.format(limit=limit, seed_tracks=seed_tracks)
-        else:
-            request_url = SUGGESTION_URL_WITH_ART.format(limit=limit, seed_artists=seed_artists, seed_tracks=seed_tracks)
-        
+        request_url = SUGGESTION_URL.format(limit=limit, seed_tracks=seed_tracks)
+
         async with self.session.get(request_url, headers=self._bearer_headers) as resp:
             if resp.status != 200:
                 raise SpotifyRequestException(

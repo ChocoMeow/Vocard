@@ -462,9 +462,9 @@ class Player(VoiceProtocol):
                 )
                 for track in tracks ]
 
-    async def spotifyRelatedTrack(self, seed_tracks: str, *, seed_artists: str = None):
+    async def spotifyRelatedTrack(self, seed_tracks: str):
         
-        tracks = await self._node._spotify_client.similar_track(seed_tracks=seed_tracks, seed_artists=seed_artists)
+        tracks = await self._node._spotify_client.similar_track(seed_tracks=seed_tracks)
 
         return [ Track(
                     track_id=None,

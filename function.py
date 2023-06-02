@@ -173,7 +173,7 @@ async def similar_track(player) -> bool:
     tracks = []
 
     if randomTrack.spotify:
-        tracks = await player.spotifyRelatedTrack(randomTrack.identifier, seed_artists=randomTrack.artistId[0] if randomTrack.artistId else None)
+        tracks = await player.spotifyRelatedTrack(randomTrack.identifier)
     else:
         if randomTrack.source != 'youtube':
             return False
