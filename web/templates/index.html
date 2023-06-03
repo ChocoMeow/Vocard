@@ -20,15 +20,16 @@
         integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
 </head>
 
 <body>
-    <script> const userId = "{{ user.id }}"</script>
+    <script> const userId = "{{ user.id }}"; </script>
     <div class="container">
         <div class="header">
             <div class="left">
-                <p>Home</p>
-                <p>Playlist</p>
+                <p id="homeBtn">Home</p>
+                <p id="playlistBtn">Playlist</p>
             </div>
             <div class="center">
                 <div class="search-container">
@@ -55,15 +56,34 @@
             </div>
         </div>
 
-        <div class="main">
+        <div class="main" id="main">
             <div class="toastContrainer"></div>
             <div class="thumbnail">
-                <img id="largeImage" />
+                <img id="largeImage" alt="" />
                 <div class="thumbnail-background"></div>
             </div>
-            <div class="queue-list">
-                <ul id="sortable">
-                </ul>
+            <div class="list">
+                <div class="auto-play">
+                    <div>
+                        <p>Autoplay</p>
+                        <p>Similar track will be to the queue</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-play">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="queue-list">
+                    <ul id="sortable">
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="playlists" id="playlists" style="display: None">
+            <div class="playlists-grid" id="playlists-grid">
+            </div>
+            <div class="playlists-tracks" id="playlists-tracks">
             </div>
         </div>
 
@@ -79,13 +99,14 @@
         <div class="player-controller">
             <div class="progress-bar-container">
                 <input type="range" value="0" min="0" max="500" class="seek-bar" id="seek-bar">
+                <div class="position-info"></div>
             </div>
             <div class="control-container">
                 <div class="left">
                     <div class="control">
-                        <i id="back-button" class="fa-solid fa-backward-step"></i>
-                        <i id="play-pause-button" class="fa-solid fa-play"></i>
-                        <i id="skip-button" class="fa-solid fa-forward-step"></i>
+                        <i id="back-btn" class="fa-solid fa-backward-step"></i>
+                        <i id="play-pause-btn" class="fa-solid fa-play"></i>
+                        <i id="skip-btn" class="fa-solid fa-forward-step"></i>
                     </div>
 
                     <div class="position">
@@ -100,12 +121,13 @@
                         <p id="title"></p>
                         <p class="desc" id="author"></p>
                     </div>
+                    <i class="fa-regular fa-thumbs-up" id="like-btn"></i>
                 </div>
 
                 <div class="right">
-                    <i id="repeat-button" class="fa-solid fa-repeat"></i>
-                    <i id="shuffle-button" class="fa-solid fa-shuffle"></i>
-                    <i id="users-button" class="fa-solid fa-user-group"></i>
+                    <i id="repeat-btn" class="fa-solid fa-repeat"></i>
+                    <i id="shuffle-btn" class="fa-solid fa-shuffle"></i>
+                    <i id="users-btn" class="fa-solid fa-user-group"></i>
                 </div>
             </div>
         </div>
@@ -113,8 +135,14 @@
 
     <div id="context-menu" class="context-menu">
         <ul>
-            <li id="remove-track-button"><i class="fa-solid fa-trash"></i>Remove</li>
-            <li id="copy-track-button"><i class="fa-solid fa-share"></i>Copy Song Link</li>
+            <li id="remove-track-btn"><i class="fa-solid fa-trash"></i>Remove</li>
+            <li id="copy-track-btn"><i class="fa-solid fa-share"></i>Copy Song Link</li>
+        </ul>
+    </div>
+
+    <div id="playlist-context-menu" class="context-menu">
+        <ul>
+            <li id="remove-playlist-btn"><i class="fa-solid fa-trash"></i>Remove</li>
         </ul>
     </div>
 </body>

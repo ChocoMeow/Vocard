@@ -63,7 +63,6 @@
     "playlistShare": "申し訳ありません！このプレイリストは{0}さんと共有されています。",
     "playlistSent": "申し訳ありません！以前に招待状を送信しました。",
     "noPlaylistAcc": "{0}さんはプレイリストアカウントを作成していません。",
-    "playlistCreateError": "申し訳ありません！この種類のプレイリストを作成することはできません！",
     "overPlaylistCreation": " {0}個以上のプレイリストを作成することはできません！",
     "playlistExists": "プレイリスト[{0}]はすでに存在します。",
     "playlistNotInvaildUrl": "有効なリンクまたは公開SpotifyまたはYouTubeプレイリストリンクを入力してください。",

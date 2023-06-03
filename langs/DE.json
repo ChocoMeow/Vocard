@@ -63,7 +63,6 @@
     "playlistShare": "Es tut uns leid! Diese Playlist wurde mit {0} geteilt.",
     "playlistSent": "Es tut uns leid! Sie haben bereits eine Einladung gesendet.",
     "noPlaylistAcc": "{0} hat kein Playlist-Konto erstellt.",
-    "playlistCreateError": "Es tut uns leid! Sie können diese Art von Wiedergabeliste nicht erstellen!",
     "overPlaylistCreation": "Sie können nicht mehr als `{0}` Wiedergabelisten erstellen!",
     "playlistExists": "Playlist [`{0}`] existiert bereits.",
     "playlistNotInvaildUrl": "Bitte geben Sie einen gültigen Link oder öffentlichen Spotify- oder YouTube-Playlist-Link ein.",

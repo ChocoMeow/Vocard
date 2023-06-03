@@ -63,7 +63,6 @@
     "playlistShare": "죄송합니다! 이 재생 목록은 {0}과(와) 공유되었습니다.",
     "playlistSent": "죄송합니다! 이미 초대장을 보냈습니다.",
     "noPlaylistAcc": "{0}님은 재생 목록 계정을 만들지 않았습니다.",
-    "playlistCreateError": "죄송합니다! 이 유형의 재생 목록을 만들 수 없습니다!",
     "overPlaylistCreation": "더 이상 {0}개 이상의 재생 목록을 만들 수 없습니다!",
     "playlistExists": "재생 목록 [{0}]이(가) 이미 있습니다.",
     "playlistNotInvaildUrl": "유효한 링크 또는 공개 Spotify 또는 YouTube 재생 목록 링크를 입력하세요.",

@@ -63,7 +63,6 @@
     "playlistShare": "Sorry! This playlist has been shared with {0}.",
     "playlistSent": "Sorry! You have sent an invitation before.",
     "noPlaylistAcc": "{0} didn't create a playlist account.",
-    "playlistCreateError": "Sorry! You are not able to create this type of playlist!",
     "overPlaylistCreation": "You cannot create more than `{0}` playlists!",
     "playlistExists": "Playlist [`{0}`] already exists.",
     "playlistNotInvaildUrl": "Please enter a valid link or public spotify or youtube playlist link.",

@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, rooms, disconn
 from ipc import IPCClient
 from objects import User
 from dotenv import load_dotenv
+from datetime import timedelta
 
 import requests
 import json
@@ -113,7 +114,7 @@ def login_required(func):
             if resp:
                 user = USERS[token] = User(resp)
             else:
-                abort(401, description="Unauthorized")
+                return redirect(url_for('login'))
         else:
             user = USERS[token]
 
@@ -129,7 +130,8 @@ def requests_api(url: str, headers=None):
     return resp.json()
 
 @app.route('/<path:url>', methods=["GET"])
-def proxy(url):
+@login_required
+def proxy(user: User, url):
     request = requests.get(url, stream=True)
     response = Response(
         stream_with_context(request.iter_content()),
@@ -180,6 +182,8 @@ def callback():
     }
     response = requests.post(f'{DISCORD_API_BASE_URL}/oauth2/token', data=data)
     token_data = json.loads(response.content.decode('utf-8'))
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(days=30)
     session['discord_token'] = token_data.get("access_token")
 
     return redirect(url_for("home"))

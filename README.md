@@ -7,7 +7,7 @@
 
 Demo:
 [Discord Bot Demo](https://discord.com/api/oauth2/authorize?client_id=890399639008866355&permissions=36708608&scope=bot%20applications.commands),
-[Dashboard Demo](http://vocard.xyz)
+[Dashboard Demo](https://vocard.xyz)
 
 ## Tutorial
 Click on the image below to watch the tutorial on Youtube.
@@ -22,15 +22,14 @@ Click on the image below to watch the tutorial on Youtube.
 <img src="https://user-images.githubusercontent.com/94597336/227766416-22ae3d91-40d9-44c0-bde1-9d40bd54c3af.png">
 
 ### Dashboard
-<img src="https://user-images.githubusercontent.com/94597336/227766460-2c8e7718-c1c2-4c8a-8c0e-185d81db20cc.png">
-<img src="https://user-images.githubusercontent.com/94597336/227766493-e7010813-077b-486a-b45c-4fbdc86f40bc.png">
-
+<img src="https://github.com/ChocoMeow/Vocard/assets/94597336/53f31f9f-57c5-452c-8317-114125ddbf03">
+<img src="https://github.com/ChocoMeow/Vocard/assets/94597336/b2acd87a-e910-4247-8d5a-418f3782f63f">
 
 ## Run the Projects
 [![Run on Repl.it](https://replit.com/badge/github/ChocoMeow/Vocard)](https://replit.com/new/github/ChocoMeow/Vocard)
 
 ## Requirements
-* [Python 3.8+](https://www.python.org/downloads/)
+* [Python 3.10+](https://www.python.org/downloads/)
 * [Modules in requirements](https://github.com/ChocoMeow/Vocard/blob/main/requirements.txt)
 * [Lavalink Server (Requires 3.7.0+)](https://github.com/freyacodes/Lavalink)
 

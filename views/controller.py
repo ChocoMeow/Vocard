@@ -30,9 +30,9 @@ from function import (
     get_playlist,
     update_playlist,
     create_account,
-    checkroles,
-    formatTime
+    checkroles
 )
+
 from typing import Dict
 
 def key(interaction: discord.Interaction):
@@ -166,15 +166,10 @@ class Add(discord.ui.Button):
         rank, max_p, max_t = await checkroles(interaction.user.id)
         if len(user['200']['tracks']) >= max_t:
             return await interaction.response.send_message(self.player.get_msg("playlistlimited").format(max_t), ephemeral=True)
-        addtrack = {'id': track.track_id, 
-                    'info':{'identifier': track.identifier,
-                            'author': track.author,
-                            'length': track.length / 1000,
-                            'title': track.title,
-                            'uri': track.uri}}
-        if addtrack in user['200']['tracks']:
+
+        if track.track_id in user['200']['tracks']:
             return await interaction.response.send_message(self.player.get_msg("playlistrepeated"), ephemeral=True)
-        respond = await update_playlist(interaction.user.id, {'playlist.200.tracks': addtrack}, push=True)
+        respond = await update_playlist(interaction.user.id, {'playlist.200.tracks': track.track_id}, push=True)
         if respond:
             await interaction.response.send_message(self.player.get_msg("playlistAdded").format(track.title, interaction.user.mention, user['200']['name']), ephemeral=True)
         else:

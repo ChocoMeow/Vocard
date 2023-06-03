@@ -20,9 +20,10 @@ class IPCClient:
 
     async def connect_and_reconnect(self):
         while True:
-            await self.connect()
-            print("Reconnect in next 10s!")
-            await asyncio.sleep(10)
+            if not self.is_connected:
+                await self.connect()
+                print("Reconnect in next 10s!")
+                await asyncio.sleep(10)
 
     async def connect(self):
         try:

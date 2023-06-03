@@ -28,6 +28,118 @@ class Timer {
     }
 }
 
+class DataInput {
+    #pos = 0;
+    #buf = Uint8Array;
+    #view = DataView;
+
+    constructor(bytes) {
+        if (typeof bytes === "string") {
+            var decodedString = atob(bytes);
+            var bytes = new Uint8Array(decodedString.length);
+            for (let i = 0; i < decodedString.length; i++) {
+                bytes[i] = decodedString.charCodeAt(i);
+            }
+        }
+        this.#buf = bytes;
+        this.#view = new DataView(bytes.buffer);
+    }
+
+    #_advance(bytes) {
+        if (this.#pos + bytes > this.#buf.length) {
+            throw new Error("");
+        }
+        const p = this.#pos;
+        this.#pos += bytes;
+        return p;
+    }
+
+    readByte() {
+        return this.#buf[this.#_advance(1)];
+    }
+
+    readBoolean() {
+        return this.readByte()
+    }
+
+    readUnsignedShort() {
+        return this.#view.getUint16(this.#_advance(2), false);
+    }
+
+    readInt() {
+        return this.#view.getInt32(this.#_advance(4), false);
+    }
+
+    readLong() {
+        const msb = this.#view.getInt32(this.#_advance(4), false);
+        const lsb = this.#view.getUint32(this.#_advance(4), false);
+        return BigInt(msb) << 32n | BigInt(lsb);
+    }
+
+    readUTF() {
+        const len = this.readUnsignedShort();
+        const start = this.#_advance(len);
+        return new window.TextDecoder().decode(this.#buf.slice(start, start + len));
+    }
+}
+
+class Track {
+    constructor(object) {
+        this.title = object.title;
+        this.author = object.author;
+        this.source = object.source;
+        this.identifier = object.identifier;
+        if (object.thumbnail == undefined) {
+            if (this.source == "youtube") {
+                this.imageUrl = `https://img.youtube.com/vi/${this.identifier}/hqdefault.jpg`
+            } else {
+                this.imageUrl = "https://cdn.discordapp.com/attachments/674788144931012638/823086668445384704/eq-dribbble.gif";
+            }
+        } else {
+            this.imageUrl = object.thumbnail;
+        }
+        this.isStream = object.isStream;
+        this.length = Number(object.length);
+        this.track_id = object.track_id;
+        this.uri = object.uri;
+    }
+}
+
+const decoders = [
+    (input, track_id) => {
+        const title = input.readUTF();
+        const author = input.readUTF();
+        const length = input.readLong();
+        const identifier = input.readUTF();
+        const isStream = input.readBoolean();
+        const uri = input.readBoolean() ? input.readUTF() : null;
+        const thumbnail = input.readBoolean() ? input.readUTF() : null;
+        const source = input.readUTF();
+
+        return { track_id, title, author, length, identifier, isStream, uri, thumbnail, source, position: 0n };
+    },
+    undefined,
+    (input, track_id) => {
+        const title = input.readUTF();
+        const author = input.readUTF();
+        const length = input.readLong();
+        const identifier = input.readUTF();
+        const isStream = input.readBoolean();
+        const uri = input.readBoolean() ? input.readUTF() : null;
+        const source = input.readUTF();
+
+        return { track_id, title, author, length, identifier, isStream, uri, thumbnail: null, source, position: 0n };
+    }
+]
+function decode(track_id) {
+    const input = new DataInput(track_id);
+    const flags = input.readInt();
+    const version = input.readByte();
+
+    const decoder = decoders[version];
+    return new Track(decoder(input, track_id));
+}
+
 const actions = {
     initPlayer: function (player, data) {
         player.init();
@@ -38,6 +150,7 @@ const actions = {
         player.current_position = data['current_position'];
         player.repeat = data['repeat_mode'];
         player.channelName = data["channel_name"];
+        player.autoplay = data["autoplay"];
         data["users"].forEach(user => {
             player.addUser(user);
         })
@@ -52,7 +165,7 @@ const actions = {
     },
 
     trackUpdate: function (player, data) {
-        var track = player.updateCurrentQueuePos(data['current_queue_position']);
+        let track = player.updateCurrentQueuePos(data['current_queue_position']);
         player.is_paused = data['is_paused'];
         if (track?.track_id != data["track_id"]) {
             player.send({ "op": "initPlayer" })
@@ -63,7 +176,7 @@ const actions = {
         player.addTrack(data["tracks"]);
         var tracks = data["tracks"];
         if (tracks.length == 1) {
-            var msg = `Added ${tracks[0]['info']['title']} songs into the queue.`
+            var msg = `Added ${decode(tracks[0]).title} songs into the queue.`
         } else {
             var msg = `Added ${tracks.length} into the queue.`
         }
@@ -71,13 +184,13 @@ const actions = {
     },
 
     getTracks: function (player, data) {
-        var tracks = data["tracks"];
+        let tracks = data["tracks"];
         if (tracks != undefined) {
             const resultList = $("#search-result-list");
             resultList.empty();
             player.searchList = tracks;
-            for (var i in tracks) {
-                var track = new Track(tracks[i]);
+            for (let i in tracks) {
+                let track = decode(tracks[i])
                 resultList.append(`<li class="search-result"><div class="search-result-left"><img src=${track.imageUrl} /><div class="search-result-info"><p class="info">${track.title}</p><p class="desc">${track.author}</p></div></div><p>${player.msToReadableTime(track.length)}</p></li>`)
             }
         }
@@ -116,11 +229,10 @@ const actions = {
 
     updatePause: function (player, data) {
         player.is_paused = data['pause'];
-        var msg = "";
         if (data["pause"]) {
-            msg = "Paused the player."
+            var msg = "Paused the player."
         } else {
-            msg = "Resumed the player."
+            var msg = "Resumed the player."
         }
         player.showToast(data["requester_id"], msg)
     },
@@ -130,10 +242,10 @@ const actions = {
     },
 
     swapTrack: function (player, data) {
-        var index1 = player.current_queue_position + data['position2']["index"];
-        var index2 = player.current_queue_position + data['position1']["index"];
-        var track1 = player.queue[index1];
-        var track2 = player.queue[index2];
+        let index1 = player.current_queue_position + data['position2']["index"];
+        let index2 = player.current_queue_position + data['position1']["index"];
+        let track1 = player.queue[index1];
+        let track2 = player.queue[index2];
 
         if (track1?.track_id != data['position1']["track_id"] || track2?.track_id != data['position2']["track_id"]) {
             return player.send({ "op": "initPlayer" });
@@ -161,12 +273,11 @@ const actions = {
     },
 
     shuffleTrack: function (player, data) {
-        var tracks = data["tracks"];
+        let tracks = data["tracks"];
         if (tracks != undefined) {
             player.queue = [];
             tracks.forEach(rawTrack => {
-
-                var track = new Track(rawTrack);
+                let track = new Track(rawTrack);
                 player.queue.push(track);
             });
             player.initSortable();
@@ -211,21 +322,19 @@ const actions = {
         player.showToast(data["requester_id"], msg);
     },
 
+    toggleAutoplay: function (player, data) {
+        var status = data["status"];
+        player.autoplay = status;
+    },
+
     errorMsg: function (player, data) {
-        var level = data["level"];
-        player.showToast(level, data["msg"]);
-    }
+        player.showToast(data["level"], data["msg"]);
+    },
 
-}
-
-class Track {
-    constructor(object) {
-        this.title = object["info"]["title"];
-        this.author = object["info"]["author"];
-        this.imageUrl = object["thumbnail"];
-        this.length = object["info"]["length"];
-        this.track_id = object["track_id"];
-        this.uri = object["info"]["uri"];
+    getPlaylists: function (player, data) {
+        const playlists = data["playlists"]
+        player.playlists = playlists;
+        player.updatePlaylists();
     }
 }
 
@@ -249,8 +358,10 @@ class Player {
         this.volume = 100;
         this.last_update = 0;
         this.is_connected = true;
+        this.autoplay = false;
 
         this.channelName = "";
+        this.playlists = null;
     }
 
     handleMessage(data) {
@@ -312,8 +423,8 @@ class Player {
         };
     }
     addTrack(tracks) {
-        for (var i in tracks) {
-            var track = new Track(tracks[i]);
+        for (let i in tracks) {
+            let track = decode(tracks[i])
             this.queue.push(track);
             $("#sortable").append(`<li><div class="track"><div class="left">${(this.isDJ) ? '<i class="fa-solid fa-bars handle"></i>' : ''}<img src=${track.imageUrl} /><div class="info"><p>${track.title}</p><p class="desc">${track.author}</p></div></div><p class="time">${this.msToReadableTime(track.length)}</p><i class="fa-solid fa-ellipsis-vertical action"></i></div></li>`)
         }
@@ -341,7 +452,7 @@ class Player {
     }
 
     removeTrack(position, track) {
-        var rawTrack = this.queue[position];
+        let rawTrack = this.queue[position];
         if (position == this.current_queue_position) {
             return this.showToast("error", "You are not allow to remove playing track!");
         }
@@ -368,7 +479,7 @@ class Player {
         if (this.currentTrack == undefined) {
             return;
         }
-        var position = tempPosition / 500 * this.currentTrack.length;
+        let position = tempPosition / 500 * this.currentTrack.length;
         this.send({ "op": "updatePosition", "position": position });
     }
 
@@ -385,7 +496,7 @@ class Player {
     }
 
     send(payload) {
-        var json = JSON.stringify(payload)
+        let json = JSON.stringify(payload)
         this.socket.send(json);
     }
 
@@ -422,7 +533,7 @@ class Player {
             var user = this.users[userId];
         }
         if (user != null) {
-            var $element = $(`<div class="toast"><img src=${user['avatar_url']} alt="user-icon"/><div class="content"><p class="username">${user['name']}</p><p class="message">${msg}</p></div></div>`)
+            let $element = $(`<div class="toast"><img src=${user['avatar_url']} alt="user-icon"/><div class="content"><p class="username">${user['name']}</p><p class="message">${msg}</p></div></div>`)
             $(".toastContrainer").append($element)
 
             setTimeout(function () {
@@ -444,35 +555,56 @@ class Player {
         this.current_position += 1000;
         $("#position").text(this.msToReadableTime(this.current_position));
 
-        var time = (this.current_position / this.currentTrack?.length) * 500;
+        let time = (this.current_position / this.currentTrack?.length) * 500;
         $("#seek-bar").val(time);
     }
 
     updateInfo() {
-        var currentTrack = this.currentTrack;
+        let currentTrack = this.currentTrack;
         if (currentTrack == undefined) {
             $("#title").text("");
             $("#author").text("");
             $("#position").text("00:00");
             $("#length").text("00:00");
-            $("#image").removeAttr('src');
-            $("#largeImage").removeAttr('src');
-            $(".thumbnail-background").css("background", "")
+            $("#image").fadeOut(100, function () { $(this).removeAttr("src"); });
+            $("#largeImage").fadeOut(100, function () { $(this).removeAttr("src"); });
+            $(".thumbnail-background").fadeOut(200);
+
         } else {
             $("#title").text(currentTrack.title);
             $("#author").text(currentTrack.author);
             $("#length").text(this.msToReadableTime(currentTrack.length));
-            $("#image").attr("src", currentTrack.imageUrl);
+            $("#auto-play").prop('checked', this.autoplay);
 
-            var image = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/` + currentTrack.imageUrl
+            let image = "";
+            if (currentTrack.source == "youtube") {
+                image += `${window.location.protocol}//${window.location.hostname}:${window.location.port}/`;
+            }
+            image += currentTrack.imageUrl;
+
             if ($("#largeImage").attr("src") != image) {
-                $("#largeImage").attr("src", image);
+                $(".thumbnail-background").fadeOut(100);
+                $("#largeImage").fadeOut(function () {
+                    $(this).attr("src", image);
+
+                });
+                $("#image").fadeOut(function () {
+                    $(this).attr("src", currentTrack.imageUrl);
+                });
+
+                if (this.playlists != null) {
+                    if (this.playlists["200"]["tracks"].includes(currentTrack.track_id)) {
+                        $("#like-btn").removeClass("fa-regular").addClass("fa-solid");
+                    } else {
+                        $("#like-btn").removeClass("fa-solid").addClass("fa-regular");
+                    }
+                }
             }
         }
 
         $("#channel-name").text((this.channelName == "") ? "Not Found" : this.channelName);
-        var play_pause_btn = $("#play-pause-button");
-        var repeat_btn = $("#repeat-button");
+        let play_pause_btn = $("#play-pause-btn");
+        let repeat_btn = $("#repeat-btn");
         if (this.is_paused || currentTrack == undefined) {
             play_pause_btn.removeClass('fa-pause').addClass('fa-play');
             if (this.timer.getIsRunning()) {
@@ -493,4 +625,35 @@ class Player {
         }
     }
 
+    updatePlaylists() {
+        $("#playlists-grid").empty();
+        for (let key in this.playlists) {
+            const pList = this.playlists[key];
+            let pDiv = $(`<div class="playlist" data-value="${key}">`);
+            let iDiv = $("<div class='images'>");
+            let infoDiv = $("<div class='info'>");
+
+            if (pList["tracks"] === 0) {
+                continue;
+            } else {
+                for (let i = 0; i < 4; i++) {
+                    if (pList["tracks"][i] == undefined) {
+                        continue;
+                    }
+                    let track = decode(pList["tracks"][i])
+                    let img = $("<img>").attr("src", track.imageUrl);
+                    iDiv.append(img);
+
+                }
+            }
+            iDiv.append(`<i class="fa-solid fa-ellipsis-vertical action"></i>`);
+            iDiv.append(`<i class="fa-solid fa-play play"></i>`);
+            pDiv.append(iDiv);
+            infoDiv.append(`<p>${pList["name"]}</p>`);
+            infoDiv.append(`<p class="desc">${pList["type"]} • ${pList["tracks"].length} Tracks</p>`);
+            pDiv.append(infoDiv);
+            $("#playlists-grid").append(pDiv);
+            $("#playlists-tracks").empty()
+        }
+    }
 }

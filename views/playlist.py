@@ -90,7 +90,7 @@ class PlaylistView(discord.ui.View):
 
         embed = discord.Embed(title=func.get_lang(self.guildID, 'playlistView'), color=func.settings.embed_color)
 
-        embed.description= func.get_lang(self.guildID, 'playlistViewDesc').format(self.current['name'], self.current['id'], len(self.current['tracks']), self.current.get('owner', "None"), self.current['type'])
+        embed.description= func.get_lang(self.guildID, 'playlistViewDesc').format(self.current['name'], self.current['id'], len(self.current['tracks']), owner if (owner := self.current.get('owner')) else f"{self.author.id} (You)", self.current['type'])
         
         perms = self.current['perms']
         permsStr = func.get_lang(self.guildID, 'settingsPermTitle')
@@ -101,9 +101,9 @@ class PlaylistView(discord.ui.View):
 
         trackStr = func.get_lang(self.guildID, 'playlistViewTrack')
         if tracks:
-            try:
-                embed.add_field(name=trackStr, value='\n'.join(f"{func.emoji_source(extract(track['info']['uri']).domain)} `{index}.` `[{func.time(track['info']['length'] * 1000)}]` **{track['info']['title'][:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
-            except:
+            if self.current.get("type") == "playlist":    
+                embed.add_field(name=trackStr, value="\n".join(f"{func.emoji_source(track['sourceName'])} `{index}.` `[{func.time(track['length'])}]` **{track['title'][:30]}**" for index, track in enumerate(tracks, start=offset - 6)), inline=False)
+            else:
                 embed.add_field(name=trackStr, value='\n'.join(f"{func.emoji_source(extract(track.info['uri']).domain)} `{index}.` `[{func.time(track.length)}]` **{track.title[:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
         else:
             embed.add_field(name=trackStr, value=func.get_lang(self.guildID, 'playlistNoTrack').format(self.current['name']), inline=False)

@@ -1,8 +1,14 @@
-import json
+import json, function as func
 
-from discord import Member
+from discord import Member, VoiceChannel
 from discord.ext import commands
-from voicelink import Player, Track, Playlist
+from voicelink import Player, Track, Playlist, NodePool, connect_channel, decode
+
+class TempCtx():
+    def __init__(self, author: Member, channel: VoiceChannel) -> None:
+        self.author = author
+        self.channel = channel
+        self.guild = channel.guild
 
 def missingPermission(user_id:int):
     payload = {"op": "errorMsg", "level": "info", "msg": "Only the DJ or admins may use this funciton!"}
@@ -10,13 +16,25 @@ def missingPermission(user_id:int):
     return payload
 
 def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str = "info"):
-    payload = {"op": "errorMsg", "level": level}
+    payload = {"op": "errorMsg", "level": level, "msg": msg}
     if user_id:
-        payload["user_id"]: user_id
+        payload["user_id"] = user_id
     if guild_id:
-        payload["guild_id"]: guild_id
+        payload["guild_id"] = guild_id
 
     return payload
+
+async def connect_channel(member: Member, bot: commands.Bot):
+    if not member.voice:
+        return
+
+    channel = member.voice.channel
+    try:
+        player: Player = await channel.connect(cls=Player(bot, channel, TempCtx(member, channel)))
+        await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+        return player
+    except:
+        return
 
 async def initPlayer(player: Player, member: Member, data: dict):
     player._ipc_connection = True
@@ -29,14 +47,15 @@ async def initPlayer(player: Player, member: Member, data: dict):
             "avatar_url": member.display_avatar.url,
             "name": member.name
         } for member in player.channel.members ],
-        "tracks": [ track.toDict() for track in player.queue._queue ],
+        "tracks": [ track.track_id for track in player.queue._queue ],
         "repeat_mode": player.queue.repeat.lower(),
         "channel_name": player.channel.name,
-        "current_queue_position": player.queue._position if player.is_playing else player.queue._position + 1,
+        "current_queue_position": player.queue._position if player._current else player.queue._position + 1,
         "current_position": 0 or player.position if player.is_playing else 0,
         "is_playing": player.is_playing,
         "is_paused": player.is_paused,
-        "is_dj": player.is_privileged(member, check_user_join=False)
+        "is_dj": player.is_privileged(member, check_user_join=False),
+        "autoplay": player.settings.get("autoplay", False)
     }
 
 async def skipTo(player: Player, member: Member, data: dict):
@@ -121,10 +140,10 @@ async def moveTrack(player: Player, member: Member, data: dict):
 async def addTracks(player: Player, member: Member, data: dict): 
     raw_tracks = data.get("tracks", [])
     tracks = [Track(
-                track_id=track["track_id"], 
-                info=track["info"],
+                track_id=track_id, 
+                info=decode(track_id),
                 requester=member
-            ) for track in raw_tracks]
+            ) for track_id in raw_tracks]
 
     await player.add_track(tracks)
 
@@ -133,6 +152,7 @@ async def addTracks(player: Player, member: Member, data: dict):
 
 async def getTracks(player: Player, member: Member, data: dict):
     query = data.get("query", None)
+
     if query:
         payload = {"op": "getTracks", "user_id": member.id}
         tracks = await player.get_tracks(query, requester=member)
@@ -140,9 +160,9 @@ async def getTracks(player: Player, member: Member, data: dict):
             return payload
         
         if isinstance(tracks, Playlist):
-            tracks = [ track for track in tracks.tracks[:20] ]
+            tracks = [ track for track in tracks.tracks[:50] ]
 
-        payload["tracks"] = [ track.toDict() for track in tracks ]
+        payload["tracks"] = [ track.track_id for track in tracks ]
         return payload
     
 async def shuffleTrack(player: Player, member: Member, data: dict):
@@ -224,18 +244,117 @@ async def updatePosition(player: Player, member: Member, data: dict):
     position = data.get("position");
     await player.seek(position, member);
 
+async def toggleAutoplay(player: Player, member: Member, data: dict):
+    if not player.is_privileged(member):
+        return error_msg(player.get_msg('missingPerms_autoplay'))
+
+    check = data.get("status", False)
+    player.settings['autoplay'] = check
+
+    if not player.is_playing:
+        await player.do_next()
+
+    return {
+        "op": "toggleAutoplay",
+        "status": check,
+        "requester_id": member.id
+    }
+
+async def closeConnection(player: Player, member: Member, data: dict):
+    player._ipc_connection = False
+
+async def getPlaylists(member: Member, data: dict):
+    playlists: dict = await func.get_playlist(member.id, "playlist")
+    if not playlists:
+        return
+
+    for pId, pList in playlists.copy().items():
+        if "type" in pList:
+            if pList["type"] == "link":
+                tracks: Playlist = await NodePool.get_node().get_tracks(pList["uri"], requester=member)
+                if tracks:
+                    playlists[pId]["tracks"] = [ track.track_id for track in tracks.tracks ]
+
+            elif pList["type"] == "share":
+                playlist = await func.get_playlist(pList["user"], "playlist", pList["referId"])
+                if playlist:
+                    if member.id not in playlist["perms"]["read"]:
+                        await func.update_playlist(member.id, {f"playlist.{pId}": 1}, mode=False)
+                        del playlists[pId]
+                        continue
+
+                    if playlist['type'] == 'link':
+                        tracks: Playlist = await NodePool.get_node().get_tracks(playlist["uri"], requester=member)
+                        playlists[pId]["tracks"] = [ track.track_id for track in tracks.tracks ]
+                    else:
+                        playlists[pId]["tracks"] = playlist["tracks"]
+            
+    return {
+        "op": "getPlaylists",
+        "playlists": playlists,
+        "user_id": member.id
+    }
+
+async def removePlaylist(member: Member, data:dict): 
+    pId = data.get("pId")
+    isShare = data.get("isShare", False)
+
+    if pId == 200:
+        return
+
+    if isShare:
+        refer_user = data.get("refer_user")
+        await func.update_playlist(refer_user, {f"playlist.{pId}.perms.read": member.id}, pull=True, mode=False)
+
+    await func.update_playlist(member.id, {f'playlist.{pId}': 1}, mode=False)
+
+async def addPlaylistTrack(member: Member, data: dict):
+    track_id = data.get("track_id")
+    pId = data.get("pId")
+    if not track_id or not pId:
+        return
+    
+    playlist: dict = await func.get_playlist(member.id, 'playlist', pId)
+    if not playlist:
+        return
+    
+    if playlist["type"] != "playlist":
+        return error_msg(func.get_lang(member.guild.id, 'playlistNotAllow'), user_id=member.id)
+    
+    rank, max_p, max_t = await func.checkroles(member.id)
+    if len(playlist["tracks"]) >= max_t:
+        return error_msg(func.get_lang(member.guild.id, "playlistlimited").format(max_t), user_id=member.id)
+
+    if track_id in playlist['tracks']:
+        return error_msg(func.get_lang(member.guild.id, "playlistrepeated"), user_id=member.id)
+    
+    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id}, push=True)
+
+async def removePlaylistTrack(member: Member, data: dict):
+    track_id = data.get("track_id")
+    pId = data.get("pId")
+    if not track_id or not pId:
+        return
+    
+    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id }, pull=True, mode=False)
+
 methods = {
-    "initPlayer": initPlayer,
-    "skipTo": skipTo,
-    "backTo": backTo,
-    "moveTrack": moveTrack,
-    "addTracks": addTracks,
-    "getTracks": getTracks,
-    "shuffleTrack": shuffleTrack,
-    "repeatTrack": repeatTrack,
-    "removeTrack": removeTrack,
-    "updatePause": updatePause,
-    "updatePosition": updatePosition,
+    "initPlayer": [initPlayer, False],
+    "skipTo": [skipTo, False],
+    "backTo": [backTo, False],
+    "moveTrack": [moveTrack, False],
+    "addTracks": [addTracks, True],
+    "getTracks": [getTracks, True],
+    "shuffleTrack": [shuffleTrack, False],
+    "repeatTrack": [repeatTrack, False],
+    "removeTrack": [removeTrack, False],
+    "updatePause": [updatePause, False],
+    "updatePosition": [updatePosition, False],
+    "toggleAutoplay": [toggleAutoplay, False],
+    "getPlaylists": [getPlaylists, False],
+    "removePlaylist": [removePlaylist, False],
+    "addPlaylistTrack": [addPlaylistTrack, False],
+    "removePlaylistTrack": [removePlaylistTrack, False]
 }
 
 async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
@@ -246,6 +365,9 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
     guild, member = None, None
     guild_id = data.get("guild_id", None)
     user_id = data.get("user_id", None)
+    if not user_id:
+        return
+    
     if guild_id is None:
         user = bot.get_user(user_id)
         if not user: 
@@ -256,22 +378,32 @@ async def process_methods(websocket, bot: commands.Bot, data: dict) -> None:
             if m.voice and m.voice.channel:
                 guild = g
                 member = m
-
+                break
     else:
         guild = bot.get_guild(guild_id)
         member = guild.get_member(user_id)
     
-    if not guild:
+    if not member:
         return
-    
-    player: Player = guild.voice_client
-    if not player or not member:
-        return
-        
+
     try:
-        resp: dict = await method(player, member, data)
+        if 'player' in method[0].__code__.co_varnames:
+            if not guild:
+                return
+            
+            player: Player = guild.voice_client
+            if not player:
+                if not method[1]:
+                    return
+                player: Player = await connect_channel(member, bot)
+
+            resp: dict = await method[0](player, member, data)
+        else:
+            resp: dict = await method[0](member, data)
+
         if resp:
             await websocket.send(json.dumps(resp))
+
     except Exception as e:
         payload = {
             "op": "errorMsg",

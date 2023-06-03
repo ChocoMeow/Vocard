@@ -74,8 +74,7 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
             ctx.bot if isinstance(ctx, commands.Context) else ctx.client, channel, ctx
         ))
     
-    if player.is_ipc_connected:
-        await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+    await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
 
     return player
 
@@ -444,10 +443,9 @@ class Player(VoiceProtocol):
             raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
             
         return [ Track(
-                    track_id=track.id,
+                    track_id=None,
                     requester=requester,
                     search_type=SearchType.ytsearch,
-                    spotify=True,
                     spotify_track=track,
                     info={
                         "title": track.name,
@@ -464,14 +462,13 @@ class Player(VoiceProtocol):
                 )
                 for track in tracks ]
 
-    async def spotifyRelatedTrack(self, seed_artists: str, seed_tracks: str):
+    async def spotifyRelatedTrack(self, seed_tracks: str):
         
-        tracks = await self._node._spotify_client.similar_track(seed_artists=seed_artists, seed_tracks=seed_tracks)
+        tracks = await self._node._spotify_client.similar_track(seed_tracks=seed_tracks)
 
         return [ Track(
-                    track_id=track.id,
+                    track_id=None,
                     search_type=SearchType.ytsearch,
-                    spotify=True,
                     spotify_track=track,
                     info={
                         "title": track.name,
@@ -579,7 +576,7 @@ class Player(VoiceProtocol):
         finally:
             if tracks:
                 if self.is_ipc_connected:
-                    await self.send_ws({"op": "addTrack", "tracks": [track.toDict() for track in tracks]}, tracks[0].requester)
+                    await self.send_ws({"op": "addTrack", "tracks": [track.track_id for track in tracks]}, tracks[0].requester)
                 return len(tracks) if isList else position
         
     async def seek(self, position: float, requester: Member = None) -> float:
@@ -619,7 +616,7 @@ class Player(VoiceProtocol):
         if self.is_ipc_connected:
             await self.send_ws({
                 "op": "shuffleTrack",
-                "tracks": [track.toDict() for track in self.queue._queue],
+                "tracks": [track.track_id for track in self.queue._queue],
                 "verified": {
                     "index": self.queue._position if queue_type == "queue" else 0,
                     "track_id": replacement[0].track_id,
