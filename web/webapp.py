@@ -114,7 +114,7 @@ def login_required(func):
             if resp:
                 user = USERS[token] = User(resp)
             else:
-                abort(401, description="Unauthorized")
+                return redirect(url_for('login'))
         else:
             user = USERS[token]
 
