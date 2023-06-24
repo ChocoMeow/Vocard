@@ -314,7 +314,7 @@ class Playlists(commands.Cog, name="playlist"):
             return await ctx.send(get_lang(ctx.guild.id, 'inboxNoMsg'), ephemeral=True)
 
         inbox = user['inbox'].copy()
-        view = InboxView(ctx.author.name, user['inbox'])
+        view = InboxView(ctx.author, user['inbox'])
         message = await ctx.send(embed=view.build_embed(), view=view, ephemeral=True)
         view.response = message
         await view.wait()
