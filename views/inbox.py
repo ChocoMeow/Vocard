@@ -40,7 +40,7 @@ class Select_message(discord.ui.Select):
 class InboxView(discord.ui.View):
     def __init__(self, author, inbox):
         super().__init__(timeout=60)
-        self.author = author
+        self.author: discord.Member = author
         self.inbox = inbox
         self.response = None
         self.newplaylist = []
@@ -48,13 +48,13 @@ class InboxView(discord.ui.View):
         self.current = None
         self.add_item(Select_message(inbox))
 
-    async def interaction_check(self, interaction):
+    async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user == self.author:
             return True
         return False
-    
+
     def build_embed(self):
-        embed=discord.Embed(title=f"📭 All {self.author}'s Inbox",
+        embed=discord.Embed(title=f"📭 All {self.author.name}'s Inbox",
                             description=f'Max Messages: {len(self.inbox)}/10' + '```%0s %2s %20s\n' % ("   ", "ID:", "Title:") + '\n'.join('%0s %2s. %35s'% ('✉️' if mail['type'] == 'invite' else '📢', index, mail['title'][:35] + "...") for index, mail in enumerate(self.inbox, start=1)) + '```',
                             color=func.settings.embed_color)
         if self.current:

@@ -35,11 +35,12 @@ class DataInput {
 
     constructor(bytes) {
         if (typeof bytes === "string") {
-            var decodedString = atob(bytes);
-            var bytes = new Uint8Array(decodedString.length);
+            const decodedString = atob(bytes);
+            const byteArr = new Uint8Array(decodedString.length);
             for (let i = 0; i < decodedString.length; i++) {
-                bytes[i] = decodedString.charCodeAt(i);
+                byteArr[i] = decodedString.charCodeAt(i);
             }
+            bytes = byteArr;
         }
         this.#buf = bytes;
         this.#view = new DataView(bytes.buffer);
@@ -47,7 +48,7 @@ class DataInput {
 
     #_advance(bytes) {
         if (this.#pos + bytes > this.#buf.length) {
-            throw new Error("");
+            throw new Error("Buffer overflow: cannot advance further.");
         }
         const p = this.#pos;
         this.#pos += bytes;
@@ -59,7 +60,7 @@ class DataInput {
     }
 
     readBoolean() {
-        return this.readByte()
+        return this.readByte() !== 0;
     }
 
     readUnsignedShort() {

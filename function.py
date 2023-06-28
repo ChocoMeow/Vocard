@@ -99,7 +99,7 @@ def init():
     global settings
 
     json = open_json(os.path.join(root_dir, "settings.json"))
-    if json:
+    if json is not None:
         settings = Settings(json)
 
 def langs_setup():
