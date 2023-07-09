@@ -31,8 +31,6 @@ import aiohttp
 from discord import Client, Member
 from typing import Dict, Optional, TYPE_CHECKING, Union
 from urllib.parse import quote
-import function as func
-
 
 from . import (
     __version__, 
@@ -122,7 +120,7 @@ class Node:
 
         self._headers = {
             "Authorization": self._password,
-            "User-Id": str(func.tokens.client_id),
+            "User-Id": str(self.bot.user.id),
             "Client-Name": f"Voicelink/{__version__}",
             'Resume-Key': self.resume_key
         }
