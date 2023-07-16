@@ -406,7 +406,7 @@ class Basic(commands.Cog):
     @queue.command(name="export", aliases=get_aliases("export"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def export(self, ctx: commands.Context):
-        "Export the queue into a txt file."
+        "Exports the entire queue to a text file"
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             return await ctx.send(get_lang(ctx.guild.id, "noPlayer"), ephemeral=True)
@@ -443,7 +443,7 @@ class Basic(commands.Cog):
     @queue.command(name="import", aliases=get_aliases("import"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def _import(self, ctx: commands.Context, attachment: discord.Attachment):
-        "Import the track into the queue."
+        "Imports the text file and adds the track to the current queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             player = await voicelink.connect_channel(ctx)
@@ -453,9 +453,9 @@ class Basic(commands.Cog):
 
         try:
             bytes = await attachment.read()
-            last_line = bytes.split(b"\n")[-1]
-            track_ids = last_line.decode().split(",")
-
+            track_ids = bytes.split(b"\n")[-1]
+            track_ids = track_ids.decode().split(",")
+            
             tracks = [voicelink.Track(track_id=track_id, info=voicelink.decode(track_id), requester=ctx.author) for track_id in track_ids]
             if not tracks:
                 return await ctx.send(player.get_msg('noTrackFound'))
@@ -464,10 +464,10 @@ class Basic(commands.Cog):
             await ctx.send(player.get_msg('playlistLoad').format(attachment.filename, index))
                 
         except voicelink.QueueFull as e:
-            return await ctx.send(e)
+            return await ctx.send(e, ephemeral=True)
 
-        except Exception as e:
-            await ctx.send("Something went wrong while decoding the file!")
+        except:
+            return await ctx.send(player.get_msg("decodeError"), ephemeral=True)
 
         finally:
             if not player.is_playing:
