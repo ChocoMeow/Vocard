@@ -120,7 +120,7 @@ class Node:
 
         self._headers = {
             "Authorization": self._password,
-            "User-Id": str(self.bot.user.id),
+            "User-Id": str(bot.user.id),
             "Client-Name": f"Voicelink/{__version__}",
             'Resume-Key': self.resume_key
         }
