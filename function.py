@@ -42,7 +42,7 @@ local_langs = {} #Stores all the localization languages in ./local_langs
 playlist_name = {} #Cache the user's playlist name
 
 #-------------- Vocard Functions --------------
-def get_settings(guild_id:int):
+def get_settings(guild_id:int) -> dict:
     settings = guild_settings.get(guild_id, None)
     if not settings:
         settings = collection.find_one({"_id":guild_id})
@@ -52,7 +52,7 @@ def get_settings(guild_id:int):
         guild_settings[guild_id] = settings
     return settings
 
-def update_settings(guild_id:int, data: dict, mode="Set"):
+def update_settings(guild_id:int, data: dict, mode="Set") -> None:
     settings = get_settings(guild_id)
     if mode == "Set":
         for key, value in data.items():
@@ -66,7 +66,7 @@ def update_settings(guild_id:int, data: dict, mode="Set"):
         collection.update_one({"_id":guild_id}, {"$unset":data})
     return
 
-def open_json(path: str):
+def open_json(path: str) -> dict:
     try:
         with open(path, encoding="utf8") as json_file:
             return json.load(json_file)
@@ -83,11 +83,11 @@ def update_json(path: str, new_data: dict) -> None:
     with open(path, "w") as json_file:
         json.dump(data, json_file, indent=4)
 
-def get_lang(guild_id:int, key:str):
+def get_lang(guild_id:int, key:str) -> str:
     lang = get_settings(guild_id).get("lang", "EN")
     return langs.get(lang, langs["EN"])[key]
     
-async def requests_api(url: str):
+async def requests_api(url: str) -> dict:
     async with aiohttp.ClientSession() as session:
         resp = await session.get(url)
         if resp.status != 200:
@@ -95,14 +95,14 @@ async def requests_api(url: str):
 
         return await resp.json(encoding="utf-8")
 
-def init():
+def init() -> None:
     global settings
 
     json = open_json(os.path.join(root_dir, "settings.json"))
     if json is not None:
         settings = Settings(json)
 
-def langs_setup():
+def langs_setup() -> None:
     for language in os.listdir(os.path.join(root_dir, "langs")):
         if language.endswith('.json'):
             langs[language[:-5]] = open_json(os.path.join(root_dir, "langs", language))
@@ -113,7 +113,7 @@ def langs_setup():
 
     return
 
-async def create_account(ctx: Union[commands.Context, discord.Interaction]):
+async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> None:
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
     if not author:
         return 
@@ -138,7 +138,7 @@ async def create_account(ctx: Union[commands.Context, discord.Interaction]):
         except:
             pass
             
-async def get_playlist(userid:int, dType:str=None, dId:str=None):
+async def get_playlist(userid:int, dType:str=None, dId:str=None) -> dict:
     user = Playlist.find_one({"_id":userid}, {"_id": 0})
     if not user:
         return None
@@ -148,7 +148,7 @@ async def get_playlist(userid:int, dType:str=None, dId:str=None):
         return user[dType]
     return user
 
-async def update_playlist(userid:int, data:dict=None, push=False, pull=False, mode=True):
+async def update_playlist(userid:int, data:dict=None, push=False, pull=False, mode=True) -> None:
     if mode is True:
         if push:
             return Playlist.update_one({"_id":userid}, {"$push": data})
@@ -159,7 +159,7 @@ async def update_playlist(userid:int, data:dict=None, push=False, pull=False, mo
         Playlist.update_one({"_id":userid}, {"$unset": data})
     return
 
-async def update_inbox(userid:int, data:dict):
+async def update_inbox(userid:int, data:dict) -> None:
     return Playlist.update_one({"_id":userid}, {"$push":{'inbox':data}})
 
 async def checkroles(userid:int):
