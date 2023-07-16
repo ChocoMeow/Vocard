@@ -206,7 +206,7 @@ class Playlists(commands.Cog, name="playlist"):
         
         for data in user:
             if user[data]['name'].lower() == name.lower():
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistExists'), ephemeral=True)
+                return await ctx.send(get_lang(ctx.guild.id, 'playlistExists').format(name), ephemeral=True)
         if link:
             tracks = await voicelink.NodePool.get_node().get_tracks(link, requester=ctx.author)
             if not isinstance(tracks, voicelink.Playlist):
