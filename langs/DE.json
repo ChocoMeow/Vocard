@@ -186,5 +186,7 @@
 
     "voicelinkQueueFull": "Entschuldigung, du hast das Maximum von `{0}` Tracks in der Warteschlange erreicht!",
     "voicelinkOutofList": "Bitte gib einen gültigen Track-Index an!",
-    "voicelinkDuplicateTrack": "Entschuldigung, dieser Track ist bereits in der Warteschlange."
+    "voicelinkDuplicateTrack": "Entschuldigung, dieser Track ist bereits in der Warteschlange.",
+
+    "deocdeError": "Beim Dekodieren der Datei ist etwas schief gelaufen!"
 }

@@ -2,6 +2,7 @@ import discord
 import voicelink
 import re
 
+from io import StringIO
 from discord import app_commands
 from discord.ext import commands
 from function import (
@@ -381,7 +382,11 @@ class Basic(commands.Cog):
         await player.seek(num, ctx.author)
         await ctx.send(player.get_msg('seek').format(position))
 
-    @commands.hybrid_command(name="queue", aliases=get_aliases("queue"))
+    @commands.hybrid_group(
+        name="queue", 
+        aliases=get_aliases("queue"),
+        invoke_without_command=True
+    )
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def queue(self, ctx: commands.Context):
         "Display the players queue songs in your queue."
@@ -397,6 +402,76 @@ class Basic(commands.Cog):
         view = ListView(player=player, author=ctx.author)
         message = await ctx.send(embed=view.build_embed(), view=view)
         view.response = message
+
+    @queue.command(name="export", aliases=get_aliases("export"))
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def export(self, ctx: commands.Context):
+        "Exports the entire queue to a text file"
+        player: voicelink.Player = ctx.guild.voice_client
+        if not player:
+            return await ctx.send(get_lang(ctx.guild.id, "noPlayer"), ephemeral=True)
+        
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+        
+        if player.queue.is_empty and not player.current:
+            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
+
+        await ctx.defer()
+
+        tracks = player.queue.tracks(True)
+        temp = ""
+        raw = "----------->Raw Info<-----------\n"
+
+        total_length = 0
+        for index, track in enumerate(tracks, start=1):
+            temp += f"{index}. {track.title} [{ctime(track.length)}]\n"
+            raw += track.track_id
+            if index != len(tracks):
+                raw += ","
+            total_length += track.length
+
+        temp = "!Remember do not change this file!\n------------->Info<-------------\nGuild: {} ({})\nRequester: {} ({})\nTracks: {} - {}\n------------>Tracks<------------\n".format(
+            ctx.guild.name, ctx.guild.id,
+            ctx.author.name, ctx.author.id,
+            len(tracks), ctime(total_length)
+        ) + temp
+        temp += raw
+
+        await ctx.reply(content="", file=discord.File(StringIO(temp), filename=f"{ctx.guild.id}_Full_Queue.txt"))
+
+    @queue.command(name="import", aliases=get_aliases("import"))
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def _import(self, ctx: commands.Context, attachment: discord.Attachment):
+        "Imports the text file and adds the track to the current queue."
+        player: voicelink.Player = ctx.guild.voice_client
+        if not player:
+            player = await voicelink.connect_channel(ctx)
+
+        if not player.is_user_join(ctx.author):
+            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
+
+        try:
+            bytes = await attachment.read()
+            track_ids = bytes.split(b"\n")[-1]
+            track_ids = track_ids.decode().split(",")
+            
+            tracks = [voicelink.Track(track_id=track_id, info=voicelink.decode(track_id), requester=ctx.author) for track_id in track_ids]
+            if not tracks:
+                return await ctx.send(player.get_msg('noTrackFound'))
+
+            index = await player.add_track(tracks)
+            await ctx.send(player.get_msg('playlistLoad').format(attachment.filename, index))
+                
+        except voicelink.QueueFull as e:
+            return await ctx.send(e, ephemeral=True)
+
+        except:
+            return await ctx.send(player.get_msg("decodeError"), ephemeral=True)
+
+        finally:
+            if not player.is_playing:
+                await player.do_next()
 
     @commands.hybrid_command(name="history", aliases=get_aliases("history"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)

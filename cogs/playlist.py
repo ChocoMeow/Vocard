@@ -1,6 +1,7 @@
 import discord
 import voicelink
 
+from io import StringIO
 from discord import app_commands
 from discord.ext import commands
 from function import (
@@ -205,7 +206,7 @@ class Playlists(commands.Cog, name="playlist"):
         
         for data in user:
             if user[data]['name'].lower() == name.lower():
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistExists'), ephemeral=True)
+                return await ctx.send(get_lang(ctx.guild.id, 'playlistExists').format(name), ephemeral=True)
         if link:
             tracks = await voicelink.NodePool.get_node().get_tracks(link, requester=ctx.author)
             if not isinstance(tracks, voicelink.Playlist):
@@ -406,6 +407,85 @@ class Playlists(commands.Cog, name="playlist"):
 
         await update_playlist(ctx.author.id, {f'playlist.{result["id"]}.tracks': []})
         await ctx.send(get_lang(ctx.guild.id, 'playlistClear').format(name))
+
+    @playlist.command(name="export", aliases=get_aliases("export"))
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    @app_commands.autocomplete(name=playlist_autocomplete)
+    async def export(self, ctx: commands.Context, name: str) -> None:
+        "Exports the entire playlist to a text file"
+        result = await check_playlist(ctx, name.lower())
+        if not result:
+            return await create_account(ctx)
+        if not result['playlist']:
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+        
+        if result['playlist']['type'] == 'link':
+            tracks = await search_playlist(result['playlist']['uri'], ctx.author, timeNeed=False)
+        else:
+            if not result['playlist']['tracks']:
+                return await ctx.send(get_lang(ctx.guild.id, 'playlistNoTrack').format(result['playlist']['name']), ephemeral=True)
+
+            playtrack = []
+            for track in result['playlist']['tracks']:
+                playtrack.append(voicelink.Track(track_id=track, info=voicelink.decode(track), requester=ctx.author))
+                    
+            tracks = {"name": result['playlist']['name'], "tracks": playtrack}
+
+        if not tracks:
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistNoTrack').format(result['playlist']['name']), ephemeral=True)
+
+        temp = ""
+        raw = "----------->Raw Info<-----------\n"
+
+        total_length = 0
+        for index, track in enumerate(tracks['tracks'], start=1):
+            temp += f"{index}. {track.title} [{ctime(track.length)}]\n"
+            raw += track.track_id
+            if index != len(tracks['tracks']):
+                raw += ","
+            total_length += track.length
+
+        temp = "!Remember do not change this file!\n------------->Info<-------------\nPlaylist: {} ({})\nRequester: {} ({})\nTracks: {} - {}\n------------>Tracks<------------\n".format(
+            tracks['name'], result['playlist']['type'],
+            ctx.author.name, ctx.author.id,
+            len(tracks['tracks']), ctime(total_length)
+        ) + temp
+        temp += raw
+
+        await ctx.send(content="", file=discord.File(StringIO(temp), filename=f"{tracks['name']}_playlist.txt"))
+
+    @playlist.command(name="import", aliases=get_aliases("import"))
+    @app_commands.describe(name="Give a name to your playlist.")
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def _import(self, ctx: commands.Context, name: str, attachment: discord.Attachment):
+        "Create your custom playlist."
+        if len(name) > 10:
+            return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
+        
+        rank, max_p, max_t = await checkroles(ctx.author.id)
+        user = await check_playlist(ctx, full=True)
+        if not user:
+            return await create_account(ctx)
+
+        if len(user) >= max_p:
+            return await ctx.send(get_lang(ctx.guild.id, 'overPlaylistCreation').format(max_p), ephemeral=True)
+        
+        for data in user:
+            if user[data]['name'].lower() == name.lower():
+                return await ctx.send(get_lang(ctx.guild.id, 'playlistExists').format(name), ephemeral=True)
+
+        try:
+            bytes = await attachment.read()
+            track_ids = bytes.split(b"\n")[-1]
+            track_ids = track_ids.decode().split(",")
+
+            playlist_name.pop(str(ctx.author.id), None)
+            data = {'tracks': track_ids, 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
+            await update_playlist(ctx.author.id, {f"playlist.{assign_playlistId([data for data in user])}": data})
+            await ctx.send(get_lang(ctx.guild.id, 'playlistCreated').format(name))
+
+        except:
+            return await ctx.send(get_lang(ctx.guild.id, "decodeError"), ephemeral=True)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Playlists(bot))

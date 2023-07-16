@@ -3,7 +3,7 @@ from io import BytesIO
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 install_pack_dir = os.path.join(root_dir, "Vocard.zip")
-__version__ = "v2.6.4a"
+__version__ = "v2.6.5"
 
 def checkVersion(withMsg = False):
     resp = requests.get("https://api.github.com/repos/ChocoMeow/Vocard/releases/latest")

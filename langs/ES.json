@@ -186,5 +186,7 @@
 
     "voicelinkQueueFull": "Lo siento, ¡ha alcanzado el máximo de `{0}` canciones en la cola!",
     "voicelinkOutofList": "¡Proporcione un índice de pista válido!",
-    "voicelinkDuplicateTrack": "Lo siento, esta canción ya está en la cola."
+    "voicelinkDuplicateTrack": "Lo siento, esta canción ya está en la cola.",
+
+    "deocdeError": "¡Algo salió mal al decodificar el archivo!"
 }
