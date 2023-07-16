@@ -186,5 +186,7 @@
 
     "voicelinkQueueFull": "抱歉，您已達到隊列中 `{0}` 首歌曲的最大數量！",
     "voicelinkOutofList": "請提供有效的歌曲索引！",
-    "voicelinkDuplicateTrack": "抱歉，此歌曲已在隊列中。"
+    "voicelinkDuplicateTrack": "抱歉，此歌曲已在隊列中。",
+
+    "deocdeError": "解碼文件時出現問題！"
 }

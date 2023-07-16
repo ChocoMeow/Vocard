@@ -186,5 +186,7 @@
 
     "voicelinkQueueFull": "Sorry, you have reached the maximum of `{0}` tracks in the queue!",
     "voicelinkOutofList": "Please provide a valid track index!",
-    "voicelinkDuplicateTrack": "Sorry, this track is already in the queue."
+    "voicelinkDuplicateTrack": "Sorry, this track is already in the queue.",
+
+    "deocdeError": "Something went wrong while decoding the file!"
 }

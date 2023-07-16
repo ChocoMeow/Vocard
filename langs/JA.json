@@ -186,5 +186,7 @@
     
     "voicelinkQueueFull": "申し訳ありませんが、キュー内の曲数が最大値の`{0}`に達しました！",
     "voicelinkOutofList": "有効なトラックインデックスを指定してください！",
-    "voicelinkDuplicateTrack": "申し訳ありませんが、このトラックは既にキューに存在します。"
+    "voicelinkDuplicateTrack": "申し訳ありませんが、このトラックは既にキューに存在します。",
+
+    "deocdeError": "ファイルのデコード中に問題が発生しました！"
 }

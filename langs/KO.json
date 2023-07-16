@@ -186,5 +186,7 @@
 
     "voicelinkQueueFull": "죄송합니다. 큐에 `{0}`개의 트랙을 모두 추가하셨습니다!",
     "voicelinkOutofList": "유효한 트랙 인덱스를 제공해주세요!",
-    "voicelinkDuplicateTrack": "죄송합니다. 이 트랙은 이미 큐에 있습니다."
+    "voicelinkDuplicateTrack": "죄송합니다. 이 트랙은 이미 큐에 있습니다.",
+
+    "deocdeError": "파일 디코딩 중 문제가 발생했습니다!"
 }
