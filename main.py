@@ -88,7 +88,7 @@ class Vocard(commands.Bot):
         elif isinstance(error, (commands.CommandOnCooldown, commands.MissingPermissions, commands.RangeError, commands.BadArgument)):
             pass
 
-        elif isinstance(error, commands.MissingRequiredArgument, commands.MissingRequiredAttachment):
+        elif isinstance(error, (commands.MissingRequiredArgument, commands.MissingRequiredAttachment)):
             command = f" Correct Usage: {ctx.prefix}" + (f"{ctx.command.parent.qualified_name} " if ctx.command.parent else "") + f"{ctx.command.name} {ctx.command.signature}"
             position = command.find(f"<{ctx.current_parameter.name}>") + 1
             error = f"```css\n[You are missing argument!]\n{command}\n" + " " * position + "^" * len(ctx.current_parameter.name) + "```"
