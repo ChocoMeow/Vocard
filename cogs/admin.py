@@ -101,8 +101,8 @@ class Admin(commands.Cog, name="settings"):
     async def queue(self, ctx: commands.Context, mode: str):
         "Change to another type of queue mode."
         player, settings = self.get_settings(ctx)
-        if mode.capitalize() not in ["FairQueue", "Queue"]:
-            mode = "Queue"
+
+        mode = "FairQueue" if mode.lower() == "fairqueue" else "queue"
         settings["queueType"] = mode
         update_settings(ctx.guild.id, {"queueType": mode})
         await ctx.send(get_lang(ctx.guild.id, "setqueue").format(mode))
