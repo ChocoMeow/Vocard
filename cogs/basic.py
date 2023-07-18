@@ -456,7 +456,7 @@ class Basic(commands.Cog):
             track_ids = bytes.split(b"\n")[-1]
             track_ids = track_ids.decode().split(",")
             
-            tracks = [voicelink.Track(track_id=track_id, info=voicelink.decode(track_id), requester=ctx.author) for track_id in track_ids]
+            tracks = (voicelink.Track(track_id=track_id, info=voicelink.decode(track_id), requester=ctx.author) for track_id in track_ids)
             if not tracks:
                 return await ctx.send(player.get_msg('noTrackFound'))
 

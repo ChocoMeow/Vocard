@@ -143,14 +143,12 @@ class Queue:
         if index2 is None:
             index2 = index
 
-        if index2 < index:
-            temp = index
-            index = index2
-            index2 = temp
+        elif index2 < index:
+            index, index2 = index2, index
 
         try:
             count = []
-            for i, track in enumerate(self._queue[pos + index: pos + index2 + 1], start=0):
+            for i, track in enumerate(self._queue[pos + index: pos + index2 + 1]):
                 if member:
                     if track.requester != member:
                         continue
@@ -194,7 +192,7 @@ class FairQueue(Queue):
         super().__init__(size, duplicate_track, get_msg)
         self._set = set()
 
-    async def put(self, item: Track) -> int:
+    def put(self, item: Track) -> int:
         if len(self._queue) >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
 
@@ -214,5 +212,6 @@ class FairQueue(Queue):
                 break
             lastIndex += 1
             self._set.add(track.requester)
-        await self.put_at_index(lastIndex, item)
+
+        self.put_at_index(lastIndex, item)
         return lastIndex
