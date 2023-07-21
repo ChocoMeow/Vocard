@@ -322,8 +322,9 @@ class Basic(commands.Cog):
 
         await ctx.send(player.get_msg('skipped').format(ctx.author))
 
-        if player.queue._repeat == 1:
-            await player.queue.set_repeat("off")
+        if player.queue._repeat.mode == voicelink.LoopType.track:
+            await player.set_repeat(voicelink.LoopType.off.name)
+            
         await player.stop()
 
     @commands.hybrid_command(name="back", aliases=get_aliases("back"))
@@ -357,8 +358,8 @@ class Basic(commands.Cog):
 
         await ctx.send(player.get_msg('backed').format(ctx.author))
 
-        if player.queue._repeat == 1:
-            await player.queue.set_repeat("off")
+        if player.queue._repeat.mode == voicelink.LoopType.track:
+            await player.set_repeat(voicelink.LoopType.off.name)
 
     @commands.hybrid_command(name="seek", aliases=get_aliases("seek"))
     @app_commands.describe(position="Input position. Exmaple: 1:20.")

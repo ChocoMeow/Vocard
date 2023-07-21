@@ -26,7 +26,7 @@ __author__ = 'Vocard Development, Choco'
 __license__ = "MIT"
 __copyright__ = "Copyright 2023 (c) Vocard Development, Choco"
 
-from .enums import SearchType
+from .enums import SearchType, LoopType
 from .events import *
 from .exceptions import *
 from .filters import *

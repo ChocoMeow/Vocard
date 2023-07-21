@@ -2,7 +2,7 @@ import json, function as func
 
 from discord import Member, VoiceChannel
 from discord.ext import commands
-from voicelink import Player, Track, Playlist, NodePool, connect_channel, decode
+from voicelink import Player, Track, Playlist, NodePool, connect_channel, decode, LoopType
 
 class TempCtx():
     def __init__(self, author: Member, channel: VoiceChannel) -> None:
@@ -76,8 +76,8 @@ async def skipTo(player: Player, member: Member, data: dict):
     if index > 1:
         player.queue.skipto(index)
 
-    if player.queue._repeat == 1:
-        await player.set_repeat("off")
+    if player.queue._repeat.mode == LoopType.track:
+        await player.set_repeat(LoopType.off.name)
     await player.stop()
 
 async def backTo(player: Player, member: Member, data: dict):
