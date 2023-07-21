@@ -82,10 +82,6 @@ class Queue:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
 
-        if not self._duplicate_track:
-            if item.uri in [track.uri for track in self._queue]:
-                raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
-
         self._queue.append(item)
         return self.count
 
@@ -93,20 +89,12 @@ class Queue:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
 
-        if not self._duplicate_track:
-            if item.uri in [track.uri for track in self._queue]:
-                raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
-
         self._queue.insert(self._position, item)
         return 1
 
     def put_at_index(self, index: int, item: Track) -> None:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
-
-        if not self._duplicate_track:
-            if item.uri in [track.uri for track in self._queue]:
-                raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
         return self._queue.insert(self._position - 1 + index, item)
 
@@ -213,10 +201,6 @@ class FairQueue(Queue):
     def put(self, item: Track) -> int:
         if len(self._queue) >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
-
-        if not self._duplicate_track:
-            if item.uri in [track.uri for track in self._queue]:
-                raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
         tracks = self.tracks(incTrack=True)
         lastIndex = len(tracks)

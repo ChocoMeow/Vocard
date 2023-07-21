@@ -39,10 +39,8 @@ from discord import (
     Client,
     Guild,
     VoiceChannel,
-    VoiceProtocol, 
-    StageChannel,
+    VoiceProtocol,
     Member,
-    Embed,
     ui,
     Message,
     Interaction
@@ -50,9 +48,9 @@ from discord import (
 
 from discord.ext import commands
 from . import events
-from .enums import SearchType
+from .enums import SearchType, LoopType
 from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent
-from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, TrackLoadError, FilterTagAlreadyInUse
+from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, TrackLoadError, FilterTagAlreadyInUse, DuplicateTrack
 from .filters import Filter, Filters
 from .objects import Track
 from .pool import Node, NodePool
@@ -565,12 +563,19 @@ class Player(VoiceProtocol):
 
     async def add_track(self, raw_tracks: Union[Track, List[Track]], at_font: bool = False) -> int:
         tracks = []
+
+        _duplicate_tracks = () if self.queue._allow_duplicate else (track.uri for track in self.queue._queue)
+
         try:
             if (isList := isinstance(raw_tracks, List)):
                 for track in raw_tracks:
+                    if track.uri in _duplicate_tracks:
+                        continue
                     self.queue.put_at_front(track) if at_font else self.queue.put(track)  
                     tracks.append(track)
             else:
+                if raw_tracks.uri in _duplicate_tracks:
+                    raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
                 position = self.queue.put_at_front(raw_tracks) if at_font else self.queue.put(raw_tracks)
                 tracks.append(raw_tracks)
         finally:
@@ -605,7 +610,7 @@ class Player(VoiceProtocol):
         self._volume = volume
         return self._volume
 
-    async def shuffle(self, queue_type: str, requester: Member = None):
+    async def shuffle(self, queue_type: str, requester: Member = None) -> None:
         replacement = self.queue.tracks() if queue_type == "queue" else self.queue.history()
         if len(replacement) < 3:
             raise VoicelinkException(self.get_msg('shuffleError'))
@@ -623,19 +628,17 @@ class Player(VoiceProtocol):
                 }
             }, requester)
 
-    async def set_repeat(self, mode:str = None):
+    async def set_repeat(self, mode: str = None) -> str:
         if not mode:
-            mode = self.queue._repeat_mode.get((self.queue._repeat + 1)%len(self.queue._repeat_mode), 'off')
-
+            mode = self.queue._repeat.next().name
+            
         is_found = False
-        for i, m in self.queue._repeat_mode.items():
-            if m == mode.lower():
+        for type in LoopType:
+            if type.name.lower() == mode.lower():
+                self.queue._repeat.set_mode(type)
                 is_found = True
-                self.queue._repeat = i
-                if i == 2:
-                    self._repeat_position = self._position - 1
                 break
-        
+
         if not is_found:
             raise VoicelinkException("Invalid repeat mode.")
         
