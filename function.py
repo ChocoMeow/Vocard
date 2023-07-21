@@ -26,7 +26,10 @@ if not (tokens.mongodb_name and tokens.mongodb_url):
 try:
     mongodb = MongoClient(host=tokens.mongodb_url, serverSelectionTimeoutMS=5000)
     mongodb.server_info()
+    if tokens.mongodb_name not in mongodb.list_database_names():
+        raise Exception(f"{tokens.mongodb_name} does not exist in your mongoDB!")
     print("Successfully connected to MongoDB!")
+
 except Exception as e:
     raise Exception("Not able to connect MongoDB! Reason:", e)
 
