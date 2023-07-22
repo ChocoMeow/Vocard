@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from .exceptions import QueueFull, OutofList, DuplicateTrack
+from .exceptions import QueueFull, OutofList
 from .objects import Track
 from .enums import LoopType
 

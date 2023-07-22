@@ -576,6 +576,7 @@ class Player(VoiceProtocol):
             else:
                 if raw_tracks.uri in _duplicate_tracks:
                     raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
+                
                 position = self.queue.put_at_front(raw_tracks) if at_font else self.queue.put(raw_tracks)
                 tracks.append(raw_tracks)
         finally:
