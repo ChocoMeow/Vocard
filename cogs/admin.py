@@ -6,6 +6,7 @@ import textwrap
 import traceback
 import function as func
 
+from typing import Tuple
 from discord import app_commands
 from discord.ext import commands
 from function import (
@@ -25,7 +26,7 @@ class Admin(commands.Cog, name="settings"):
         self.bot = bot
         self.description = "This category is only available to admin permissions on the server."
 
-    def get_settings(self, ctx: commands.Context) -> dict:
+    def get_settings(self, ctx: commands.Context) -> Tuple[voicelink.Player, dict]:
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             settings = get_settings(ctx.guild.id)
@@ -34,9 +35,11 @@ class Admin(commands.Cog, name="settings"):
 
         return player, settings
     
-    @commands.hybrid_group(name="settings",
-                           aliases=get_aliases("settings"),
-                           invoke_without_command=True)
+    @commands.hybrid_group(
+        name="settings",
+        aliases=get_aliases("settings"),
+        invoke_without_command=True
+    )
     async def settings(self, ctx: commands.Context):
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(self.qualified_name)
@@ -101,8 +104,8 @@ class Admin(commands.Cog, name="settings"):
     async def queue(self, ctx: commands.Context, mode: str):
         "Change to another type of queue mode."
         player, settings = self.get_settings(ctx)
-        if mode.capitalize() not in ["FairQueue", "Queue"]:
-            mode = "Queue"
+
+        mode = "FairQueue" if mode.lower() == "fairqueue" else "Queue"
         settings["queueType"] = mode
         update_settings(ctx.guild.id, {"queueType": mode})
         await ctx.send(get_lang(ctx.guild.id, "setqueue").format(mode))
@@ -211,10 +214,10 @@ class Admin(commands.Cog, name="settings"):
         player, settings = self.get_settings(ctx)
         toggle = settings.get('duplicateTrack', False)
         if player:
-            player.queue._duplicateTrack = not toggle
+            player.queue._allow_duplicate = not toggle
 
         update_settings(ctx.guild.id, {'duplicateTrack': not toggle})
-        toggle = get_lang(ctx.guild.id, "enabled" if not toggle else "disabled")
+        toggle = get_lang(ctx.guild.id, "enabled" if toggle else "disabled")
         return await ctx.send(get_lang(ctx.guild.id, "toggleDuplicateTrack").format(toggle))
     
     @settings.command(name="customcontroller", aliases=get_aliases("customcontroller"))
@@ -234,7 +237,7 @@ class Admin(commands.Cog, name="settings"):
         if interaction.user.id not in func.settings.bot_access_user:
             return await interaction.response.send_message("You are not able to use this command!")
 
-        def clear_code(content):
+        def clear_code(content: str):
             if content.startswith("```") and content.endswith("```"):
                 return "\n".join(content.split("\n")[1:])[:-3]
             else:

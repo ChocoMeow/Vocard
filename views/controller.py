@@ -22,6 +22,7 @@ SOFTWARE.
 """
 
 import discord
+import voicelink
 import function as func
 
 from discord.ext import commands
@@ -40,7 +41,7 @@ def key(interaction: discord.Interaction):
     
 class Back(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="⏮️", label=player.get_msg('buttonBack'), style=style, disabled=False if self.player.queue.history() or not self.player.current else True, row=row)
     
     async def callback(self, interaction: discord.Interaction):
@@ -63,12 +64,12 @@ class Back(discord.ui.Button):
 
         await interaction.response.send_message(self.player.get_msg("backed").format(interaction.user))
 
-        if self.player.queue._repeat == 1:
-            await self.player.set_repeat("off")
+        if self.player.queue._repeat.mode == voicelink.LoopType.track:
+            await self.player.set_repeat(voicelink.LoopType.off.name)
         
 class Resume(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="⏸️", label=player.get_msg('buttonPause'), style=style, disabled=False if self.player.current else True, row=row)
     
     async def callback(self, interaction: discord.Interaction):
@@ -107,7 +108,7 @@ class Resume(discord.ui.Button):
 
 class Skip(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="⏭️", label=player.get_msg('buttonSkip'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
@@ -127,13 +128,13 @@ class Skip(discord.ui.Button):
 
         await interaction.response.send_message(self.player.get_msg("skipped").format(interaction.user))
 
-        if self.player.queue._repeat == 1:
-            await self.player.set_repeat("off")
+        if self.player.queue._repeat.mode == voicelink.LoopType.track:
+            await self.player.set_repeat(voicelink.LoopType.off.name)
         await self.player.stop()
 
 class Stop(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="⏹️", label=player.get_msg('buttonLeave'), style=style, row=row)
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
@@ -151,7 +152,7 @@ class Stop(discord.ui.Button):
 
 class Add(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="❤️", style=style, disabled=False if self.player.current else True, row=row)
     
     async def callback(self, interaction: discord.Interaction):
@@ -177,7 +178,7 @@ class Add(discord.ui.Button):
 
 class Loop(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="🔁", label=player.get_msg('buttonLoop'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
@@ -189,7 +190,7 @@ class Loop(discord.ui.Button):
 
 class VolumeUp(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="🔊", label=player.get_msg('buttonVolumeUp'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
@@ -203,7 +204,7 @@ class VolumeUp(discord.ui.Button):
 
 class VolumeDown(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="🔉", label=player.get_msg('buttonVolumeDown'), style=style, row=row)
     
     async def callback(self, interaction: discord.Interaction):
@@ -217,7 +218,7 @@ class VolumeDown(discord.ui.Button):
 
 class VolumeMute(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="🔇" if player.volume else "🔈",
                          label=player.get_msg('buttonVolumeMute' if player.volume else "buttonVolumeUnmute"),
                          style=style, row=row)
@@ -241,7 +242,7 @@ class VolumeMute(discord.ui.Button):
 
 class AutoPlay(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="💡",
                          label=player.get_msg('buttonAutoPlay'),
                          style=style, row=row)
@@ -259,7 +260,7 @@ class AutoPlay(discord.ui.Button):
 
 class Shuffle(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="🔀",
                          label=player.get_msg('buttonShuffle'),
                          style=style, row=row)
@@ -280,7 +281,7 @@ class Shuffle(discord.ui.Button):
 
 class Forward(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="⏩",
                          label=player.get_msg('buttonForward'),
                          disabled=False if self.player.current else True,
@@ -298,7 +299,7 @@ class Forward(discord.ui.Button):
 
 class Rewind(discord.ui.Button):
     def __init__(self, player, style, row):
-        self.player = player
+        self.player: voicelink.Player = player
         super().__init__(emoji="⏪",
                          label=player.get_msg('buttonRewind'),
                          disabled=False if self.player.current else True,
@@ -319,7 +320,7 @@ class Rewind(discord.ui.Button):
 class Tracks(discord.ui.Select):
     def __init__(self, player, style, row):
 
-        self.player = player
+        self.player: voicelink.Player = player
         
         options = []
         for index, track in enumerate(self.player.queue.tracks(), start=1):
@@ -370,7 +371,7 @@ class InteractiveController(discord.ui.View):
     def __init__(self, player):
         super().__init__(timeout=None)
 
-        self.player = player
+        self.player: voicelink.Player = player
         for row, btnRow in enumerate(func.settings.controller.get("default_buttons")):
             for btn in btnRow:
                 color = ""
@@ -385,7 +386,7 @@ class InteractiveController(discord.ui.View):
 
         self.cooldown = commands.CooldownMapping.from_cooldown(2.0, 10.0, key)
             
-    async def interaction_check(self, interaction):
+    async def interaction_check(self, interaction: discord.Interaction):
         if not self.player.node._available:
             await interaction.response.send_message(self.player.get_msg("nodeReconnect"), ephemeral=True)
             return False

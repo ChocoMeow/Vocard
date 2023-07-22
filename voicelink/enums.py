@@ -23,6 +23,18 @@ SOFTWARE.
 
 from enum import Enum, auto
 
+class LoopType(Enum):
+    """The enum for the different loop types for Voicelink
+
+        LoopType.off: 1
+        LoopType.track: 2
+        LoopType.queue: 3
+
+    """
+
+    off = auto()
+    track = auto()
+    queue = auto()
 
 class SearchType(Enum):
     """The enum for the different search types for Voicelink.

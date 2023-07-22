@@ -322,8 +322,9 @@ class Basic(commands.Cog):
 
         await ctx.send(player.get_msg('skipped').format(ctx.author))
 
-        if player.queue._repeat == 1:
-            await player.queue.set_repeat("off")
+        if player.queue._repeat.mode == voicelink.LoopType.track:
+            await player.set_repeat(voicelink.LoopType.off.name)
+            
         await player.stop()
 
     @commands.hybrid_command(name="back", aliases=get_aliases("back"))
@@ -357,8 +358,8 @@ class Basic(commands.Cog):
 
         await ctx.send(player.get_msg('backed').format(ctx.author))
 
-        if player.queue._repeat == 1:
-            await player.queue.set_repeat("off")
+        if player.queue._repeat.mode == voicelink.LoopType.track:
+            await player.set_repeat(voicelink.LoopType.off.name)
 
     @commands.hybrid_command(name="seek", aliases=get_aliases("seek"))
     @app_commands.describe(position="Input position. Exmaple: 1:20.")
@@ -456,7 +457,7 @@ class Basic(commands.Cog):
             track_ids = bytes.split(b"\n")[-1]
             track_ids = track_ids.decode().split(",")
             
-            tracks = [voicelink.Track(track_id=track_id, info=voicelink.decode(track_id), requester=ctx.author) for track_id in track_ids]
+            tracks = (voicelink.Track(track_id=track_id, info=voicelink.decode(track_id), requester=ctx.author) for track_id in track_ids)
             if not tracks:
                 return await ctx.send(player.get_msg('noTrackFound'))
 

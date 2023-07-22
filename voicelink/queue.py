@@ -21,41 +21,60 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from .exceptions import QueueFull, OutofList, DuplicateTrack
+from .exceptions import QueueFull, OutofList
 from .objects import Track
+from .enums import LoopType
+
+from typing import Optional, Tuple, List, Callable
+from itertools import cycle
 from discord import Member
 
+class LoopTypeCycle:
+    def __init__(self) -> None:
+        self._cycle = cycle(LoopType)
+        self.current = next(self._cycle)
+
+    def next(self) -> LoopType:
+        self.current = next(self._cycle)
+        return self.current
+
+    def set_mode(self, value: LoopType) -> LoopType:
+        while next(self._cycle) != value:
+            pass
+        self.current = value
+        return value
+
+    @property
+    def mode(self) -> LoopType:
+        return self.current
+    
+    def __str__(self) -> str:
+        return self.current.name.capitalize()
+
 class Queue:
-    def __init__(self, size: int, duplicate_track: bool, get_msg):
+    def __init__(self, size: int, allow_duplicate: bool, get_msg: Callable[[str], str]) -> None:
         self._queue = []
         self._position = 0
         self._size = size
-        self._repeat = 0
+        self._repeat = LoopTypeCycle()
         self._repeat_position = 0
-        self._duplicate_track = duplicate_track
-
-        self._repeat_mode = {
-            0: "off",
-            1: "track",
-            2: "queue",
-        }
+        self._allow_duplicate = allow_duplicate
 
         self.get_msg = get_msg
 
-    def get(self):
+    def get(self) -> Optional[Track]:
         track = None
         try:
-            track = self._queue[self._position -
-                                1 if self._repeat == 1 else self._position]
-            if self._repeat != 1:
+            track = self._queue[self._position - 1 if self._repeat.mode == LoopType.track else self._position]
+            if self._repeat.mode != LoopType.track:
                 self._position += 1
         except:
-            if self._repeat == 2:
+            if self._repeat.mode == LoopType.queue:
                 try:
                     track = self._queue[self._repeat_position]
                     self._position = self._repeat_position + 1
                 except IndexError:
-                    self._repeat = 0
+                    self._repeat.set_mode(LoopType.off)
 
         return track
 
@@ -63,61 +82,49 @@ class Queue:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
 
-        if not self._duplicate_track:
-            if item.uri in [track.uri for track in self._queue]:
-                raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
-
         self._queue.append(item)
         return self.count
 
-    def put_at_front(self, item: Track):
+    def put_at_front(self, item: Track) -> int:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
-
-        if not self._duplicate_track:
-            if item.uri in [track.uri for track in self._queue]:
-                raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
         self._queue.insert(self._position, item)
         return 1
 
-    def put_at_index(self, index: int, item: Track):
+    def put_at_index(self, index: int, item: Track) -> None:
         if self.count >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
 
-        if not self._duplicate_track:
-            if item.uri in [track.uri for track in self._queue]:
-                raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
-
         return self._queue.insert(self._position - 1 + index, item)
 
-    def skipto(self, index: int):
+    def skipto(self, index: int) -> None:
         if not 0 < index <= self.count:
             raise OutofList(self.get_msg("voicelinkOutofList"))
         else:
             self._position += index - 1
 
-    def backto(self, index: int):
+    def backto(self, index: int) -> None:
         if not self._position - index >= 0:
             raise OutofList(self.get_msg("voicelinkOutofList"))
         else:
             self._position -= index
 
-    def history_clear(self, is_playing: bool):
+    def history_clear(self, is_playing: bool) -> None:
         self._queue[:self._position - 1 if is_playing else self._position] = []
         self._position = 1 if is_playing else 0
 
-    def clear(self):
+    def clear(self) -> None:
         del self._queue[self._position:]
 
-    def replace(self, queue_type: str, replacement: list):
+    def replace(self, queue_type: str, replacement: list) -> None:
         if queue_type == "queue":
             self.clear()
             self._queue += replacement
         elif queue_type == "history":
             self._queue[:self._position] = replacement
 
-    def swap(self, num1: int, num2: int):
+    def swap(self, num1: int, num2: int) -> Tuple[Track, Track]:
         try:
             pos = self._position - 1
             self._queue[pos + num1], self._queue[pos + num2] = self._queue[pos + num2], self._queue[pos + num1]
@@ -125,7 +132,7 @@ class Queue:
         except IndexError:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
-    def move(self, target: int, to: int):
+    def move(self, target: int, to: int) -> Optional[Track]:
         if not 0 < target <= self.count or not 0 < to:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
@@ -137,20 +144,18 @@ class Queue:
         except:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
-    def remove(self, index: int, index2: int = None, member: Member = None):
+    def remove(self, index: int, index2: int = None, member: Member = None) -> Optional[List[Track]]:
         pos = self._position - 1
 
         if index2 is None:
             index2 = index
 
-        if index2 < index:
-            temp = index
-            index = index2
-            index2 = temp
+        elif index2 < index:
+            index, index2 = index2, index
 
         try:
             count = []
-            for i, track in enumerate(self._queue[pos + index: pos + index2 + 1], start=0):
+            for i, track in enumerate(self._queue[pos + index: pos + index2 + 1]):
                 if member:
                     if track.requester != member:
                         continue
@@ -162,45 +167,40 @@ class Queue:
         except:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
-    def history(self, incTrack: bool = False) -> list:
+    def history(self, incTrack: bool = False) -> List[Track]:
         if incTrack:
             return self._queue[:self._position]
         return self._queue[:self._position - 1]
 
-    def tracks(self, incTrack: bool = False):
+    def tracks(self, incTrack: bool = False) -> List[Track]:
         if incTrack:
             return self._queue[self._position - 1:]
         return self._queue[self._position:]
 
     @property
-    def count(self):
+    def count(self) -> int:
         return len(self._queue[self._position:])
+    
+    @property
+    def repeat(self) -> str:
+        return self._repeat.mode.name.capitalize()
 
     @property
-    def repeat(self):
-        return self._repeat_mode.get(self._repeat, "Off").capitalize()
-
-    @property
-    def is_empty(self):
+    def is_empty(self) -> bool:
         try:
             self._queue[self._position]
         except:
             return True
         return False
 
-
 class FairQueue(Queue):
-    def __init__(self, size: int, duplicate_track: bool, get_msg):
-        super().__init__(size, duplicate_track, get_msg)
+    def __init__(self, size: int, allow_duplicate: bool, get_msg) -> None:
+        super().__init__(size, allow_duplicate, get_msg)
         self._set = set()
 
-    async def put(self, item: Track) -> int:
+    def put(self, item: Track) -> int:
         if len(self._queue) >= self._size:
             raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
-
-        if not self._duplicate_track:
-            if item.uri in [track.uri for track in self._queue]:
-                raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
 
         tracks = self.tracks(incTrack=True)
         lastIndex = len(tracks)
@@ -214,5 +214,6 @@ class FairQueue(Queue):
                 break
             lastIndex += 1
             self._set.add(track.requester)
-        await self.put_at_index(lastIndex, item)
+
+        self.put_at_index(lastIndex, item)
         return lastIndex
