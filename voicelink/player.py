@@ -52,11 +52,11 @@ from .enums import SearchType, LoopType
 from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent
 from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, TrackLoadError, FilterTagAlreadyInUse, DuplicateTrack
 from .filters import Filter, Filters
-from .objects import Track
+from .objects import Track, Playlist
 from .pool import Node, NodePool
 from .queue import Queue, FairQueue
 from .placeholders import Placeholders, build_embed
-from random import shuffle
+from random import shuffle, choice
 
 async def connect_channel(ctx: Union[commands.Context, Interaction], channel: VoiceChannel = None):
     try:
@@ -459,28 +459,7 @@ class Player(VoiceProtocol):
                     }
                 )
                 for track in tracks ]
-
-    async def spotifyRelatedTrack(self, seed_tracks: str):
-        
-        tracks = await self._node._spotify_client.similar_track(seed_tracks=seed_tracks)
-
-        return [ Track(
-                    track_id=None,
-                    search_type=SearchType.ytsearch,
-                    spotify_track=track,
-                    info={
-                        "title": track.name,
-                        "author": track.artists,
-                        "length": track.length,
-                        "identifier": track.id,
-                        "artistId": track.artistId,
-                        "uri": track.uri,
-                        "isStream": False,
-                        "isSeekable": True,
-                        "position": 0,
-                        "thumbnail": track.image
-                    },
-                    requester=self.client.user
+                    info=track.to_dict()
                 )
                 for track in tracks ]
 
@@ -677,8 +656,7 @@ class Player(VoiceProtocol):
             await self.seek(self.position)
 
     async def change_node(self, identifier: str = None) -> None:
-        """Change node.
-        """
+        """Change node."""
         try:
             node = NodePool.get_node(identifier=identifier)
         except:
@@ -699,6 +677,41 @@ class Player(VoiceProtocol):
 
         if self.volume != 100:
             await self.set_volume(self.volume)
+    
+    async def get_recommendations(self, *, track: Track = None) -> bool:
+        """Get recommendations from Youtube or Spotify."""
+        if not track:
+            track = choice(self.queue.history(incTrack=True)[-5:])
+
+        if track.spotify:
+            spotify_tracks = await self._node._spotify_client.similar_track(seed_tracks=track.identifier)
+
+            tracks = [ Track(
+                    track_id=None,
+                    search_type=SearchType.ytsearch,
+                    spotify_track=track,
+                    info=track.to_dict(),
+                    requester=self.client.user
+                )
+                for track in spotify_tracks ]
+
+        else:
+            if track.source != 'youtube':
+                return False
+
+            tracks = await self.get_tracks(
+                    f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}", 
+                    requester=self.client.user
+                )
+
+        if tracks:
+            if isinstance(tracks, Playlist):
+                await self.add_track(tracks.tracks, duplicate=False)
+            else:
+                await self.add_track(tracks, duplicate=False)
+            return True
+
+        return False
     
     async def send_ws(self, payload, requester: Member = None):
             payload['guild_id'] = self.guild.id

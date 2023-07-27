@@ -4,7 +4,6 @@ import aiohttp
 import os
 
 from discord.ext import commands
-from random import choice
 from datetime import datetime
 from time import strptime
 from io import BytesIO
@@ -169,48 +168,6 @@ async def checkroles(userid:int):
     rank, max_p, max_t = 'Normal', 5, 500
 
     return rank, max_p, max_t
-
-async def similar_track(player) -> bool:
-    trackids = [ track.identifier for track in player.queue.history(incTrack=True) if track.source == 'youtube' ]
-    randomTrack = choice(player.queue.history(incTrack=True)[-10:])
-    tracks = []
-
-    if randomTrack.spotify:
-        tracks = await player.spotifyRelatedTrack(randomTrack.identifier)
-    else:
-        if randomTrack.source != 'youtube':
-            return False
-
-        if not tokens.youtube_api_key:
-            return False
-        
-        request_url = "https://youtube.googleapis.com/youtube/v3/search?part={part}&relatedToVideoId={videoId}&type={type}&videoCategoryId={videoCategoryId}&key={key}".format(
-            part="snippet",
-            videoId=randomTrack.identifier,
-            type="video",
-            videoCategoryId="10",
-            key=tokens.youtube_api_key
-        )
-
-        try:
-            data = await requests_api(request_url)
-            if not data:
-                return False
-
-            for item in data['items']:
-                if 'snippet' not in item:
-                    continue
-                if item['id']['videoId'] not in trackids:
-                    tracks = await player.get_tracks(f"https://www.youtube.com/watch?v={item['id']['videoId']}", requester=player._bot.user)
-                    break
-        except:
-            return False
-
-    if tracks:
-        await player.add_track(tracks)
-        return True
-
-    return False
 
 def time(millis:int) -> str:
     seconds=(millis/1000)%60
