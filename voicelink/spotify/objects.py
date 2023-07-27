@@ -20,6 +20,20 @@ class Track:
         else:
             self.uri = data["external_urls"]["spotify"]
 
+    def to_dict(self) -> dict:
+        return {
+            "title": self.name,
+            "author": self.artists,
+            "length": self.length,
+            "identifier": self.id,
+            "artistId": self.artistId,
+            "uri": self.uri,
+            "isStream": False,
+            "isSeekable": True,
+            "position": 0,
+            "thumbnail": self.image
+        }
+    
     def __repr__(self) -> str:
         return (
             f"<Voicelink.spotify.Track name={self.name} artists={self.artists} "

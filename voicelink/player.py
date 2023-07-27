@@ -331,9 +331,8 @@ class Player(VoiceProtocol):
         track: Track = self.queue.get()
 
         if not track:
-            if self.settings.get("autoplay", False):
-                if await func.similar_track(self):
-                    return await self.do_next()
+            if self.settings.get("autoplay", False) and await self.get_recommendations():
+                return await self.do_next()
         else:
             try:
                 await self.play(track, start=track.position)
@@ -445,20 +444,6 @@ class Player(VoiceProtocol):
                     requester=requester,
                     search_type=SearchType.ytsearch,
                     spotify_track=track,
-                    info={
-                        "title": track.name,
-                        "author": track.artists,
-                        "length": track.length,
-                        "identifier": track.id,
-                        "artistId": track.artistId,
-                        "uri": track.uri,
-                        "isStream": False,
-                        "isSeekable": True,
-                        "position": 0,
-                        "thumbnail": track.image
-                    }
-                )
-                for track in tracks ]
                     info=track.to_dict()
                 )
                 for track in tracks ]
@@ -540,10 +525,10 @@ class Player(VoiceProtocol):
             
         return self._current
 
-    async def add_track(self, raw_tracks: Union[Track, List[Track]], at_font: bool = False) -> int:
+    async def add_track(self, raw_tracks: Union[Track, List[Track]], *, at_font: bool = False, duplicate: bool = True) -> int:
         tracks = []
 
-        _duplicate_tracks = () if self.queue._allow_duplicate else (track.uri for track in self.queue._queue)
+        _duplicate_tracks = () if self.queue._allow_duplicate and duplicate else (track.uri for track in self.queue._queue)
 
         try:
             if (isList := isinstance(raw_tracks, List)):
@@ -714,7 +699,7 @@ class Player(VoiceProtocol):
         return False
     
     async def send_ws(self, payload, requester: Member = None):
-            payload['guild_id'] = self.guild.id
-            if requester:
-                payload['requester_id'] = requester.id
-            await self.bot.ipc.send(payload)
+        payload['guild_id'] = self.guild.id
+        if requester:
+            payload['requester_id'] = requester.id
+        await self.bot.ipc.send(payload)

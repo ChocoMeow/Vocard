@@ -160,5 +160,5 @@ class Client:
 
             return Playlist(data, tracks)
     
-    async def close(self):
+    async def close(self) -> None:
         await self.session.close()
