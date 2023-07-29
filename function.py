@@ -70,7 +70,7 @@ def update_settings(guild_id:int, data: dict, mode="Set") -> None:
 
 def open_json(path: str) -> dict:
     try:
-        with open(path, encoding="utf8") as json_file:
+        with open(os.path.join(root_dir, path), encoding="utf8") as json_file:
             return json.load(json_file)
     except:
         return {}
@@ -82,13 +82,86 @@ def update_json(path: str, new_data: dict) -> None:
     
     data.update(new_data)
 
-    with open(path, "w") as json_file:
+    with open(os.path.join(root_dir, path), "w") as json_file:
         json.dump(data, json_file, indent=4)
 
 def get_lang(guild_id:int, key:str) -> str:
     lang = get_settings(guild_id).get("lang", "EN")
-    return langs.get(lang, langs["EN"])[key]
+    if lang in langs and not langs[lang]:
+        langs[lang] = open_json(os.path.join("langs", f"{lang}.json"))
+
+    return langs.get(lang, {}).get(key, "Language pack not found!")
+
+def init() -> None:
+    global settings
+
+    json = open_json("settings.json")
+    if json is not None:
+        settings = Settings(json)
+
+def langs_setup() -> None:
+    for language in os.listdir(os.path.join(root_dir, "langs")):
+        if language.endswith('.json'):
+            langs[language[:-5]] = {}
     
+    for language in os.listdir(os.path.join(root_dir, "local_langs")):
+        if language.endswith('.json'):
+            local_langs[language[:-5]] = open_json(os.path.join("local_langs", language))
+
+    return
+
+def time(millis:int) -> str:
+    seconds=(millis/1000)%60
+    minutes=(millis/(1000*60))%60
+    hours=(millis/(1000*60*60))%24
+    if hours > 1:
+        return "%02d:%02d:%02d" % (hours, minutes, seconds)
+    else:
+        return "%02d:%02d" % (minutes, seconds)
+
+def formatTime(number:str) -> Optional[int]:
+    try:
+        try:
+            num = strptime(number, '%M:%S')
+        except ValueError:
+            try:
+                num = strptime(number, '%S')
+            except ValueError:
+                num = strptime(number, '%H:%M:%S')
+    except:
+        return None
+    
+    return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
+
+def emoji_source(emoji:str):
+    return settings.emoji_source_raw.get(emoji.lower(), "🔗")
+
+def gen_report() -> Optional[discord.File]:
+    if error_log:
+        errorText = ""
+        for guild_id, error in error_log.items():
+            errorText += f"Guild ID: {guild_id}\n" + "-" * 30 + "\n"
+            for index, (key, value) in enumerate(error.items() , start=1):
+                errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
+
+        buffer = BytesIO(errorText.encode('utf-8'))
+        file = discord.File(buffer, filename='report.txt')
+        buffer.close()
+
+        return file        
+    return None
+
+def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
+    if ctx.author.id in settings.bot_access_user:
+        return None
+    cooldown = settings.cooldowns_settings.get(f"{ctx.command.parent.qualified_name} {ctx.command.name}" if ctx.command.parent else ctx.command.name)
+    if not cooldown:
+        return None
+    return commands.Cooldown(cooldown[0], cooldown[1])
+
+def get_aliases(name: str) -> list:
+    return settings.aliases_settings.get(name, [])
+
 async def requests_api(url: str) -> dict:
     async with aiohttp.ClientSession() as session:
         resp = await session.get(url)
@@ -96,24 +169,6 @@ async def requests_api(url: str) -> dict:
             return False
 
         return await resp.json(encoding="utf-8")
-
-def init() -> None:
-    global settings
-
-    json = open_json(os.path.join(root_dir, "settings.json"))
-    if json is not None:
-        settings = Settings(json)
-
-def langs_setup() -> None:
-    for language in os.listdir(os.path.join(root_dir, "langs")):
-        if language.endswith('.json'):
-            langs[language[:-5]] = open_json(os.path.join(root_dir, "langs", language))
-    
-    for language in os.listdir(os.path.join(root_dir, "local_langs")):
-        if language.endswith('.json'):
-            local_langs[language[:-5]] = open_json(os.path.join(root_dir, "local_langs", language))
-
-    return
 
 async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> None:
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
@@ -168,55 +223,3 @@ async def checkroles(userid:int):
     rank, max_p, max_t = 'Normal', 5, 500
 
     return rank, max_p, max_t
-
-def time(millis:int) -> str:
-    seconds=(millis/1000)%60
-    minutes=(millis/(1000*60))%60
-    hours=(millis/(1000*60*60))%24
-    if hours > 1:
-        return "%02d:%02d:%02d" % (hours, minutes, seconds)
-    else:
-        return "%02d:%02d" % (minutes, seconds)
-
-def formatTime(number:str) -> Optional[int]:
-    try:
-        try:
-            num = strptime(number, '%M:%S')
-        except ValueError:
-            try:
-                num = strptime(number, '%S')
-            except ValueError:
-                num = strptime(number, '%H:%M:%S')
-    except:
-        return None
-    
-    return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
-
-def emoji_source(emoji:str):
-    return settings.emoji_source_raw.get(emoji.lower(), "🔗")
-
-def gen_report() -> Optional[discord.File]:
-    if error_log:
-        errorText = ""
-        for guild_id, error in error_log.items():
-            errorText += f"Guild ID: {guild_id}\n" + "-" * 30 + "\n"
-            for index, (key, value) in enumerate(error.items() , start=1):
-                errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
-
-        buffer = BytesIO(errorText.encode('utf-8'))
-        file = discord.File(buffer, filename='report.txt')
-        buffer.close()
-
-        return file        
-    return None
-
-def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
-    if ctx.author.id in settings.bot_access_user:
-        return None
-    cooldown = settings.cooldowns_settings.get(f"{ctx.command.parent.qualified_name} {ctx.command.name}" if ctx.command.parent else ctx.command.name)
-    if not cooldown:
-        return None
-    return commands.Cooldown(cooldown[0], cooldown[1])
-
-def get_aliases(name: str) -> list:
-    return settings.aliases_settings.get(name, [])
