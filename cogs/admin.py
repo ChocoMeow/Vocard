@@ -223,7 +223,7 @@ class Admin(commands.Cog, name="settings"):
     @settings.command(name="customcontroller", aliases=get_aliases("customcontroller"))
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def customController(self, ctx: commands.Context):
+    async def customcontroller(self, ctx: commands.Context):
         "Customizes music controller embeds."
         player, settings = self.get_settings(ctx)
         controller_settings = settings.get("default_controller", func.settings.controller)
@@ -231,6 +231,19 @@ class Admin(commands.Cog, name="settings"):
         view = EmbedBuilderView(ctx.author, controller_settings.get("embeds").copy())
         message = await ctx.send(embed=view.build_embed(), view=view)
         view.response = message
+
+    @settings.command(name="controllermsg", aliases=get_aliases("controllermsg"))
+    @commands.has_permissions(manage_guild=True)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def controllermsg(self, ctx: commands.Context):
+        "Toggles to send a message when clicking the button in the music controller."
+        player, settings = self.get_settings(ctx)
+        toggle = settings.get('controller_msg', True)
+
+        settings['controller_msg'] = not toggle
+        update_settings(ctx.guild.id, {'controller_msg': not toggle})
+        toggle = get_lang(ctx.guild.id, "enabled" if not toggle else "disabled")
+        await ctx.send(get_lang(ctx.guild.id, 'toggleControllerMsg').format(toggle))
 
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):

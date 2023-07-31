@@ -20,6 +20,7 @@
     "setVolume": "Ajustar el volumen a `{0}`%",
     "togglecontroller": "Ahora tienes `{0}` el controlador de música.",
     "toggleDuplicateTrack": "Ahora tienes `{0}` para evitar que se agreguen pistas duplicadas a la cola.",
+    "toggleControllerMsg": "Ahora tiene `{0}` mensajes del controlador de música.",
     "settingsMenu": "Configuración del servidor | {0}",
     "settingsTitle": "❤️ Información básica:",
     "settingsValue": "Prefijo: `{0}`\nIdioma: `{1}`\nHabilitar controlador de música: `{2}`\nRol de DJ: {3}\nBypass de votación: `{4}`\n24/7: `{5}`\nVolumen predeterminado: `{6}%`\nTiempo de reproducción: `{7}`",

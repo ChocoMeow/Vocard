@@ -20,6 +20,7 @@
     "setVolume": "Set the volume to `{0}`%",
     "togglecontroller": "Now you have `{0}` the music controller.",
     "toggleDuplicateTrack": "Now you have `{0}` to prevent duplicate track in the queue.",
+    "toggleControllerMsg": "Now you have `{0}` messages from the music controller.",
     "settingsMenu": "Server Settings | {0}",
     "settingsTitle": "❤️ Basic Info:",
     "settingsValue": "Prefix: `{0}`\nLanguage: `{1}`\nEnable Music Controller: `{2}`\nDJ Role: {3}\nVote Bypass: `{4}`\n24/7: `{5}`\nDefault Volume: `{6}%`\nPlay Time: `{7}`",
