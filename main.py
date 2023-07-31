@@ -137,5 +137,5 @@ bot = Vocard(
 )
 
 if __name__ == "__main__":
-    update.check_version(withMsg=True)
+    update.check_version(with_msg=True)
     bot.run(func.tokens.token, log_handler=None)
