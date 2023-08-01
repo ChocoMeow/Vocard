@@ -49,10 +49,13 @@ class ControlButton(discord.ui.Button):
         self.player: voicelink.Player = player
         super().__init__(label=player.get_msg(label) if label else None, **kwargs)
 
-    async def send(self, interaction: discord.Interaction, content: str):
-        if self.player.settings.get("controller_msg", True):
-            return await interaction.response.send_message(content)
-        await interaction.response.defer()
+    async def send(self, interaction: discord.Interaction, content: str, *, ephemeral: bool = False) -> None:
+        remove = self.player.settings.get("controller_msg", True)
+        return await interaction.response.send_message(
+            content,
+            delete_after=None if (ephemeral or not remove) is True else 10,
+            ephemeral=ephemeral
+        )
 
 class Back(ControlButton):
     def __init__(self, **kwargs):
@@ -66,13 +69,13 @@ class Back(ControlButton):
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
             if interaction.user in self.player.previous_votes:
-                return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
+                return await self.send(interaction, self.player.get_msg("voted"), ephemeral=True)
             else:
                 self.player.previous_votes.add(interaction.user)
                 if len(self.player.previous_votes) >= (required := self.player.required()):
                     pass
                 else:
-                    return await interaction.response.send_message(self.player.get_msg("backVote").format(interaction.user, len(self.player.previous_votes), required))
+                    return await self.send(interaction, self.player.get_msg("backVote").format(interaction.user, len(self.player.previous_votes), required))
 
         if not self.player.is_playing:
             self.player.queue.backto(1)
@@ -99,13 +102,13 @@ class Resume(ControlButton):
         if self.player.is_paused:
             if not self.player.is_privileged(interaction.user):
                 if interaction.user in self.player.resume_votes:
-                    return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
+                    return await self.send(interaction, self.player.get_msg("voted"), ephemeral=True)
                 else:
                     self.player.resume_votes.add(interaction.user)
                     if len(self.player.resume_votes) >= (required := self.player.required()):
                         pass
                     else:
-                        return await interaction.response.send_message(self.player.get_msg("resumeVote").format(interaction.user, len(self.player.resume_votes), required))
+                        return await self.send(interaction, self.player.get_msg("resumeVote").format(interaction.user, len(self.player.resume_votes), required))
 
             self.player.resume_votes.clear()
             self.emoji = "⏸️"
@@ -115,13 +118,13 @@ class Resume(ControlButton):
         else:
             if not self.player.is_privileged(interaction.user):
                 if interaction.user in self.player.pause_votes:
-                    return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
+                    return await self.send(interaction, self.player.get_msg("voted"), ephemeral=True)
                 else:
                     self.player.pause_votes.add(interaction.user)
                     if len(self.player.pause_votes) >= (required := self.player.required()):
                         pass
                     else:
-                        return await interaction.response.send_message(self.player.get_msg("pauseVote").format(interaction.user, len(self.player.pause_votes), required))
+                        return await self.send(interaction, self.player.get_msg("pauseVote").format(interaction.user, len(self.player.pause_votes), required))
 
             self.player.pause_votes.clear()
             self.emoji = "▶️"
@@ -144,13 +147,13 @@ class Skip(ControlButton):
             if interaction.user == self.player.current.requester:
                 pass 
             elif interaction.user in self.player.skip_votes:
-                return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
+                return await self.send(interaction, self.player.get_msg("voted"), ephemeral=True)
             else:
                 self.player.skip_votes.add(interaction.user)
                 if len(self.player.skip_votes) >= (required := self.player.required()):
                     pass
                 else:
-                    return await interaction.response.send_message(self.player.get_msg("skipVote").format(interaction.user, len(self.player.skip_votes), required))
+                    return await self.send(interaction, self.player.get_msg("skipVote").format(interaction.user, len(self.player.skip_votes), required))
 
         await self.send(interaction, self.player.get_msg("skipped").format(interaction.user))
 
@@ -169,13 +172,13 @@ class Stop(ControlButton):
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
             if interaction.user in self.player.stop_votes:
-                return await interaction.response.send_message(self.player.get_msg("voted"), ephemeral=True)
+                return await self.send(interaction, self.player.get_msg("voted"), ephemeral=True)
             else:
                 self.player.stop_votes.add(interaction.user)
                 if len(self.player.stop_votes) >= (required := self.player.required(leave=True)):
                     pass
                 else:
-                    return await interaction.response.send_message(self.player.get_msg("leaveVote").format(interaction.user, len(self.player.stop_votes), required))
+                    return await self.send(interaction, self.player.get_msg("leaveVote").format(interaction.user, len(self.player.stop_votes), required))
         
         await self.send(interaction, self.player.get_msg("left").format(interaction.user))
         await self.player.teardown()
@@ -191,23 +194,23 @@ class Add(ControlButton):
     async def callback(self, interaction: discord.Interaction):
         track = self.player.current
         if not track:
-            return await interaction.response.send_message(self.player.get_msg("noTrackPlaying"))
+            return await self.send(interaction, self.player.get_msg("noTrackPlaying"))
         if track.is_stream:
-            return await interaction.response.send_message(self.player.get_msg("playlistAddError"))
+            return await self.send(interaction, self.player.get_msg("playlistAddError"))
         user = await get_playlist(interaction.user.id, 'playlist')
         if not user:
             return await create_account(interaction)
         rank, max_p, max_t = await checkroles(interaction.user.id)
         if len(user['200']['tracks']) >= max_t:
-            return await interaction.response.send_message(self.player.get_msg("playlistlimited").format(max_t), ephemeral=True)
+            return await self.send(interaction, self.player.get_msg("playlistlimited").format(max_t), ephemeral=True)
 
         if track.track_id in user['200']['tracks']:
-            return await interaction.response.send_message(self.player.get_msg("playlistrepeated"), ephemeral=True)
+            return await self.send(interaction, self.player.get_msg("playlistrepeated"), ephemeral=True)
         respond = await update_playlist(interaction.user.id, {'playlist.200.tracks': track.track_id}, push=True)
         if respond:
-            await interaction.response.send_message(self.player.get_msg("playlistAdded").format(track.title, interaction.user.mention, user['200']['name']), ephemeral=True)
+            await self.send(interaction, self.player.get_msg("playlistAdded").format(track.title, interaction.user.mention, user['200']['name']), ephemeral=True)
         else:
-            await interaction.response.send_message(self.player.get_msg("playlistAddError2"), ephemeral=True)
+            await self.send(interaction, self.player.get_msg("playlistAddError2"), ephemeral=True)
 
 class Loop(ControlButton):
     def __init__(self, **kwargs):
@@ -219,7 +222,7 @@ class Loop(ControlButton):
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await interaction.response.send_message(self.player.get_msg('missingPerms_mode'), ephemeral=True)
+            return await self.send(interaction, self.player.get_msg('missingPerms_mode'), ephemeral=True)
 
         mode = await self.player.set_repeat()
         await self.send(interaction, self.player.get_msg('repeat').format(mode.capitalize()))
@@ -234,7 +237,7 @@ class VolumeUp(ControlButton):
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await interaction.response.send_message(self.player.get_msg("missingPerms_function"))
+            return await self.send(interaction, self.player.get_msg("missingPerms_function"))
 
         value = value if (value := self.player.volume + 20) <= 150 else 150
         await self.player.set_volume(value, interaction.user)
@@ -251,12 +254,12 @@ class VolumeDown(ControlButton):
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await interaction.response.send_message(self.player.get_msg("missingPerms_function"))
+            return await self.send(interaction, self.player.get_msg("missingPerms_function"))
 
         value = value if (value := self.player.volume - 20) >= 0 else 0
         await self.player.set_volume(value, interaction.user)
 
-        await interaction.response.send_message(self.player.get_msg('setVolume').format(value), ephemeral=True)
+        await self.send(interaction, self.player.get_msg('setVolume').format(value), ephemeral=True)
 
 class VolumeMute(ControlButton):
     def __init__(self, **kwargs):
@@ -268,7 +271,7 @@ class VolumeMute(ControlButton):
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await interaction.response.send_message(self.player.get_msg("missingPerms_function"))
+            return await self.send(interaction, self.player.get_msg("missingPerms_function"))
 
         if self.player.volume != 0:
             value = 0
@@ -293,7 +296,7 @@ class AutoPlay(ControlButton):
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await interaction.response.send_message(self.player.get_msg("missingPerms_autoplay"), ephemeral=True)
+            return await self.send(interaction, self.player.get_msg("missingPerms_autoplay"), ephemeral=True)
 
         check = not self.player.settings.get("autoplay", False)
         self.player.settings['autoplay'] = check
@@ -313,13 +316,13 @@ class Shuffle(ControlButton):
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
             if interaction.user in self.player.shuffle_votes:
-                return await interaction.response.send_message(self.player.get_msg('voted'), ephemeral=True)
+                return await self.send(interaction, self.player.get_msg('voted'), ephemeral=True)
             else:
                 self.player.shuffle_votes.add(interaction.user)
                 if len(self.player.shuffle_votes) >= (required := self.player.required()):
                     pass
                 else:
-                    return await interaction.response.send_message(self.player.get_msg('shuffleVote').format(interaction.user, len(self.player.skip_votes), required))
+                    return await self.send(interaction, self.player.get_msg('shuffleVote').format(interaction.user, len(self.player.skip_votes), required))
         
         await self.player.shuffle("queue", interaction.user)
         await self.send(interaction, self.player.get_msg('shuffled'))
@@ -335,10 +338,10 @@ class Forward(ControlButton):
         
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await interaction.response.send_message(self.player.get_msg('missingPerms_pos'), ephemeral=True)
+            return await self.send(interaction, self.player.get_msg('missingPerms_pos'), ephemeral=True)
 
         if not self.player.current:
-            return await interaction.response.send_message(self.player.get_msg('noTrackPlaying'), ephemeral=True)
+            return await self.send(interaction, self.player.get_msg('noTrackPlaying'), ephemeral=True)
 
         await self.player.seek(self.player.position + 30000)
         await self.send(interaction, self.player.get_msg('forward').format(func.time(self.player.position + 10000)))
@@ -354,15 +357,15 @@ class Rewind(ControlButton):
         
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await interaction.response.send_message(self.player.get_msg('missingPerms_pos'), ephemeral=True)
+            return await self.send(interaction, self.player.get_msg('missingPerms_pos'), ephemeral=True)
 
         if not self.player.current:
-            return await interaction.response.send_message(self.player.get_msg('noTrackPlaying'), ephemeral=True)
+            return await self.send(interaction, self.player.get_msg('noTrackPlaying'), ephemeral=True)
 
         position = 0 if (value := (self.player.position - 30000)) <= 0 else value
         
         await self.player.seek(position)
-        await interaction.response.send_message(self.player.get_msg('rewind').format(func.time(position)))
+        await self.send(interaction, self.player.get_msg('rewind').format(func.time(position)))
 
 class Tracks(discord.ui.Select):
     def __init__(self, player, style, row):
