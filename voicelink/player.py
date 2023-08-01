@@ -116,6 +116,7 @@ class Player(VoiceProtocol):
         self._paused: bool = False
         self._is_connected: bool = False
         self._ping: float = 0.0
+        self._track_is_stuck = False
 
         self._position: int = 0
         self._last_position: int = 0
@@ -317,6 +318,10 @@ class Player(VoiceProtocol):
         
         if self._paused:
             self._paused = False
+
+        if self._track_is_stuck:
+            await sleep(10)
+            self._track_is_stuck = False
 
         if not self.guild.me.voice:
             await self.connect(timeout=0.0, reconnect=True)

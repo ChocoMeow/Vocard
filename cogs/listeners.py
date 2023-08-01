@@ -32,17 +32,16 @@ class Nodes(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voicelink_track_stuck(self, player: voicelink.Player, track, _):
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         await player.do_next()
 
     @commands.Cog.listener()
     async def on_voicelink_track_exception(self, player: voicelink.Player, track, _):
         try:
-            await player.context.send(f"{_} Please wait for 5 seconds.", delete_after=5)
+            player._track_is_stuck = True
+            await player.context.send(f"{_} Please wait for 5 seconds.", delete_after=10)
         except:
             pass
-        await asyncio.sleep(5)
-        await player.do_next()
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
