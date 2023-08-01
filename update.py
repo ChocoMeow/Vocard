@@ -69,10 +69,20 @@ def install(response, version):
 def start():
     """Start the update process."""
     try:
-        response = download_file()
-        version = check_version()
-        install(response, version)
-        print("Update Successfully! Run `python main.py` to start your bot")
+        user_input = input("--------------------------------------------------------------------------\n"
+                           "Note: Before proceeding, please ensure that there are no personal files or\n" \
+                           "sensitive information in the directory you're about to delete. This action\n" \
+                           "is irreversible, so it's important to double-check that you're making the \n" \
+                           "right decision. Continue with caution? (Y/n) ")
+        
+        if user_input.lower() in ["y", "yes"]:
+            response = download_file()
+            version = check_version()
+            install(response, version)
+            print("Update Successfully! Run `python main.py` to start your bot")
+        else:
+            print("Update canceled!")
+
     except Exception as e:
         print(traceback.format_exc())
 
