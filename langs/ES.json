@@ -131,8 +131,8 @@
 
     "live": "EN VIVO",
     "playlistLoad": " 🎶 Se agregó la lista de reproducción {0} con {1} canciones a la cola.",
-    "trackLoad": "Se agregó {0} de {1} ({2}) para comenzar a reproducir.\n",
-    "trackLoad_pos": "Se agregó {0} de {1} ({2}) a la cola en la posición {3}\n",
+    "trackLoad": "Se agregó **[{0}](<{1}>)** de {2} ({3}) para comenzar a reproducir.\n",
+    "trackLoad_pos": "Se agregó **[{0}](<{1}>)** de {2} ({3}) a la cola en la posición {4}\n",
 
     "searchTitle": "Consulta de búsqueda: {0}",
     "searchDesc": "➥ Plataforma: {0} **{1}**\n➥ Resultados: **{2}**\n\n{3}",

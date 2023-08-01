@@ -131,8 +131,8 @@
 
     "live": "LIVE",
     "playlistLoad": " 🎶 Die Wiedergabeliste **{0}** mit `{1}` Songs wurde zur Warteschlange hinzugefügt.",
-    "trackLoad": "**{0}** von **{1}** (`{2}`) wurde zum Abspielen hinzugefügt.\n",
-    "trackLoad_pos": "**{0}** von **{1}** (`{2}`) wurde in der Warteschlange an Position **{3}** hinzugefügt.\n",
+    "trackLoad": "**[{0}](<{1}>)** von **{2}** (`{3}`) wurde zum Abspielen hinzugefügt.\n",
+    "trackLoad_pos": "**[{0}](<{1}>)** von **{2}** (`{3}`) wurde in der Warteschlange an Position **{4}** hinzugefügt.\n",
 
     "searchTitle": "Suchabfrage: {0}",
     "searchDesc": "➥ Plattform: {0} **{1}**\n➥ Ergebnisse: **{2}**\n\n{3}",
