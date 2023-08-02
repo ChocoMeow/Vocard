@@ -50,10 +50,10 @@ class ControlButton(discord.ui.Button):
         super().__init__(label=player.get_msg(label) if label else None, **kwargs)
 
     async def send(self, interaction: discord.Interaction, content: str, *, ephemeral: bool = False) -> None:
-        remove = self.player.settings.get("controller_msg", True)
+        stay = self.player.settings.get("controller_msg", True)
         return await interaction.response.send_message(
             content,
-            delete_after=None if (ephemeral or not remove) is True else 10,
+            delete_after=None if (not ephemeral or stay) is True else 10,
             ephemeral=ephemeral
         )
 

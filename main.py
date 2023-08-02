@@ -77,6 +77,7 @@ class Vocard(commands.Bot):
         print("------------------")
 
         func.tokens.client_id = self.user.id
+        func.local_langs.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
         error = getattr(exception, 'original', exception)
