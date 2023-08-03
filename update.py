@@ -2,7 +2,7 @@ import requests, zipfile, os, shutil, argparse
 from io import BytesIO
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
-__version__ = "v2.6.6b2"
+__version__ = "v2.6.6"
 
 GITHUB_API_URL = "https://api.github.com/repos/ChocoMeow/Vocard/releases/latest"
 VOCARD_URL = "https://github.com/ChocoMeow/Vocard/archive/"
@@ -27,7 +27,7 @@ def check_version(with_msg=False):
     latest_version = response.json().get("name", __version__)
     if with_msg:
         msg = f"{bcolors.OKGREEN}Your bot is up-to-date! - {latest_version}{bcolors.ENDC}" if latest_version == __version__ else \
-              f"{bcolors.WARNING}Your bot is not up-to-date! The latest version is {latest_version} and you are currently running version {__version__}\n. Run `python update.py --start` to update your bot!{bcolors.ENDC}"
+              f"{bcolors.WARNING}Your bot is not up-to-date! The latest version is {latest_version} and you are currently running version {__version__}\n. Run `python update.py -l` to update your bot!{bcolors.ENDC}"
         print(msg)
     return latest_version
 
@@ -114,7 +114,7 @@ def main():
         
     elif args.beta:
         response = download_file("refs/heads/beta")
-        install(response, "beta.zip")
+        install(response, "beta")
         pass
 
     else:
