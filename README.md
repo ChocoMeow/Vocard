@@ -171,6 +171,17 @@ MONGODB_NAME = Vocard
 * For `default_controller` you can set custom embeds and buttons in controller, [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#controller-embeds)
 
 ## How to update? (For Windows and Linux)
-1. Run `python update.py --check` to check if your bot is up to date
-2. Run `python update.py --start` to start update your bot <br/>
 ***Note: Make sure there are no personal files in the directory! Otherwise it will be deleted.***
+```sh
+# Check the current version
+python update.py -c
+
+# Install the latest version
+python update.py -l
+
+# Install the specified version
+python update.py -v VERSION
+
+# Install the beta version
+python update.py -b
+```
