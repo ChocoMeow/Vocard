@@ -404,18 +404,7 @@ class Node:
                         requester=requester,
                         search_type=search_type,
                         spotify_track=spotify_results,
-                        info={
-                            "title": spotify_results.name,
-                            "author": spotify_results.artists,
-                            "length": spotify_results.length,
-                            "identifier": spotify_results.id,
-                            "uri": spotify_results.uri,
-                            "artistId": spotify_results.artistId,
-                            "isStream": False,
-                            "isSeekable": True,
-                            "position": 0,
-                            "thumbnail": spotify_results.image
-                        }
+                        info=spotify_results.to_dict()
                     )
                 ]
 
@@ -425,18 +414,7 @@ class Node:
                     requester=requester,
                     search_type=search_type,
                     spotify_track=track,
-                    info={
-                        "title": track.name,
-                        "author": track.artists,
-                        "length": track.length,
-                        "identifier": track.id,
-                        "artistId": track.artistId,
-                        "uri": track.uri,
-                        "isStream": False,
-                        "isSeekable": True,
-                        "position": 0,
-                        "thumbnail": track.image
-                    }
+                    info=track.to_dict()
                 ) for track in spotify_results.tracks if track.uri
             ]
 
@@ -511,7 +489,6 @@ class Node:
                 )
                 for track in data["tracks"]
             ]
-
 
 class NodePool:
     """The base class for the node pool.

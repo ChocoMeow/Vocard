@@ -62,7 +62,6 @@ class TOKENS:
         self.bug_report_channel_id = int(os.getenv("BUG_REPORT_CHANNEL_ID"))
         self.spotify_client_id = os.getenv("SPOTIFY_CLIENT_ID")
         self.spotify_client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-        self.youtube_api_key = os.getenv("YOUTUBE_API_KEY")
         self.genius_token = os.getenv("GENIUS_TOKEN")
         self.mongodb_url = os.getenv("MONGODB_URL")
         self.mongodb_name = os.getenv("MONGODB_NAME")

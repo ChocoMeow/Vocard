@@ -103,7 +103,7 @@ class Basic(commands.Cog):
                 await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 position = await player.add_track(tracks[0])
-                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
+                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
         except voicelink.QueueFull as e:
             await ctx.send(e)
         finally:
@@ -143,7 +143,7 @@ class Basic(commands.Cog):
                 await interaction.response.send_message(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 position = await player.add_track(tracks[0])
-                await interaction.response.send_message((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
+                await interaction.response.send_message((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
         except voicelink.QueueFull as e:
             await interaction.response.send_message(e)
         
@@ -202,8 +202,8 @@ class Basic(commands.Cog):
             for value in view.values:
                 track = tracks[int(value.split(". ")[0]) - 1]
                 position = await player.add_track(track)
-                msg += ((f"`{player.get_msg('live')}`" if track.is_stream else "") + (player.get_msg('trackLoad_pos').format(track.title, track.author, track.formatLength,
-                        position) if position >= 1 else player.get_msg('trackLoad').format(track.title, track.author, track.formatLength)))
+                msg += ((f"`{player.get_msg('live')}`" if track.is_stream else "") + (player.get_msg('trackLoad_pos').format(track.title, track.uri, track.author, track.formatLength,
+                        position) if position >= 1 else player.get_msg('trackLoad').format(track.title, track.uri, track.author, track.formatLength)))
             await ctx.send(msg, allowed_mentions=False)
 
             if not player.is_playing:
@@ -231,7 +231,7 @@ class Basic(commands.Cog):
                 await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 position = await player.add_track(tracks[0], at_font=True)
-                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
+                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
         
         except voicelink.QueueFull as e:
             await ctx.send(e)
@@ -239,6 +239,39 @@ class Basic(commands.Cog):
         finally:
             if not player.is_playing:
                 await player.do_next()
+
+    @commands.hybrid_command(name="forceplay", aliases=get_aliases("forceplay"))
+    @app_commands.describe(query="Input a query or a searchable link.")
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def forceplay(self, ctx: commands.Context, query: str):
+        "Enforce playback using the given URL or query."
+        player: voicelink.Player = ctx.guild.voice_client
+        if not player:
+            player = await voicelink.connect_channel(ctx)
+
+        if not player.is_privileged(ctx.author):
+            return await ctx.send(player.get_msg('missingPerms_function'), ephemeral=True)
+            
+        tracks = await player.get_tracks(query, requester=ctx.author)
+        if not tracks:
+            return await ctx.send(player.get_msg('noTrackFound'))
+        
+        try:
+            if isinstance(tracks, voicelink.Playlist):
+                index = await player.add_track(tracks.tracks, at_font=True)
+                await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
+            else:
+                await player.add_track(tracks[0], at_font=True)
+                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength), allowed_mentions=False)
+
+        except voicelink.QueueFull as e:
+            await ctx.send(e)
+
+        finally:
+            if player.queue._repeat.mode == voicelink.LoopType.track:
+                await player.set_repeat(voicelink.LoopType.off.name)
+                
+            await player.stop() if player.is_playing else await player.do_next()        
 
     @commands.hybrid_command(name="pause", aliases=get_aliases("pause"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)

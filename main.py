@@ -62,7 +62,7 @@ class Vocard(commands.Bot):
             await self.ipc.start()
 
         if not func.settings.version or func.settings.version != update.__version__:
-            func.update_json(func.root_dir + "/settings.json", new_data={"version": update.__version__})
+            func.update_json("settings.json", new_data={"version": update.__version__})
 
             await self.tree.set_translator(Translator())
             await self.tree.sync()
@@ -77,6 +77,7 @@ class Vocard(commands.Bot):
         print("------------------")
 
         func.tokens.client_id = self.user.id
+        func.local_langs.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
         error = getattr(exception, 'original', exception)
@@ -137,5 +138,5 @@ bot = Vocard(
 )
 
 if __name__ == "__main__":
-    update.checkVersion(withMsg=True)
+    update.check_version(with_msg=True)
     bot.run(func.tokens.token, log_handler=None)

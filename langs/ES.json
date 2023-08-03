@@ -20,6 +20,7 @@
     "setVolume": "Ajustar el volumen a `{0}`%",
     "togglecontroller": "Ahora tienes `{0}` el controlador de música.",
     "toggleDuplicateTrack": "Ahora tienes `{0}` para evitar que se agreguen pistas duplicadas a la cola.",
+    "toggleControllerMsg": "Ahora tiene `{0}` mensajes del controlador de música.",
     "settingsMenu": "Configuración del servidor | {0}",
     "settingsTitle": "❤️ Información básica:",
     "settingsValue": "Prefijo: `{0}`\nIdioma: `{1}`\nHabilitar controlador de música: `{2}`\nRol de DJ: {3}\nBypass de votación: `{4}`\n24/7: `{5}`\nVolumen predeterminado: `{6}%`\nTiempo de reproducción: `{7}`",
@@ -130,8 +131,8 @@
 
     "live": "EN VIVO",
     "playlistLoad": " 🎶 Se agregó la lista de reproducción {0} con {1} canciones a la cola.",
-    "trackLoad": "Se agregó {0} de {1} ({2}) para comenzar a reproducir.\n",
-    "trackLoad_pos": "Se agregó {0} de {1} ({2}) a la cola en la posición {3}\n",
+    "trackLoad": "Se agregó **[{0}](<{1}>)** de {2} ({3}) para comenzar a reproducir.\n",
+    "trackLoad_pos": "Se agregó **[{0}](<{1}>)** de {2} ({3}) a la cola en la posición {4}\n",
 
     "searchTitle": "Consulta de búsqueda: {0}",
     "searchDesc": "➥ Plataforma: {0} **{1}**\n➥ Resultados: **{2}**\n\n{3}",

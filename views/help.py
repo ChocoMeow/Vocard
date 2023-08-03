@@ -59,7 +59,7 @@ class HelpView(discord.ui.View):
 
         self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.settings.invite_link))
         self.add_item(discord.ui.Button(label='Invite', emoji=':invite:915152589056790589', url='https://discord.com/oauth2/authorize?client_id={}&permissions=2184260928&scope=bot%20applications.commands'.format(func.tokens.client_id)))
-        self.add_item(discord.ui.Button(label='Github', url='https://github.com/ChocoMeow/Vocard'))
+        self.add_item(discord.ui.Button(label='Github', emoji=':github:1098265017268322406', url='https://github.com/ChocoMeow/Vocard'))
         self.add_item(discord.ui.Button(label='Donate', emoji=':patreon:913397909024800878', url='https://www.patreon.com/Vocard'))
         self.add_item(HelpDropdown(self.categorys))
     
@@ -89,13 +89,9 @@ class HelpView(discord.ui.View):
                             value="```py\n👉 News\n2. Tutorial\n{}```".format("".join(f"{i}. {c}\n" for i, c in enumerate(self.categorys, start=3))),
                             inline=True)
 
-            update = "> Update Contents\n" \
-                     "➥ More text support for other languages\n" \
-                     "➥ Add author name in playing track msg\n" \
-                     "➥ Fixed some commands\n\n" \
-                     "[Click Me For More Info](https://discord.com/channels/811542332678996008/811909963718459392/1063728318777671741)" \
+            update = "Vocard is a simple music bot. It leads to a comfortable experience which is user-friendly, It supports YouTube, Soundcloud, Spotify, Twitch and more!"
 
-            embed.add_field(name="📰 Latest News <t:1661168201:d> (<t:1661168201:R>)", value=update, inline=True)
+            embed.add_field(name="📰 Information:", value=update, inline=True)
             embed.add_field(name="Get Started", value="```Join a voice channel and /play {Song/URL} a song. (Names, Youtube Video Links or Playlist links or Spotify links are supported on Vocard)```", inline=False)
             
             return embed

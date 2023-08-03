@@ -52,11 +52,11 @@ from .enums import SearchType, LoopType
 from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent
 from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, TrackLoadError, FilterTagAlreadyInUse, DuplicateTrack
 from .filters import Filter, Filters
-from .objects import Track
+from .objects import Track, Playlist
 from .pool import Node, NodePool
 from .queue import Queue, FairQueue
 from .placeholders import Placeholders, build_embed
-from random import shuffle
+from random import shuffle, choice
 
 async def connect_channel(ctx: Union[commands.Context, Interaction], channel: VoiceChannel = None):
     try:
@@ -116,6 +116,7 @@ class Player(VoiceProtocol):
         self._paused: bool = False
         self._is_connected: bool = False
         self._ping: float = 0.0
+        self._track_is_stuck = False
 
         self._position: int = 0
         self._last_position: int = 0
@@ -217,8 +218,8 @@ class Player(VoiceProtocol):
     def ping(self) -> float:
         return round(self._ping / 1000, 2)
     
-    def get_msg(self, mKey: str, lang: str = None) -> str:
-        return func.langs.get(lang if lang else self.lang, func.langs["EN"])[mKey]
+    def get_msg(self, key: str) -> str:
+        return func.get_lang(self.guild.id, key)
 
     def required(self, leave=False):
         if self.settings.get('votedisable'):
@@ -318,6 +319,10 @@ class Player(VoiceProtocol):
         if self._paused:
             self._paused = False
 
+        if self._track_is_stuck:
+            await sleep(10)
+            self._track_is_stuck = False
+
         if not self.guild.me.voice:
             await self.connect(timeout=0.0, reconnect=True)
         
@@ -331,9 +336,8 @@ class Player(VoiceProtocol):
         track: Track = self.queue.get()
 
         if not track:
-            if self.settings.get("autoplay", False):
-                if await func.similar_track(self):
-                    return await self.do_next()
+            if self.settings.get("autoplay", False) and await self.get_recommendations():
+                return await self.do_next()
         else:
             try:
                 await self.play(track, start=track.position)
@@ -445,42 +449,7 @@ class Player(VoiceProtocol):
                     requester=requester,
                     search_type=SearchType.ytsearch,
                     spotify_track=track,
-                    info={
-                        "title": track.name,
-                        "author": track.artists,
-                        "length": track.length,
-                        "identifier": track.id,
-                        "artistId": track.artistId,
-                        "uri": track.uri,
-                        "isStream": False,
-                        "isSeekable": True,
-                        "position": 0,
-                        "thumbnail": track.image
-                    }
-                )
-                for track in tracks ]
-
-    async def spotifyRelatedTrack(self, seed_tracks: str):
-        
-        tracks = await self._node._spotify_client.similar_track(seed_tracks=seed_tracks)
-
-        return [ Track(
-                    track_id=None,
-                    search_type=SearchType.ytsearch,
-                    spotify_track=track,
-                    info={
-                        "title": track.name,
-                        "author": track.artists,
-                        "length": track.length,
-                        "identifier": track.id,
-                        "artistId": track.artistId,
-                        "uri": track.uri,
-                        "isStream": False,
-                        "isSeekable": True,
-                        "position": 0,
-                        "thumbnail": track.image
-                    },
-                    requester=self.client.user
+                    info=track.to_dict()
                 )
                 for track in tracks ]
 
@@ -561,10 +530,10 @@ class Player(VoiceProtocol):
             
         return self._current
 
-    async def add_track(self, raw_tracks: Union[Track, List[Track]], at_font: bool = False) -> int:
+    async def add_track(self, raw_tracks: Union[Track, List[Track]], *, at_font: bool = False, duplicate: bool = True) -> int:
         tracks = []
 
-        _duplicate_tracks = () if self.queue._allow_duplicate else (track.uri for track in self.queue._queue)
+        _duplicate_tracks = () if self.queue._allow_duplicate and duplicate else (track.uri for track in self.queue._queue)
 
         try:
             if (isList := isinstance(raw_tracks, List)):
@@ -677,8 +646,7 @@ class Player(VoiceProtocol):
             await self.seek(self.position)
 
     async def change_node(self, identifier: str = None) -> None:
-        """Change node.
-        """
+        """Change node."""
         try:
             node = NodePool.get_node(identifier=identifier)
         except:
@@ -700,8 +668,43 @@ class Player(VoiceProtocol):
         if self.volume != 100:
             await self.set_volume(self.volume)
     
+    async def get_recommendations(self, *, track: Track = None) -> bool:
+        """Get recommendations from Youtube or Spotify."""
+        if not track:
+            track = choice(self.queue.history(incTrack=True)[-5:])
+
+        if track.spotify:
+            spotify_tracks = await self._node._spotify_client.similar_track(seed_tracks=track.identifier)
+
+            tracks = [ Track(
+                    track_id=None,
+                    search_type=SearchType.ytsearch,
+                    spotify_track=track,
+                    info=track.to_dict(),
+                    requester=self.client.user
+                )
+                for track in spotify_tracks ]
+
+        else:
+            if track.source != 'youtube':
+                return False
+
+            tracks = await self.get_tracks(
+                    f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}", 
+                    requester=self.client.user
+                )
+
+        if tracks:
+            if isinstance(tracks, Playlist):
+                await self.add_track(tracks.tracks, duplicate=False)
+            else:
+                await self.add_track(tracks, duplicate=False)
+            return True
+
+        return False
+    
     async def send_ws(self, payload, requester: Member = None):
-            payload['guild_id'] = self.guild.id
-            if requester:
-                payload['requester_id'] = requester.id
-            await self.bot.ipc.send(payload)
+        payload['guild_id'] = self.guild.id
+        if requester:
+            payload['requester_id'] = requester.id
+        await self.bot.ipc.send(payload)

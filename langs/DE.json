@@ -20,6 +20,7 @@
     "setVolume": "Stellen Sie die Lautstärke auf `{0}` % ein.",
     "togglecontroller": "Jetzt haben Sie `{0}` den Musikcontroller.",
     "toggleDuplicateTrack": "Jetzt haben Sie `{0}`, um doppelte Tracks in der Warteschlange zu verhindern.",
+    "toggleControllerMsg": "Sie haben jetzt `{0}` Nachrichten vom Musik-Controller.",
     "settingsMenu": "Servereinstellungen | {0}",
     "settingsTitle": "❤️ Grundlegende Informationen:",
     "settingsValue": "Präfix: `{0}`\nSprache: `{1}`\nMusik-Controller aktivieren: `{2}`\nDJ-Rolle: {3}\nAbstimmungsumgehung: `{4}`\nRund um die Uhr: `{5}`\nStandardvolumen: `{6} %`\nSpielzeit: `{7}`",
@@ -130,8 +131,8 @@
 
     "live": "LIVE",
     "playlistLoad": " 🎶 Die Wiedergabeliste **{0}** mit `{1}` Songs wurde zur Warteschlange hinzugefügt.",
-    "trackLoad": "**{0}** von **{1}** (`{2}`) wurde zum Abspielen hinzugefügt.\n",
-    "trackLoad_pos": "**{0}** von **{1}** (`{2}`) wurde in der Warteschlange an Position **{3}** hinzugefügt.\n",
+    "trackLoad": "**[{0}](<{1}>)** von **{2}** (`{3}`) wurde zum Abspielen hinzugefügt.\n",
+    "trackLoad_pos": "**[{0}](<{1}>)** von **{2}** (`{3}`) wurde in der Warteschlange an Position **{4}** hinzugefügt.\n",
 
     "searchTitle": "Suchabfrage: {0}",
     "searchDesc": "➥ Plattform: {0} **{1}**\n➥ Ergebnisse: **{2}**\n\n{3}",

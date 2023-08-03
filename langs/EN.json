@@ -20,6 +20,7 @@
     "setVolume": "Set the volume to `{0}`%",
     "togglecontroller": "Now you have `{0}` the music controller.",
     "toggleDuplicateTrack": "Now you have `{0}` to prevent duplicate track in the queue.",
+    "toggleControllerMsg": "Now you have `{0}` messages from the music controller.",
     "settingsMenu": "Server Settings | {0}",
     "settingsTitle": "❤️ Basic Info:",
     "settingsValue": "Prefix: `{0}`\nLanguage: `{1}`\nEnable Music Controller: `{2}`\nDJ Role: {3}\nVote Bypass: `{4}`\n24/7: `{5}`\nDefault Volume: `{6}%`\nPlay Time: `{7}`",
@@ -130,8 +131,8 @@
 
     "live": "LIVE",
     "playlistLoad": " 🎶 Added the playlist **{0}** with `{1}` songs to the queue.",
-    "trackLoad": "Added **{0}** by **{1}** (`{2}`) to begin playing.\n",
-    "trackLoad_pos": "Added **{0}** by **{1}** (`{2}`) to the queue at position **{3}**\n",
+    "trackLoad": "Added **[{0}](<{1}>)** by **{2}** (`{3}`) to begin playing.\n",
+    "trackLoad_pos": "Added **[{0}](<{1}>)** by **{3}** (`{3}`) to the queue at position **{4}**\n",
 
     "searchTitle": "Search Query: {0}",
     "searchDesc": "➥ Platform: {0} **{1}**\n➥ Results: **{2}**\n\n{3}",
