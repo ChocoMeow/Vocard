@@ -33,7 +33,7 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
     if not track:
         return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
 
-    upnext = "\n".join(f"`{index}.` `[{track.formatLength}]` [{track.title[:30]}]({track.uri})" for index, track in enumerate(
+    upnext = "\n".join(f"`{index}.` `[{track.formatted_length}]` [{track.title[:30]}]({track.uri})" for index, track in enumerate(
         player.queue.tracks()[:2], start=2))
     embed = discord.Embed(description=player.get_msg(
         'nowplayingDesc').format(track.title), color=settings.embed_color)
@@ -48,7 +48,7 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
         ":pause_button:" if player.is_paused else ":arrow_forward:")
 
     embed.add_field(
-        name="\u2800", value=f"{icon} {pbar} **[{ctime(player.position)}/{track.formatLength}]**", inline=False)
+        name="\u2800", value=f"{icon} {pbar} **[{ctime(player.position)}/{track.formatted_length}]**", inline=False)
 
     return await ctx.send(embed=embed, view=LinkView(player.get_msg('nowplayingLink').format(track.source), track.emoji, track.uri))
 
@@ -103,7 +103,7 @@ class Basic(commands.Cog):
                 await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 position = await player.add_track(tracks[0])
-                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
+                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         except voicelink.QueueFull as e:
             await ctx.send(e)
         finally:
@@ -143,7 +143,7 @@ class Basic(commands.Cog):
                 await interaction.response.send_message(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 position = await player.add_track(tracks[0])
-                await interaction.response.send_message((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
+                await interaction.response.send_message((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         except voicelink.QueueFull as e:
             await interaction.response.send_message(e)
         
@@ -190,7 +190,7 @@ class Basic(commands.Cog):
             return await ctx.send(player.get_msg('noTrackFound'))
 
         query_track = "\n".join(
-            f"`{index}.` `[{track.formatLength}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
+            f"`{index}.` `[{track.formatted_length}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
         embed = discord.Embed(title=player.get_msg('searchTitle').format(query), description=player.get_msg(
             'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
         view = SearchView(tracks=tracks[0:10], lang=player.lang)
@@ -202,8 +202,8 @@ class Basic(commands.Cog):
             for value in view.values:
                 track = tracks[int(value.split(". ")[0]) - 1]
                 position = await player.add_track(track)
-                msg += ((f"`{player.get_msg('live')}`" if track.is_stream else "") + (player.get_msg('trackLoad_pos').format(track.title, track.uri, track.author, track.formatLength,
-                        position) if position >= 1 else player.get_msg('trackLoad').format(track.title, track.uri, track.author, track.formatLength)))
+                msg += ((f"`{player.get_msg('live')}`" if track.is_stream else "") + (player.get_msg('trackLoad_pos').format(track.title, track.uri, track.author, track.formatted_length,
+                        position) if position >= 1 else player.get_msg('trackLoad').format(track.title, track.uri, track.author, track.formatted_length)))
             await ctx.send(msg, allowed_mentions=False)
 
             if not player.is_playing:
@@ -231,7 +231,7 @@ class Basic(commands.Cog):
                 await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 position = await player.add_track(tracks[0], at_font=True)
-                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength)), allowed_mentions=False)
+                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + (player.get_msg('trackLoad_pos').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         
         except voicelink.QueueFull as e:
             await ctx.send(e)
@@ -262,7 +262,7 @@ class Basic(commands.Cog):
                 await ctx.send(player.get_msg('playlistLoad').format(tracks.name, index))
             else:
                 await player.add_track(tracks[0], at_font=True)
-                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatLength), allowed_mentions=False)
+                await ctx.send((f"`{player.get_msg('live')}`" if tracks[0].is_stream else "") + player.get_msg('trackLoad').format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length), allowed_mentions=False)
 
         except voicelink.QueueFull as e:
             await ctx.send(e)

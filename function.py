@@ -17,7 +17,7 @@ if not os.path.exists(os.path.join(root_dir, "settings.json")):
     raise Exception("Settings file not set!")
 
 #-------------- API Clients --------------
-tokens: TOKENS = TOKENS();
+tokens: TOKENS = TOKENS()
 
 if not (tokens.mongodb_name and tokens.mongodb_url):
     raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
@@ -133,7 +133,7 @@ def formatTime(number:str) -> Optional[int]:
     
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
-def emoji_source(emoji:str):
+def emoji_source(emoji:str) -> str:
     return settings.emoji_source_raw.get(emoji.lower(), "🔗")
 
 def gen_report() -> Optional[discord.File]:

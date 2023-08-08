@@ -376,7 +376,7 @@ class Tracks(discord.ui.Select):
         for index, track in enumerate(self.player.queue.tracks(), start=1):
             if index > 10:
                 break
-            options.append(discord.SelectOption(label=f"{index}. {track.title[:40]}", description=f"{track.author[:30]} · " + ("Live" if track.is_stream else track.formatLength), emoji=track.emoji))
+            options.append(discord.SelectOption(label=f"{index}. {track.title[:40]}", description=f"{track.author[:30]} · " + ("Live" if track.is_stream else track.formatted_length), emoji=track.emoji))
 
         super().__init__(
             placeholder=player.get_msg("playerDropdown"),

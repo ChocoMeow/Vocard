@@ -441,7 +441,7 @@ class Player(VoiceProtocol):
 
         try:
             tracks = await self._node._spotify_client.trackSearch(query=query)
-        except:
+        except Exception as _:
             raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
             
         return [ Track(

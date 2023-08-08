@@ -31,7 +31,7 @@ class SearchDropdown(discord.ui.Select):
         self.lang = lang
         options = []
         for index, track in enumerate(self.tracks, start=1):
-            options.append(discord.SelectOption(label=f"{index}. {track.title[:50]}", description=f"{track.author[:50]} · {track.formatLength}"))
+            options.append(discord.SelectOption(label=f"{index}. {track.title[:50]}", description=f"{track.author[:50]} · {track.formatted_length}"))
 
         super().__init__(placeholder=langs[lang]['searchWait'],
                             min_values=1, max_values=len(tracks),

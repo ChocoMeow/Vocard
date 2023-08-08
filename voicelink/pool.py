@@ -394,7 +394,7 @@ class Node:
 
             try:
                 spotify_results = await self._spotify_client.search(query=query)
-            except:
+            except Exception as _:
                 raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
                 
             if isinstance(spotify_results, spotify.Track):

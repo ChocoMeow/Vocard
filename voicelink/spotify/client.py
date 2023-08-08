@@ -23,12 +23,12 @@ SOFTWARE.
 
 import re
 import time
-from base64 import b64encode
-
 import aiohttp
 
+from base64 import b64encode
+from typing import List, Union
 from .objects import Track, Album, Artist, Playlist
-from .exceptions import InvalidSpotifyURL, SpotifyRequestException
+from .exceptions import InvalidSpotifyURL, SpotifyRequestException 
 
 GRANT_URL = "https://accounts.spotify.com/api/token"
 REQUEST_URL = "https://api.spotify.com/v1/{type}s/{id}"
@@ -71,7 +71,7 @@ class Client:
         self._expiry = time.time() + (int(data["expires_in"]) - 10)
         self._bearer_headers = {"Authorization": f"Bearer {self._bearer_token}"}
 
-    async def trackSearch(self, query: str, track: str = "track", limit: int = 10) -> list:
+    async def trackSearch(self, query: str, track: str = "track", limit: int = 10) -> List[Track]:
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
 
@@ -87,7 +87,7 @@ class Client:
 
         return [ Track(track) for track in data['tracks']['items'] ]
 
-    async def similar_track(self, seed_tracks: str, *, limit: int = 5) -> list:
+    async def similar_track(self, seed_tracks: str, *, limit: int = 5) -> List[Track]:
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
         
@@ -103,7 +103,7 @@ class Client:
 
             return [ Track(track) for track in data['tracks'] ]
             
-    async def search(self, *, query: str):
+    async def search(self, *, query: str) -> Union(Track, Album, Playlist):
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
 
