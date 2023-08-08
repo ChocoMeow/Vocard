@@ -60,8 +60,6 @@ SPOTIFY_CLIENT_SECRET = 0XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 GENIUS_TOKEN = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-YOUTUBE_API_KEY = AXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 MONGODB_URL = mongodb+srv://user:password@clusterURL
 MONGODB_NAME = Vocard
 ```
@@ -74,7 +72,6 @@ MONGODB_NAME = Vocard
 | BUG_REPORT_CHANNEL_ID | All the error messages will send to this text channel ***(optional)*** |
 | SPOTIFY_CLIENT_ID | Your Spoity client id [(Spotify Portal)](https://developer.spotify.com/dashboard/applications) ***(optional)*** |
 | SPOTIFY_CLIENT_SECRET | Your Spoity client sercret id [(Spotify Portal)](https://developer.spotify.com/dashboard/applications) ***(optional)*** |
-| YOUTUBE_API_KEY | Your youtube api key [(Google API)](https://cloud.google.com/apis) ***(optional)*** |
 | GENIUS_TOKEN | Your genius api key [(Genius Lyrics API)](https://genius.com/api-clients) ***(optional)*** |
 | MONGODB_URL | Your Mongo datebase url [(Mongodb)](https://www.mongodb.com/) |
 | MONGODB_NAME | The datebase name that you created on [Mongodb](https://www.mongodb.com/) |
