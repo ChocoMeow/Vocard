@@ -33,22 +33,20 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
     if not track:
         return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
 
-    upnext = "\n".join(f"`{index}.` `[{track.formatted_length}]` [{track.title[:30]}]({track.uri})" for index, track in enumerate(
-        player.queue.tracks()[:2], start=2))
-    embed = discord.Embed(description=player.get_msg(
-        'nowplayingDesc').format(track.title), color=settings.embed_color)
-    embed.set_author(name=track.requester if track.requester else ctx.bot,
-                     icon_url=track.requester.display_avatar.url if track.requester else ctx.me.display_avatar.url)
+    upnext = "\n".join(f"`{index}.` `[{track.formatted_length}]` [{track.title[:30]}]({track.uri})" for index, track in enumerate(player.queue.tracks()[:2], start=2))
+    embed = discord.Embed(description=player.get_msg('nowplayingDesc').format(track.title), color=settings.embed_color)
+    embed.set_author(
+        name=track.requester if track.requester else ctx.bot,
+        icon_url=track.requester.display_avatar.url if track.requester else ctx.me.display_avatar.url
+    )
+    embed.set_thumbnail(url=track.thumbnail)
 
     if upnext:
         embed.add_field(name=player.get_msg('nowplayingField'), value=upnext)
-    pbar = "".join(":radio_button:" if i == round(
-        player.position // round(track.length // 15)) else "▬" for i in range(15))
-    icon = ":red_circle:" if track.is_stream else (
-        ":pause_button:" if player.is_paused else ":arrow_forward:")
 
-    embed.add_field(
-        name="\u2800", value=f"{icon} {pbar} **[{ctime(player.position)}/{track.formatted_length}]**", inline=False)
+    pbar = "".join(":radio_button:" if i == round(player.position // round(track.length // 15)) else "▬" for i in range(15))
+    icon = ":red_circle:" if track.is_stream else (":pause_button:" if player.is_paused else ":arrow_forward:")
+    embed.add_field(name="\u2800", value=f"{icon} {pbar} **[{ctime(player.position)}/{track.formatted_length}]**", inline=False)
 
     return await ctx.send(embed=embed, view=LinkView(player.get_msg('nowplayingLink').format(track.source), track.emoji, track.uri))
 
@@ -63,8 +61,7 @@ class Basic(commands.Cog):
         self.bot.tree.add_command(self.ctx_menu)
 
     async def cog_unload(self) -> None:
-        self.bot.tree.remove_command(
-            self.ctx_menu.name, type=self.ctx_menu.type)
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
     async def help_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
         return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
