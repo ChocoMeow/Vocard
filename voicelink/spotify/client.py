@@ -103,7 +103,7 @@ class Client:
 
             return [ Track(track) for track in data['tracks'] ]
             
-    async def search(self, *, query: str) -> Union(Track, Album, Playlist):
+    async def search(self, *, query: str) -> Union[Track, Album, Playlist]:
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
 
