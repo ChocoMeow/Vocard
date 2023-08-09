@@ -190,7 +190,7 @@ class Basic(commands.Cog):
             f"`{index}.` `[{track.formatted_length}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
         embed = discord.Embed(title=player.get_msg('searchTitle').format(query), description=player.get_msg(
             'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
-        view = SearchView(tracks=tracks[0:10], lang=player.lang)
+        view = SearchView(tracks=tracks[0:10], lang=player.get_msg)
         message = await ctx.send(embed=embed, view=view, ephemeral=True)
         view.response = message
         await view.wait()

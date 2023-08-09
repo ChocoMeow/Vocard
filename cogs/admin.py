@@ -63,10 +63,6 @@ class Admin(commands.Cog, name="settings"):
         if language not in langs:
             return await ctx.send(get_lang(ctx.guild.id, "languageNotFound"))
 
-        player, settings = self.get_settings(ctx)
-        if player:
-            player.lang = language
-
         update_settings(ctx.guild.id, {'lang': language})
         await ctx.send(get_lang(ctx.guild.id, 'changedLanguage').format(language))
 

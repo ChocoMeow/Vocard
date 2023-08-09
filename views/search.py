@@ -26,21 +26,22 @@ import discord
 from function import langs
 
 class SearchDropdown(discord.ui.Select):
-    def __init__(self, tracks, lang):
+    def __init__(self, tracks, get_msg):
         self.tracks = tracks
-        self.lang = lang
+        self.get_msg = get_msg
         options = []
         for index, track in enumerate(self.tracks, start=1):
             options.append(discord.SelectOption(label=f"{index}. {track.title[:50]}", description=f"{track.author[:50]} · {track.formatted_length}"))
 
-        super().__init__(placeholder=langs[lang]['searchWait'],
-                            min_values=1, max_values=len(tracks),
-                            options=options
-                        )
+        super().__init__(
+            placeholder=get_msg('searchWait'),
+            min_values=1, max_values=len(tracks),
+            options=options
+        )
         
     async def callback(self, interaction: discord.Interaction):
         self.disabled = True
-        self.placeholder = langs[self.lang]['searchSuccess']
+        self.placeholder = self.get_msg('searchSuccess')
         await interaction.response.edit_message(view=self.view)
         self.view.values = self.values          
         self.view.stop()

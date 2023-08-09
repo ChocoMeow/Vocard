@@ -107,7 +107,6 @@ class Player(VoiceProtocol):
         self.settings: dict = func.get_settings(ctx.guild.id)
         self.joinTime: float = round(time.time())
         self._volume: int = self.settings.get('volume', 100)
-        self.lang: dict = self.settings.get('lang', 'EN') if self.settings.get('lang', 'EN') in func.langs else "EN"
         self.queue: Queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.settings.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
 
         self._node = NodePool.get_node()
