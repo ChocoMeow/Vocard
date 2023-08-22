@@ -1,9 +1,6 @@
 import discord
 import voicelink
-import io
-import contextlib
-import textwrap
-import traceback
+import psutil
 import function as func
 
 from typing import Tuple
@@ -19,11 +16,18 @@ from function import (
     get_aliases,
     cooldown_check
 )
-from views import DebugModal, HelpView, EmbedBuilderView
+from views import DebugView, HelpView, EmbedBuilderView
 
-class Admin(commands.Cog, name="settings"):
+def formatBytes(bytes: int, unit: bool = False):
+    if bytes <= 1_000_000_000:
+        return f"{bytes / (1024 ** 2):.1f}" + ("MB" if unit else "")
+    
+    else:
+        return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
+
+class Settings(commands.Cog, name="settings"):
     def __init__(self, bot) -> None:
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.description = "This category is only available to admin permissions on the server."
 
     def get_settings(self, ctx: commands.Context) -> Tuple[voicelink.Player, dict]:
@@ -246,53 +250,41 @@ class Admin(commands.Cog, name="settings"):
         if interaction.user.id not in func.settings.bot_access_user:
             return await interaction.response.send_message("You are not able to use this command!")
 
-        def clear_code(content: str):
-            if content.startswith("```") and content.endswith("```"):
-                return "\n".join(content.split("\n")[1:])[:-3]
-            else:
-                return content
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
 
-        modal = DebugModal(title="Debug Panel")
-        await interaction.response.send_modal(modal)
-        await modal.wait()
+        available_memory, total_memory = memory.available, memory.total
+        used_disk_space, total_disk_space = disk.used, disk.total
+        embed = discord.Embed(title="📄 Debug Panel", color=func.settings.embed_color)
+        embed.description = "```==    System Info    ==\n" \
+                            f"• CPU:     {psutil.cpu_freq().current}Mhz ({psutil.cpu_percent()}%)\n" \
+                            f"• RAM:     {formatBytes(total_memory - available_memory)}/{formatBytes(total_memory, True)} ({memory.percent}%)\n" \
+                            f"• DISK:    {formatBytes(total_disk_space - used_disk_space)}/{formatBytes(total_disk_space, True)} ({disk.percent}%)```"
 
-        if modal.values is None:
-            return
+        embed.add_field(
+            name="🤖 Bot Information",
+            value=f"```• LATENCY: {self.bot.latency:.2f}ms\n" \
+                  f"• GUILDS:  {len(self.bot.guilds)}\n" \
+                  f"• USERS:   {sum([guild.member_count for guild in self.bot.guilds])}\n" \
+                  f"• PLAYERS: {len(self.bot.voice_clients)}```",
+            inline=False
+        )
 
-        e = None
+        node: voicelink.Node
+        for name, node in voicelink.NodePool._nodes.items():
+            total_memory = node.stats.used + node.stats.free
+            embed.add_field(
+                name=f"{name} Node - " + ("🟢 Connected" if node._available else "🔴 Disconnected"),
+                value=f"```• ADDRESS:  {node._host}:{node._port}\n" \
+                      f"• PLAYERS:  {len(node._players)}\n" \
+                      f"• CPU:      {node.stats.cpu_process_load:.1f}%\n" \
+                      f"• RAM:      {formatBytes(node.stats.free)}/{formatBytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
+                      f"• LATENCY:  {node.latency:.2f}ms\n" \
+                      f"• UPTIME:   {func.time(node.stats.uptime)}```",
+                inline=True
+            )
 
-        local_variables = {
-            "discord": discord,
-            "commands": commands,
-            "voicelink": voicelink,
-            "bot": self.bot,
-            "interaction": interaction,
-            "channel": interaction.channel,
-            "author": interaction.user,
-            "guild": interaction.guild,
-            "message": interaction.message,
-            "input": None
-        }
-
-        code = clear_code(modal.values)
-        str_obj = io.StringIO()  # Retrieves a stream of data
-        try:
-            with contextlib.redirect_stdout(str_obj):
-                exec(
-                    f"async def func():\n{textwrap.indent(code, '              ')}", local_variables)
-                obj = await local_variables["func"]()
-                result = f"{str_obj.getvalue()}\n-- {obj}\n"
-        except Exception as e:
-            errormsg = ''.join(
-                traceback.format_exception(e, e, e.__traceback__))
-            return await interaction.followup.send(f"```py\n{errormsg}```")
-
-        string = result.split("\n")
-        text = ""
-        for index, i in enumerate(string, start=1):
-            text += f"{'%03d' % index} | {i}\n"
-        return await interaction.followup.send(f"```{text}```")
-
+        await interaction.response.send_message(embed=embed, view=DebugView(self.bot), ephemeral=True)
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Admin(bot))
+    await bot.add_cog(Settings(bot))

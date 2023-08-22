@@ -13,5 +13,5 @@ from .chapter import ChapterView
 from .playlist import PlaylistView, CreateView
 from .inbox import InboxView
 from .link import LinkView
-from .debug import DebugModal
+from .debug import DebugView
 from .embedBuilder import EmbedBuilderView

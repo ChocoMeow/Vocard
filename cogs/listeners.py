@@ -5,7 +5,7 @@ import function as func
 
 from discord.ext import commands
 
-class Nodes(commands.Cog):
+class Listeners(commands.Cog):
     """Music Cog."""
 
     def __init__(self, bot: commands.Bot):
@@ -82,4 +82,4 @@ class Nodes(commands.Cog):
         })
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Nodes(bot))
+    await bot.add_cog(Listeners(bot))
