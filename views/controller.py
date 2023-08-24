@@ -94,7 +94,7 @@ class Resume(ControlButton):
         super().__init__(
             emoji="⏸️",
             label="buttonPause",
-            disabled=not bool(kwargs["player"].current),
+            disabled=kwargs["player"].current is None,
             **kwargs
         )
     
@@ -187,7 +187,7 @@ class Add(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
             emoji="❤️",
-            disabled=not bool(kwargs["player"].current),
+            disabled=kwargs["player"].current is None,
             **kwargs
         )
     
@@ -332,7 +332,7 @@ class Forward(ControlButton):
         super().__init__(
             emoji="⏩",
             label="buttonForward",
-            disabled=not bool(kwargs["player"].current),
+            disabled=kwargs["player"].current is None,
             **kwargs
         )
         
@@ -351,7 +351,7 @@ class Rewind(ControlButton):
         super().__init__(
             emoji="⏪",
             label="buttonRewind",
-            disabled=not bool(kwargs["player"].current)
+            disabled=kwargs["player"].current is None,
             **kwargs
         )
         
