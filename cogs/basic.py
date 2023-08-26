@@ -416,6 +416,7 @@ class Basic(commands.Cog):
     @commands.hybrid_group(
         name="queue", 
         aliases=get_aliases("queue"),
+        fallback="list",
         invoke_without_command=True
     )
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
