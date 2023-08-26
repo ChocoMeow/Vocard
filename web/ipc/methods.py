@@ -279,7 +279,7 @@ async def getPlaylists(member: Member, data: dict):
                 playlist = await func.get_playlist(pList["user"], "playlist", pList["referId"])
                 if playlist:
                     if member.id not in playlist["perms"]["read"]:
-                        await func.update_playlist(member.id, {f"playlist.{pId}": 1}, mode=False)
+                        await func.update_playlist(member.id, {f"playlist.{pId}": 1}, mode="unset")
                         del playlists[pId]
                         continue
 
@@ -304,9 +304,9 @@ async def removePlaylist(member: Member, data:dict):
 
     if isShare:
         refer_user = data.get("refer_user")
-        await func.update_playlist(refer_user, {f"playlist.{pId}.perms.read": member.id}, pull=True, mode=False)
+        await func.update_playlist(refer_user, {f"playlist.{pId}.perms.read": member.id}, mode="pull")
 
-    await func.update_playlist(member.id, {f'playlist.{pId}': 1}, mode=False)
+    await func.update_playlist(member.id, {f'playlist.{pId}': 1}, mode="unset")
 
 async def addPlaylistTrack(member: Member, data: dict):
     track_id = data.get("track_id")
@@ -321,14 +321,14 @@ async def addPlaylistTrack(member: Member, data: dict):
     if playlist["type"] != "playlist":
         return error_msg(func.get_lang(member.guild.id, 'playlistNotAllow'), user_id=member.id)
     
-    rank, max_p, max_t = await func.checkroles(member.id)
+    rank, max_p, max_t = await func.checkroles()
     if len(playlist["tracks"]) >= max_t:
         return error_msg(func.get_lang(member.guild.id, "playlistlimited").format(max_t), user_id=member.id)
 
     if track_id in playlist['tracks']:
         return error_msg(func.get_lang(member.guild.id, "playlistrepeated"), user_id=member.id)
     
-    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id}, push=True)
+    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id}, mode="push")
 
 async def removePlaylistTrack(member: Member, data: dict):
     track_id = data.get("track_id")
@@ -336,7 +336,7 @@ async def removePlaylistTrack(member: Member, data: dict):
     if not track_id or not pId:
         return
     
-    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id }, pull=True, mode=False)
+    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id }, mode="pull")
 
 methods = {
     "initPlayer": [initPlayer, False],

@@ -191,8 +191,8 @@ class Basic(commands.Cog):
         embed = discord.Embed(title=player.get_msg('searchTitle').format(query), description=player.get_msg(
             'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
         view = SearchView(tracks=tracks[0:10], lang=player.get_msg)
-        message = await ctx.send(embed=embed, view=view, ephemeral=True)
-        view.response = message
+        view.response = await ctx.send(embed=embed, view=view, ephemeral=True)
+
         await view.wait()
         if view.values is not None:
             msg = ""
@@ -432,8 +432,7 @@ class Basic(commands.Cog):
         if player.queue.is_empty:
             return await nowplay(ctx, player)
         view = ListView(player=player, author=ctx.author)
-        message = await ctx.send(embed=view.build_embed(), view=view)
-        view.response = message
+        view.response = await ctx.send(embed=view.build_embed(), view=view)
 
     @queue.command(name="export", aliases=get_aliases("export"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -520,8 +519,7 @@ class Basic(commands.Cog):
             return await nowplay(ctx, player)
 
         view = ListView(player=player, author=ctx.author, isQueue=False)
-        message = await ctx.send(embed=view.build_embed(), view=view)
-        view.response = message
+        view.response = await ctx.send(embed=view.build_embed(), view=view)
 
     @commands.hybrid_command(name="leave", aliases=get_aliases("leave"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -776,8 +774,7 @@ class Basic(commands.Cog):
             return await ctx.send(get_lang(ctx.guild.id, 'lyricsNotFound'), ephemeral=True)
 
         view = LyricsView(name=name, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
-        message = await ctx.send(embed=view.build_embed(), view=view)
-        view.response = message
+        view.response = await ctx.send(embed=view.build_embed(), view=view)
 
     @commands.hybrid_command(name="swapdj", aliases=get_aliases("swapdj"))
     @app_commands.describe(member="Choose a member to transfer the dj role.")
@@ -839,8 +836,7 @@ class Basic(commands.Cog):
             return await ctx.send(player.get_msg('noChaptersFound'), ephemeral=True)
 
         view = ChapterView(player, chapters, author=ctx.author)
-        message = await ctx.send(view=view)
-        view.response = message
+        view.response = await ctx.send(view=view)
 
     @commands.hybrid_command(name="autoplay", aliases=get_aliases("autoplay"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)

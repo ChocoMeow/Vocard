@@ -31,14 +31,17 @@ class ListView(discord.ui.View):
         super().__init__(timeout=60)
         self.player = player
 
-        self.name = player.get_msg('queueTitle') if isQueue else player.get_msg('historyTitle')
-        self.tracks = player.queue.tracks() if isQueue else player.queue.history()
+        self.name: str = player.get_msg('queueTitle') if isQueue else player.get_msg('historyTitle')
+        self.tracks: list = player.queue.tracks() if isQueue else player.queue.history()
+        self.response: discord.Message = None
+
         if not isQueue:
             self.tracks.reverse()
-        self.author = author
+        self.author: discord.Member = author
 
         self.page = ceil(len(self.tracks) / 7)
         self.current_page = 1
+
         try:
             self.time = func.time(sum([track.length for track in self.tracks]))
         except:

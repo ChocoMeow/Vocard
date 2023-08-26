@@ -200,13 +200,13 @@ class Add(ControlButton):
         user = await get_playlist(interaction.user.id, 'playlist')
         if not user:
             return await create_account(interaction)
-        rank, max_p, max_t = await checkroles(interaction.user.id)
+        rank, max_p, max_t = await checkroles()
         if len(user['200']['tracks']) >= max_t:
             return await self.send(interaction, self.player.get_msg("playlistlimited").format(max_t), ephemeral=True)
 
         if track.track_id in user['200']['tracks']:
             return await self.send(interaction, self.player.get_msg("playlistrepeated"), ephemeral=True)
-        respond = await update_playlist(interaction.user.id, {'playlist.200.tracks': track.track_id}, push=True)
+        respond = await update_playlist(interaction.user.id, {'playlist.200.tracks': track.track_id}, mode="push")
         if respond:
             await self.send(interaction, self.player.get_msg("playlistAdded").format(track.title, interaction.user.mention, user['200']['name']), ephemeral=True)
         else:

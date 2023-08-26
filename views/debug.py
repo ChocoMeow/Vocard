@@ -184,7 +184,7 @@ class DebugView(discord.ui.View):
     
     @discord.ui.button(label='Send Logs', emoji="📥", style=discord.ButtonStyle.red)
     async def send_error_logs(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not function.error_log:
+        if not function.ERROR_LOGS:
             return await interaction.response.send_message("Sorry there are not error logs!", ephemeral=True)
         
         await interaction.response.send_message(file=function.gen_report(), ephemeral=True)

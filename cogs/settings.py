@@ -7,7 +7,7 @@ from typing import Tuple
 from discord import app_commands
 from discord.ext import commands
 from function import (
-    langs,
+    LANGS,
     update_settings,
     get_settings,
     get_lang,
@@ -47,8 +47,7 @@ class Settings(commands.Cog, name="settings"):
     async def settings(self, ctx: commands.Context):
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(self.qualified_name)
-        message = await ctx.send(embed=embed, view=view)
-        view.response = message
+        view.response = await ctx.send(embed=embed, view=view)
     
     @settings.command(name="prefix", aliases=get_aliases("prefix"))
     @commands.has_permissions(manage_guild=True)
@@ -64,7 +63,7 @@ class Settings(commands.Cog, name="settings"):
     async def language(self, ctx: commands.Context, language: str):
         "You can choose your preferred language, the bot message will change to the language you set."
         language = language.upper()
-        if language not in langs:
+        if language not in LANGS:
             return await ctx.send(get_lang(ctx.guild.id, "languageNotFound"))
 
         update_settings(ctx.guild.id, {'lang': language})
@@ -73,8 +72,8 @@ class Settings(commands.Cog, name="settings"):
     @language.autocomplete('language')
     async def autocomplete_callback(self, interaction: discord.Interaction, current: str) -> list:
         if current:
-            return [app_commands.Choice(name=lang, value=lang) for lang in langs.keys() if current.upper() in lang]
-        return [app_commands.Choice(name=lang, value=lang) for lang in langs.keys()]
+            return [app_commands.Choice(name=lang, value=lang) for lang in LANGS.keys() if current.upper() in lang]
+        return [app_commands.Choice(name=lang, value=lang) for lang in LANGS.keys()]
 
     @settings.command(name="dj", aliases=get_aliases("dj"))
     @commands.has_permissions(manage_guild=True)
@@ -86,7 +85,7 @@ class Settings(commands.Cog, name="settings"):
         if not role:
             if player:
                 player.settings.pop('dj', None)
-            update_settings(ctx.guild.id, {'dj': ''}, mode="Unset")
+            update_settings(ctx.guild.id, {'dj': ''}, mode="unset")
         else:
             if player:
                 player.settings['dj'] = role.id
@@ -229,8 +228,7 @@ class Settings(commands.Cog, name="settings"):
         controller_settings = settings.get("default_controller", func.settings.controller)
 
         view = EmbedBuilderView(ctx.author, controller_settings.get("embeds").copy())
-        message = await ctx.send(embed=view.build_embed(), view=view)
-        view.response = message
+        view.response = await ctx.send(embed=view.build_embed(), view=view)
 
     @settings.command(name="controllermsg", aliases=get_aliases("controllermsg"))
     @commands.has_permissions(manage_guild=True)

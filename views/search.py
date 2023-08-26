@@ -23,7 +23,7 @@ SOFTWARE.
 
 import discord
 
-from function import langs
+from function import LANGS
 
 class SearchDropdown(discord.ui.Select):
     def __init__(self, tracks, get_msg):
