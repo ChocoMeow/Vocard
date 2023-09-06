@@ -31,7 +31,7 @@ from function import (
     get_playlist,
     update_playlist,
     create_account,
-    checkroles
+    check_roles
 )
 
 from typing import Dict
@@ -200,7 +200,7 @@ class Add(ControlButton):
         user = await get_playlist(interaction.user.id, 'playlist')
         if not user:
             return await create_account(interaction)
-        rank, max_p, max_t = await checkroles()
+        rank, max_p, max_t = check_roles()
         if len(user['200']['tracks']) >= max_t:
             return await self.send(interaction, self.player.get_msg("playlistlimited").format(max_t), ephemeral=True)
 

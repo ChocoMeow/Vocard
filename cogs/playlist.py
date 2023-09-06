@@ -8,7 +8,7 @@ from function import (
     time as ctime,
     get_playlist,
     create_account,
-    checkroles,
+    check_roles,
     update_playlist,
     update_inbox,
     get_lang,
@@ -103,7 +103,7 @@ class Playlists(commands.Cog, name="playlist"):
             return await create_account(ctx)
         if not result['playlist']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
-        rank, max_p, max_t = await checkroles()
+        rank, max_p, max_t = check_roles()
         if result['position'] > max_p:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAccess'), ephemeral=True)
 
@@ -141,7 +141,7 @@ class Playlists(commands.Cog, name="playlist"):
         user = await check_playlist(ctx, full=True)
         if not user:
             return await create_account(ctx)
-        rank, max_p, max_t = await checkroles()
+        rank, max_p, max_t = check_roles()
 
         results = []
         for index, data in enumerate(user, start=1):
@@ -195,7 +195,7 @@ class Playlists(commands.Cog, name="playlist"):
         if len(name) > 10:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
         
-        rank, max_p, max_t = await checkroles()
+        rank, max_p, max_t = check_roles()
         user = await check_playlist(ctx, full=True)
         if not user:
             return await create_account(ctx)
@@ -344,7 +344,7 @@ class Playlists(commands.Cog, name="playlist"):
         if result['playlist']['type'] in ['share', 'link']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAllow'), ephemeral=True)
         
-        rank, max_p, max_t = await checkroles()
+        rank, max_p, max_t = check_roles()
         if len(result['playlist']['tracks']) >= max_t:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistLimitTrack').format(max_t), ephemeral=True)
 
@@ -456,7 +456,7 @@ class Playlists(commands.Cog, name="playlist"):
         if len(name) > 10:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
         
-        rank, max_p, max_t = await checkroles()
+        rank, max_p, max_t = check_roles()
         user = await check_playlist(ctx, full=True)
         if not user:
             return await create_account(ctx)

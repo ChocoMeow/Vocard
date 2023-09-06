@@ -321,7 +321,7 @@ async def addPlaylistTrack(member: Member, data: dict):
     if playlist["type"] != "playlist":
         return error_msg(func.get_lang(member.guild.id, 'playlistNotAllow'), user_id=member.id)
     
-    rank, max_p, max_t = await func.checkroles()
+    rank, max_p, max_t = func.check_roles()
     if len(playlist["tracks"]) >= max_t:
         return error_msg(func.get_lang(member.guild.id, "playlistlimited").format(max_t), user_id=member.id)
 

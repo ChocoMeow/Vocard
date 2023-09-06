@@ -163,6 +163,9 @@ def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
 def get_aliases(name: str) -> list:
     return settings.aliases_settings.get(name, [])
 
+def check_roles() -> tuple[str, int, int]:
+    return 'Normal', 5, 500
+
 async def requests_api(url: str) -> dict:
     async with aiohttp.ClientSession() as session:
         resp = await session.get(url)
@@ -212,6 +215,3 @@ async def update_playlist(user_id:int, data:dict, *, mode:str="set", update_cach
 
 async def update_inbox(user_id:int, data:dict) -> None:
     return PLAYLISTS_DB.update_one({"_id":user_id}, {"$push":{'inbox':data}})
-
-async def checkroles():
-    return 'Normal', 5, 500
