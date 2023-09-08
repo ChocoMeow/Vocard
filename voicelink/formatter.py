@@ -180,7 +180,8 @@ class TrackDecoder:
             "identifier": body_reader.read_utf(),
             "is_stream": body_reader.read_bool(),
             "uri": body_reader.read_optional_utf(),
-            "thumbnail": None if version != 0 else body_reader.read_optional_utf(),
+            "thumbnail": None if version not in [0, 3] else body_reader.read_optional_utf(),
+            "isrc": None if version != 3 else body_reader.read_optional_utf(),
             "sourceName": body_reader.read_utf(),
             "position": body_reader.read_long()
         }

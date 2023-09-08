@@ -42,7 +42,7 @@ class Track:
     """
 
     __slots__ = (
-        "track_id",
+        "_track_id",
         "info",
         "identifier",
         "title",
@@ -72,7 +72,7 @@ class Track:
         search_type: SearchType = SearchType.ytsearch,
         spotify_track = None,
     ):
-        self.track_id: str = track_id
+        self._track_id: Optional[str] = track_id
         self.info: dict = info
 
         self.identifier: str = info.get("identifier")
@@ -80,7 +80,7 @@ class Track:
         self.author: str = info.get("author", "Unknown")
         self.uri: str = info.get("uri", "https://discord.com/application-directory/605618911471468554")
         self.source: str = info.get("sourceName", extract(self.uri).domain)
-        self.spotify: bool = True if self.source == "spotify" else False
+        self.spotify: bool = self.source == "spotify"
         if self.spotify:
             self.artist_id: Optional[list] = info.get("artist_id")
 
@@ -91,8 +91,9 @@ class Track:
         self.thumbnail: str = None
         self.emoji: str = emoji_source(self.source)
         
-        if info.get("thumbnail"):
-            self.thumbnail = info.get("thumbnail")
+        if artworkUrl := info.get("artworkUrl"):
+            self.thumbnail = artworkUrl
+
         elif YOUTUBE_REGEX.match(self.uri):
             self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg"            
 
@@ -103,9 +104,6 @@ class Track:
         self.is_seekable: bool = info.get("isSeekable", True)
         self.position: int = info.get("position", 0)
 
-        if not track_id:
-            self.track_id = encode(self)
-            
     def __eq__(self, other) -> bool:
         if not isinstance(other, Track):
             return False
@@ -124,9 +122,13 @@ class Track:
             "info": self.info,
             "thumbnail": self.thumbnail
         }
-    
-    def encode(self) -> bytes:
-        return encode(self)
+
+    @property
+    def track_id(self) -> str:
+        if not self._track_id:
+            self._track_id = encode(self)
+        
+        return self._track_id
     
     @property
     def formatted_length(self) -> str:

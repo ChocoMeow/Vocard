@@ -303,7 +303,7 @@ class Player(VoiceProtocol):
         event_type = data.get("type")
         event: VoicelinkEvent = getattr(events, event_type)(data, self)
 
-        if isinstance(event, TrackEndEvent) and event.reason != "REPLACED":
+        if isinstance(event, TrackEndEvent) and event.reason != "replaced":
             self._current = None
 
         event.dispatch(self._bot)

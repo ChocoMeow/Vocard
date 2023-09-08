@@ -1,6 +1,6 @@
 """MIT License
 
-Copyright (c) 2023 Vocard Development
+Copyright (c) 2023 - present Vocard Development
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -108,12 +108,11 @@ class TrackExceptionEvent(VoicelinkEvent):
     def __init__(self, data: dict, player):
         self.player = player
         self.track = self.player._ending_track
-        if data.get('error'):
-            # User is running Lavalink <= 3.3
-            self.exception: str = data["error"]
-        else:
-            # User is running Lavalink >=3.4
-            self.exception: str = data["exception"]
+        self.exception: dict = data.get("exception", {
+            "severity": "",
+            "message": "",
+            "cause": ""
+        })
 
         # on_voicelink_track_exception(player, track, error)
         self.handler_args = self.player, self.track, self.exception

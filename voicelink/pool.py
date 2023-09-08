@@ -66,7 +66,7 @@ URL_REGEX = re.compile(
     r"https?://(?:www\.)?.+"
 )
 
-NODE_VERSION = "v3"
+NODE_VERSION = "v4"
 CALL_METHOD = ["PATCH", "DELETE"]
 
 def exception_catch_callback(task):
@@ -461,33 +461,44 @@ class Node:
             ) as response:
                 data = await response.json()
 
+        print(data)
         load_type = data.get("loadType")
 
         if not load_type:
             raise TrackLoadError("There was an error while trying to load this track.")
 
-        elif load_type == "LOAD_FAILED":
+        elif load_type == "error":
             exception = data["exception"]
             raise TrackLoadError(f"{exception['message']} [{exception['severity']}]")
 
-        elif load_type == "NO_MATCHES":
+        elif load_type == "empty":
             return None
 
-        elif load_type == "PLAYLIST_LOADED":
+        elif load_type == "playlist":
             return Playlist(
                 playlist_info=data["playlistInfo"],
                 tracks=data["tracks"],
                 requester=requester
             )
 
-        elif load_type == "SEARCH_RESULT" or load_type == "TRACK_LOADED":
+        elif load_type == "search":
             return [
                 Track(
-                    track_id=track["track"],
+                    track_id=track["encoded"],
                     info=track["info"],
                     requester=requester
                 )
-                for track in data["tracks"]
+                for track in data["data"]
+            ]
+
+        elif load_type == "track":
+            track = data["data"]
+            return [
+                Track(
+                    track_id=track["encoded"],
+                    info=track["info"],
+                    requester=requester
+                )
             ]
 
 class NodePool:

@@ -59,10 +59,10 @@ class Listeners(commands.Cog):
         await player.do_next()
 
     @commands.Cog.listener()
-    async def on_voicelink_track_exception(self, player: voicelink.Player, track, _):
+    async def on_voicelink_track_exception(self, player: voicelink.Player, track, error: dict):
         try:
             player._track_is_stuck = True
-            await player.context.send(f"{_} Please wait for 5 seconds.", delete_after=10)
+            await player.context.send(f"{error['message']}! The next song will begin in the next 5 seconds.", delete_after=10)
         except:
             pass
 
