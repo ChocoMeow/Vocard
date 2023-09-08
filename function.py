@@ -50,7 +50,7 @@ def get_settings(guild_id:int) -> dict:
         settings = SETTINGS_DB.find_one({"_id":guild_id})
         if not settings:
             SETTINGS_DB.insert_one({"_id":guild_id})
-
+            
         GUILD_SETTINGS[guild_id] = settings or {}
     return settings
 
