@@ -82,26 +82,30 @@ class ListView(discord.ui.View):
     async def fast_back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.current_page != 1:
             self.current_page = 1
-            await interaction.response.edit_message(embed=self.build_embed())
-    
+            return await interaction.response.edit_message(embed=self.build_embed())
+        await interaction.response.defer()
+
     @discord.ui.button(label='Back', style=discord.ButtonStyle.blurple)
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.current_page > 1:
             self.current_page -= 1
-            await interaction.response.edit_message(embed=self.build_embed())
-    
+            return await interaction.response.edit_message(embed=self.build_embed())
+        await interaction.response.defer()
+
     @discord.ui.button(label='Next', style=discord.ButtonStyle.blurple)
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.current_page < self.page:
             self.current_page += 1
-            await interaction.response.edit_message(embed=self.build_embed())
+            return await interaction.response.edit_message(embed=self.build_embed())
+        await interaction.response.defer()
 
     @discord.ui.button(label='>>', style=discord.ButtonStyle.grey)
     async def fast_next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.current_page != self.page:
             self.current_page = self.page
-            await interaction.response.edit_message(embed=self.build_embed())
-
+            return await interaction.response.edit_message(embed=self.build_embed())
+        await interaction.response.defer()
+        
     @discord.ui.button(emoji='🗑️', style=discord.ButtonStyle.red)
     async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.response.delete()

@@ -191,7 +191,7 @@ class Playlists(commands.Cog, name="playlist"):
                         init.append(dt)
                     playlist['tracks'] = init
                     results.append({'emoji': ('🔒' if max_p < index else ('🤝' if share else '❤️')), 'id': data, 'time': ctime(time), 'name': user[data]['name'], 'tracks': playlist['tracks'], 'perms': playlist['perms'], 'owner': user[data].get('user', None), 'type': user[data]['type']})
-            
+        
             except Exception as e:
                 results.append({'emoji': '⛔', 'id': data, 'time': '00:00', 'name': 'Error', 'tracks': [], 'type': 'error'})
 
