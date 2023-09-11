@@ -96,8 +96,8 @@ class Player(VoiceProtocol):
         channel: Optional[VoiceChannel] = None, 
         ctx: Union[commands.Context, Interaction] = None,
     ):
-        self.client = client
-        self._bot = client
+        self.client: Client = client
+        self._bot: Client = client
         self.context = ctx
         self.dj: Member = ctx.user if isinstance(ctx, Interaction) else ctx.author
         self.channel: VoiceChannel = channel

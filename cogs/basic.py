@@ -59,8 +59,8 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
     upnext = "\n".join(f"`{index}.` `[{track.formatted_length}]` [{track.title[:30]}]({track.uri})" for index, track in enumerate(player.queue.tracks()[:2], start=2))
     embed = discord.Embed(description=player.get_msg('nowplayingDesc').format(track.title), color=settings.embed_color)
     embed.set_author(
-        name=track.requester if track.requester else ctx.bot,
-        icon_url=track.requester.display_avatar.url if track.requester else ctx.me.display_avatar.url
+        name=track.requester,
+        icon_url=track.requester.display_avatar.url
     )
     embed.set_thumbnail(url=track.thumbnail)
 
@@ -792,7 +792,7 @@ class Basic(commands.Cog):
             name = player.current.title + " " + player.current.author
         await ctx.defer()
 
-        song = await lyricsPlatform.get(settings.lyrics_platform)().getLyrics(name)
+        song: dict[str, str] = await lyricsPlatform.get(settings.lyrics_platform)().getLyrics(name)
         if not song:
             return await ctx.send(get_lang(ctx.guild.id, 'lyricsNotFound'), ephemeral=True)
 

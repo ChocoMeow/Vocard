@@ -24,8 +24,11 @@ SOFTWARE.
 import discord
 import function as func
 
+from typing import Any
+
 class Select_message(discord.ui.Select):
     def __init__(self, inbox):
+        self.view: InboxView
         options = [discord.SelectOption(label=f"{index}. {mail['title'][:50]}", description=mail['type'], emoji='✉️' if mail['type'] == 'invite' else '📢') for index, mail in enumerate(inbox, start=1) ]
 
         super().__init__(
@@ -38,25 +41,27 @@ class Select_message(discord.ui.Select):
         await self.view.button_change(interaction)
 
 class InboxView(discord.ui.View):
-    def __init__(self, author, inbox):
+    def __init__(self, author: discord.Member, inbox: list[dict[str, Any]]):
         super().__init__(timeout=60)
-        self.author: discord.Member = author
-        self.inbox = inbox
-        self.response = None
+        self.inbox: list[dict[str, Any]] = inbox
         self.newplaylist = []
 
+        self.author: discord.Member = author
+        self.response: discord.Message = None
         self.current = None
+
         self.add_item(Select_message(inbox))
 
     async def interaction_check(self, interaction: discord.Interaction):
-        if interaction.user == self.author:
-            return True
-        return False
+        return interaction.user == self.author
 
-    def build_embed(self):
-        embed=discord.Embed(title=f"📭 All {self.author.name}'s Inbox",
-                            description=f'Max Messages: {len(self.inbox)}/10' + '```%0s %2s %20s\n' % ("   ", "ID:", "Title:") + '\n'.join('%0s %2s. %35s'% ('✉️' if mail['type'] == 'invite' else '📢', index, mail['title'][:35] + "...") for index, mail in enumerate(self.inbox, start=1)) + '```',
-                            color=func.settings.embed_color)
+    def build_embed(self) -> discord.Embed:
+        embed=discord.Embed(
+            title=f"📭 All {self.author.name}'s Inbox",
+            description=f'Max Messages: {len(self.inbox)}/10' + '```%0s %2s %20s\n' % ("   ", "ID:", "Title:") + '\n'.join('%0s %2s. %35s'% ('✉️' if mail['type'] == 'invite' else '📢', index, mail['title'][:35] + "...") for index, mail in enumerate(self.inbox, start=1)) + '```',
+            color=func.settings.embed_color
+        )
+
         if self.current:
             embed.add_field(name="Message Info:", value=f"```{self.current['description']}\nSender ID: {self.current['sender']}\nPlaylist ID: {self.current['referId']}\nInvite Time: {self.current['time'].strftime('%d-%m %H:%M:%S')}```")
         return embed

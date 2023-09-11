@@ -33,7 +33,7 @@ from discord.ext import commands
 class ExceuteModal(discord.ui.Modal):
     def __init__(self, code: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.code = code
+        self.code: str = code
 
         self.add_item(
             discord.ui.TextInput(
@@ -51,24 +51,23 @@ class ExceuteModal(discord.ui.Modal):
 
 class CogsDropdown(discord.ui.Select):
     def __init__(self, bot: commands.Bot):
-        self.bot = bot
-
-        options = [discord.SelectOption(label="All", description="All the cogs")]
-
-        for name, cog in bot.cogs.items():
-            options.append(discord.SelectOption(label=name.capitalize(), description=cog.description[:50]))
+        self.bot: commands.Bot = bot
 
         super().__init__(
             placeholder="Select a cog to reload...",
             min_values=1, max_values=1,
-            options=options,
+            options=[discord.SelectOption(label="All", description="All the cogs")] +
+            [
+                discord.SelectOption(label=name.capitalize(), description=cog.description[:50])
+                for name, cog in bot.cogs.items()
+            ],
         )
 
     async def callback(self, interaction: discord.Interaction) -> None:
         selected = self.values[0].lower()
         try:
             if selected == "all":
-                for name in self.bot.cogs.copy().keys():
+                for name in self.bot.cogs.keys():
                     await self.bot.reload_extension(f"cogs.{name.lower()}")
             else:
                 await self.bot.reload_extension(f"cogs.{selected}")

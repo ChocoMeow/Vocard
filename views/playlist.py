@@ -24,10 +24,12 @@ SOFTWARE.
 import discord
 import function as func
 
-from voicelink import Track
 from math import ceil
 from tldextract import extract
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from voicelink import Track
 
 class Select_playlist(discord.ui.Select):
     def __init__(self, results):

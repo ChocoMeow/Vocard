@@ -1,5 +1,5 @@
 discord.py==2.3.2
-pymongo==4.1.1
+pymongo==4.5.0
 dnspython==2.2.1
 tldextract==3.2.1
 validators==0.18.2
