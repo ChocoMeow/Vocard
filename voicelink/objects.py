@@ -175,7 +175,7 @@ class Playlist:
             self._uri = self.spotify_playlist.uri
         else:
             self.tracks = [
-                Track(track_id=track["track"], info=track["info"], requester=requester)
+                Track(track_id=track["encoded"], info=track["info"], requester=requester)
                 for track in self.tracks_raw
             ]
             self._thumbnail = None

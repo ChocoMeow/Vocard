@@ -461,7 +461,6 @@ class Node:
             ) as response:
                 data = await response.json()
 
-        print(data)
         load_type = data.get("loadType")
 
         if not load_type:
@@ -475,8 +474,10 @@ class Node:
             return None
 
         elif load_type == "playlist":
+            data = data.get("data")
+            
             return Playlist(
-                playlist_info=data["playlistInfo"],
+                playlist_info=data["info"],
                 tracks=data["tracks"],
                 requester=requester
             )
