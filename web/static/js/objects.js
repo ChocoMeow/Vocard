@@ -494,7 +494,7 @@ class Player {
             return;
         }
         let position = tempPosition / 500 * this.currentTrack.length;
-        this.send({ "op": "updatePosition", "position": position });
+        this.send({ "op": "updatePosition", "position": Math.trunc(position) });
     }
 
     shuffle() {
