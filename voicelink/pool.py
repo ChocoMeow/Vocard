@@ -401,20 +401,20 @@ class Node:
                 return [
                     Track(
                         track_id=None,
+                        info=spotify_results.to_dict(),
                         requester=requester,
                         search_type=search_type,
                         spotify_track=spotify_results,
-                        info=spotify_results.to_dict()
                     )
                 ]
 
             tracks = [
                 Track(
                     track_id=None,
+                    info=track.to_dict(),
                     requester=requester,
                     search_type=search_type,
                     spotify_track=track,
-                    info=track.to_dict()
                 ) for track in spotify_results.tracks if track.uri
             ]
 
@@ -467,7 +467,7 @@ class Node:
             raise TrackLoadError("There was an error while trying to load this track.")
 
         elif load_type == "error":
-            exception = data["exception"]
+            exception = data["data"]
             raise TrackLoadError(f"{exception['message']} [{exception['severity']}]")
 
         elif load_type == "empty":

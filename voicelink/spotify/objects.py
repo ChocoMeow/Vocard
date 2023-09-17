@@ -1,5 +1,3 @@
-from typing import List
-
 class Track:
     """The base class for a Spotify Track"""
 
@@ -16,7 +14,7 @@ class Track:
     def __init__(self, data: dict, image=None) -> None:
         self.name: str = data.get('name', 'Unknown')
         self.artists: str = ", ".join(artist["name"] for artist in data.get('artists'))
-        self.artist_id: list = [artist['id'] for artist in data.get('artists')]
+        self.artist_id: list[str] = [artist['id'] for artist in data.get('artists')]
         self.length: int = data.get('duration_ms')
         self.id: str = data.get('id')
         self.image: str = images[0]["url"] if (images := data.get("album", {}).get("images")) else image
@@ -33,7 +31,7 @@ class Track:
             "isStream": False,
             "isSeekable": True,
             "position": 0,
-            "thumbnail": self.image
+            "artworkUrl": self.image
         }
     
     def __repr__(self) -> str:
@@ -59,7 +57,7 @@ class Album:
         self.name: str = data.get('name', 'Unknown')
         self.artists: str = ", ".join(artist["name"] for artist in data.get('artists'))
         self.image: str = data["images"][0]["url"]
-        self.tracks: list = [Track(track, image=self.image) for track in data["tracks"]["items"]]
+        self.tracks: list[Track] = [Track(track, image=self.image) for track in data["tracks"]["items"]]
         self.total_tracks: int = data["total_tracks"]
         self.id: str = data.get('id')
         self.uri: str = data["external_urls"]["spotify"]
@@ -83,7 +81,7 @@ class Artist:
         "name"
     )
     def __init__(self, data: dict) -> None:
-        self.tracks: List[Track] = [Track(track) for track in data['tracks']]
+        self.tracks: list[Track] = [Track(track) for track in data['tracks']]
         if self.tracks:
             self.image: str = self.tracks[0].image
             self.total_tracks: int = len(self.tracks)
@@ -111,9 +109,9 @@ class Playlist:
         "uri"
     )
     
-    def __init__(self, data: dict, tracks: List[Track]) -> None:
+    def __init__(self, data: dict, tracks: list[Track]) -> None:
         self.name: str = data.get('name', 'Unknown')
-        self.tracks: List[Track] = tracks
+        self.tracks: list[Track] = tracks
         self.owner: str = data["owner"]["display_name"]
         self.total_tracks: int = data["tracks"]["total"]
         self.id: str = data.get('id')

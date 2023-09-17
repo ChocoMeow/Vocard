@@ -888,8 +888,7 @@ class Basic(commands.Cog):
             category = "News"
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(category)
-        message = await ctx.send(embed=embed, view=view)
-        view.response = message
+        view.response = await ctx.send(embed=embed, view=view)
 
     @commands.hybrid_command(name="ping", aliases=get_aliases("ping"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)

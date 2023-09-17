@@ -88,15 +88,11 @@ class Track:
         self._search_type: SearchType = SearchType.ytmsearch if self.spotify else search_type
         self.spotify_track: Track = spotify_track
 
-        self.thumbnail: str = None
-        self.emoji: str = emoji_source(self.source)
+        self.thumbnail: str = info.get("artworkUrl")
+        if not self.thumbnail and YOUTUBE_REGEX.match(self.uri):
+            self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/maxresdefault.jpg"
         
-        if artworkUrl := info.get("artworkUrl"):
-            self.thumbnail = artworkUrl
-
-        elif YOUTUBE_REGEX.match(self.uri):
-            self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/hqdefault.jpg"            
-
+        self.emoji: str = emoji_source(self.source)
         self.length: float = 3000 if self.source == "soundcloud" and "/preview/" in self.identifier else info.get("length")
         
         self.requester: Member = requester

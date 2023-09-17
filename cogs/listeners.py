@@ -96,7 +96,7 @@ class Listeners(commands.Cog):
             "op": "updateGuild",
             "user": {
                 "user_id": member.id,
-                "avatar_url": member.avatar.url,
+                "avatar_url": member.display_avatar.url,
                 "name": member.name,
             },
             "channel_name": member.voice.channel.name if is_joined else "",

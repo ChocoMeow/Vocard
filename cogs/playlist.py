@@ -204,8 +204,7 @@ class Playlists(commands.Cog, name="playlist"):
         embed.set_footer(text=get_lang(ctx.guild.id, 'playlistFooter'))
 
         view = PlaylistView(embed, results, ctx.author)
-        messsage = await ctx.send(embed=embed, view=view, ephemeral=True)
-        view.response = messsage 
+        view.response = await ctx.send(embed=embed, view=view, ephemeral=True)
 
     @playlist.command(name="create", aliases=get_aliases("create"))
     @app_commands.describe(

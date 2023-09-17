@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import base64, io, abc, struct, dataclasses
 
-from typing import Union, BinaryIO, Optional
+from typing import Union, BinaryIO, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from .objects import Track
 
 @dataclasses.dataclass(frozen=True)
 class Codec:
@@ -180,14 +184,14 @@ class TrackDecoder:
             "identifier": body_reader.read_utf(),
             "is_stream": body_reader.read_bool(),
             "uri": body_reader.read_optional_utf(),
-            "thumbnail": None if version not in [0, 3] else body_reader.read_optional_utf(),
+            "artworkUrl": None if version not in [0, 3] else body_reader.read_optional_utf(),
             "isrc": None if version != 3 else body_reader.read_optional_utf(),
             "sourceName": body_reader.read_utf(),
             "position": body_reader.read_long()
         }
     
 class TrackEncoder:
-    def encode(self, stream: MessageOutput, track) -> None:
+    def encode(self, stream: MessageOutput, track: Track) -> None:
         body_writer = stream.start()
 
         body_writer.write_byte(0)
