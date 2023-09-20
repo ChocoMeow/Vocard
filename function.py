@@ -54,7 +54,7 @@ def get_settings(guild_id:int) -> dict:
         GUILD_SETTINGS[guild_id] = settings or {}
     return settings
 
-def update_settings(guild_id:int, data: dict, mode="set") -> None:
+def update_settings(guild_id:int, data: dict, mode="set") -> bool:
     settings = get_settings(guild_id)
 
     for key, value in data.items():
@@ -65,9 +65,10 @@ def update_settings(guild_id:int, data: dict, mode="set") -> None:
                 case "unset":
                     GUILD_SETTINGS[guild_id].pop(key)
                 case _:
-                    return
+                    return False
                            
-    SETTINGS_DB.update_one({"_id":guild_id}, {f"${mode}":data})
+    result = SETTINGS_DB.update_one({"_id":guild_id}, {f"${mode}":data})
+    return result.modified_count > 0
 
 def open_json(path: str) -> dict:
     try:
@@ -198,7 +199,7 @@ async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> N
         except:
             pass
             
-async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> dict:
+async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> bool:
     user = PLAYLISTS_DB.find_one({"_id":user_id}, {"_id": 0})
     if not user:
         return None
@@ -211,7 +212,9 @@ async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> dict:
 async def update_playlist(user_id:int, data:dict, *, mode:str="set", update_cache: bool=False) -> None:
     if update_cache:
         PLAYLIST_NAME.pop(str(user_id), None)
-    PLAYLISTS_DB.update_one({"_id":user_id}, {f"${mode}": data})
+    result = PLAYLISTS_DB.update_one({"_id":user_id}, {f"${mode}": data})
+    return result.modified_count > 0
 
-async def update_inbox(user_id:int, data:dict) -> None:
-    return PLAYLISTS_DB.update_one({"_id":user_id}, {"$push":{'inbox':data}})
+async def update_inbox(user_id:int, data:dict) -> bool:
+    result = PLAYLISTS_DB.update_one({"_id":user_id}, {"$push":{'inbox':data}})
+    return result.modified_count > 0
