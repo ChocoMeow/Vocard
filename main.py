@@ -90,9 +90,16 @@ class Vocard(commands.Bot):
             pass
 
         elif isinstance(error, (commands.MissingRequiredArgument, commands.MissingRequiredAttachment)):
-            command = f" Correct Usage: {ctx.prefix}" + (f"{ctx.command.parent.qualified_name} " if ctx.command.parent else "") + f"{ctx.command.name} {ctx.command.signature}"
+            command = f"{ctx.prefix}" + (f"{ctx.command.parent.qualified_name} " if ctx.command.parent else "") + f"{ctx.command.name} {ctx.command.signature}"
             position = command.find(f"<{ctx.current_parameter.name}>") + 1
-            error = f"```css\n[You are missing argument!]\n{command}\n" + " " * position + "^" * len(ctx.current_parameter.name) + "```"
+            description = f"**Correct Usage:**\n```{command}\n" + " " * position + "^" * len(ctx.current_parameter.name) + "```\n"
+            if ctx.command.aliases:
+                description += f"**Aliases:**\n`{', '.join([f'{ctx.prefix}{alias}' for alias in ctx.command.aliases])}`\n\n"
+            description += f"**Description:**\n{ctx.command.help}\n\u200b"
+
+            embed = discord.Embed(description=description, color=func.settings.embed_color)
+            embed.set_footer(icon_url=ctx.me.display_avatar.url, text=f"More Help: {func.settings.invite_link}")
+            return await ctx.reply(embed=embed)
 
         elif not issubclass(error.__class__, VoicelinkException):
             error = func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
