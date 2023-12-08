@@ -1,6 +1,6 @@
 """MIT License
 
-Copyright (c) 2023 Vocard Development
+Copyright (c) 2023 - present Vocard Development
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -96,8 +96,8 @@ class Player(VoiceProtocol):
         channel: Optional[VoiceChannel] = None, 
         ctx: Union[commands.Context, Interaction] = None,
     ):
-        self.client = client
-        self._bot = client
+        self.client: Client = client
+        self._bot: Client = client
         self.context = ctx
         self.dj: Member = ctx.user if isinstance(ctx, Interaction) else ctx.author
         self.channel: VoiceChannel = channel
@@ -107,7 +107,6 @@ class Player(VoiceProtocol):
         self.settings: dict = func.get_settings(ctx.guild.id)
         self.joinTime: float = round(time.time())
         self._volume: int = self.settings.get('volume', 100)
-        self.lang: dict = self.settings.get('lang', 'EN') if self.settings.get('lang', 'EN') in func.langs else "EN"
         self.queue: Queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.settings.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
 
         self._node = NodePool.get_node()
@@ -304,7 +303,7 @@ class Player(VoiceProtocol):
         event_type = data.get("type")
         event: VoicelinkEvent = getattr(events, event_type)(data, self)
 
-        if isinstance(event, TrackEndEvent) and event.reason != "REPLACED":
+        if isinstance(event, TrackEndEvent) and event.reason != "replaced":
             self._current = None
 
         event.dispatch(self._bot)
@@ -441,7 +440,7 @@ class Player(VoiceProtocol):
 
         try:
             tracks = await self._node._spotify_client.trackSearch(query=query)
-        except:
+        except Exception as _:
             raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
             
         return [ Track(

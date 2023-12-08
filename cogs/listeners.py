@@ -1,3 +1,26 @@
+"""MIT License
+
+Copyright (c) 2023 - present Vocard Development
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import voicelink
 import asyncio
 import discord
@@ -5,7 +28,7 @@ import function as func
 
 from discord.ext import commands
 
-class Nodes(commands.Cog):
+class Listeners(commands.Cog):
     """Music Cog."""
 
     def __init__(self, bot: commands.Bot):
@@ -36,10 +59,10 @@ class Nodes(commands.Cog):
         await player.do_next()
 
     @commands.Cog.listener()
-    async def on_voicelink_track_exception(self, player: voicelink.Player, track, _):
+    async def on_voicelink_track_exception(self, player: voicelink.Player, track, error: dict):
         try:
             player._track_is_stuck = True
-            await player.context.send(f"{_} Please wait for 5 seconds.", delete_after=10)
+            await player.context.send(f"{error['message']}! The next song will begin in the next 5 seconds.", delete_after=10)
         except:
             pass
 
@@ -73,7 +96,7 @@ class Nodes(commands.Cog):
             "op": "updateGuild",
             "user": {
                 "user_id": member.id,
-                "avatar_url": member.avatar.url,
+                "avatar_url": member.display_avatar.url,
                 "name": member.name,
             },
             "channel_name": member.voice.channel.name if is_joined else "",
@@ -82,4 +105,4 @@ class Nodes(commands.Cog):
         })
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Nodes(bot))
+    await bot.add_cog(Listeners(bot))

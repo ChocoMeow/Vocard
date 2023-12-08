@@ -1,24 +1,24 @@
-from typing import List
-
 class Track:
     """The base class for a Spotify Track"""
 
+    __slots__ = (
+        "name",
+        "artists",
+        "artist_id",
+        "length",
+        "id",
+        "image",
+        "uri"
+    )
+
     def __init__(self, data: dict, image=None) -> None:
-        self.name = data.get('name', 'Unknown')
-        self.artists = ", ".join(artist["name"] for artist in data.get('artists'))
-        self.artistId = [artist['id'] for artist in data.get('artists')]
-        self.length = data.get('duration_ms')
-        self.id = data.get('id')
-
-        if data.get("album") and data["album"].get("images"):
-            self.image = data["album"]["images"][0]["url"]
-        else:
-            self.image = image
-
-        if data["is_local"]:
-            self.uri = None
-        else:
-            self.uri = data["external_urls"]["spotify"]
+        self.name: str = data.get('name', 'Unknown')
+        self.artists: str = ", ".join(artist["name"] for artist in data.get('artists'))
+        self.artist_id: list[str] = [artist['id'] for artist in data.get('artists')]
+        self.length: int = data.get('duration_ms')
+        self.id: str = data.get('id')
+        self.image: str = images[0]["url"] if (images := data.get("album", {}).get("images")) else image
+        self.uri: str = None if data["is_local"] else data["external_urls"]["spotify"]
 
     def to_dict(self) -> dict:
         return {
@@ -26,12 +26,12 @@ class Track:
             "author": self.artists,
             "length": self.length,
             "identifier": self.id,
-            "artistId": self.artistId,
+            "artist_id": self.artist_id,
             "uri": self.uri,
             "isStream": False,
             "isSeekable": True,
             "position": 0,
-            "thumbnail": self.image
+            "artworkUrl": self.image
         }
     
     def __repr__(self) -> str:
@@ -43,14 +43,24 @@ class Track:
 class Album:
     """The base class for a Spotify album"""
 
+    __slots__ = (
+        "name",
+        "artists",
+        "image",
+        "tracks",
+        "total_tracks",
+        "id",
+        "uri"
+    )
+
     def __init__(self, data: dict) -> None:
-        self.name = data.get('name', 'Unknown')
-        self.artists = ", ".join(artist["name"] for artist in data.get('artists'))
-        self.image = data["images"][0]["url"]
-        self.tracks = [Track(track, image=self.image) for track in data["tracks"]["items"]]
-        self.total_tracks = data["total_tracks"]
-        self.id = data.get('id')
-        self.uri = data["external_urls"]["spotify"]
+        self.name: str = data.get('name', 'Unknown')
+        self.artists: str = ", ".join(artist["name"] for artist in data.get('artists'))
+        self.image: str = data["images"][0]["url"]
+        self.tracks: list[Track] = [Track(track, image=self.image) for track in data["tracks"]["items"]]
+        self.total_tracks: int = data["total_tracks"]
+        self.id: str = data.get('id')
+        self.uri: str = data["external_urls"]["spotify"]
 
     def __repr__(self) -> str:
         return (
@@ -61,15 +71,24 @@ class Album:
 class Artist:
     """The base class for a Spotify playlist"""
 
+    __slots__ = (
+        "tracks",
+        "image",
+        "total_tracks",
+        "owner",
+        "id",
+        "uri",
+        "name"
+    )
     def __init__(self, data: dict) -> None:
-        self.tracks = [Track(track) for track in data['tracks']]
+        self.tracks: list[Track] = [Track(track) for track in data['tracks']]
         if self.tracks:
-            self.image = self.tracks[0].image
-            self.total_tracks = len(self.tracks)
-            self.owner = self.tracks[0].artists
-            self.id = self.tracks[0].artistId
-            self.uri = data['tracks'][0]['album']['artists'][0]['external_urls']['spotify']
-            self.name = f"Top tracks - {self.owner}"
+            self.image: str = self.tracks[0].image
+            self.total_tracks: int = len(self.tracks)
+            self.owner: str = self.tracks[0].artists
+            self.id: str = self.tracks[0].artist_id
+            self.uri: str = data['tracks'][0]['album']['artists'][0]['external_urls']['spotify']
+            self.name: str = f"Top tracks - {self.owner}"
 
     def __repr__(self) -> str:
         return (
@@ -80,17 +99,24 @@ class Artist:
 class Playlist:
     """The base class for a Spotify playlist"""
 
-    def __init__(self, data: dict, tracks: List[Track]) -> None:
-        self.name = data.get('name', 'Unknown')
-        self.tracks = tracks
-        self.owner = data["owner"]["display_name"]
-        self.total_tracks = data["tracks"]["total"]
-        self.id = data.get('id')
-        if data.get("images") and len(data["images"]):
-            self.image = data["images"][0]["url"]
-        else:
-            self.image = None
-        self.uri = data["external_urls"]["spotify"]
+    __slots__ = (
+        "name",
+        "tracks",
+        "owner",
+        "total_tracks",
+        "id",
+        "image",
+        "uri"
+    )
+    
+    def __init__(self, data: dict, tracks: list[Track]) -> None:
+        self.name: str = data.get('name', 'Unknown')
+        self.tracks: list[Track] = tracks
+        self.owner: str = data["owner"]["display_name"]
+        self.total_tracks: int = data["tracks"]["total"]
+        self.id: str = data.get('id')
+        self.image: str = data["images"][0]["url"] if len(data.get("images", [])) else None
+        self.uri: str = data["external_urls"]["spotify"]
 
     def __repr__(self) -> str:
         return (

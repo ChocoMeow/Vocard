@@ -13,42 +13,9 @@ class Settings:
         self.emoji_source_raw = settings.get("emoji_source_raw", {})
         self.cooldowns_settings = settings.get("cooldowns", {})
         self.aliases_settings = settings.get("aliases", {})
-        self.controller = settings.get("default_controller", 
-        {
-            "embeds": {
-                "active": {
-                    "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
-                    "footer": {
-                        "text": "Queue Length: @@queue_length@@ | Duration: @@duration@@ | Volume: @@volume@@% {{loop_mode!=Off ?? | Repeat: @@loop_mode@@}}",
-                    },
-                    "image": "@@track_thumbnail@@",
-                    "author": {
-                        "name": "Music Controller | @@channel_name@@",
-                        "icon_url": "@@bot_icon@@"
-                    },
-                    "color": "@@default_embed_color@@"
-                },
-                "inactive": {
-                    "title": {
-                        "name": "There are no songs playing right now"
-                    },
-                    "description": "[Support](@@server_invite_link@@) | [Invite](@@invite_link@@) | [Questionnaire](https://forms.gle/Qm8vjBfg2kp13YGD7)",
-                    "image": "https://i.imgur.com/dIFBwU7.png",
-                    "color": "@@default_embed_color@@"
-                }
-            },
-            "default_buttons": [
-                ["back", "resume", "skip", {"stop": "red"}, "add"],
-                ["tracks"]
-            ]
-        })
+        self.controller = settings.get("default_controller", {})
         self.lyrics_platform = settings.get("lyrics_platform", "A_ZLyrics").lower()
-        self.ipc_server = settings.get("ipc_server", {
-                "host": "127.0.0.1",
-                "port": 8000,
-                "enable": False
-            }
-        )
+        self.ipc_server = settings.get("ipc_server", {})
         self.version = settings.get("version", "")
 
 class TOKENS:

@@ -59,10 +59,8 @@ class EmbedBuilderView(discord.ui.View):
         except:
             pass
 
-    async def interaction_check(self, interaction):
-        if interaction.user == self.author:
-            return True
-        return False
+    async def interaction_check(self, interaction: discord.Interaction):
+        return interaction.user == self.author
 
     @discord.ui.button(label="Edit Content", style=discord.ButtonStyle.blurple)
     async def edit_content(self, interaction: discord.Interaction, button: discord.ui.Button):

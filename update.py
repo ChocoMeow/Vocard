@@ -65,22 +65,22 @@ def install(response, version):
     if user_input.lower() in ["y", "yes"]:
         print("Installing ...")
         zfile = zipfile.ZipFile(BytesIO(response.content))
-        zfile.extractall(root_dir)
+        zfile.extractall(ROOT_DIR)
 
         version = version.replace("v", "")
-        source_dir = os.path.join(root_dir, f"Vocard-{version}")
+        source_dir = os.path.join(ROOT_DIR, f"Vocard-{version}")
         if os.path.exists(source_dir):
-            for filename in os.listdir(root_dir):
+            for filename in os.listdir(ROOT_DIR):
                 if filename in IGNORE_FILES + [f"Vocard-{version}"]:
                     continue
 
-                filename = os.path.join(root_dir, filename)
+                filename = os.path.join(ROOT_DIR, filename)
                 if os.path.isdir(filename):
                     shutil.rmtree(filename)
                 else:
                     os.remove(filename)
             for filename in os.listdir(source_dir):
-                shutil.move(os.path.join(source_dir, filename), os.path.join(root_dir, filename))
+                shutil.move(os.path.join(source_dir, filename), os.path.join(ROOT_DIR, filename))
             os.rmdir(source_dir)
         print(f"{bcolors.OKGREEN}Version {version} installed Successfully! Run `python main.py` to start your bot{bcolors.ENDC}")
     else:

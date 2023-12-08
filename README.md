@@ -34,7 +34,7 @@ Click on the image below to watch the tutorial on Youtube.
 ## Requirements
 * [Python 3.10+](https://www.python.org/downloads/)
 * [Modules in requirements](https://github.com/ChocoMeow/Vocard/blob/main/requirements.txt)
-* [Lavalink Server (Requires 3.7.0+)](https://github.com/freyacodes/Lavalink)
+* [Lavalink Server (Requires 4.0.0+)](https://github.com/freyacodes/Lavalink)
 
 ## Quick Start
 ```sh

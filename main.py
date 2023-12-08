@@ -21,8 +21,8 @@ class Translator(discord.app_commands.Translator):
         print("Unload Translator")
 
     async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
-        if str(locale) in func.local_langs:
-            return func.local_langs[str(locale)].get(string.message, None)
+        if str(locale) in func.LOCAL_LANGS:
+            return func.LOCAL_LANGS[str(locale)].get(string.message, None)
         return None
 
 class Vocard(commands.Bot):
@@ -50,7 +50,7 @@ class Vocard(commands.Bot):
 
     async def setup_hook(self):
         func.langs_setup()
-        for module in os.listdir(func.root_dir + '/cogs'):
+        for module in os.listdir(func.ROOT_DIR + '/cogs'):
             if module.endswith('.py'):
                 try:
                     await self.load_extension(f"cogs.{module[:-3]}")
@@ -77,7 +77,7 @@ class Vocard(commands.Bot):
         print("------------------")
 
         func.tokens.client_id = self.user.id
-        func.local_langs.clear()
+        func.LOCAL_LANGS.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
         error = getattr(exception, 'original', exception)
@@ -90,15 +90,22 @@ class Vocard(commands.Bot):
             pass
 
         elif isinstance(error, (commands.MissingRequiredArgument, commands.MissingRequiredAttachment)):
-            command = f" Correct Usage: {ctx.prefix}" + (f"{ctx.command.parent.qualified_name} " if ctx.command.parent else "") + f"{ctx.command.name} {ctx.command.signature}"
+            command = f"{ctx.prefix}" + (f"{ctx.command.parent.qualified_name} " if ctx.command.parent else "") + f"{ctx.command.name} {ctx.command.signature}"
             position = command.find(f"<{ctx.current_parameter.name}>") + 1
-            error = f"```css\n[You are missing argument!]\n{command}\n" + " " * position + "^" * len(ctx.current_parameter.name) + "```"
+            description = f"**Correct Usage:**\n```{command}\n" + " " * position + "^" * len(ctx.current_parameter.name) + "```\n"
+            if ctx.command.aliases:
+                description += f"**Aliases:**\n`{', '.join([f'{ctx.prefix}{alias}' for alias in ctx.command.aliases])}`\n\n"
+            description += f"**Description:**\n{ctx.command.help}\n\u200b"
+
+            embed = discord.Embed(description=description, color=func.settings.embed_color)
+            embed.set_footer(icon_url=ctx.me.display_avatar.url, text=f"More Help: {func.settings.invite_link}")
+            return await ctx.reply(embed=embed)
 
         elif not issubclass(error.__class__, VoicelinkException):
             error = func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
-            if (guildId := ctx.guild.id) not in func.error_log:
-                func.error_log[guildId] = {}
-            func.error_log[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+            if (guildId := ctx.guild.id) not in func.ERROR_LOGS:
+                func.ERROR_LOGS[guildId] = {}
+            func.ERROR_LOGS[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
 
         try:
             return await ctx.reply(error, ephemeral=True)
