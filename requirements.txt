@@ -1,5 +1,5 @@
-discord.py==2.3.1
-pymongo==4.1.1
+discord.py==2.3.2
+pymongo==4.5.0
 dnspython==2.2.1
 tldextract==3.2.1
 validators==0.18.2
@@ -9,3 +9,4 @@ beautifulsoup4==4.11.1
 websockets==10.4
 Flask==2.2.3
 Flask-SocketIO==5.3.2
+psutil==5.9.5

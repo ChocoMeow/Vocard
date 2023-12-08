@@ -1,6 +1,6 @@
 """MIT License
 
-Copyright (c) 2023 Vocard Development
+Copyright (c) 2023 - present Vocard Development
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -53,12 +53,12 @@ class LoopTypeCycle:
 
 class Queue:
     def __init__(self, size: int, allow_duplicate: bool, get_msg: Callable[[str], str]) -> None:
-        self._queue = []
-        self._position = 0
-        self._size = size
-        self._repeat = LoopTypeCycle()
-        self._repeat_position = 0
-        self._allow_duplicate = allow_duplicate
+        self._queue: List[Track] = []
+        self._position: int = 0
+        self._size: int = size
+        self._repeat: LoopTypeCycle = LoopTypeCycle()
+        self._repeat_position: int = 0
+        self._allow_duplicate: bool = allow_duplicate
 
         self.get_msg = get_msg
 

@@ -1,3 +1,26 @@
+"""MIT License
+
+Copyright (c) 2023 - present Vocard Development
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import voicelink
 import discord
 import function as func
@@ -87,8 +110,8 @@ class Task(commands.Cog):
     
     @tasks.loop(hours=12.0)
     async def cache_cleaner(self):
-        func.guild_settings.clear()
-        func.playlist_name.clear()
+        func.GUILD_SETTINGS.clear()
+        func.PLAYLIST_NAME.clear()
 
         errorFile = func.gen_report()
         if errorFile:
@@ -98,7 +121,7 @@ class Task(commands.Cog):
                     await report_channel.send(content=f"Report Before: <t:{round(datetime.timestamp(datetime.now()))}:F>", file=errorFile)
                 except Exception as e:
                     print(f"Report could not be sent (Reason: {e})")
-            func.error_log.clear()
+            func.ERROR_LOGS.clear()
         
 async def setup(bot: commands.Bot):
     await bot.add_cog(Task(bot))

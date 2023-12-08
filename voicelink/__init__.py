@@ -1,6 +1,6 @@
 """MIT License
 
-Copyright (c) 2023 Vocard Development
+Copyright (c) 2023 - present Vocard Development
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__version__ = "1.3"
+__version__ = "1.4"
 __author__ = 'Vocard Development, Choco'
 __license__ = "MIT"
 __copyright__ = "Copyright 2023 (c) Vocard Development, Choco"

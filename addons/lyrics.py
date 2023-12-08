@@ -1,6 +1,7 @@
 import aiohttp, random, bs4, re
 import function as func
 
+from abc import ABC, abstractmethod
 from urllib.parse import quote
 from math import floor
 from importlib import import_module
@@ -46,7 +47,12 @@ Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.9 (KHTM
 Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.6 (KHTML, like Gecko) Chrome/ Safari/530.6
 Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.5 (KHTML, like Gecko) Chrome/ Safari/530.5'''
 
-class A_ZLyrics():
+class LyricsPlatform(ABC):
+    @abstractmethod
+    async def getLyrics():
+        ...
+
+class A_ZLyrics(LyricsPlatform):
     async def get(self, url):
         try:
             async with aiohttp.ClientSession() as session:
@@ -166,7 +172,7 @@ class A_ZLyrics():
             
         return text
 
-class Genius():
+class Genius(LyricsPlatform):
     def __init__(self) -> None:
         self.module = import_module("lyricsgenius")
         self.genius = self.module.Genius(func.tokens.genius_token)
@@ -178,7 +184,7 @@ class Genius():
         
         return {"default": song.lyrics}
 
-lyricsPlatform = {
+lyricsPlatform: dict[str, LyricsPlatform] = {
     "a_zlyrics": A_ZLyrics,
     "genius": Genius
 }

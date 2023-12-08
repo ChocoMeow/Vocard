@@ -130,6 +130,19 @@ const decoders = [
         const source = input.readUTF();
 
         return { track_id, title, author, length, identifier, isStream, uri, thumbnail: null, source, position: 0n };
+    },
+    (input, track_id) => {
+        const title = input.readUTF();
+        const author = input.readUTF();
+        const length = input.readLong();
+        const identifier = input.readUTF();
+        const isStream = input.readBoolean();
+        const uri = input.readBoolean() ? input.readUTF() : null;
+        const thumbnail = input.readBoolean() ? input.readUTF() : null;
+        const isrc = input.readBoolean() ? input.readUTF() : null;
+        const source = input.readUTF();
+
+        return { track_id, title, author, length, identifier, isStream, uri, thumbnail, source, position: 0n };
     }
 ]
 function decode(track_id) {
@@ -481,7 +494,7 @@ class Player {
             return;
         }
         let position = tempPosition / 500 * this.currentTrack.length;
-        this.send({ "op": "updatePosition", "position": position });
+        this.send({ "op": "updatePosition", "position": Math.trunc(position) });
     }
 
     shuffle() {

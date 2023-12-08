@@ -8,16 +8,16 @@ from datetime import datetime
 from time import strptime
 from io import BytesIO
 from pymongo import MongoClient
-from typing import Optional, Union
+from typing import Optional, Union, Any
 from addons import Settings, TOKENS
 
-root_dir = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-if not os.path.exists(os.path.join(root_dir, "settings.json")):
+if not os.path.exists(os.path.join(ROOT_DIR, "settings.json")):
     raise Exception("Settings file not set!")
 
 #-------------- API Clients --------------
-tokens: TOKENS = TOKENS();
+tokens: TOKENS = TOKENS()
 
 if not (tokens.mongodb_name and tokens.mongodb_url):
     raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
@@ -32,45 +32,47 @@ try:
 except Exception as e:
     raise Exception("Not able to connect MongoDB! Reason:", e)
 
-collection = mongodb[tokens.mongodb_name]['Settings']
-Playlist = mongodb[tokens.mongodb_name]['Playlist']
+SETTINGS_DB = mongodb[tokens.mongodb_name]['Settings']
+PLAYLISTS_DB = mongodb[tokens.mongodb_name]['Playlist']
 
 #--------------- Cache Var ---------------
 settings: Settings
-error_log = {} #Stores error that not a Voicelink Exception
-langs = {} #Stores all the languages in ./langs
-guild_settings = {} #Cache guild language
-local_langs = {} #Stores all the localization languages in ./local_langs 
-playlist_name = {} #Cache the user's playlist name
+ERROR_LOGS: dict[int, dict[int, str]] = {} #Stores error that not a Voicelink Exception
+LANGS: dict[str, dict[str, str]] = {} #Stores all the languages in ./langs
+GUILD_SETTINGS: dict[int, dict[str, Any]] = {} #Cache guild language
+LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs 
+PLAYLIST_NAME: dict[str, list[str]] = {} #Cache the user's playlist name
 
 #-------------- Vocard Functions --------------
 def get_settings(guild_id:int) -> dict:
-    settings = guild_settings.get(guild_id, None)
+    settings = GUILD_SETTINGS.get(guild_id, None)
     if not settings:
-        settings = collection.find_one({"_id":guild_id})
+        settings = SETTINGS_DB.find_one({"_id":guild_id})
         if not settings:
-            collection.insert_one({"_id":guild_id})
-            settings = {}
-        guild_settings[guild_id] = settings
+            SETTINGS_DB.insert_one({"_id":guild_id})
+            
+        GUILD_SETTINGS[guild_id] = settings or {}
     return settings
 
-def update_settings(guild_id:int, data: dict, mode="Set") -> None:
+def update_settings(guild_id:int, data: dict, mode="set") -> bool:
     settings = get_settings(guild_id)
-    if mode == "Set":
-        for key, value in data.items():
-            if settings.get(key) != value:
-                guild_settings[guild_id][key] = value
-        collection.update_one({"_id":guild_id}, {"$set":data})
-    elif mode == "Delete":
-        for key, value in data.items():
-            if settings.get(key) != value:
-                del guild_settings[guild_id][key]
-        collection.update_one({"_id":guild_id}, {"$unset":data})
-    return
+
+    for key, value in data.items():
+        if settings.get(key) != value:
+            match mode:
+                case "set":
+                    GUILD_SETTINGS[guild_id][key] = value
+                case "unset":
+                    GUILD_SETTINGS[guild_id].pop(key)
+                case _:
+                    return False
+                           
+    result = SETTINGS_DB.update_one({"_id":guild_id}, {f"${mode}":data})
+    return result.modified_count > 0
 
 def open_json(path: str) -> dict:
     try:
-        with open(os.path.join(root_dir, path), encoding="utf8") as json_file:
+        with open(os.path.join(ROOT_DIR, path), encoding="utf8") as json_file:
             return json.load(json_file)
     except:
         return {}
@@ -82,15 +84,15 @@ def update_json(path: str, new_data: dict) -> None:
     
     data.update(new_data)
 
-    with open(os.path.join(root_dir, path), "w") as json_file:
+    with open(os.path.join(ROOT_DIR, path), "w") as json_file:
         json.dump(data, json_file, indent=4)
 
 def get_lang(guild_id:int, key:str) -> str:
     lang = get_settings(guild_id).get("lang", "EN")
-    if lang in langs and not langs[lang]:
-        langs[lang] = open_json(os.path.join("langs", f"{lang}.json"))
+    if lang in LANGS and not LANGS[lang]:
+        LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
 
-    return langs.get(lang, {}).get(key, "Language pack not found!")
+    return LANGS.get(lang, {}).get(key, "Language pack not found!")
 
 def init() -> None:
     global settings
@@ -100,13 +102,13 @@ def init() -> None:
         settings = Settings(json)
 
 def langs_setup() -> None:
-    for language in os.listdir(os.path.join(root_dir, "langs")):
+    for language in os.listdir(os.path.join(ROOT_DIR, "langs")):
         if language.endswith('.json'):
-            langs[language[:-5]] = {}
+            LANGS[language[:-5]] = {}
     
-    for language in os.listdir(os.path.join(root_dir, "local_langs")):
+    for language in os.listdir(os.path.join(ROOT_DIR, "local_langs")):
         if language.endswith('.json'):
-            local_langs[language[:-5]] = open_json(os.path.join("local_langs", language))
+            LOCAL_LANGS[language[:-5]] = open_json(os.path.join("local_langs", language))
 
     return
 
@@ -133,13 +135,13 @@ def formatTime(number:str) -> Optional[int]:
     
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
-def emoji_source(emoji:str):
+def emoji_source(emoji:str) -> str:
     return settings.emoji_source_raw.get(emoji.lower(), "🔗")
 
 def gen_report() -> Optional[discord.File]:
-    if error_log:
+    if ERROR_LOGS:
         errorText = ""
-        for guild_id, error in error_log.items():
+        for guild_id, error in ERROR_LOGS.items():
             errorText += f"Guild ID: {guild_id}\n" + "-" * 30 + "\n"
             for index, (key, value) in enumerate(error.items() , start=1):
                 errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
@@ -162,6 +164,9 @@ def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
 def get_aliases(name: str) -> list:
     return settings.aliases_settings.get(name, [])
 
+def check_roles() -> tuple[str, int, int]:
+    return 'Normal', 5, 500
+
 async def requests_api(url: str) -> dict:
     async with aiohttp.ClientSession() as session:
         resp = await session.get(url)
@@ -183,20 +188,19 @@ async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> N
                                                     "‌    ➥ You have the right to immediately stop the services we offer to you\n"
                                                     "‌    ➥ Please do not abuse our services, such as affecting other users\n", inline=False)
     if isinstance(ctx, commands.Context):
-        message = await ctx.reply(embed=embed, view=view, ephemeral=True)
+        view.response = await ctx.reply(embed=embed, view=view, ephemeral=True)
     else:
-        message = await ctx.response.send_message(embed=embed, view=view, ephemeral=True)
-        
-    view.response = message
+        view.response = await ctx.response.send_message(embed=embed, view=view, ephemeral=True)
+
     await view.wait()
     if view.value:
         try:
-            Playlist.insert_one({'_id':author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
+            PLAYLISTS_DB.insert_one({'_id':author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
         except:
             pass
             
-async def get_playlist(userid:int, dType:str=None, dId:str=None) -> dict:
-    user = Playlist.find_one({"_id":userid}, {"_id": 0})
+async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> bool:
+    user = PLAYLISTS_DB.find_one({"_id":user_id}, {"_id": 0})
     if not user:
         return None
     if dType:
@@ -205,21 +209,12 @@ async def get_playlist(userid:int, dType:str=None, dId:str=None) -> dict:
         return user[dType]
     return user
 
-async def update_playlist(userid:int, data:dict=None, push=False, pull=False, mode=True) -> None:
-    if mode is True:
-        if push:
-            return Playlist.update_one({"_id":userid}, {"$push": data})
-        Playlist.update_one({"_id":userid}, {"$set": data})
-    else:
-        if pull:
-            return Playlist.update_one({"_id":userid}, {"$pull": data})
-        Playlist.update_one({"_id":userid}, {"$unset": data})
-    return
+async def update_playlist(user_id:int, data:dict, *, mode:str="set", update_cache: bool=False) -> None:
+    if update_cache:
+        PLAYLIST_NAME.pop(str(user_id), None)
+    result = PLAYLISTS_DB.update_one({"_id":user_id}, {f"${mode}": data})
+    return result.modified_count > 0
 
-async def update_inbox(userid:int, data:dict) -> None:
-    return Playlist.update_one({"_id":userid}, {"$push":{'inbox':data}})
-
-async def checkroles(userid:int):
-    rank, max_p, max_t = 'Normal', 5, 500
-
-    return rank, max_p, max_t
+async def update_inbox(user_id:int, data:dict) -> bool:
+    result = PLAYLISTS_DB.update_one({"_id":user_id}, {"$push":{'inbox':data}})
+    return result.modified_count > 0

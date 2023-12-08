@@ -1,6 +1,6 @@
 """MIT License
 
-Copyright (c) 2023 Vocard Development
+Copyright (c) 2023 - present Vocard Development
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ from function import (
     get_playlist,
     update_playlist,
     create_account,
-    checkroles
+    check_roles
 )
 
 from typing import Dict
@@ -94,7 +94,7 @@ class Resume(ControlButton):
         super().__init__(
             emoji="⏸️",
             label="buttonPause",
-            disabled=not bool(kwargs["player"].current),
+            disabled=kwargs["player"].current is None,
             **kwargs
         )
     
@@ -187,7 +187,7 @@ class Add(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
             emoji="❤️",
-            disabled=not bool(kwargs["player"].current),
+            disabled=kwargs["player"].current is None,
             **kwargs
         )
     
@@ -200,13 +200,13 @@ class Add(ControlButton):
         user = await get_playlist(interaction.user.id, 'playlist')
         if not user:
             return await create_account(interaction)
-        rank, max_p, max_t = await checkroles(interaction.user.id)
+        rank, max_p, max_t = check_roles()
         if len(user['200']['tracks']) >= max_t:
             return await self.send(interaction, self.player.get_msg("playlistlimited").format(max_t), ephemeral=True)
 
         if track.track_id in user['200']['tracks']:
             return await self.send(interaction, self.player.get_msg("playlistrepeated"), ephemeral=True)
-        respond = await update_playlist(interaction.user.id, {'playlist.200.tracks': track.track_id}, push=True)
+        respond = await update_playlist(interaction.user.id, {'playlist.200.tracks': track.track_id}, mode="push")
         if respond:
             await self.send(interaction, self.player.get_msg("playlistAdded").format(track.title, interaction.user.mention, user['200']['name']), ephemeral=True)
         else:
@@ -332,7 +332,7 @@ class Forward(ControlButton):
         super().__init__(
             emoji="⏩",
             label="buttonForward",
-            disabled=not bool(kwargs["player"].current),
+            disabled=kwargs["player"].current is None,
             **kwargs
         )
         
@@ -351,7 +351,7 @@ class Rewind(ControlButton):
         super().__init__(
             emoji="⏪",
             label="buttonRewind",
-            disabled=not bool(kwargs["player"].current)
+            disabled=kwargs["player"].current is None,
             **kwargs
         )
         
@@ -376,7 +376,7 @@ class Tracks(discord.ui.Select):
         for index, track in enumerate(self.player.queue.tracks(), start=1):
             if index > 10:
                 break
-            options.append(discord.SelectOption(label=f"{index}. {track.title[:40]}", description=f"{track.author[:30]} · " + ("Live" if track.is_stream else track.formatLength), emoji=track.emoji))
+            options.append(discord.SelectOption(label=f"{index}. {track.title[:40]}", description=f"{track.author[:30]} · " + ("Live" if track.is_stream else track.formatted_length), emoji=track.emoji))
 
         super().__init__(
             placeholder=player.get_msg("playerDropdown"),

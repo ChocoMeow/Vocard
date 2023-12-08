@@ -1,6 +1,6 @@
 """MIT License
 
-Copyright (c) 2023 Vocard Development
+Copyright (c) 2023 - present Vocard Development
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,28 +20,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from __future__ import annotations
 
 import discord
 
 from function import formatTime
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from voicelink import Player
 
 class Dropdown(discord.ui.Select):
-    def __init__(self, player, chapters):
+    def __init__(self, player: Player, chapters):
+        self.view: ChapterView
 
-        self.player = player
-        self.chapters = chapters
-        self.current = player.current.uri
-        
-        options = [
-            discord.SelectOption(label=f"{index}. {title[:30]}",
-                                    description=time)
-            for index, (time, title) in enumerate(self.chapters, start=1)
-        ]
+        self.player: Player = player
+        self.chapters: list[str] = chapters
+        self.current: str = player.current.uri
         
         super().__init__(
             placeholder=self.player.get_msg('chaptersDropdown'),
             min_values=1, max_values=1,
-            options=options[:25],
+            options=[
+                discord.SelectOption(label=f"{index}. {title[:30]}", description=time)
+                for index, (time, title) in enumerate(self.chapters, start=1)
+            ][:25]
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -55,13 +57,18 @@ class Dropdown(discord.ui.Select):
         await interaction.response.send_message(self.player.get_msg('seek').format(formatTime(position)))
 
 class ChapterView(discord.ui.View):
-    def __init__(self, player, chapters, author):
+    def __init__(
+        self,
+        player: Player,
+        chapters: list[str],
+        author: discord.Member
+    ) -> None:
         super().__init__(timeout=180)
 
-        self.player = player
-        self.chapters = chapters
-        self.author = author
-        self.response = None
+        self.player: Player = player
+        self.chapters: list[str] = chapters
+        self.author: discord.Member = author
+        self.response: discord.Message = None
         self.add_item(Dropdown(player, chapters))
     
     async def on_error(self, error: Exception, item, interaction) -> None:
@@ -78,7 +85,5 @@ class ChapterView(discord.ui.View):
     async def on_timeout(self) -> None:
         await self.stop_view()
     
-    async def interaction_check(self, interaction):
-        if interaction.user == self.author:
-            return True
-        return False
+    async def interaction_check(self, interaction: discord.Interaction):
+        return interaction.user == self.author

@@ -1,3 +1,26 @@
+"""MIT License
+
+Copyright (c) 2023 - present Vocard Development
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import discord
 import voicelink
 
@@ -8,11 +31,11 @@ from function import (
     time as ctime,
     get_playlist,
     create_account,
-    checkroles,
+    check_roles,
     update_playlist,
     update_inbox,
     get_lang,
-    playlist_name,
+    PLAYLIST_NAME,
     settings,
     get_aliases,
     cooldown_check
@@ -70,10 +93,10 @@ class Playlists(commands.Cog, name="playlist"):
         self.description = "This is the Vocard playlist system. You can save your favorites and use Vocard to play on any server."
 
     async def playlist_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
-        playlists = playlist_name.get(str(interaction.user.id), None)
+        playlists = PLAYLIST_NAME.get(str(interaction.user.id), None)
         if not playlists:
             playlists_raw = await get_playlist(interaction.user.id, 'playlist')
-            playlists = playlist_name[str(interaction.user.id)] = [
+            playlists = PLAYLIST_NAME[str(interaction.user.id)] = [
                 value['name'] for value in playlists_raw.values()] if playlists_raw else []
         if current:
             return [app_commands.Choice(name=p, value=p) for p in playlists if current in p]
@@ -87,8 +110,7 @@ class Playlists(commands.Cog, name="playlist"):
     async def playlist(self, ctx: commands.Context):
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(self.qualified_name)
-        message = await ctx.send(embed=embed, view=view)
-        view.response = message
+        view.response = await ctx.send(embed=embed, view=view)
 
     @playlist.command(name="play", aliases=get_aliases("play"))
     @app_commands.describe(
@@ -104,7 +126,7 @@ class Playlists(commands.Cog, name="playlist"):
             return await create_account(ctx)
         if not result['playlist']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
-        rank, max_p, max_t = await checkroles(ctx.author.id)
+        rank, max_p, max_t = check_roles()
         if result['position'] > max_p:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAccess'), ephemeral=True)
 
@@ -142,7 +164,7 @@ class Playlists(commands.Cog, name="playlist"):
         user = await check_playlist(ctx, full=True)
         if not user:
             return await create_account(ctx)
-        rank, max_p, max_t = await checkroles(ctx.author.id)
+        rank, max_p, max_t = check_roles()
 
         results = []
         for index, data in enumerate(user, start=1):
@@ -156,7 +178,7 @@ class Playlists(commands.Cog, name="playlist"):
                     if share := playlist['type'] == 'share':
                         playlist = await check_playlist_perms(ctx.author.id, playlist['user'], playlist['referId'])
                         if not playlist:
-                            await update_playlist(ctx.author.id, {f"playlist.{data}": 1}, mode=False)
+                            await update_playlist(ctx.author.id, {f"playlist.{data}": 1}, mode="unset")
                             continue
                         if playlist['type'] == 'link':
                             tracks = await search_playlist(playlist['uri'], requester=ctx.author)
@@ -169,7 +191,7 @@ class Playlists(commands.Cog, name="playlist"):
                         init.append(dt)
                     playlist['tracks'] = init
                     results.append({'emoji': ('🔒' if max_p < index else ('🤝' if share else '❤️')), 'id': data, 'time': ctime(time), 'name': user[data]['name'], 'tracks': playlist['tracks'], 'perms': playlist['perms'], 'owner': user[data].get('user', None), 'type': user[data]['type']})
-            
+        
             except Exception as e:
                 results.append({'emoji': '⛔', 'id': data, 'time': '00:00', 'name': 'Error', 'tracks': [], 'type': 'error'})
 
@@ -182,8 +204,7 @@ class Playlists(commands.Cog, name="playlist"):
         embed.set_footer(text=get_lang(ctx.guild.id, 'playlistFooter'))
 
         view = PlaylistView(embed, results, ctx.author)
-        messsage = await ctx.send(embed=embed, view=view, ephemeral=True)
-        view.response = messsage 
+        view.response = await ctx.send(embed=embed, view=view, ephemeral=True)
 
     @playlist.command(name="create", aliases=get_aliases("create"))
     @app_commands.describe(
@@ -196,7 +217,7 @@ class Playlists(commands.Cog, name="playlist"):
         if len(name) > 10:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
         
-        rank, max_p, max_t = await checkroles(ctx.author.id)
+        rank, max_p, max_t = check_roles()
         user = await check_playlist(ctx, full=True)
         if not user:
             return await create_account(ctx)
@@ -212,9 +233,8 @@ class Playlists(commands.Cog, name="playlist"):
             if not isinstance(tracks, voicelink.Playlist):
                 return await ctx.send(get_lang(ctx.guild.id, 'playlistNotInvaildUrl'), ephemeral=True)
 
-        playlist_name.pop(str(ctx.author.id), None)
         data = {'uri': link, 'perms': {'read': []}, 'name': name, 'type': 'link'} if link else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-        await update_playlist(ctx.author.id, {f"playlist.{assign_playlistId([data for data in user])}": data})
+        await update_playlist(ctx.author.id, {f"playlist.{assign_playlistId([data for data in user])}": data}, update_cache=True)
         await ctx.send(get_lang(ctx.guild.id, 'playlistCreated').format(name))
 
     @playlist.command(name="delete", aliases=get_aliases("delete"))
@@ -232,10 +252,9 @@ class Playlists(commands.Cog, name="playlist"):
             return await ctx.send(get_lang(ctx.guild.id, 'playlistDeleteError'), ephemeral=True)
 
         if result['playlist']['type'] == 'share':
-            await update_playlist(result['playlist']['user'], {f"playlist.{result['playlist']['referId']}.perms.read": ctx.author.id}, pull=True, mode=False)
+            await update_playlist(result['playlist']['user'], {f"playlist.{result['playlist']['referId']}.perms.read": ctx.author.id}, mode="pull")
 
-        playlist_name.pop(str(ctx.author.id), None)
-        await update_playlist(ctx.author.id, {f"playlist.{result['id']}": 1}, mode=False)
+        await update_playlist(ctx.author.id, {f"playlist.{result['id']}": 1}, mode="unset", update_cache=True)
         return await ctx.send(get_lang(ctx.guild.id, 'playlistRemove').format(result['playlist']['name']))
 
     @playlist.command(name="share", aliases=get_aliases("share"))
@@ -300,8 +319,7 @@ class Playlists(commands.Cog, name="playlist"):
         if not found:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
 
-        playlist_name.pop(str(ctx.author.id), None)
-        await update_playlist(ctx.author.id, {f'playlist.{id}.name': newname})
+        await update_playlist(ctx.author.id, {f'playlist.{id}.name': newname}, update_cache=True)
         await ctx.send(get_lang(ctx.guild.id, 'playlistRenamed').format(name, newname))
 
     @playlist.command(name="inbox", aliases=get_aliases("inbox"))
@@ -316,8 +334,7 @@ class Playlists(commands.Cog, name="playlist"):
 
         inbox = user['inbox'].copy()
         view = InboxView(ctx.author, user['inbox'])
-        message = await ctx.send(embed=view.build_embed(), view=view, ephemeral=True)
-        view.response = message
+        view.response = await ctx.send(embed=view.build_embed(), view=view, ephemeral=True)
         await view.wait()
 
         if inbox == user['inbox']:
@@ -325,13 +342,12 @@ class Playlists(commands.Cog, name="playlist"):
         updateData, dId = {}, {dId for dId in user["playlist"]}
         for data in view.newplaylist[:(5 - len(user['playlist']))]:
             addId = assign_playlistId(dId)
-            await update_playlist(data['sender'], {f"playlist.{data['referId']}.perms.read": ctx.author.id}, push=True)
+            await update_playlist(data['sender'], {f"playlist.{data['referId']}.perms.read": ctx.author.id}, mode="push")
             updateData[f'playlist.{addId}'] = {'user': data['sender'], 'referId': data['referId'],
                                                'name': f"Share{data['time'].strftime('%M%S')}", 'type': 'share'}
             dId.add(addId)
 
-        playlist_name.pop(str(ctx.author.id), None)
-        await update_playlist(ctx.author.id, updateData | {'inbox': view.inbox})
+        await update_playlist(ctx.author.id, updateData | {'inbox': view.inbox}, update_cache=True)
 
     @playlist.command(name="add", aliases=get_aliases("add"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -350,7 +366,7 @@ class Playlists(commands.Cog, name="playlist"):
         if result['playlist']['type'] in ['share', 'link']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAllow'), ephemeral=True)
         
-        rank, max_p, max_t = await checkroles(ctx.author.id)
+        rank, max_p, max_t = check_roles()
         if len(result['playlist']['tracks']) >= max_t:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistLimitTrack').format(max_t), ephemeral=True)
 
@@ -364,7 +380,7 @@ class Playlists(commands.Cog, name="playlist"):
         if results[0].is_stream:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistStream'), ephemeral=True)
 
-        await update_playlist(ctx.author.id, {f'playlist.{result["id"]}.tracks': results[0].track_id}, push=True)
+        await update_playlist(ctx.author.id, {f'playlist.{result["id"]}.tracks': results[0].track_id}, mode="push")
         await ctx.send(get_lang(ctx.guild.id, 'playlistAdded').format(results[0].title, ctx.author, result['playlist']['name']))
 
     @playlist.command(name="remove", aliases=get_aliases("remove"))
@@ -386,7 +402,7 @@ class Playlists(commands.Cog, name="playlist"):
         if not 0 < position <= len(result['playlist']['tracks']):
             return await ctx.send(get_lang(ctx.guild.id, 'playlistPositionNotFound').format(position, name))
 
-        await update_playlist(ctx.author.id, {f'playlist.{result["id"]}.tracks': result['playlist']['tracks'][position - 1]}, pull=True, mode=False)
+        await update_playlist(ctx.author.id, {f'playlist.{result["id"]}.tracks': result['playlist']['tracks'][position - 1]}, mode="pull")
         
         track = voicelink.decode(result['playlist']['tracks'][position - 1])
         await ctx.send(get_lang(ctx.guild.id, 'playlistRemoved').format(track.get("title"), ctx.author, name))
@@ -462,7 +478,7 @@ class Playlists(commands.Cog, name="playlist"):
         if len(name) > 10:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
         
-        rank, max_p, max_t = await checkroles(ctx.author.id)
+        rank, max_p, max_t = check_roles()
         user = await check_playlist(ctx, full=True)
         if not user:
             return await create_account(ctx)
@@ -479,9 +495,8 @@ class Playlists(commands.Cog, name="playlist"):
             track_ids = bytes.split(b"\n")[-1]
             track_ids = track_ids.decode().split(",")
 
-            playlist_name.pop(str(ctx.author.id), None)
             data = {'tracks': track_ids, 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-            await update_playlist(ctx.author.id, {f"playlist.{assign_playlistId([data for data in user])}": data})
+            await update_playlist(ctx.author.id, {f"playlist.{assign_playlistId([data for data in user])}": data}, update_cache=True)
             await ctx.send(get_lang(ctx.guild.id, 'playlistCreated').format(name))
 
         except:
