@@ -1,7 +1,7 @@
 import requests, zipfile, os, shutil, argparse
 from io import BytesIO
 
-root_dir = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 __version__ = "v2.6.7"
 
 GITHUB_API_URL = "https://api.github.com/repos/ChocoMeow/Vocard/releases/latest"
