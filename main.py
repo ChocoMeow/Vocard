@@ -126,7 +126,6 @@ async def get_prefix(bot, message: discord.Message):
     return settings.get("prefix", func.settings.bot_prefix)
 
 intents = discord.Intents.default()
-intents.members = True
 intents.message_content = True if func.settings.bot_prefix else False
 member_cache = discord.MemberCacheFlags(
     voice=True,

@@ -670,7 +670,7 @@ class Basic(commands.Cog):
         if num is None:
             return await ctx.send(player.get_msg('timeFormatError'), ephemeral=True)
 
-        await player.seek(player.position + num)
+        await player.seek(int(player.position + num))
         await ctx.send(player.get_msg('forward').format(ctime(player.position + num)))
 
     @commands.hybrid_command(name="rewind", aliases=get_aliases("rewind"))
@@ -692,7 +692,7 @@ class Basic(commands.Cog):
         if num is None:
             return await ctx.send(player.get_msg('timeFormatError'), ephemeral=True)
 
-        await player.seek(player.position - num)
+        await player.seek(int(player.position - num))
         await ctx.send(player.get_msg('rewind').format(ctime(player.position - num)))
 
     @commands.hybrid_command(name="replay", aliases=get_aliases("replay"))

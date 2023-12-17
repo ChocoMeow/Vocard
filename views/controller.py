@@ -343,8 +343,10 @@ class Forward(ControlButton):
         if not self.player.current:
             return await self.send(interaction, self.player.get_msg('noTrackPlaying'), ephemeral=True)
 
-        await self.player.seek(self.player.position + 30000)
-        await self.send(interaction, self.player.get_msg('forward').format(func.time(self.player.position + 10000)))
+        position = int(self.player.position + 30000)
+
+        await self.player.seek(position)
+        await self.send(interaction, self.player.get_msg('forward').format(func.time(position)))
 
 class Rewind(ControlButton):
     def __init__(self, **kwargs):
@@ -362,7 +364,7 @@ class Rewind(ControlButton):
         if not self.player.current:
             return await self.send(interaction, self.player.get_msg('noTrackPlaying'), ephemeral=True)
 
-        position = 0 if (value := (self.player.position - 30000)) <= 0 else value
+        position = 0 if (value := int(self.player.position - 30000)) <= 0 else value
         
         await self.player.seek(position)
         await self.send(interaction, self.player.get_msg('rewind').format(func.time(position)))
