@@ -53,7 +53,7 @@ class ControlButton(discord.ui.Button):
         stay = self.player.settings.get("controller_msg", True)
         return await interaction.response.send_message(
             content,
-            delete_after=None if (not ephemeral or stay) is True else 10,
+            delete_after=None if ephemeral or stay is True else 10,
             ephemeral=ephemeral
         )
 
