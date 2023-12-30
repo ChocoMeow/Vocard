@@ -28,6 +28,7 @@ class Placeholders:
             "channel_name": self.channel_name,
             "track_name": self.track_name,
             "track_url": self.track_url,
+            "track_author": self.track_author,
             "track_duration": self.track_duration,
             "track_thumbnail": self.track_thumbnail,
             "requester": self.requester,
@@ -57,6 +58,10 @@ class Placeholders:
     @ensure_track
     def track_url(self, track: Track) -> str:
         return track.uri
+    
+    @ensure_track
+    def track_author(self, track: Track) -> str:
+        return track.author
 
     @ensure_track
     def track_duration(self, track: Track) -> str:
