@@ -250,7 +250,7 @@ class Settings(commands.Cog, name="settings"):
         player, settings = self.get_settings(ctx)
         controller_settings = settings.get("default_controller", func.settings.controller)
 
-        view = EmbedBuilderView(ctx.author, controller_settings.get("embeds").copy())
+        view = EmbedBuilderView(ctx, controller_settings.get("embeds").copy())
         view.response = await ctx.send(embed=view.build_embed(), view=view)
 
     @settings.command(name="controllermsg", aliases=get_aliases("controllermsg"))
