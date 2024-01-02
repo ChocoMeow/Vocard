@@ -14,7 +14,7 @@ Actions
 
 | Action Name | Description |
 | --- | --- |
-| player | Playing status. |
+| play | Playing status. |
 | listen | Listening status. |
 | watch | Watching status. |
 | stream | Streaming status. |
