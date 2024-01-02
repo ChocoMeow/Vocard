@@ -59,6 +59,8 @@ Valuables
 | channel_name | The name of the channel the bot is playing on. |
 | track_name | The name of the track currently playing. |
 | track_url | The url of the track currently playing. |
+| track_author | The name of the author of the track currently playing. |
+| track_duration | The length of the track currently playing. |
 | track_thumbnail | The thumbnail of the track currently playing. |
 | requester | The mention name of the requester of the currently playing track. |
 | requester_name | The name of the requester of the currently playing track. |
@@ -88,7 +90,7 @@ Change the value of `default_controller` in `settings.json`.
         "active": {
             "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
             "footer": {
-                "text": "Queue Length: @@queue_length@@ | Duration: @@duration@@ | Volume: @@volume@@% {{loop_mode!=Off ?? | Repeat: @@loop_mode@@}}"
+                "text": "Queue Length: @@queue_length@@ | Duration: @@track_duration@@ | Volume: @@volume@@% {{loop_mode!=Off ?? | Repeat: @@loop_mode@@}}"
             },
             "image": "@@track_thumbnail@@",
             "author": {
