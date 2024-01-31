@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:latest
+    container_name: lavalink
+    restart: unless-stopped
+    environment:
+      - _JAVA_OPTIONS=-Xmx1G
+      - SERVER_PORT=2333
+      - LAVALINK_SERVER_PASSWORD=XXXXXXXXXXXXXXXX
+    volumes:
+      - ./application.yml:/opt/Lavalink/application.yml
+    networks:
+      - lavalink
+    ports:
+      - "2333:2333"
+
+  beatbuddy:
+    container_name: XXXXXXXXXXXXXXXX
+    build:
+      dockerfile: ./Dockerfile
+    environment:
+      - TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      - CLIENT_ID=XXXXXXXXXXXXXXXX
+      - CLIENT_SECRET_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      - SERCET_KEY=XXXXXXXXXXXXXXXX
+      - BUG_REPORT_CHANNEL_ID=XXXXXXXXXXXXXXXX
+      - SPOTIFY_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      - SPOTIFY_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      - GENIUS_TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      - MONGODB_URL=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      - MONGODB_NAME=XXXXXXXXXXXXXXXX
+    volumes:
+      - ./settings.json:/app/settings.json
+      - ./.env:/app/.env
+      - ./langs:/app/langs
+    networks:
+      - lavalink
+
+networks:
+  lavalink:
+    name: lavalink
