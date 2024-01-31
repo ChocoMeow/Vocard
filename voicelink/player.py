@@ -134,7 +134,7 @@ class Player(VoiceProtocol):
         self.shuffle_votes = set()
         self.stop_votes = set()
 
-        self.ph = Placeholders(self)
+        self.ph = Placeholders(client, self)
 
     def __repr__(self):
         return (
@@ -499,7 +499,7 @@ class Player(VoiceProtocol):
         if track.spotify:
             if not track.original:
                 search: Track = (await self._node.get_tracks(
-                    f"ytmsearch:{track.author} - {track.title}",
+                    f"ytsearch:{track.author} - {track.title}",
                     requester=track.requester
                 ))
  

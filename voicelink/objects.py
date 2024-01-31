@@ -85,7 +85,7 @@ class Track:
             self.artist_id: Optional[list] = info.get("artist_id")
 
         self.original: Optional[Track] = None if self.spotify else self
-        self._search_type: SearchType = SearchType.ytmsearch if self.spotify else search_type
+        self._search_type: SearchType = SearchType.ytsearch if self.spotify else search_type
         self.spotify_track: Track = spotify_track
 
         self.thumbnail: str = info.get("artworkUrl")
