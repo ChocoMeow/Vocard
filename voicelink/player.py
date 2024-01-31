@@ -499,7 +499,7 @@ class Player(VoiceProtocol):
         if track.spotify:
             if not track.original:
                 search: Track = (await self._node.get_tracks(
-                    f"ytmsearch:{track.author} - {track.title}",
+                    f"ytsearch:{track.author} - {track.title}",
                     requester=track.requester
                 ))
  

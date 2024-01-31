@@ -47,7 +47,6 @@ class Placeholders:
     def get_current(self) -> Track:
         return self.player.current if self.player else None
 
-    @ensure_track
     def channel_name(self) -> str:
         return self.player.channel.name if self.player.channel else "None"
     
