@@ -109,8 +109,8 @@
     "playerDropdown": "Выберите трек для перехода ...",
 
     "buttonBack": "Назад",
-    "buttonPause": "Приостановить",
-    "buttonResume": "Продолжить",
+    "buttonPause": "Пауза",
+    "buttonResume": "Пуск",
     "buttonSkip": "Вперед",
     "buttonLeave": "СТОП",
     "buttonLoop": "Зациклить",
