@@ -53,14 +53,14 @@ class ControlButton(discord.ui.Button):
         stay = self.player.settings.get("controller_msg", True)
         return await interaction.response.send_message(
             content,
-            delete_after=None if (not ephemeral or stay) is True else 10,
+            delete_after=None if ephemeral or stay is True else 10,
             ephemeral=ephemeral
         )
 
 class Back(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏮️",
+            emoji="â®ï¸",
             label="buttonBack",
             disabled=False if kwargs["player"].queue.history() or not kwargs["player"].current else True,
             **kwargs
@@ -92,7 +92,7 @@ class Back(ControlButton):
 class Resume(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏸️",
+            emoji="â¸ï¸",
             label="buttonPause",
             disabled=kwargs["player"].current is None,
             **kwargs
@@ -111,7 +111,7 @@ class Resume(ControlButton):
                         return await self.send(interaction, self.player.get_msg("resumeVote").format(interaction.user, len(self.player.resume_votes), required))
 
             self.player.resume_votes.clear()
-            self.emoji = "⏸️"
+            self.emoji = "â¸ï¸"
             self.label = self.player.get_msg("buttonPause")
             await self.player.set_pause(False, interaction.user)
         
@@ -127,7 +127,7 @@ class Resume(ControlButton):
                         return await self.send(interaction, self.player.get_msg("pauseVote").format(interaction.user, len(self.player.pause_votes), required))
 
             self.player.pause_votes.clear()
-            self.emoji = "▶️"
+            self.emoji = "â–¶ï¸"
             self.label = self.player.get_msg("buttonResume")
             await self.player.set_pause(True, interaction.user)  
         await interaction.response.edit_message(view=self.view)
@@ -135,7 +135,7 @@ class Resume(ControlButton):
 class Skip(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏭️",
+            emoji="â­ï¸",
             label="buttonSkip",
             **kwargs
         )
@@ -164,7 +164,7 @@ class Skip(ControlButton):
 class Stop(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏹️",
+            emoji="â¹ï¸",
             label="buttonLeave",
             **kwargs
         )
@@ -186,7 +186,7 @@ class Stop(ControlButton):
 class Add(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="❤️",
+            emoji="â¤ï¸",
             disabled=kwargs["player"].current is None,
             **kwargs
         )
@@ -215,7 +215,7 @@ class Add(ControlButton):
 class Loop(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔁",
+            emoji="ðŸ”",
             label="buttonLoop",
             **kwargs
         )
@@ -230,7 +230,7 @@ class Loop(ControlButton):
 class VolumeUp(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔊",
+            emoji="ðŸ”Š",
             label="buttonVolumeUp",
             **kwargs
         )
@@ -247,7 +247,7 @@ class VolumeUp(ControlButton):
 class VolumeDown(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔉",
+            emoji="ðŸ”‰",
             label="buttonVolumeDown",
             **kwargs
         )
@@ -264,7 +264,7 @@ class VolumeDown(ControlButton):
 class VolumeMute(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔇" if kwargs["player"].volume else "🔈",
+            emoji="ðŸ”‡" if kwargs["player"].volume else "ðŸ”ˆ",
             label="buttonVolumeMute" if kwargs["player"].volume else "buttonVolumeUnmute",
             **kwargs
         )
@@ -275,11 +275,11 @@ class VolumeMute(ControlButton):
 
         if self.player.volume != 0:
             value = 0
-            self.emoji = "🔈"
+            self.emoji = "ðŸ”ˆ"
             self.label = self.player.get_msg("buttonVolumeUnmute")
         else:
             value = self.player.settings.get("volume", 100)
-            self.emoji = "🔇"
+            self.emoji = "ðŸ”‡"
             self.label = self.player.get_msg("buttonVolumeMute")
 
         await self.player.set_volume(value, interaction.user)
@@ -289,7 +289,7 @@ class VolumeMute(ControlButton):
 class AutoPlay(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="💡",
+            emoji="ðŸ’¡",
             label="buttonAutoPlay",
             **kwargs
         )
@@ -308,7 +308,7 @@ class AutoPlay(ControlButton):
 class Shuffle(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔀",
+            emoji="ðŸ”€",
             label="buttonShuffle",
             **kwargs
         )
@@ -330,7 +330,7 @@ class Shuffle(ControlButton):
 class Forward(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏩",
+            emoji="â©",
             label="buttonForward",
             disabled=kwargs["player"].current is None,
             **kwargs
@@ -351,7 +351,7 @@ class Forward(ControlButton):
 class Rewind(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏪",
+            emoji="âª",
             label="buttonRewind",
             disabled=kwargs["player"].current is None,
             **kwargs
@@ -378,7 +378,7 @@ class Tracks(discord.ui.Select):
         for index, track in enumerate(self.player.queue.tracks(), start=1):
             if index > 10:
                 break
-            options.append(discord.SelectOption(label=f"{index}. {track.title[:40]}", description=f"{track.author[:30]} · " + ("Live" if track.is_stream else track.formatted_length), emoji=track.emoji))
+            options.append(discord.SelectOption(label=f"{index}. {track.title[:40]}", description=f"{track.author[:30]} Â· " + ("Live" if track.is_stream else track.formatted_length), emoji=track.emoji))
 
         super().__init__(
             placeholder=player.get_msg("playerDropdown"),
