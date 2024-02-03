@@ -1,10 +1,8 @@
 # Use an official Python runtime as a base image
-FROM python:3.11
+FROM python:3.11-slim
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Install build dependencies
+RUN apt-get update -y && apt-get install -y gcc python3-dev
 
 # Set the working directory to /app
 WORKDIR /app
@@ -15,5 +13,5 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Run app.py when the container launches
-CMD ["python", "main.py"]
+# Run main.py when the container launches
+CMD ["python", "-u", "main.py"]
