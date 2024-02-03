@@ -343,7 +343,7 @@ class Forward(ControlButton):
         if not self.player.current:
             return await self.send(interaction, self.player.get_msg('noTrackPlaying'), ephemeral=True)
 
-        position = int(self.player.position + 30000)
+        position = int(self.player.position + 10000)
 
         await self.player.seek(position)
         await self.send(interaction, self.player.get_msg('forward').format(func.time(position)))
