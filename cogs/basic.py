@@ -21,9 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
-import voicelink
-import re
+import discord, voicelink, re, aiohttp, json
 
 from io import StringIO
 from discord import app_commands
@@ -87,6 +85,21 @@ class Basic(commands.Cog):
     async def help_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
         return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
+    async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
+        if current:
+            async with aiohttp.ClientSession() as session:
+                try:
+                    async with session.get(f"http://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q={current}") as resp:
+                        if resp.status != 200:
+                            return []
+
+                        raw_content = await resp.read()
+                        data = raw_content.decode("utf-8")
+                        return [app_commands.Choice(name=result, value=result) for result in json.loads(data)[1]]
+
+                except (aiohttp.ClientError, json.JSONDecodeError):
+                    return []
+                
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -98,11 +111,12 @@ class Basic(commands.Cog):
             return await ctx.send(get_lang(ctx.guild.id, "alreadyConnected"))
 
         await ctx.send(player.get_msg('connect').format(player.channel))
-
+                
     @commands.hybrid_command(name="play", aliases=get_aliases("play"))
     @app_commands.describe(query="Input a query or a searchable link.")
+    @app_commands.autocomplete(query=play_autocomplete)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def play(self, ctx: commands.Context, *, query: str) -> None:
+    async def play(self, ctx: commands.Context, query: str) -> None:
         "Loads your input and added it to the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
@@ -127,7 +141,7 @@ class Basic(commands.Cog):
         finally:
             if not player.is_playing:
                 await player.do_next()
-
+    
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def _play(self, interaction: discord.Interaction, message: discord.Message):
         query = ""
