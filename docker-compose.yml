@@ -21,6 +21,7 @@ services:
             dockerfile: ./Dockerfile
         volumes:
             - ./settings.json:/app/settings.json
+            - ./.env:/app/.env
         depends_on:
             lavalink:
               condition: service_started
