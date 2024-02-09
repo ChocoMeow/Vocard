@@ -8,10 +8,10 @@ import function as func
 
 from discord.ext import commands
 from web import IPCServer
+from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 from voicelink import VoicelinkException
-
-func.init()
+from addons import Settings
 
 class Translator(discord.app_commands.Translator):
     async def load(self):
@@ -48,8 +48,29 @@ class Vocard(commands.Bot):
 
         await self.process_commands(message)
 
-    async def setup_hook(self):
+    async def connect_db(self) -> None:
+        if not ((db_name := func.tokens.mongodb_name) and (db_url := func.tokens.mongodb_url)):
+            raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in settings.json")
+
+        try:
+            func.MONGO_DB = AsyncIOMotorClient(host=db_url, serverSelectionTimeoutMS=5000)
+            await func.MONGO_DB.server_info()
+            if db_name not in await func.MONGO_DB.list_database_names():
+                raise Exception(f"{db_name} does not exist in your mongoDB!")
+            print("Successfully connected to MongoDB!")
+
+        except Exception as e:
+            raise Exception("Not able to connect MongoDB! Reason:", e)
+        
+        func.SETTINGS_DB = func.MONGO_DB[db_name]["Settings"]
+        func.PLAYLISTS_DB = func.MONGO_DB[db_name]["Playlist"]
+
+    async def setup_hook(self) -> None:
         func.langs_setup()
+        
+        await self.connect_db()
+
+        # Loading all the module in `cogs` folder
         for module in os.listdir(func.ROOT_DIR + '/cogs'):
             if module.endswith('.py'):
                 try:
@@ -113,7 +134,6 @@ class Vocard(commands.Bot):
             pass
 
 class CommandCheck(discord.app_commands.CommandTree):
-
     async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
         if not interaction.guild:
             await interaction.response.send_message("This command can only be used in guilds!")
@@ -122,9 +142,11 @@ class CommandCheck(discord.app_commands.CommandTree):
         return await super().interaction_check(interaction)
     
 async def get_prefix(bot, message: discord.Message):
-    settings = func.get_settings(message.guild.id)
+    settings = await func.get_settings(message.guild.id)
     return settings.get("prefix", func.settings.bot_prefix)
 
+
+# Setup the bot object
 intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
 member_cache = discord.MemberCacheFlags(

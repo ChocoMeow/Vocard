@@ -307,9 +307,9 @@ class EmbedBuilderView(discord.ui.View):
 
     @discord.ui.button(label="Apply", style=discord.ButtonStyle.green, row=1)
     async def apply(self, interaction: discord.Interaction, button: discord.ui.Button):
-        func.update_settings(
+        await func.update_settings(
             interaction.guild_id,
-            {"default_controller": {"embeds": self.data}},
+            {"$set": {"default_controller.embeds": self.data}},
         )
 
         await self.on_timeout()

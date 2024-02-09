@@ -1,75 +1,37 @@
-import discord
-import json
-import aiohttp
-import os
+import discord, json, os
 
 from discord.ext import commands
 from datetime import datetime
 from time import strptime
 from io import BytesIO
-from pymongo import MongoClient
 from typing import Optional, Union, Any
 from addons import Settings, TOKENS
+
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorCollection,
+)
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 if not os.path.exists(os.path.join(ROOT_DIR, "settings.json")):
     raise Exception("Settings file not set!")
 
-#-------------- API Clients --------------
-tokens: TOKENS = TOKENS()
-
-if not (tokens.mongodb_name and tokens.mongodb_url):
-    raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
-
-try:
-    mongodb = MongoClient(host=tokens.mongodb_url, serverSelectionTimeoutMS=5000)
-    mongodb.server_info()
-    if tokens.mongodb_name not in mongodb.list_database_names():
-        raise Exception(f"{tokens.mongodb_name} does not exist in your mongoDB!")
-    print("Successfully connected to MongoDB!")
-
-except Exception as e:
-    raise Exception("Not able to connect MongoDB! Reason:", e)
-
-SETTINGS_DB = mongodb[tokens.mongodb_name]['Settings']
-PLAYLISTS_DB = mongodb[tokens.mongodb_name]['Playlist']
-
 #--------------- Cache Var ---------------
+tokens: TOKENS = TOKENS()
 settings: Settings
+
+MONGO_DB: AsyncIOMotorClient
+SETTINGS_DB: AsyncIOMotorCollection
+PLAYLISTS_DB: AsyncIOMotorCollection
+
 ERROR_LOGS: dict[int, dict[int, str]] = {} #Stores error that not a Voicelink Exception
 LANGS: dict[str, dict[str, str]] = {} #Stores all the languages in ./langs
-GUILD_SETTINGS: dict[int, dict[str, Any]] = {} #Cache guild language
+SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
 LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs 
 PLAYLIST_NAME: dict[str, list[str]] = {} #Cache the user's playlist name
 
 #-------------- Vocard Functions --------------
-def get_settings(guild_id:int) -> dict:
-    settings = GUILD_SETTINGS.get(guild_id, None)
-    if not settings:
-        settings = SETTINGS_DB.find_one({"_id":guild_id})
-        if not settings:
-            SETTINGS_DB.insert_one({"_id":guild_id})
-            
-        GUILD_SETTINGS[guild_id] = settings or {}
-    return settings
-
-def update_settings(guild_id:int, data: dict, mode="set") -> bool:
-    settings = get_settings(guild_id)
-
-    for key, value in data.items():
-        if settings.get(key) != value:
-            match mode:
-                case "set":
-                    GUILD_SETTINGS[guild_id][key] = value
-                case "unset":
-                    GUILD_SETTINGS[guild_id].pop(key)
-                case _:
-                    return False
-                           
-    result = SETTINGS_DB.update_one({"_id":guild_id}, {f"${mode}":data})
-    return result.modified_count > 0
-
 def open_json(path: str) -> dict:
     try:
         with open(os.path.join(ROOT_DIR, path), encoding="utf8") as json_file:
@@ -88,18 +50,11 @@ def update_json(path: str, new_data: dict) -> None:
         json.dump(data, json_file, indent=4)
 
 def get_lang(guild_id:int, key:str) -> str:
-    lang = get_settings(guild_id).get("lang", "EN")
+    lang = SETTINGS_BUFFER.get(guild_id).get("lang", "EN")
     if lang in LANGS and not LANGS[lang]:
         LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
 
     return LANGS.get(lang, {}).get(key, "Language pack not found!")
-
-def init() -> None:
-    global settings
-
-    json = open_json("settings.json")
-    if json is not None:
-        settings = Settings(json)
 
 def langs_setup() -> None:
     for language in os.listdir(os.path.join(ROOT_DIR, "langs")):
@@ -167,6 +122,41 @@ def get_aliases(name: str) -> list:
 def check_roles() -> tuple[str, int, int]:
     return 'Normal', 5, 500
 
+async def get_settings(guild_id:int) -> dict[str, Any]:
+    settings = SETTINGS_BUFFER.get(guild_id, None)
+    if not settings:
+        settings = await SETTINGS_DB.find_one({"_id": guild_id})
+        if not settings:
+            await SETTINGS_DB.insert_one({"_id": guild_id})
+            
+        settings = SETTINGS_BUFFER[guild_id] = settings or {}
+    return settings
+
+async def update_settings(guild_id: int, data: dict[str, dict[str, Any]]) -> bool:
+    settings = await get_settings(guild_id)
+    for mode, action in data.items():
+        for key, value in action.items():
+            cursors = key.split(".")
+
+            nested_data = settings
+            for c in cursors[:-1]:
+                nested_data = nested_data.setdefault(c, {})
+
+            if mode == "$set":
+                try:
+                    nested_data[cursors[-1]] = value
+                except TypeError:
+                    nested_data[int(cursors[-1])] = value
+
+            elif mode == "$unset":
+                nested_data.pop(cursors[-1], None)
+
+            else:
+                return False
+
+    result = await SETTINGS_DB.update_one({"_id": guild_id}, data)
+    return result.modified_count > 0
+
 async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> None:
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
     if not author:
@@ -187,12 +177,12 @@ async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> N
     await view.wait()
     if view.value:
         try:
-            PLAYLISTS_DB.insert_one({'_id':author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
+            await PLAYLISTS_DB.insert_one({'_id':author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
         except:
             pass
             
 async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> bool:
-    user = PLAYLISTS_DB.find_one({"_id":user_id}, {"_id": 0})
+    user = await PLAYLISTS_DB.find_one({"_id":user_id}, {"_id": 0})
     if not user:
         return None
     if dType:
@@ -204,9 +194,9 @@ async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> bool:
 async def update_playlist(user_id:int, data:dict, *, mode:str="set", update_cache: bool=False) -> None:
     if update_cache:
         PLAYLIST_NAME.pop(str(user_id), None)
-    result = PLAYLISTS_DB.update_one({"_id":user_id}, {f"${mode}": data})
+    result = await PLAYLISTS_DB.update_one({"_id":user_id}, {f"${mode}": data})
     return result.modified_count > 0
 
 async def update_inbox(user_id:int, data:dict) -> bool:
-    result = PLAYLISTS_DB.update_one({"_id":user_id}, {"$push":{'inbox':data}})
+    result = await PLAYLISTS_DB.update_one({"_id":user_id}, {"$push":{'inbox':data}})
     return result.modified_count > 0

@@ -68,8 +68,11 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
     if check.connect == False or check.speak == False:
         raise VoicelinkException(func.get_lang(ctx.guild.id, 'noPermission'))
 
-    player: Player = await channel.connect(cls=Player(
-            ctx.bot if isinstance(ctx, commands.Context) else ctx.client, channel, ctx
+    settings = await func.get_settings(channel.guild.id)
+    player: Player = await channel.connect(
+        cls=Player(
+            ctx.bot if isinstance(ctx, commands.Context) else ctx.client,
+            channel, ctx, settings
         ))
     
     await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
@@ -95,6 +98,7 @@ class Player(VoiceProtocol):
         client: Optional[Client] = None, 
         channel: Optional[VoiceChannel] = None, 
         ctx: Union[commands.Context, Interaction] = None,
+        settings: dict[str, Any] = None
     ):
         self.client: Client = client
         self._bot: Client = client
@@ -104,7 +108,7 @@ class Player(VoiceProtocol):
         self._guild = channel.guild if channel else None
         self._ipc_connection: bool = False
 
-        self.settings: dict = func.get_settings(ctx.guild.id)
+        self.settings: dict = settings
         self.joinTime: float = round(time.time())
         self._volume: int = self.settings.get('volume', 100)
         self.queue: Queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.settings.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
@@ -403,8 +407,14 @@ class Player(VoiceProtocol):
         return False
     
     async def teardown(self):
-        timeNow = round(time.time())
-        func.update_settings(self.guild.id, {"lastActice": timeNow, "playTime": round(self.settings.get("playTime", 0) + ((timeNow - self.joinTime) / 60), 2)})
+        await func.update_settings(
+            self.guild.id,
+            {"$set": {
+                "lastActice": (timeNow := round(time.time())), 
+                "playTime": round(self.settings.get("playTime", 0) + ((timeNow - self.joinTime) / 60), 2)
+            }}
+        )
+        
         if self.is_ipc_connected:
             await self.send_ws({"op": "playerClose"})
 
