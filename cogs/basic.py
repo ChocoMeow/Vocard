@@ -32,16 +32,14 @@ from function import (
     time as ctime,
     formatTime,
     emoji_source,
-    requests_api,
     get_lang,
-    tokens,
     settings,
     cooldown_check,
     get_aliases
 )
 
 from addons import lyricsPlatform
-from views import SearchView, ListView, LinkView, LyricsView, ChapterView, HelpView
+from views import SearchView, ListView, LinkView, LyricsView, HelpView
 from validators import url
 
 searchPlatform = {
@@ -822,44 +820,6 @@ class Basic(commands.Cog):
 
         player.dj = member
         await ctx.send(player.get_msg('djswap').format(member))
-
-    @commands.hybrid_command(name="chapters", aliases=get_aliases("chapters"))
-    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def chapters(self, ctx: commands.Context):
-        "Lists all chapters of the currently playing song (if any)."
-        player: voicelink.Player = ctx.guild.voice_client
-        if not player:
-            return await ctx.send(get_lang(ctx.guild.id, 'noPlayer'), ephemeral=True)
-
-        if not player.is_user_join(ctx.author):
-            return await ctx.send(player.get_msg('notInChannel').format(ctx.author.mention, player.channel.mention), ephemeral=True)
-
-        if not (track := player.current):
-            return await ctx.send(player.get_msg('noTrackPlaying'), ephemeral=True)
-        if not player.is_privileged(ctx.author):
-            return await ctx.send(player.get_msg('missingPerms_pos'), ephemeral=True)
-
-        if track.source != 'youtube':
-            return await ctx.send(player.get_msg('chatpersNotSupport'), ephemeral=True)
-
-        request_uri = "https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id={videoId}&key={key}".format(videoId=track.identifier, key=tokens.youtube_api_key)
-
-        data = await requests_api(request_uri)
-        if not data:
-            return await ctx.send(player.get_msg('noChaptersFound'), ephemeral=True)
-
-        try:
-            desc = data['items'][0]['snippet']['description']
-        except KeyError:
-            return await ctx.send(player.get_msg('noChaptersFound'), ephemeral=True)
-
-        chapters = re.findall(
-            r"(?P<timestamp>\d+:\d+|\d+:\d+:\d+) (?P<desc>.+)", desc)
-        if not chapters:
-            return await ctx.send(player.get_msg('noChaptersFound'), ephemeral=True)
-
-        view = ChapterView(player, chapters, author=ctx.author)
-        view.response = await ctx.send(view=view)
 
     @commands.hybrid_command(name="autoplay", aliases=get_aliases("autoplay"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)

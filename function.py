@@ -167,14 +167,6 @@ def get_aliases(name: str) -> list:
 def check_roles() -> tuple[str, int, int]:
     return 'Normal', 5, 500
 
-async def requests_api(url: str) -> dict:
-    async with aiohttp.ClientSession() as session:
-        resp = await session.get(url)
-        if resp.status != 200:
-            return False
-
-        return await resp.json(encoding="utf-8")
-
 async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> None:
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
     if not author:
