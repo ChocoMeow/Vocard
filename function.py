@@ -1,10 +1,10 @@
-import discord, json, os
+import discord, json, os, copy
 
 from discord.ext import commands
 from datetime import datetime
 from time import strptime
 from io import BytesIO
-from typing import Optional, Union, Any
+from typing import Optional, Dict, Any
 from addons import Settings, TOKENS
 
 from motor.motor_asyncio import (
@@ -29,7 +29,19 @@ ERROR_LOGS: dict[int, dict[int, str]] = {} #Stores error that not a Voicelink Ex
 LANGS: dict[str, dict[str, str]] = {} #Stores all the languages in ./langs
 SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
 LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs 
-PLAYLIST_NAME: dict[str, list[str]] = {} #Cache the user's playlist name
+PLAYLISTS_BUFFER: dict[str, dict] = {}
+
+PLAYLIST_BASE: dict[str, Any] = {
+    'playlist': {
+        '200': {
+            'tracks':[],
+            'perms': {'read': [], 'write':[], 'remove': []},
+            'name':'Favourite',
+            'type':'playlist'
+        }
+    },
+    'inbox':[]
+}
 
 #-------------- Vocard Functions --------------
 def open_json(path: str) -> dict:
@@ -50,7 +62,7 @@ def update_json(path: str, new_data: dict) -> None:
         json.dump(data, json_file, indent=4)
 
 def get_lang(guild_id:int, key:str) -> str:
-    lang = SETTINGS_BUFFER.get(guild_id).get("lang", "EN")
+    lang = SETTINGS_BUFFER.get(guild_id, {}).get("lang", "EN")
     if lang in LANGS and not LANGS[lang]:
         LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
 
@@ -122,23 +134,12 @@ def get_aliases(name: str) -> list:
 def check_roles() -> tuple[str, int, int]:
     return 'Normal', 5, 500
 
-async def get_settings(guild_id:int) -> dict[str, Any]:
-    settings = SETTINGS_BUFFER.get(guild_id, None)
-    if not settings:
-        settings = await SETTINGS_DB.find_one({"_id": guild_id})
-        if not settings:
-            await SETTINGS_DB.insert_one({"_id": guild_id})
-            
-        settings = SETTINGS_BUFFER[guild_id] = settings or {}
-    return settings
-
-async def update_settings(guild_id: int, data: dict[str, dict[str, Any]]) -> bool:
-    settings = await get_settings(guild_id)
+async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, data: dict) -> bool:
     for mode, action in data.items():
         for key, value in action.items():
             cursors = key.split(".")
 
-            nested_data = settings
+            nested_data = tempStore
             for c in cursors[:-1]:
                 nested_data = nested_data.setdefault(c, {})
 
@@ -151,32 +152,55 @@ async def update_settings(guild_id: int, data: dict[str, dict[str, Any]]) -> boo
             elif mode == "$unset":
                 nested_data.pop(cursors[-1], None)
 
+            elif mode == "$inc":
+                nested_data[cursors[-1]] = nested_data.get(cursors[-1], 0) + value
+
+            elif mode == "$push":
+                nested_data.setdefault(cursors[-1], []).extend([value])
+
+            elif mode == "$pull":
+                if cursors[-1] in nested_data:
+                    value = value.get("$in", []) if isinstance(value, dict) else [value]
+                    nested_data[cursors[-1]] = [item for item in nested_data[cursors[-1]] if item not in value]
+                    
             else:
                 return False
 
-    result = await SETTINGS_DB.update_one({"_id": guild_id}, data)
+    result = await db.update_one(filter, data)
     return result.modified_count > 0
 
-async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> None:
 async def get_settings(guild_id:int) -> dict[str, Any]:
-
+    settings = SETTINGS_BUFFER.get(guild_id, None)
+    if not settings:
+        settings = await SETTINGS_DB.find_one({"_id": guild_id})
+        if not settings:
+            await SETTINGS_DB.insert_one({"_id": guild_id})
             
-async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> bool:
-    user = await PLAYLISTS_DB.find_one({"_id":user_id}, {"_id": 0})
-    if not user:
-        return None
-    if dType:
-        if dId and dType == "playlist":
-            return user[dType][dId] if dId in user[dType] else None
-        return user[dType]
-    return user
+        settings = SETTINGS_BUFFER[guild_id] = settings or {}
+    return settings
 
-async def update_playlist(user_id:int, data:dict, *, mode:str="set", update_cache: bool=False) -> None:
-    if update_cache:
-        PLAYLIST_NAME.pop(str(user_id), None)
-    result = await PLAYLISTS_DB.update_one({"_id":user_id}, {f"${mode}": data})
-    return result.modified_count > 0
+async def update_settings(guild_id: int, data: dict[str, dict[str, Any]]) -> bool:
+    settings = await get_settings(guild_id)
+    return await update_db(SETTINGS_DB, settings, {"_id": guild_id}, data)
+            
+async def get_playlist(user_id: int, d_type: Optional[str] = None, d_id: Optional[str] = None, need_copy: bool = True) -> Dict[str, Any]:
+    playlist = PLAYLISTS_BUFFER.get(user_id)
+    if not playlist:
+        playlist = await PLAYLISTS_DB.find_one({"_id": user_id})
+        if not playlist:
+            playlist = {"_id": user_id, **PLAYLIST_BASE}
+            await PLAYLISTS_DB.insert_one(playlist)
+    
+        PLAYLISTS_BUFFER[user_id] = playlist
 
-async def update_inbox(user_id:int, data:dict) -> bool:
-    result = await PLAYLISTS_DB.update_one({"_id":user_id}, {"$push":{'inbox':data}})
-    return result.modified_count > 0
+    if d_type:
+        if d_id and d_type == "playlist":
+            playlist = playlist[d_type].get(d_id)
+        else:
+            playlist = playlist.get(d_type)
+            
+    return copy.deepcopy(playlist) if need_copy else playlist
+
+async def update_playlist(user_id:int, data:dict) -> None:
+    playlist = await get_playlist(user_id, need_copy=False)
+    return await update_db(PLAYLISTS_DB, playlist, {"_id": user_id}, data)
