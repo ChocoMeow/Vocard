@@ -21,8 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
-import voicelink
+import discord, voicelink
 
 from io import StringIO
 from discord import app_commands
@@ -30,12 +29,10 @@ from discord.ext import commands
 from function import (
     time as ctime,
     get_playlist,
-    create_account,
     check_roles,
     update_playlist,
     update_inbox,
     get_lang,
-    PLAYLIST_NAME,
     settings,
     get_aliases,
     cooldown_check
@@ -122,8 +119,7 @@ class Playlists(commands.Cog, name="playlist"):
     async def play(self, ctx: commands.Context, name: str = None, value: int = None) -> None:
         "Play all songs from your favorite playlist."
         result = await check_playlist(ctx, name.lower() if name else None)
-        if not result:
-            return await create_account(ctx)
+
         if not result['playlist']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
         rank, max_p, max_t = check_roles()
@@ -162,8 +158,6 @@ class Playlists(commands.Cog, name="playlist"):
     async def view(self, ctx: commands.Context) -> None:
         "List all your playlist and all songs in your favourite playlist."
         user = await check_playlist(ctx, full=True)
-        if not user:
-            return await create_account(ctx)
         rank, max_p, max_t = check_roles()
 
         results = []
@@ -219,8 +213,6 @@ class Playlists(commands.Cog, name="playlist"):
         
         rank, max_p, max_t = check_roles()
         user = await check_playlist(ctx, full=True)
-        if not user:
-            return await create_account(ctx)
 
         if len(user) >= max_p:
             return await ctx.send(get_lang(ctx.guild.id, 'overPlaylistCreation').format(max_p), ephemeral=True)
@@ -244,8 +236,6 @@ class Playlists(commands.Cog, name="playlist"):
     async def delete(self, ctx: commands.Context, name: str):
         "Delete your custom playlist."
         result = await check_playlist(ctx, name.lower(), share=False)
-        if not result:
-            return await create_account(ctx)
         if not result['playlist']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
         if result['id'] == "200":
@@ -271,8 +261,6 @@ class Playlists(commands.Cog, name="playlist"):
         if member.bot:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistSendErrorBot'), ephemeral=True)
         result = await check_playlist(ctx, name.lower(), share=False)
-        if not result:
-            return await create_account(ctx)
         if not result['playlist']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
 
@@ -307,8 +295,6 @@ class Playlists(commands.Cog, name="playlist"):
         if name.lower() == newname.lower():
             return await ctx.send(get_lang(ctx.guild.id, 'playlistSameName'), ephemeral=True)
         user = await check_playlist(ctx, full=True)
-        if not user:
-            return await create_account(ctx)
         found, id = False, 0
         for data in user:
             if user[data]['name'].lower() == name.lower():
@@ -327,8 +313,6 @@ class Playlists(commands.Cog, name="playlist"):
     async def inbox(self, ctx: commands.Context) -> None:
         "Show your playlist invitation."
         user = await get_playlist(ctx.author.id)
-        if user is None:
-            return await create_account(ctx)
         if not user['inbox']:
             return await ctx.send(get_lang(ctx.guild.id, 'inboxNoMsg'), ephemeral=True)
 
@@ -359,8 +343,6 @@ class Playlists(commands.Cog, name="playlist"):
     async def add(self, ctx: commands.Context, name: str, query: str) -> None:
         "Add tracks in to your custom playlist."
         result = await check_playlist(ctx, name.lower(), share=False)
-        if not result:
-            return await create_account(ctx)
         if not result['playlist']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
         if result['playlist']['type'] in ['share', 'link']:
@@ -393,8 +375,6 @@ class Playlists(commands.Cog, name="playlist"):
     async def remove(self, ctx: commands.Context, name: str, position: int):
         "Remove song from your favorite playlist."
         result = await check_playlist(ctx, name.lower(), share=False)
-        if not result:
-            return await create_account(ctx)
         if not result['playlist']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
         if result['playlist']['type'] in ['link', 'share']:
@@ -413,8 +393,6 @@ class Playlists(commands.Cog, name="playlist"):
     async def clear(self, ctx: commands.Context, name: str) -> None:
         "Remove all songs from your favorite playlist."
         result = await check_playlist(ctx, name.lower(), share=False)
-        if not result:
-            return await create_account(ctx)
         if not result['playlist']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
 
@@ -463,7 +441,7 @@ class Playlists(commands.Cog, name="playlist"):
 
         temp = "!Remember do not change this file!\n------------->Info<-------------\nPlaylist: {} ({})\nRequester: {} ({})\nTracks: {} - {}\n------------>Tracks<------------\n".format(
             tracks['name'], result['playlist']['type'],
-            ctx.author.name, ctx.author.id,
+            ctx.author.display_name, ctx.author.id,
             len(tracks['tracks']), ctime(total_length)
         ) + temp
         temp += raw
@@ -480,8 +458,6 @@ class Playlists(commands.Cog, name="playlist"):
         
         rank, max_p, max_t = check_roles()
         user = await check_playlist(ctx, full=True)
-        if not user:
-            return await create_account(ctx)
 
         if len(user) >= max_p:
             return await ctx.send(get_lang(ctx.guild.id, 'overPlaylistCreation').format(max_p), ephemeral=True)

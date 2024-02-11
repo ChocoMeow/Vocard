@@ -30,7 +30,6 @@ from . import ButtonOnCooldown
 from function import (
     get_playlist,
     update_playlist,
-    create_account,
     check_roles
 )
 
@@ -198,8 +197,6 @@ class Add(ControlButton):
         if track.is_stream:
             return await self.send(interaction, self.player.get_msg("playlistAddError"))
         user = await get_playlist(interaction.user.id, 'playlist')
-        if not user:
-            return await create_account(interaction)
         rank, max_p, max_t = check_roles()
         if len(user['200']['tracks']) >= max_t:
             return await self.send(interaction, self.player.get_msg("playlistlimited").format(max_t), ephemeral=True)

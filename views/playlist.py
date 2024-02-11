@@ -54,20 +54,6 @@ class Select_playlist(discord.ui.Select):
         self.view.current_page = 1
         await interaction.response.edit_message(embed=self.view.build_embed())
 
-class agree(discord.ui.Button):
-    def __init__(self) -> None:
-        self.view: CreateView
-        super().__init__(label="Agree", style=discord.ButtonStyle.green)
-    
-    async def callback(self, interaction: discord.Interaction) -> None:
-        self.label = "Created"
-        self.disabled = True
-        self.style=discord.ButtonStyle.primary
-        embed = discord.Embed(description="Your account has been successfully created", color=0x55e27f)
-        await interaction.response.edit_message(embed=embed, view=self.view)
-        self.view.value = True
-        self.view.stop()
-
 class PlaylistView(discord.ui.View):
     def __init__(
             self,
@@ -171,20 +157,3 @@ class PlaylistView(discord.ui.View):
     async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         await self.response.delete()
         self.stop()
-
-class CreateView(discord.ui.View):
-    def __init__(self) -> None:
-        super().__init__(timeout=20)
-        self.value: bool = None
-        self.response: discord.Message = None
-
-        self.add_item(agree())
-        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.settings.invite_link))
-
-    async def on_timeout(self) -> None:
-        for child in self.children:
-            child.disabled = True
-        try:
-            await self.response.edit(view=self)
-        except:
-            pass

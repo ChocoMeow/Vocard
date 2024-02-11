@@ -158,28 +158,8 @@ async def update_settings(guild_id: int, data: dict[str, dict[str, Any]]) -> boo
     return result.modified_count > 0
 
 async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> None:
-    author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
-    if not author:
-        return 
-    from views import CreateView
-    view = CreateView()
-    embed=discord.Embed(title="Do you want to create an account on Vocard?", color=settings.embed_color)
-    embed.description = f"> Plan: `Default` | `5` Playlist | `500` tracks in each playlist."
-    embed.add_field(name="Terms of Service:", value="‌    ➥ We assure you that all your data on Vocard will not be disclosed to any third party\n"
-                                                    "‌    ➥ We will not perform any data analysis on your data\n"
-                                                    "‌    ➥ You have the right to immediately stop the services we offer to you\n"
-                                                    "‌    ➥ Please do not abuse our services, such as affecting other users\n", inline=False)
-    if isinstance(ctx, commands.Context):
-        view.response = await ctx.reply(embed=embed, view=view, ephemeral=True)
-    else:
-        view.response = await ctx.response.send_message(embed=embed, view=view, ephemeral=True)
+async def get_settings(guild_id:int) -> dict[str, Any]:
 
-    await view.wait()
-    if view.value:
-        try:
-            await PLAYLISTS_DB.insert_one({'_id':author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
-        except:
-            pass
             
 async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> bool:
     user = await PLAYLISTS_DB.find_one({"_id":user_id}, {"_id": 0})
