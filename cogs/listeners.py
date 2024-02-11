@@ -91,18 +91,19 @@ class Listeners(commands.Cog):
         elif before.channel and after.channel:
             if after.channel.id != player.channel.id:
                 is_joined = False
-
-        await self.bot.ipc.send({
-            "op": "updateGuild",
-            "user": {
-                "user_id": member.id,
-                "avatar_url": member.display_avatar.url,
-                "name": member.name,
-            },
-            "channel_name": member.voice.channel.name if is_joined else "",
-            "guild_id": guild,
-            "is_joined": is_joined
-        })
+                
+        if player.is_ipc_connected:
+            await self.bot.ipc.send({
+                "op": "updateGuild",
+                "user": {
+                    "user_id": member.id,
+                    "avatar_url": member.display_avatar.url,
+                    "name": member.name,
+                },
+                "channel_name": member.voice.channel.name if is_joined else "",
+                "guild_id": guild,
+                "is_joined": is_joined
+            })
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Listeners(bot))
