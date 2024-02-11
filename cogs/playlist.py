@@ -71,16 +71,19 @@ async def check_playlist(ctx: commands.Context, name: str = None, full: bool = F
             return {'playlist': playlist, 'position': index, 'id': data}
     return {'playlist': None, 'position': None, 'id': None}
 
-async def search_playlist(url: str, requester: discord.Member, timeNeed=True):
+async def search_playlist(url: str, requester: discord.Member, time_needed: bool = True) -> dict:
     try:
         tracks = await voicelink.NodePool.get_node().get_tracks(url, requester=requester)
         tracks = {"name": tracks.name, "tracks": tracks.tracks}
-        if timeNeed:
-            time = sum([track for track in tracks["tracks"]])
+        if time_needed:
+            time = sum([track.length for track in tracks["tracks"]])
     except:
-        return None
+        return {}
     
-    return tracks | ({'time': ctime(time)} if timeNeed else {})
+    if time_needed:
+        tracks["time"] = ctime(time)
+
+    return tracks
 
 class Playlists(commands.Cog, name="playlist"):
     def __init__(self, bot: commands.Bot) -> None:
@@ -187,9 +190,11 @@ class Playlists(commands.Cog, name="playlist"):
             except:
                 results.append({'emoji': '⛔', 'id': data, 'time': '00:00', 'name': 'Error', 'tracks': [], 'type': 'error'})
 
+        title = get_lang(ctx.guild.id, 'playlistViewHeaders')
+
         embed = discord.Embed(
             title=get_lang(ctx.guild.id, 'playlistViewTitle').format(ctx.author.display_name),
-            description='```%0s %4s %10s %10s %10s\n' % tuple(get_lang(ctx.guild.id, 'playlistViewHeaders')) + '\n'.join('%0s %3s. %10s %10s %10s' % (info['emoji'], info['id'], f"[{info['time']}]", info['name'], len(info['tracks'])) for info in results) + '```',
+            description=f'```{title[0]:>0} {title[1]:>4} {title[2]:>10} {title[3]:>10} {title[4]:>10}\n' + '\n'.join(f"""{info['emoji']} {info['id']:>4}. {f'''[{info["time"]}]''':>10} {info['name']:>10} {f'''{len(info['tracks'])}/{max_t}''':>10}""" for info in results) + '```',
             color=settings.embed_color
         )
         
