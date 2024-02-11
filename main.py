@@ -68,6 +68,7 @@ class Vocard(commands.Bot):
     async def setup_hook(self) -> None:
         func.langs_setup()
         
+        # Connecting to MongoDB
         await self.connect_db()
 
         # Loading all the module in `cogs` folder
@@ -145,6 +146,8 @@ async def get_prefix(bot, message: discord.Message):
     settings = await func.get_settings(message.guild.id)
     return settings.get("prefix", func.settings.bot_prefix)
 
+# Loading settings
+func.settings = Settings(func.open_json("settings.json"))
 
 # Setup the bot object
 intents = discord.Intents.default()

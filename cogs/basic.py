@@ -499,7 +499,7 @@ class Basic(commands.Cog):
 
         temp = "!Remember do not change this file!\n------------->Info<-------------\nGuild: {} ({})\nRequester: {} ({})\nTracks: {} - {}\n------------>Tracks<------------\n".format(
             ctx.guild.name, ctx.guild.id,
-            ctx.author.name, ctx.author.id,
+            ctx.author.display_name, ctx.author.id,
             len(tracks), ctime(total_length)
         ) + temp
         temp += raw

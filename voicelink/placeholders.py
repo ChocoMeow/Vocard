@@ -72,7 +72,7 @@ class Placeholders:
     
     @ensure_track
     def requester_name(self, track: Track) -> str:
-        return track.requester.name if track.requester else self.bot.user.name
+        return track.requester.name if track.requester else self.bot.user.display_name
     
     @ensure_track
     def requester_avatar(self, track: Track) -> str:

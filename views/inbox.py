@@ -57,7 +57,7 @@ class InboxView(discord.ui.View):
 
     def build_embed(self) -> discord.Embed:
         embed=discord.Embed(
-            title=f"📭 All {self.author.name}'s Inbox",
+            title=f"📭 All {self.author.display_name}'s Inbox",
             description=f'Max Messages: {len(self.inbox)}/10' + '```%0s %2s %20s\n' % ("   ", "ID:", "Title:") + '\n'.join('%0s %2s. %35s'% ('✉️' if mail['type'] == 'invite' else '📢', index, mail['title'][:35] + "...") for index, mail in enumerate(self.inbox, start=1)) + '```',
             color=func.settings.embed_color
         )
