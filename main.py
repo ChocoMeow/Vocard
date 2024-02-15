@@ -55,8 +55,6 @@ class Vocard(commands.Bot):
         try:
             func.MONGO_DB = AsyncIOMotorClient(host=db_url, serverSelectionTimeoutMS=5000)
             await func.MONGO_DB.server_info()
-            if db_name not in await func.MONGO_DB.list_database_names():
-                raise Exception(f"{db_name} does not exist in your mongoDB!")
             print("Successfully connected to MongoDB!")
 
         except Exception as e:
