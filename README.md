@@ -140,7 +140,8 @@ MONGODB_NAME = Vocard
         "default_buttons": [
             ["back", "resume", "skip", {"stop": "red"}, "add"],
             ["tracks"]
-        ]
+        ],
+        "disableButtonText": false
     },
     "cooldowns": {
         "connect": [2, 30],

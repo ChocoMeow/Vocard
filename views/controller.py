@@ -46,7 +46,9 @@ class ControlButton(discord.ui.Button):
         **kwargs
     ):
         self.player: voicelink.Player = player
-        super().__init__(label=player.get_msg(label) if label else None, **kwargs)
+        
+        disable_button_text = not func.settings.controller.get("disableButtonText", False)
+        super().__init__(label=player.get_msg(label) if label and disable_button_text else None, **kwargs)
 
     async def send(self, interaction: discord.Interaction, content: str, *, ephemeral: bool = False) -> None:
         stay = self.player.settings.get("controller_msg", True)
