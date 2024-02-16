@@ -36,3 +36,4 @@ from .pool import *
 from .queue import *
 from .placeholders import Placeholders, build_embed
 from .formatter import encode, decode
+from .spotify import *

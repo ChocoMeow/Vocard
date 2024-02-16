@@ -11,7 +11,7 @@ class Track:
         "uri"
     )
 
-    def __init__(self, data: dict, image=None) -> None:
+    def __init__(self, data: dict, image = None) -> None:
         self.name: str = data.get('name', 'Unknown')
         self.artists: str = ", ".join(artist["name"] for artist in data.get('artists'))
         self.artist_id: list[str] = [artist['id'] for artist in data.get('artists')]
