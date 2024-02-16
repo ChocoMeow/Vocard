@@ -92,8 +92,8 @@ class Basic(commands.Cog):
             
             node = voicelink.NodePool.get_node()
             if node and node.spotify_client:
-                tracks: list[voicelink.spotify.Track] = await node.spotify_client.trackSearch(current)
-                return [app_commands.Choice(name=f"{track.artists} - {track.name}", value=f"{track.artists} - {track.name}") for track in tracks]
+                tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
+                return [app_commands.Choice(name=f"{track.author} - {track.title}", value=f"{track.author} - {track.title}") for track in tracks]
                 
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
@@ -211,7 +211,7 @@ class Basic(commands.Cog):
             query_platform = searchPlatform.get(platform, 'ytsearch') + f":{query}"
             tracks = await player.get_tracks(query=query_platform, requester=ctx.author)
         else:
-            tracks = await player.spotifySearch(query=query, requester=ctx.author)
+            tracks = await player.node.spotifySearch(query=query, requester=ctx.author)
 
         if not tracks:
             return await ctx.send(player.get_msg('noTrackFound'))

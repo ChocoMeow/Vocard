@@ -434,7 +434,7 @@ class Player(VoiceProtocol):
         *,
         requester: Member,
         search_type: SearchType = SearchType.ytsearch
-    ):
+    ) -> Union[List[Track], Playlist]:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
         If you passed in Spotify API credentials when you created the node,
@@ -445,22 +445,6 @@ class Player(VoiceProtocol):
         Context object on any track you search.
         """
         return await self._node.get_tracks(query, requester=requester, search_type=search_type)
-
-    async def spotifySearch(self, query: str, *, requester: Member) -> list:
-
-        try:
-            tracks = await self._node._spotify_client.trackSearch(query=query)
-        except Exception as _:
-            raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
-            
-        return [ Track(
-                    track_id=None,
-                    requester=requester,
-                    search_type=SearchType.ytsearch,
-                    spotify_track=track,
-                    info=track.to_dict()
-                )
-                for track in tracks ]
 
     async def connect(self, *, timeout: float, reconnect: bool, self_deaf: bool = True, self_mute: bool = False):
         await self.guild.change_voice_state(channel=self.channel, self_deaf=True, self_mute=self_mute)

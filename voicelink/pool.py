@@ -30,7 +30,7 @@ import aiohttp
 
 from discord import Client, Member
 from discord.ext.commands import Bot
-from typing import Dict, Optional, TYPE_CHECKING, Union
+from typing import Dict, Optional, TYPE_CHECKING, Union, List
 from urllib.parse import quote
 
 from . import (
@@ -375,7 +375,7 @@ class Node:
         *,
         requester: Member,
         search_type: SearchType = SearchType.ytsearch
-    ) -> Union[Track, Playlist]:
+    ) -> Union[List[Track], Playlist]:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
            If you passed in Spotify API credentials, you can also pass in a
@@ -505,6 +505,29 @@ class Node:
                     requester=requester
                 )
             ]
+    
+    async def spotifySearch(self, query: str, *, requester: Member) -> Optional[List[Track]]:
+        try:
+            if not self.spotify_client:
+                raise InvalidSpotifyClientAuthorization(
+                "You did not provide proper Spotify client authorization credentials. "
+                "If you would like to use the Spotify searching feature, "
+                "please obtain Spotify API credentials here: https://developer.spotify.com/"
+            )
+                
+            tracks = await self._spotify_client.trackSearch(query=query)
+        except Exception as _:
+            raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
+            
+        return [ 
+            Track(
+                track_id=None,
+                requester=requester,
+                search_type=SearchType.ytsearch,
+                spotify_track=track,
+                info=track.to_dict()
+            )
+            for track in tracks ]
 
 class NodePool:
     """The base class for the node pool.
