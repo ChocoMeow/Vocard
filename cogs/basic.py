@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, voicelink, re, aiohttp, json
+import discord, voicelink, re
 
 from io import StringIO
 from discord import app_commands
@@ -87,18 +87,13 @@ class Basic(commands.Cog):
 
     async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
         if current:
-            async with aiohttp.ClientSession() as session:
-                try:
-                    async with session.get(f"http://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q={current}") as resp:
-                        if resp.status != 200:
-                            return []
-
-                        raw_content = await resp.read()
-                        data = raw_content.decode("utf-8")
-                        return [app_commands.Choice(name=result, value=result) for result in json.loads(data)[1]]
-
-                except (aiohttp.ClientError, json.JSONDecodeError):
-                    return []
+            if voicelink.pool.URL_REGEX.match(current):
+                return
+            
+            node = voicelink.NodePool.get_node()
+            if node and node.spotify_client:
+                tracks: list[voicelink.spotify.Track] = await node.spotify_client.trackSearch(current)
+                return [app_commands.Choice(name=track.name, value=f"{track.name} - {track.artists}") for track in tracks]
                 
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
