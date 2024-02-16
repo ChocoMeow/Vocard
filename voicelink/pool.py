@@ -137,7 +137,7 @@ class Node:
     @property
     def spotify_client(self) -> Optional[spotify.Client]:
         if not self._spotify_client:
-            if not self._spotify_client_id and not self._spotify_client_secret:
+            if not self._spotify_client_id or not self._spotify_client_secret:
                 return None
             
             self._spotify_client = spotify.Client(
