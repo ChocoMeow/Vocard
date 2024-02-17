@@ -21,9 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from .pool import NodePool
-from discord import Client
+from __future__ import annotations
 
+from .pool import NodePool
+from discord.ext.commands import Bot
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .player import Player
 
 class VoicelinkEvent:
     """The base class for all events dispatched by a node. 
@@ -37,7 +42,7 @@ class VoicelinkEvent:
     name = "event"
     handler_args = ()
 
-    def dispatch(self, bot: Client):
+    def dispatch(self, bot: Bot):
         bot.dispatch(f"voicelink_{self.name}", *self.handler_args)
 
 
@@ -47,8 +52,8 @@ class TrackStartEvent(VoicelinkEvent):
     """
     name = "track_start"
 
-    def __init__(self, data: dict, player):
-        self.player = player
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
         self.track = self.player._current
 
         # on_voicelink_track_start(player, track)
@@ -64,8 +69,8 @@ class TrackEndEvent(VoicelinkEvent):
     """
     name = "track_end"
 
-    def __init__(self, data: dict, player):
-        self.player = player
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
         self.track = self.player._ending_track
         self.reason: str = data["reason"]
 
@@ -86,8 +91,8 @@ class TrackStuckEvent(VoicelinkEvent):
     """
     name = "track_stuck"
 
-    def __init__(self, data: dict, player):
-        self.player = player
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
         self.track = self.player._ending_track
         self.threshold: float = data["thresholdMs"]
 
@@ -105,8 +110,8 @@ class TrackExceptionEvent(VoicelinkEvent):
     """
     name = "track_exception"
 
-    def __init__(self, data: dict, player):
-        self.player = player
+    def __init__(self, data: dict, player: Player):
+        self.player: Player = player
         self.track = self.player._ending_track
         self.exception: dict = data.get("exception", {
             "severity": "",
