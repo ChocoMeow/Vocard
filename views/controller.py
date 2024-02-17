@@ -28,8 +28,8 @@ import function as func
 from discord.ext import commands
 from . import ButtonOnCooldown
 from function import (
-    get_playlist,
-    update_playlist,
+    get_user,
+    update_user,
     check_roles
 )
 
@@ -198,14 +198,14 @@ class Add(ControlButton):
             return await self.send(interaction, self.player.get_msg("noTrackPlaying"))
         if track.is_stream:
             return await self.send(interaction, self.player.get_msg("playlistAddError"))
-        user = await get_playlist(interaction.user.id, 'playlist')
+        user = await get_user(interaction.user.id, 'playlist')
         rank, max_p, max_t = check_roles()
         if len(user['200']['tracks']) >= max_t:
             return await self.send(interaction, self.player.get_msg("playlistlimited").format(max_t), ephemeral=True)
 
         if track.track_id in user['200']['tracks']:
             return await self.send(interaction, self.player.get_msg("playlistrepeated"), ephemeral=True)
-        respond = await update_playlist(interaction.user.id, {'playlist.200.tracks': track.track_id}, mode="push")
+        respond = await update_user(interaction.user.id, {"$push": {'playlist.200.tracks': track.track_id}})
         if respond:
             await self.send(interaction, self.player.get_msg("playlistAdded").format(track.title, interaction.user.mention, user['200']['name']), ephemeral=True)
         else:

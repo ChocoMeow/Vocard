@@ -42,10 +42,12 @@ class Listeners(commands.Cog):
         await self.bot.wait_until_ready()
         for n in func.settings.nodes.values():
             try:
-                await self.voicelink.create_node(bot=self.bot, 
-                                                 spotify_client_id=func.tokens.spotify_client_id, 
-                                                 spotify_client_secret=func.tokens.spotify_client_secret,
-                                                 **n)
+                await self.voicelink.create_node(
+                    bot=self.bot, 
+                    spotify_client_id=func.tokens.spotify_client_id, 
+                    spotify_client_secret=func.tokens.spotify_client_secret,
+                    **n
+                )
             except Exception as e:
                 print(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
 

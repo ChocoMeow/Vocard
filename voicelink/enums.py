@@ -31,11 +31,11 @@ class LoopType(Enum):
         LoopType.queue: 3
 
     """
-
+    
     off = auto()
     track = auto()
     queue = auto()
-
+    
 class SearchType(Enum):
     """The enum for the different search types for Voicelink.
        This feature is exclusively for the Spotify search feature of Voicelink.
@@ -50,6 +50,7 @@ class SearchType(Enum):
        SearchType.scsearch searches using SoundCloud,
        which is an alternative to YouTube or YouTube Music.
     """
+    
     ytsearch = "ytsearch"
     ytmsearch = "ytmsearch"
     scsearch = "scsearch"

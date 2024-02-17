@@ -37,6 +37,7 @@ class Select_playlist(discord.ui.Select):
 
         super().__init__(
             placeholder="Select a playlist to view ..",
+            custom_id="selector",
             options=[discord.SelectOption(emoji='🌎', label='All Playlist')] + 
                 [
                     discord.SelectOption(emoji=playlist['emoji'], label=f'{index}. {playlist["name"]}', description=f"{playlist['time']} · {playlist['type']}") 
@@ -47,12 +48,14 @@ class Select_playlist(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction) -> None:
         if self.values[0] == 'All Playlist':
             self.view.current = None
-            return await interaction.response.edit_message(embed=self.view.viewEmbed)
+            self.view.toggle_btn(True)
+            return await interaction.response.edit_message(embed=self.view.viewEmbed, view=self.view)
         
         self.view.current = self.view.results[int(self.values[0].split(". ")[0]) - 1]
         self.view.page = ceil(len(self.view.current['tracks']) / 7)
         self.view.current_page = 1
-        await interaction.response.edit_message(embed=self.view.build_embed())
+        self.view.toggle_btn(False)
+        await interaction.response.edit_message(embed=self.view.build_embed(), view=self.view)
 
 class PlaylistView(discord.ui.View):
     def __init__(
@@ -80,6 +83,11 @@ class PlaylistView(discord.ui.View):
     async def on_error(self, error, item, interaction) -> None:
         return
 
+    def toggle_btn(self, action: bool) -> None:
+        for child in self.children:
+            if child.custom_id not in ("delete", "selector"):
+                child.disabled = action
+        
     def build_embed(self) -> discord.Embed:
         offset: int = self.current_page * 7
         tracks: list[Track] = self.current['tracks'][(offset-7):offset]
@@ -117,7 +125,7 @@ class PlaylistView(discord.ui.View):
         except:
             pass
 
-    @discord.ui.button(label='<<', style=discord.ButtonStyle.grey)
+    @discord.ui.button(label='<<', style=discord.ButtonStyle.grey, disabled=True)
     async def fast_back_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not self.current:
             return 
@@ -126,7 +134,7 @@ class PlaylistView(discord.ui.View):
             return await interaction.response.edit_message(embed=self.build_embed())
         await interaction.response.defer()
 
-    @discord.ui.button(label='Back', style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label='Back', style=discord.ButtonStyle.blurple, disabled=True)
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not self.current:
             return 
@@ -135,7 +143,7 @@ class PlaylistView(discord.ui.View):
             return await interaction.response.edit_message(embed=self.build_embed())
         await interaction.response.defer()
 
-    @discord.ui.button(label='Next', style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label='Next', style=discord.ButtonStyle.blurple, disabled=True)
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not self.current:
             return 
@@ -144,7 +152,7 @@ class PlaylistView(discord.ui.View):
             return await interaction.response.edit_message(embed=self.build_embed())
         await interaction.response.defer()
 
-    @discord.ui.button(label='>>', style=discord.ButtonStyle.grey)
+    @discord.ui.button(label='>>', style=discord.ButtonStyle.grey, disabled=True)
     async def fast_next_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not self.current:
             return 
@@ -153,7 +161,7 @@ class PlaylistView(discord.ui.View):
             return await interaction.response.edit_message(embed=self.build_embed())
         await interaction.response.defer()
 
-    @discord.ui.button(emoji='🗑️', style=discord.ButtonStyle.red)
+    @discord.ui.button(emoji='🗑️', custom_id="delete", style=discord.ButtonStyle.red)
     async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         await self.response.delete()
         self.stop()

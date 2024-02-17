@@ -28,9 +28,9 @@ from discord import app_commands
 from discord.ext import commands
 from function import (
     time as ctime,
-    get_playlist,
+    get_user,
+    update_user,
     check_roles,
-    update_playlist,
     get_lang,
     settings,
     get_aliases,
@@ -46,13 +46,14 @@ def assign_playlistId(existed: list) -> str:
             return str(i)
 
 async def check_playlist_perms(user_id: int, author_id: int, d_id: str) -> dict:
-    playlist = await get_playlist(author_id, 'playlist', d_id)
+    playlist = await get_user(author_id, 'playlist')
+    playlist = playlist.get(d_id)
     if not playlist or user_id not in playlist['perms']['read']:
         return {}
     return playlist
 
 async def check_playlist(ctx: commands.Context, name: str = None, full: bool = False, share: bool = True) -> dict:
-    user = await get_playlist(ctx.author.id, 'playlist')
+    user = await get_user(ctx.author.id, 'playlist')
 
     await ctx.defer()
     if full:
@@ -91,7 +92,7 @@ class Playlists(commands.Cog, name="playlist"):
         self.description = "This is the Vocard playlist system. You can save your favorites and use Vocard to play on any server."
 
     async def playlist_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
-        playlists_raw: dict[str, dict] = await get_playlist(interaction.user.id, 'playlist')
+        playlists_raw: dict[str, dict] = await get_user(interaction.user.id, 'playlist')
         playlists = [value['name'] for value in playlists_raw.values()] if playlists_raw else []
         if current:
             return [app_commands.Choice(name=p, value=p) for p in playlists if current in p]
@@ -171,7 +172,7 @@ class Playlists(commands.Cog, name="playlist"):
                     if share := playlist['type'] == 'share':
                         playlist = await check_playlist_perms(ctx.author.id, playlist['user'], playlist['referId'])
                         if not playlist:
-                            await update_playlist(ctx.author.id, {"$unset": {f"playlist.{data}": 1}})
+                            await update_user(ctx.author.id, {"$unset": {f"playlist.{data}": 1}})
                             continue
                         
                         if playlist['type'] == 'link':
@@ -188,18 +189,26 @@ class Playlists(commands.Cog, name="playlist"):
                     results.append({'emoji': ('🔒' if max_p < index else ('🤝' if share else '❤️')), 'id': data, 'time': ctime(time), 'name': user[data]['name'], 'tracks': playlist['tracks'], 'perms': playlist['perms'], 'owner': user[data].get('user', None), 'type': user[data]['type']})
         
             except:
-                results.append({'emoji': '⛔', 'id': data, 'time': '00:00', 'name': 'Error', 'tracks': [], 'type': 'error'})
+                results.append({'emoji': '⛔', 'id': data, 'time': '--:--', 'name': 'Error', 'tracks': [], 'type': 'error'})
 
-        title = get_lang(ctx.guild.id, 'playlistViewHeaders')
+        title = get_lang(ctx.guild.id, 'playlistViewHeaders').split(",")
 
         embed = discord.Embed(
             title=get_lang(ctx.guild.id, 'playlistViewTitle').format(ctx.author.display_name),
-            description=f'```{title[0]:>0} {title[1]:>4} {title[2]:>10} {title[3]:>10} {title[4]:>10}\n' + '\n'.join(f"""{info['emoji']} {info['id']:>4}. {f'''[{info["time"]}]''':>10} {info['name']:>10} {f'''{len(info['tracks'])}/{max_t}''':>10}""" for info in results) + '```',
+            description='```prolog\n   %4s %10s %10s %10s\n' % tuple(title),
             color=settings.embed_color
         )
         
-        embed.add_field(name=get_lang(ctx.guild.id, 'playlistMaxP'), value=f"➥ {len(user)}/{max_p}", inline=True)
-        embed.add_field(name=get_lang(ctx.guild.id, 'playlistMaxT'), value=f"➥ {max_t}", inline=True)
+        for index in range(max_p):
+            try:
+                info = results[index]
+                track_info = (info['emoji'], info['id'], f"[{info['time']}]", info['name'], f"{len(info['tracks'])}/{max_t}")
+            except IndexError:
+                track_info = ("🎵", "-"*3, "[--:--]", "-"*6, f"-/{max_t}")
+
+            embed.description += '%0s %3s. %10s %10s %10s\n' % track_info
+            
+        embed.description += "```"
         embed.set_footer(text=get_lang(ctx.guild.id, 'playlistFooter'))
 
         view = PlaylistView(embed, results, ctx.author)
@@ -231,7 +240,7 @@ class Playlists(commands.Cog, name="playlist"):
                 return await ctx.send(get_lang(ctx.guild.id, 'playlistNotInvaildUrl'), ephemeral=True)
 
         data = {'uri': link, 'perms': {'read': []}, 'name': name, 'type': 'link'} if link else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-        await update_playlist(ctx.author.id, {"$set": {f"playlist.{assign_playlistId([data for data in user])}": data}})
+        await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlistId([data for data in user])}": data}})
         await ctx.send(get_lang(ctx.guild.id, 'playlistCreated').format(name))
 
     @playlist.command(name="delete", aliases=get_aliases("delete"))
@@ -247,9 +256,9 @@ class Playlists(commands.Cog, name="playlist"):
             return await ctx.send(get_lang(ctx.guild.id, 'playlistDeleteError'), ephemeral=True)
 
         if result['playlist']['type'] == 'share':
-            await update_playlist(result['playlist']['user'], {"$pull": {f"playlist.{result['playlist']['referId']}.perms.read": ctx.author.id}})
+            await update_user(result['playlist']['user'], {"$pull": {f"playlist.{result['playlist']['referId']}.perms.read": ctx.author.id}})
 
-        await update_playlist(ctx.author.id, {"$unset": {f"playlist.{result['id']}": 1}})
+        await update_user(ctx.author.id, {"$unset": {f"playlist.{result['id']}": 1}})
         return await ctx.send(get_lang(ctx.guild.id, 'playlistRemove').format(result['playlist']['name']))
 
     @playlist.command(name="share", aliases=get_aliases("share"))
@@ -274,7 +283,7 @@ class Playlists(commands.Cog, name="playlist"):
         if member.id in result['playlist']['perms']['read']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistShare').format(member), ephemeral=True)
 
-        receiver = await get_playlist(member.id)
+        receiver = await get_user(member.id)
         if not receiver:
             return await ctx.send(get_lang(ctx.guild.id, 'noPlaylistAcc').format(member))
         for mail in receiver['inbox']:
@@ -283,7 +292,7 @@ class Playlists(commands.Cog, name="playlist"):
         if len(receiver['inbox']) >= 10:
             return await ctx.send(get_lang(ctx.guild.id, 'inboxFull').format(member), ephemeral=True)
 
-        await update_playlist(
+        await update_user(
             member.id, 
             {"$push": {"inbox": {
                 'sender': ctx.author.id, 
@@ -320,14 +329,14 @@ class Playlists(commands.Cog, name="playlist"):
         if not found:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
 
-        await update_playlist(ctx.author.id, {"$set": {f'playlist.{id}.name': newname}})
+        await update_user(ctx.author.id, {"$set": {f'playlist.{id}.name': newname}})
         await ctx.send(get_lang(ctx.guild.id, 'playlistRenamed').format(name, newname))
 
     @playlist.command(name="inbox", aliases=get_aliases("inbox"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def inbox(self, ctx: commands.Context) -> None:
         "Show your playlist invitation."
-        user = await get_playlist(ctx.author.id)
+        user = await get_user(ctx.author.id)
         rank, max_p, max_t = check_roles()
 
         if not user['inbox']:
@@ -344,7 +353,7 @@ class Playlists(commands.Cog, name="playlist"):
         update_data, dId = {}, {dId for dId in user["playlist"]}
         for data in view.newplaylist[:(max_p - len(user['playlist']))]:
             addId = assign_playlistId(dId)
-            await update_playlist(data['sender'], {"$push": {f"playlist.{data['referId']}.perms.read": ctx.author.id}})
+            await update_user(data['sender'], {"$push": {f"playlist.{data['referId']}.perms.read": ctx.author.id}})
             update_data[f'playlist.{addId}'] = {
                 'user': data['sender'], 'referId': data['referId'],
                 'name': f"Share{data['time'].strftime('%M%S')}", 'type': 'share'
@@ -353,7 +362,7 @@ class Playlists(commands.Cog, name="playlist"):
             dId.add(addId)
 
         if update_data:
-            await update_playlist(ctx.author.id, {"$set": update_data})
+            await update_user(ctx.author.id, {"$set": update_data})
 
     @playlist.command(name="add", aliases=get_aliases("add"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -384,7 +393,7 @@ class Playlists(commands.Cog, name="playlist"):
         if results[0].is_stream:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistStream'), ephemeral=True)
 
-        await update_playlist(ctx.author.id, {"$push": {f'playlist.{result["id"]}.tracks': results[0].track_id}})
+        await update_user(ctx.author.id, {"$push": {f'playlist.{result["id"]}.tracks': results[0].track_id}})
         await ctx.send(get_lang(ctx.guild.id, 'playlistAdded').format(results[0].title, ctx.author, result['playlist']['name']))
 
     @playlist.command(name="remove", aliases=get_aliases("remove"))
@@ -404,7 +413,7 @@ class Playlists(commands.Cog, name="playlist"):
         if not 0 < position <= len(result['playlist']['tracks']):
             return await ctx.send(get_lang(ctx.guild.id, 'playlistPositionNotFound').format(position, name))
 
-        await update_playlist(ctx.author.id, {"$pull": {f'playlist.{result["id"]}.tracks': result['playlist']['tracks'][position - 1]}})
+        await update_user(ctx.author.id, {"$pull": {f'playlist.{result["id"]}.tracks': result['playlist']['tracks'][position - 1]}})
         
         track = voicelink.decode(result['playlist']['tracks'][position - 1])
         await ctx.send(get_lang(ctx.guild.id, 'playlistRemoved').format(track.get("title"), ctx.author, name))
@@ -421,7 +430,7 @@ class Playlists(commands.Cog, name="playlist"):
         if result['playlist']['type'] in ['link', 'share']:
             return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAllow'), ephemeral=True)
 
-        await update_playlist(ctx.author.id, {"$set": {f'playlist.{result["id"]}.tracks': []}})
+        await update_user(ctx.author.id, {"$set": {f'playlist.{result["id"]}.tracks': []}})
         await ctx.send(get_lang(ctx.guild.id, 'playlistClear').format(name))
 
     @playlist.command(name="export", aliases=get_aliases("export"))
@@ -492,7 +501,7 @@ class Playlists(commands.Cog, name="playlist"):
             track_ids = track_ids.decode().split(",")
 
             data = {'tracks': track_ids, 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-            await update_playlist(ctx.author.id, {"$set": {f"playlist.{assign_playlistId([data for data in user])}": data}})
+            await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlistId([data for data in user])}": data}})
             await ctx.send(get_lang(ctx.guild.id, 'playlistCreated').format(name))
 
         except:

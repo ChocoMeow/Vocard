@@ -61,7 +61,7 @@ class Vocard(commands.Bot):
             raise Exception("Not able to connect MongoDB! Reason:", e)
         
         func.SETTINGS_DB = func.MONGO_DB[db_name]["Settings"]
-        func.PLAYLISTS_DB = func.MONGO_DB[db_name]["Playlist"]
+        func.USERS_DB = func.MONGO_DB[db_name]["Users"]
 
     async def setup_hook(self) -> None:
         func.langs_setup()
@@ -150,6 +150,7 @@ func.settings = Settings(func.open_json("settings.json"))
 # Setup the bot object
 intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
+intents.members = True
 member_cache = discord.MemberCacheFlags(
     voice=True,
     joined=False

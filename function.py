@@ -23,15 +23,15 @@ settings: Settings
 
 MONGO_DB: AsyncIOMotorClient
 SETTINGS_DB: AsyncIOMotorCollection
-PLAYLISTS_DB: AsyncIOMotorCollection
+USERS_DB: AsyncIOMotorCollection
 
 ERROR_LOGS: dict[int, dict[int, str]] = {} #Stores error that not a Voicelink Exception
 LANGS: dict[str, dict[str, str]] = {} #Stores all the languages in ./langs
+LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs
 SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
-LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs 
-PLAYLISTS_BUFFER: dict[str, dict] = {}
+USERS_BUFFER: dict[str, dict] = {}
 
-PLAYLIST_BASE: dict[str, Any] = {
+USERS_BASE: dict[str, Any] = {
     'playlist': {
         '200': {
             'tracks':[],
@@ -40,6 +40,7 @@ PLAYLIST_BASE: dict[str, Any] = {
             'type':'playlist'
         }
     },
+    'history': [],
     'inbox':[]
 }
 
@@ -183,24 +184,21 @@ async def update_settings(guild_id: int, data: dict[str, dict[str, Any]]) -> boo
     settings = await get_settings(guild_id)
     return await update_db(SETTINGS_DB, settings, {"_id": guild_id}, data)
             
-async def get_playlist(user_id: int, d_type: Optional[str] = None, d_id: Optional[str] = None, need_copy: bool = True) -> Dict[str, Any]:
-    playlist = PLAYLISTS_BUFFER.get(user_id)
-    if not playlist:
-        playlist = await PLAYLISTS_DB.find_one({"_id": user_id})
-        if not playlist:
-            playlist = {"_id": user_id, **PLAYLIST_BASE}
-            await PLAYLISTS_DB.insert_one(playlist)
+async def get_user(user_id: int, d_type: Optional[str] = None, need_copy: bool = True) -> Dict[str, Any]:
+    user = USERS_BUFFER.get(user_id)
+    if not user:
+        user = await USERS_DB.find_one({"_id": user_id})
+        if not user:
+            user = {"_id": user_id, **USERS_BASE}
+            await USERS_DB.insert_one(user)
     
-        PLAYLISTS_BUFFER[user_id] = playlist
+        USERS_BUFFER[user_id] = user
 
     if d_type:
-        if d_id and d_type == "playlist":
-            playlist = playlist[d_type].get(d_id)
-        else:
-            playlist = playlist.get(d_type)
+        user = user.setdefault(d_type, copy.deepcopy(USERS_BASE.get(d_type)))
             
-    return copy.deepcopy(playlist) if need_copy else playlist
+    return copy.deepcopy(user) if need_copy else user
 
-async def update_playlist(user_id:int, data:dict) -> None:
-    playlist = await get_playlist(user_id, need_copy=False)
-    return await update_db(PLAYLISTS_DB, playlist, {"_id": user_id}, data)
+async def update_user(user_id:int, data:dict) -> bool:
+    playlist = await get_user(user_id, need_copy=False)
+    return await update_db(USERS_DB, playlist, {"_id": user_id}, data)

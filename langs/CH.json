@@ -45,9 +45,7 @@
     "FilterTagAlreadyInUse": "此聲音效果已在使用中！請使用 /cleareffect <Tag> 移除它。",
 
     "playlistViewTitle": "📜 所有 {0} 的播放清單",
-    "playlistViewHeaders": ["  ", "ID:", "時間:", "名稱:", "曲目數:"],
-    "playlistMaxP": "最大播放清單:",
-    "playlistMaxT": "最大曲目數:",
+    "playlistViewHeaders": "ID:,時間:,名稱:,曲目數:",
     "playlistFooter": "輸入 /playlist play [播放清單] 加入此播放清單至隊列中。",
     "playlistNotFound": "找不到播放清單 [`{0}`]。輸入 /playlist view 查看所有播放清單。",
     "playlistNotAccess": "抱歉！你無權訪問此播放清單！",

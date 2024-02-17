@@ -201,7 +201,7 @@ class Player(VoiceProtocol):
         return self._volume
 
     @property
-    def filters(self) -> Filter:
+    def filters(self) -> Filters:
         """Property which returns the helper class for interacting with filters"""
         return self._filters
 

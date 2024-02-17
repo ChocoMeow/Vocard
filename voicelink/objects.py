@@ -33,9 +33,11 @@ from function import (
     time as ctime
 )
 
+from .spotify import Playlist as spPlaylist
 from .formatter import encode
 
 YOUTUBE_REGEX = re.compile(r'(https?://)?(www\.)?youtube\.(com|nl)/watch\?v=([-\w]+)')
+
 class Track:
     """The base track object. Returns critical track information needed for parsing by Lavalink.
        You can also pass in commands.Context to get a discord.py Context object in your track.
@@ -154,16 +156,16 @@ class Playlist:
         tracks: list,
         requester: Member = None,
         spotify: bool = False,
-        spotify_playlist = None
+        spotify_playlist: Optional[spPlaylist] = None
     ):
-        self.playlist_info = playlist_info
-        self.tracks_raw = tracks
-        self.spotify = spotify
-        self.name = playlist_info.get("name")
-        self.spotify_playlist = spotify_playlist
+        self.playlist_info: dict = playlist_info
+        self.tracks_raw: list[Track] = tracks
+        self.spotify: bool = spotify
+        self.name: str = playlist_info.get("name")
+        self.spotify_playlist: Optional[spPlaylist] = spotify_playlist
 
-        self._thumbnail = None
-        self._uri = None
+        self._thumbnail: str = None
+        self._uri: str = None
         
         if self.spotify:
             self.tracks = tracks

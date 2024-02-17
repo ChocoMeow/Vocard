@@ -45,9 +45,7 @@
     "FilterTagAlreadyInUse": "¡Este efecto de sonido ya está en uso! Utilice /cleareffect <Tag> para eliminarlo.",
 
     "playlistViewTitle": "📜 Todas las listas de reproducción de {0}",
-    "playlistViewHeaders": ["   ", "ID:", "Tiempo:", "Nombre:", "Pistas:"],
-    "playlistMaxP": "Máximo de lista de reproducción:",
-    "playlistMaxT": "Máximo de pistas:",
+    "playlistViewHeaders": "ID:,Tiempo:,Nombre:,Pistas:",
     "playlistFooter": "Escriba /playlist play [playlist] para agregar la lista de reproducción a la cola.",
     "playlistNotFound": "Lista de reproducción [`{0}`] no encontrada. Escriba /playlist view para ver todas sus listas de reproducción.",
     "playlistNotAccess": "¡Lo siento! No está autorizado para acceder a esta lista de reproducción.",

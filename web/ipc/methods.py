@@ -30,7 +30,8 @@ async def connect_channel(member: Member, bot: commands.Bot):
 
     channel = member.voice.channel
     try:
-        player: Player = await channel.connect(cls=Player(bot, channel, TempCtx(member, channel)))
+        settings = await func.get_settings(channel.guild.id)
+        player: Player = await channel.connect(cls=Player(bot, channel, TempCtx(member, channel), settings))
         await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
         return player
     except:
@@ -264,7 +265,7 @@ async def closeConnection(player: Player, member: Member, data: dict):
     player._ipc_connection = False
 
 async def getPlaylists(member: Member, data: dict):
-    playlists: dict = await func.get_playlist(member.id, "playlist")
+    playlists: dict = await func.get_user(member.id, "playlist")
     if not playlists:
         return
 
@@ -276,10 +277,11 @@ async def getPlaylists(member: Member, data: dict):
                     playlists[pId]["tracks"] = [ track.track_id for track in tracks.tracks ]
 
             elif pList["type"] == "share":
-                playlist = await func.get_playlist(pList["user"], "playlist", pList["referId"])
+                playlist = await func.get_user(pList["user"], "playlist")
+                playlist = playlist.get(pList["referId"])
                 if playlist:
                     if member.id not in playlist["perms"]["read"]:
-                        await func.update_playlist(member.id, {f"playlist.{pId}": 1}, mode="unset")
+                        await func.update_user(member.id, {"$unset": {f"playlist.{pId}": 1}})
                         del playlists[pId]
                         continue
 
@@ -304,9 +306,9 @@ async def removePlaylist(member: Member, data:dict):
 
     if isShare:
         refer_user = data.get("refer_user")
-        await func.update_playlist(refer_user, {f"playlist.{pId}.perms.read": member.id}, mode="pull")
+        await func.update_user(refer_user, {"$pull": {f"playlist.{pId}.perms.read": member.id}})
 
-    await func.update_playlist(member.id, {f'playlist.{pId}': 1}, mode="unset")
+    await func.update_user(member.id, {"$unset": {f'playlist.{pId}': 1}})
 
 async def addPlaylistTrack(member: Member, data: dict):
     track_id = data.get("track_id")
@@ -314,7 +316,8 @@ async def addPlaylistTrack(member: Member, data: dict):
     if not track_id or not pId:
         return
     
-    playlist: dict = await func.get_playlist(member.id, 'playlist', pId)
+    playlist: dict = await func.get_user(member.id, 'playlist')
+    playlist = playlist.get(pId)
     if not playlist:
         return
     
@@ -328,7 +331,7 @@ async def addPlaylistTrack(member: Member, data: dict):
     if track_id in playlist['tracks']:
         return error_msg(func.get_lang(member.guild.id, "playlistrepeated"), user_id=member.id)
     
-    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id}, mode="push")
+    await func.update_user(member.id, {"$push": {f'playlist.{pId}.tracks': track_id}})
 
 async def removePlaylistTrack(member: Member, data: dict):
     track_id = data.get("track_id")
@@ -336,7 +339,7 @@ async def removePlaylistTrack(member: Member, data: dict):
     if not track_id or not pId:
         return
     
-    await func.update_playlist(member.id, {f'playlist.{pId}.tracks': track_id }, mode="pull")
+    await func.update_user(member.id, {"$pull": {f'playlist.{pId}.tracks': track_id }})
 
 methods = {
     "initPlayer": [initPlayer, False],
