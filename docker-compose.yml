@@ -15,7 +15,24 @@ services:
         ports:
             - "2333:2333"
 
+    mongo:
+        image: mongo:latest
+        container_name: mongo
+        restart: unless-stopped
+        volumes:
+            - /data/mongo/db:/data/db
+            - /data/mongo/conf:/data/configdb
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=admin
+            - MONGO_INITDB_ROOT_PASSWORD=admin
+        ports:
+            - "27017:27017"
+        networks:
+            - local
+        command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
+
     vocard:
+        image: vocard
         container_name: vocard
         build:
             dockerfile: ./Dockerfile
@@ -24,7 +41,9 @@ services:
             - ./.env:/app/.env
         depends_on:
             lavalink:
-              condition: service_started
+                condition: service_started
+            mongo:
+                condition: service_started
         networks:
             - local
 
