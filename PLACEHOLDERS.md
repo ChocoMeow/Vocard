@@ -62,6 +62,7 @@ Valuables
 | track_author | The name of the author of the track currently playing. |
 | track_duration | The length of the track currently playing. |
 | track_thumbnail | The thumbnail of the track currently playing. |
+| track_color | The color associated with the source of the currently playing track. For example, YouTube tracks are indicated in red. This color can be customized in the settings.json file |
 | requester | The mention name of the requester of the currently playing track. |
 | requester_name | The name of the requester of the currently playing track. |
 | requester_avatar | The avatar url of the requester of the currently playing track. |
