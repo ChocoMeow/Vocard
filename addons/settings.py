@@ -10,7 +10,7 @@ class Settings:
         self.activity: dict = settings.get("activity", [{"listen": "/help"}])
         self.embed_color: str = int(settings.get("embed_color", "0xb3b3b3"), 16)
         self.bot_access_user: list = settings.get("bot_access_user", [])
-        self.emoji_source_raw: dict = settings.get("emoji_source_raw", {})
+        self.sources_settings: dict = settings.get("sources_settings", {})
         self.cooldowns_settings: dict = settings.get("cooldowns", {})
         self.aliases_settings: dict = settings.get("aliases", {})
         self.controller: dict = settings.get("default_controller", {})

@@ -103,8 +103,9 @@ def formatTime(number:str) -> Optional[int]:
     
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
-def emoji_source(emoji:str) -> str:
-    return settings.emoji_source_raw.get(emoji.lower(), "🔗")
+def get_source(source: str, type: str) -> str:
+    source_settings: dict = settings.sources_settings.get(source.lower(), {})
+    return source_settings.get(type, ("🔗" if type == "emoji" else settings.embed_color))
 
 def gen_report() -> Optional[discord.File]:
     if ERROR_LOGS:

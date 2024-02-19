@@ -29,7 +29,7 @@ from discord.ext import commands
 from function import (
     time as ctime,
     formatTime,
-    emoji_source,
+    get_source,
     get_lang,
     settings,
     cooldown_check,
@@ -219,7 +219,7 @@ class Basic(commands.Cog):
         query_track = "\n".join(
             f"`{index}.` `[{track.formatted_length}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
         embed = discord.Embed(title=player.get_msg('searchTitle').format(query), description=player.get_msg(
-            'searchDesc').format(emoji_source(platform), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
+            'searchDesc').format(get_source(platform, "emoji"), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
         view = SearchView(tracks=tracks[0:10], lang=player.get_msg)
         view.response = await ctx.send(embed=embed, view=view, ephemeral=True)
 

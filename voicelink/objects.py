@@ -29,7 +29,7 @@ from tldextract import extract
 
 from .enums import SearchType
 from function import (
-    emoji_source,
+    get_source,
     time as ctime
 )
 
@@ -94,7 +94,7 @@ class Track:
         if not self.thumbnail and YOUTUBE_REGEX.match(self.uri):
             self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/maxresdefault.jpg"
         
-        self.emoji: str = emoji_source(self.source)
+        self.emoji: str = get_source(self.source, "emoji")
         self.length: float = 3000 if self.source == "soundcloud" and "/preview/" in self.identifier else info.get("length")
         
         self.requester: Member = requester

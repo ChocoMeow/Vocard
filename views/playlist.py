@@ -107,9 +107,9 @@ class PlaylistView(discord.ui.View):
         trackStr = func.get_lang(guild_id, 'playlistViewTrack')
         if tracks:
             if self.current.get("type") == "playlist":    
-                embed.add_field(name=trackStr, value="\n".join(f"{func.emoji_source(track['sourceName'])} `{index}.` `[{func.time(track['length'])}]` **{track['title'][:30]}**" for index, track in enumerate(tracks, start=offset - 6)), inline=False)
+                embed.add_field(name=trackStr, value="\n".join(f"{func.get_source(track['sourceName'], 'emoji')} `{index}.` `[{func.time(track['length'])}]` **{track['title'][:30]}**" for index, track in enumerate(tracks, start=offset - 6)), inline=False)
             else:
-                embed.add_field(name=trackStr, value='\n'.join(f"{func.emoji_source(extract(track.info['uri']).domain)} `{index}.` `[{func.time(track.length)}]` **{track.title[:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
+                embed.add_field(name=trackStr, value='\n'.join(f"{func.get_source(extract(track.info['uri']).domain, 'emoji')} `{index}.` `[{func.time(track.length)}]` **{track.title[:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
         else:
             embed.add_field(name=trackStr, value=func.get_lang(guild_id, 'playlistNoTrack').format(self.current['name']), inline=False)
 

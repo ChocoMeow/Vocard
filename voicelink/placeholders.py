@@ -31,6 +31,7 @@ class Placeholders:
             "track_author": self.track_author,
             "track_duration": self.track_duration,
             "track_thumbnail": self.track_thumbnail,
+            "track_color": self.track_color,
             "requester": self.requester,
             "requester_name": self.requester_name,
             "requester_avatar": self.requester_avatar,
@@ -77,6 +78,10 @@ class Placeholders:
     @ensure_track
     def requester_avatar(self, track: Track) -> str:
         return track.requester.display_avatar.url if track.requester else self.bot.user.display_avatar.url
+    
+    @ensure_track
+    def track_color(self, track: Track) -> int:
+        return int(func.get_source(track.source, "color"), 16)
     
     def track_thumbnail(self) -> str:
         if not self.player or not self.player.current:
