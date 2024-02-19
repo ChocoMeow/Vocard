@@ -12,21 +12,21 @@ services:
             - ./application.yml:/opt/Lavalink/application.yml
         networks:
             - local
-        ports:
-            - "2333:2333"
+        expose:
+            - "2333"
 
     mongo:
         image: mongo:latest
         container_name: mongo
         restart: unless-stopped
         volumes:
-            - /data/mongo/db:/data/db
-            - /data/mongo/conf:/data/configdb
+            - ./data/mongo/db:/data/db
+            - ./data/mongo/conf:/data/configdb
         environment:
             - MONGO_INITDB_ROOT_USERNAME=admin
             - MONGO_INITDB_ROOT_PASSWORD=admin
-        ports:
-            - "27017:27017"
+        expose:
+            - "27017"
         networks:
             - local
         command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
