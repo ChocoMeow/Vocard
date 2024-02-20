@@ -47,8 +47,8 @@ class ControlButton(discord.ui.Button):
     ):
         self.player: voicelink.Player = player
         
-        disable_button_text = not func.settings.controller.get("disableButtonText", False)
-        super().__init__(label=player.get_msg(label) if label and disable_button_text else None, **kwargs)
+        self.disable_button_text: bool = func.settings.controller.get("disableButtonText", False)
+        super().__init__(label=player.get_msg(label) if label and not self.disable_button_text else None, **kwargs)
 
     async def send(self, interaction: discord.Interaction, key:str, *params, ephemeral: bool = False) -> None:
         stay = self.player.settings.get("controller_msg", True)
@@ -100,11 +100,11 @@ class Resume(ControlButton):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        is_paused = self.player.is_paused
-        vote_type = "resume" if is_paused else "pause"
+        is_paused = not self.player.is_paused
+        vote_type = "pause" if is_paused else "resume"
         votes = getattr(self.player, f"{vote_type}_votes")
-        emoji = "⏸️" if is_paused else "▶️"
-        button = "buttonPause" if is_paused else "buttonResume"
+        emoji = "▶️" if is_paused else "⏸️"
+        button = "buttonResume" if is_paused else "buttonPause"
 
         if not self.player.is_privileged(interaction.user):
             if interaction.user in votes:
@@ -116,7 +116,8 @@ class Resume(ControlButton):
 
         votes.clear()
         self.emoji = emoji
-        self.label = await func.get_lang(interaction.guild.id, button)
+        if not self.disable_button_text:
+            self.label = await func.get_lang(interaction.guild.id, button)
         await self.player.set_pause(is_paused, interaction.user)
         await interaction.response.edit_message(view=self.view)
 
@@ -262,7 +263,8 @@ class VolumeMute(ControlButton):
         is_muted = self.player.volume != 0
         value = 0 if is_muted else self.player.settings.get("volume", 100)
         self.emoji = "🔈" if is_muted else "🔇"
-        self.label = await func.get_lang(interaction.guild_id, "buttonVolumeUnmute" if is_muted else "buttonVolumeMute")
+        if not self.disable_button_text:
+            self.label = await func.get_lang(interaction.guild_id, "buttonVolumeUnmute" if is_muted else "buttonVolumeMute")
 
         await self.player.set_volume(value, interaction.user)
         await interaction.response.edit_message(view=self.view)

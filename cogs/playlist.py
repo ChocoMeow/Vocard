@@ -131,7 +131,7 @@ class Playlists(commands.Cog, name="playlist"):
             player = await voicelink.connect_channel(ctx)
 
         if result['playlist']['type'] == 'link':
-            tracks = await search_playlist(result['playlist']['uri'], ctx.author, timeNeed=False)
+            tracks = await search_playlist(result['playlist']['uri'], ctx.author, time_needed=False)
         else:
             if not result['playlist']['tracks']:
                 return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)
@@ -443,7 +443,7 @@ class Playlists(commands.Cog, name="playlist"):
             return await send(ctx, 'playlistNotFound', name, ephemeral=True)
         
         if result['playlist']['type'] == 'link':
-            tracks = await search_playlist(result['playlist']['uri'], ctx.author, timeNeed=False)
+            tracks = await search_playlist(result['playlist']['uri'], ctx.author, time_needed=False)
         else:
             if not result['playlist']['tracks']:
                 return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)

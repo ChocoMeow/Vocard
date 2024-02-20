@@ -146,8 +146,7 @@ class Basic(commands.Cog):
         query = ""
 
         if message.content:
-            url = re.findall(
-                "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", message.content)
+            url = re.findall(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", message.content)
             if url:
                 query = url[0]
 
@@ -467,7 +466,7 @@ class Basic(commands.Cog):
         if player.queue.is_empty:
             return await nowplay(ctx, player)
         view = ListView(player=player, author=ctx.author)
-        view.response = await ctx.send(embed=view.build_embed(), view=view)
+        view.response = await ctx.send(embed=await view.build_embed(), view=view)
 
     @queue.command(name="export", aliases=get_aliases("export"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -553,8 +552,8 @@ class Basic(commands.Cog):
         if not player.queue.history():
             return await nowplay(ctx, player)
 
-        view = ListView(player=player, author=ctx.author, isQueue=False)
-        view.response = await ctx.send(embed=view.build_embed(), view=view)
+        view = ListView(player=player, author=ctx.author, is_queue=False)
+        view.response = await ctx.send(embed=await view.build_embed(), view=view)
 
     @commands.hybrid_command(name="leave", aliases=get_aliases("leave"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
