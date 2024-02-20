@@ -65,13 +65,13 @@ async def skipTo(player: Player, member: Member, data: dict):
             pass
 
         elif member in player.skip_votes:
-            return error_msg(player.get_msg('voted', 'EN'), user_id=member.id)
+            return error_msg(player.get_msg('voted'), user_id=member.id)
         else:
             player.skip_votes.add(member)
             if len(player.skip_votes) >= (required := player.required()):
                 pass
             else:
-                return error_msg(player.get_msg('skipVote', 'EN').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
+                return error_msg(player.get_msg('skipVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
 
     index = data.get("index", 1)
     if index > 1:
@@ -87,13 +87,13 @@ async def backTo(player: Player, member: Member, data: dict):
             pass
 
         elif member in player.skip_votes:
-            return error_msg(player.get_msg('voted', 'EN'), user_id=member.id)
+            return error_msg(player.get_msg('voted'), user_id=member.id)
         else:
             player.skip_votes.add(member)
             if len(player.skip_votes) >= (required := player.required()):
                 pass
             else:
-                return error_msg(player.get_msg('backVote', 'EN').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
+                return error_msg(player.get_msg('backVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
     
     index = data.get("index", 1)
     if not player.is_playing:
