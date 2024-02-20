@@ -122,7 +122,6 @@ class Vocard(commands.Bot):
             return await ctx.reply(embed=embed)
 
         elif not issubclass(error.__class__, VoicelinkException):
-            error = func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
             error = await func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
             if (guildId := ctx.guild.id) not in func.ERROR_LOGS:
                 func.ERROR_LOGS[guildId] = {}
