@@ -69,7 +69,7 @@ class Settings(commands.Cog, name="settings"):
     async def prefix(self, ctx: commands.Context, prefix: str):
         "Change the default prefix for message commands."
         await update_settings(ctx.guild.id, {"$set": {"prefix": prefix}})
-        await send(ctx, "setPrefix", ctx.prefix, prefix)
+        await send(ctx, "setPrefix", prefix, prefix)
 
     @settings.command(name="language", aliases=get_aliases("language"))
     @commands.has_permissions(manage_guild=True)
