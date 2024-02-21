@@ -104,7 +104,7 @@ class PlaylistView(discord.ui.View):
 
         if tracks:
             if self.current.get("type") == "playlist":    
-                embed.description += texts[5] + "\n" + "\n".join(f"{func.get_source(track['sourceName'], 'emoji')} `{index:>2}.` `[{func.time(track['length'])}]` **{track['title'][:30]}**" for index, track in enumerate(tracks, start=offset - 6))
+                embed.description += texts[5] + "\n" + "\n".join(f"{func.get_source(track['sourceName'], 'emoji')} `{index:>2}.` `[{func.time(track['length'])}]` **[{func.truncate_string(track.title)}]({track.uri})**" for index, track in enumerate(tracks, start=offset - 6))
             else:
                 embed.description += texts[5] + "\n" + '\n'.join(f"{func.get_source(extract(track.info['uri']).domain, 'emoji')} `{index:>2}.` `[{func.time(track.length)}]` **[{func.truncate_string(track.title)}]({track.uri})** " for index, track in enumerate(tracks, start=offset - 6))
         else:
