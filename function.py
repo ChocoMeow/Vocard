@@ -190,7 +190,17 @@ async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, d
                 nested_data[cursors[-1]] = nested_data.get(cursors[-1], 0) + value
 
             elif mode == "$push":
-                nested_data.setdefault(cursors[-1], []).extend([value])
+                if isinstance(value, dict) and "$each" in value:
+                    nested_data.setdefault(cursors[-1], []).extend(value["$each"][value.get("$slice", len(value["$each"])):])
+                else:
+                    nested_data.setdefault(cursors[-1], []).extend([value])
+                    
+            elif mode == "$push":
+                if isinstance(value, dict) and "$each" in value:
+                    nested_data.setdefault(cursors[-1], []).extend(value["$each"])
+                    nested_data[cursors[-1]] = nested_data[cursors[-1]][value.get("$slice", len(value["$each"])):]
+                else:
+                    nested_data.setdefault(cursors[-1], []).extend([value])
 
             elif mode == "$pull":
                 if cursors[-1] in nested_data:
@@ -226,7 +236,7 @@ async def get_user(user_id: int, d_type: Optional[str] = None, need_copy: bool =
             await USERS_DB.insert_one(user)
     
         USERS_BUFFER[user_id] = user
-
+        
     if d_type:
         user = user.setdefault(d_type, copy.deepcopy(USERS_BASE.get(d_type)))
             
