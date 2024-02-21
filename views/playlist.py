@@ -94,21 +94,21 @@ class PlaylistView(discord.ui.View):
         texts = await func.get_lang(self.author.guild.id, "playlistView", "playlistViewDesc", "settingsPermTitle", "playlistViewPermsValue", "playlistViewPermsValue2", "playlistViewTrack", "playlistNoTrack", "playlistViewPage")
 
         embed = discord.Embed(title=texts[0], color=func.settings.embed_color)
-        embed.description= texts[1].format(self.current['name'], self.current['id'], len(self.current['tracks']), owner if (owner := self.current.get('owner')) else f"{self.author.id} (You)", self.current['type'])
+        embed.description = texts[1].format(self.current['name'], self.current['id'], len(self.current['tracks']), owner if (owner := self.current.get('owner')) else f"{self.author.id} (You)", self.current['type']) + "\n"
         
         perms = self.current['perms']
         if self.current['type'] == 'share':
-            embed.add_field(name=texts[2], value=texts[3].format('✓' if 'write' in perms and self.author.id in perms['write'] else '✘', '✓' if 'remove' in perms and self.author.id in perms['remove'] else '✘'))
+            embed.description += texts[2] + "\n" + texts[3].format('✓' if 'write' in perms and self.author.id in perms['write'] else '✘', '✓' if 'remove' in perms and self.author.id in perms['remove'] else '✘')
         else:
-            embed.add_field(name=texts[2], value=texts[4].format(', '.join(f'<@{user}>' for user in perms['read'])))
+            embed.description += texts[2] + "\n" + texts[4].format(', '.join(f'<@{user}>' for user in perms['read']))
 
         if tracks:
             if self.current.get("type") == "playlist":    
-                embed.add_field(name=texts[5], value="\n".join(f"{func.get_source(track['sourceName'], 'emoji')} `{index}.` `[{func.time(track['length'])}]` **{track['title'][:30]}**" for index, track in enumerate(tracks, start=offset - 6)), inline=False)
+                embed.description += texts[5] + "\n" + "\n".join(f"{func.get_source(track['sourceName'], 'emoji')} `{index:>2}.` `[{func.time(track['length'])}]` **{track['title'][:30]}**" for index, track in enumerate(tracks, start=offset - 6))
             else:
-                embed.add_field(name=texts[5], value='\n'.join(f"{func.get_source(extract(track.info['uri']).domain, 'emoji')} `{index}.` `[{func.time(track.length)}]` **{track.title[:30]}** " for index, track in enumerate(tracks, start=offset - 6)), inline=False)
+                embed.description += texts[5] + "\n" + '\n'.join(f"{func.get_source(extract(track.info['uri']).domain, 'emoji')} `{index:>2}.` `[{func.time(track.length)}]` **[{func.truncate_string(track.title)}]({track.uri})** " for index, track in enumerate(tracks, start=offset - 6))
         else:
-            embed.add_field(name=texts[5], value=texts[6].format(self.current['name']), inline=False)
+            embed.description += texts[5] + "\n" + texts[6].format(self.current['name'])
 
         embed.set_footer(text=texts[7].format(self.current_page, self.page, self.current['time']))
 

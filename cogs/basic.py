@@ -27,12 +27,13 @@ from io import StringIO
 from discord import app_commands
 from discord.ext import commands
 from function import (
+    settings,
     send,
     time as ctime,
     formatTime,
     get_source,
     get_lang,
-    settings,
+    truncate_string,
     cooldown_check,
     get_aliases
 )
@@ -54,11 +55,11 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
         return await send(ctx, 'noTrackPlaying', ephemeral=True)
 
     texts = await get_lang(ctx.guild.id, "nowplayingDesc", "nowplayingField", "nowplayingLink")
-    upnext = "\n".join(f"`{index}.` `[{track.formatted_length}]` [{track.title[:30]}]({track.uri})" for index, track in enumerate(player.queue.tracks()[:2], start=2))
+    upnext = "\n".join(f"`{index}.` `[{track.formatted_length}]` [{truncate_string(track.title)}]({track.uri})" for index, track in enumerate(player.queue.tracks()[:2], start=2))
     
     embed = discord.Embed(description=texts[0].format(track.title), color=settings.embed_color)
     embed.set_author(
-        name=track.requester,
+        name=track.requester.display_name,
         icon_url=track.requester.display_avatar.url
     )
     embed.set_thumbnail(url=track.thumbnail)

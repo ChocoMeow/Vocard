@@ -129,7 +129,7 @@ def get_aliases(name: str) -> list:
 def check_roles() -> tuple[str, int, int]:
     return 'Normal', 5, 500
 
-def truncate_string(text: str, length: int = 30) -> str:
+def truncate_string(text: str, length: int = 40) -> str:
     return text[:length - 3] + "..." if len(text) > length else text
     
 def get_lang_non_async(guild_id: int, *keys) -> Union[list[str], str]:
