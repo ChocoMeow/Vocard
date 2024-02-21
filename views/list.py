@@ -78,8 +78,8 @@ class ListView(discord.ui.View):
         embed = discord.Embed(title=texts[0], color=func.settings.embed_color)
         embed.description=texts[1].format(self.player.current.uri, f"```{self.player.current.title}```") if self.player.current else texts[2].format("None")
         
-        embed.description += "\n" + (texts[4] if self.is_queue else texts[5]) + "\n" + "\n".join([
-            f"{track.emoji} `{i:>2}.` `[" + (texts[3] if track.is_stream else func.time(track.length)) + f'`] **[{func.truncate_string(track.title)}]({track.uri})** ' + (track.requester.mention)
+        embed.description += "\n**" + (texts[4] if self.is_queue else texts[5]) + "**\n" + "\n".join([
+            f"{track.emoji} `{i:>2}.` `[" + (texts[3] if track.is_stream else func.time(track.length)) + f']` [{func.truncate_string(track.title)}]({track.uri})' + (track.requester.mention)
             for i, track in enumerate(tracks, start=offset-6)
         ])
         embed.set_footer(text=texts[6].format(self.current_page, self.page, self.time))

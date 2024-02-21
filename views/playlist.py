@@ -102,16 +102,16 @@ class PlaylistView(discord.ui.View):
         else:
             embed.description += texts[2] + "\n" + texts[4].format(', '.join(f'<@{user}>' for user in perms['read']))
 
+        embed.description += f"\n\n**{texts[5]}:**\n"
         if tracks:
             if self.current.get("type") == "playlist":    
-                embed.description += texts[5] + "\n" + "\n".join(f"{func.get_source(track['sourceName'], 'emoji')} `{index:>2}.` `[{func.time(track['length'])}]` **[{func.truncate_string(track.title)}]({track.uri})**" for index, track in enumerate(tracks, start=offset - 6))
+                embed.description += "\n".join(f"{func.get_source(track['sourceName'], 'emoji')} `{index:>2}.` `[{func.time(track['length'])}]` [{func.truncate_string(track['title'])}]({track['uri']})" for index, track in enumerate(tracks, start=offset - 6))
             else:
-                embed.description += texts[5] + "\n" + '\n'.join(f"{func.get_source(extract(track.info['uri']).domain, 'emoji')} `{index:>2}.` `[{func.time(track.length)}]` **[{func.truncate_string(track.title)}]({track.uri})** " for index, track in enumerate(tracks, start=offset - 6))
+                embed.description += '\n'.join(f"{func.get_source(extract(track.info['uri']).domain, 'emoji')} `{index:>2}.` `[{func.time(track.length)}]` [{func.truncate_string(track.title)}]({track.uri})" for index, track in enumerate(tracks, start=offset - 6))
         else:
-            embed.description += texts[5] + "\n" + texts[6].format(self.current['name'])
+            embed.description += texts[6].format(self.current['name'])
 
         embed.set_footer(text=texts[7].format(self.current_page, self.page, self.current['time']))
-
         return embed
 
     async def on_timeout(self) -> None:
