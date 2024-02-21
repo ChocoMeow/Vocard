@@ -27,6 +27,7 @@ from io import StringIO
 from discord import app_commands
 from discord.ext import commands
 from function import (
+    send,
     time as ctime,
     get_user,
     update_user,
@@ -120,20 +121,20 @@ class Playlists(commands.Cog, name="playlist"):
         result = await check_playlist(ctx, name.lower() if name else None)
 
         if not result['playlist']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+            return await send(ctx, 'playlistNotFound', name, ephemeral=True)
         rank, max_p, max_t = check_roles()
         if result['position'] > max_p:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAccess'), ephemeral=True)
+            return await send(ctx, 'playlistNotAccess', ephemeral=True)
 
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
             player = await voicelink.connect_channel(ctx)
 
         if result['playlist']['type'] == 'link':
-            tracks = await search_playlist(result['playlist']['uri'], ctx.author, timeNeed=False)
+            tracks = await search_playlist(result['playlist']['uri'], ctx.author, time_needed=False)
         else:
             if not result['playlist']['tracks']:
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistNoTrack').format(result['playlist']['name']), ephemeral=True)
+                return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)
 
             playtrack = []
             for track in result['playlist']['tracks'][:max_t]:
@@ -142,12 +143,12 @@ class Playlists(commands.Cog, name="playlist"):
             tracks = {"name": result['playlist']['name'], "tracks": playtrack}
 
         if not tracks:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNoTrack').format(result['playlist']['name']), ephemeral=True)
+            return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)
 
         if value and 0 < value <= (len(tracks['tracks'])):
             tracks['tracks'] = [tracks['tracks'][value - 1]]
         await player.add_track(tracks['tracks'])
-        await ctx.send(get_lang(ctx.guild.id, 'playlistPlay').format(result['playlist']['name'], len(tracks['tracks'][:max_t])))
+        await send(ctx, 'playlistPlay', result['playlist']['name'], len(tracks['tracks'][:max_t]))
 
         if not player.is_playing:
             await player.do_next()
@@ -191,11 +192,10 @@ class Playlists(commands.Cog, name="playlist"):
             except:
                 results.append({'emoji': '⛔', 'id': data, 'time': '--:--', 'name': 'Error', 'tracks': [], 'type': 'error'})
 
-        title = get_lang(ctx.guild.id, 'playlistViewHeaders').split(",")
-
+        text = await get_lang(ctx.guild.id, "playlistViewTitle", "playlistViewHeaders", "playlistFooter")
         embed = discord.Embed(
-            title=get_lang(ctx.guild.id, 'playlistViewTitle').format(ctx.author.display_name),
-            description='```prolog\n   %4s %10s %10s %10s\n' % tuple(title),
+            title=text[0].format(ctx.author.display_name),
+            description='```prolog\n   %4s %10s %10s %10s\n' % tuple(text[1].split(",")),
             color=settings.embed_color
         )
         
@@ -209,7 +209,7 @@ class Playlists(commands.Cog, name="playlist"):
             embed.description += '%0s %3s. %10s %10s %10s\n' % track_info
             
         embed.description += "```"
-        embed.set_footer(text=get_lang(ctx.guild.id, 'playlistFooter'))
+        embed.set_footer(text=text[2])
 
         view = PlaylistView(embed, results, ctx.author)
         view.response = await ctx.send(embed=embed, view=view, ephemeral=True)
@@ -223,25 +223,25 @@ class Playlists(commands.Cog, name="playlist"):
     async def create(self, ctx: commands.Context, name: str, link: str = None):
         "Create your custom playlist."
         if len(name) > 10:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
+            return await send(ctx, 'playlistOverText', ephemeral=True)
         
         rank, max_p, max_t = check_roles()
         user = await check_playlist(ctx, full=True)
 
         if len(user) >= max_p:
-            return await ctx.send(get_lang(ctx.guild.id, 'overPlaylistCreation').format(max_p), ephemeral=True)
+            return await send(ctx, 'overPlaylistCreation', max_p, ephemeral=True)
         
         for data in user:
             if user[data]['name'].lower() == name.lower():
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistExists').format(name), ephemeral=True)
+                return await send(ctx, 'playlistExists', name, ephemeral=True)
         if link:
             tracks = await voicelink.NodePool.get_node().get_tracks(link, requester=ctx.author)
             if not isinstance(tracks, voicelink.Playlist):
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistNotInvaildUrl'), ephemeral=True)
+                return await send(ctx, "playlistNotInvaildUrl", ephemeral=True)
 
         data = {'uri': link, 'perms': {'read': []}, 'name': name, 'type': 'link'} if link else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
         await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlistId([data for data in user])}": data}})
-        await ctx.send(get_lang(ctx.guild.id, 'playlistCreated').format(name))
+        await send(ctx, "playlistCreated", name)
 
     @playlist.command(name="delete", aliases=get_aliases("delete"))
     @app_commands.describe(name="The name of the playlist.")
@@ -251,15 +251,15 @@ class Playlists(commands.Cog, name="playlist"):
         "Delete your custom playlist."
         result = await check_playlist(ctx, name.lower(), share=False)
         if not result['playlist']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+            return await ctx(ctx, "playlistNotFound", name, ephemeral=True)
         if result['id'] == "200":
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistDeleteError'), ephemeral=True)
+            return await send(ctx, "playlistDeleteError", ephemeral=True)
 
         if result['playlist']['type'] == 'share':
             await update_user(result['playlist']['user'], {"$pull": {f"playlist.{result['playlist']['referId']}.perms.read": ctx.author.id}})
 
         await update_user(ctx.author.id, {"$unset": {f"playlist.{result['id']}": 1}})
-        return await ctx.send(get_lang(ctx.guild.id, 'playlistRemove').format(result['playlist']['name']))
+        return await send(ctx, "playlistRemove", result["playlist"]["name"])
 
     @playlist.command(name="share", aliases=get_aliases("share"))
     @app_commands.describe(
@@ -271,26 +271,26 @@ class Playlists(commands.Cog, name="playlist"):
     async def share(self, ctx: commands.Context, member: discord.Member, name: str):
         "Share your custom playlist with your friends."
         if member.id == ctx.author.id:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistSendErrorPlayer'), ephemeral=True)
+            return await send(ctx, 'playlistSendErrorPlayer', ephemeral=True)
         if member.bot:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistSendErrorBot'), ephemeral=True)
+            return await send(ctx, 'playlistSendErrorBot', ephemeral=True)
         result = await check_playlist(ctx, name.lower(), share=False)
         if not result['playlist']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+            return await send(ctx, 'playlistNotFound', name, ephemeral=True)
 
         if result['playlist']['type'] == 'share':
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistBelongs').format(result['playlist']['user']), ephemeral=True)
+            return await send(ctx, 'playlistBelongs', result['playlist']['user'], ephemeral=True)
         if member.id in result['playlist']['perms']['read']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistShare').format(member), ephemeral=True)
+            return await send(ctx, 'playlistShare', member, ephemeral=True)
 
         receiver = await get_user(member.id)
         if not receiver:
-            return await ctx.send(get_lang(ctx.guild.id, 'noPlaylistAcc').format(member))
+            return await send(ctx, 'noPlaylistAcc', member)
         for mail in receiver['inbox']:
             if mail['sender'] == ctx.author.id and mail['referId'] == result['id']:
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistSent'), ephemeral=True)
+                return await send(ctx, 'playlistSent', ephemeral=True)
         if len(receiver['inbox']) >= 10:
-            return await ctx.send(get_lang(ctx.guild.id, 'inboxFull').format(member), ephemeral=True)
+            return await send(ctx.guild.id, 'inboxFull', member, ephemeral=True)
 
         await update_user(
             member.id, 
@@ -303,7 +303,7 @@ class Playlists(commands.Cog, name="playlist"):
                 'type': 'invite'
             }}}
         )
-        return await ctx.send(get_lang(ctx.guild.id, 'invitationSent').format(member))
+        return await send(ctx, "invitationSent", member)
 
     @playlist.command(name="rename", aliases=get_aliases("rename"))
     @app_commands.describe(
@@ -315,22 +315,22 @@ class Playlists(commands.Cog, name="playlist"):
     async def rename(self, ctx: commands.Context, name: str, newname: str) -> None:
         "Rename your custom playlist."
         if len(newname) > 10:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
+            return await send(ctx, 'playlistOverText', ephemeral=True)
         if name.lower() == newname.lower():
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistSameName'), ephemeral=True)
+            return await send(ctx, 'playlistSameName', ephemeral=True)
         user = await check_playlist(ctx, full=True)
         found, id = False, 0
         for data in user:
             if user[data]['name'].lower() == name.lower():
                 found, id = True, data
             if user[data]['name'].lower() == newname.lower():
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistExists'), ephemeral=True)
+                return await send(ctx, 'playlistExists', ephemeral=True)
 
         if not found:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+            return await send(ctx.guild.id, 'playlistNotFound', name, ephemeral=True)
 
         await update_user(ctx.author.id, {"$set": {f'playlist.{id}.name': newname}})
-        await ctx.send(get_lang(ctx.guild.id, 'playlistRenamed').format(name, newname))
+        await send(ctx, 'playlistRenamed', name, newname)
 
     @playlist.command(name="inbox", aliases=get_aliases("inbox"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -340,7 +340,7 @@ class Playlists(commands.Cog, name="playlist"):
         rank, max_p, max_t = check_roles()
 
         if not user['inbox']:
-            return await ctx.send(get_lang(ctx.guild.id, 'inboxNoMsg'), ephemeral=True)
+            return await send(ctx, 'inboxNoMsg', ephemeral=True)
 
         inbox = user['inbox'].copy()
         view = InboxView(ctx.author, user['inbox'])
@@ -375,26 +375,26 @@ class Playlists(commands.Cog, name="playlist"):
         "Add tracks in to your custom playlist."
         result = await check_playlist(ctx, name.lower(), share=False)
         if not result['playlist']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+            return await send(ctx, 'playlistNotFound', name, ephemeral=True)
         if result['playlist']['type'] in ['share', 'link']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAllow'), ephemeral=True)
+            return await send(ctx, 'playlistNotAllow', ephemeral=True)
         
         rank, max_p, max_t = check_roles()
         if len(result['playlist']['tracks']) >= max_t:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistLimitTrack').format(max_t), ephemeral=True)
+            return await send(ctx, 'playlistLimitTrack', max_t, ephemeral=True)
 
         results = await voicelink.NodePool.get_node().get_tracks(query, requester=ctx.author)
         if not results:
-            return await ctx.send(get_lang(ctx.guild.id, 'noTrackFound'))
+            return await send(ctx, 'noTrackFound')
         
         if isinstance(results, voicelink.Playlist):
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistPlaylistLink'), ephemeral=True)
+            return await send(ctx, 'playlistPlaylistLink', ephemeral=True)
         
         if results[0].is_stream:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistStream'), ephemeral=True)
+            return await send(ctx, 'playlistStream', ephemeral=True)
 
         await update_user(ctx.author.id, {"$push": {f'playlist.{result["id"]}.tracks': results[0].track_id}})
-        await ctx.send(get_lang(ctx.guild.id, 'playlistAdded').format(results[0].title, ctx.author, result['playlist']['name']))
+        await send(ctx, 'playlistAdded', results[0].title, ctx.author, result['playlist']['name'])
 
     @playlist.command(name="remove", aliases=get_aliases("remove"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -407,16 +407,16 @@ class Playlists(commands.Cog, name="playlist"):
         "Remove song from your favorite playlist."
         result = await check_playlist(ctx, name.lower(), share=False)
         if not result['playlist']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+            return await send(ctx, 'playlistNotFound', name, ephemeral=True)
         if result['playlist']['type'] in ['link', 'share']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAllow'), ephemeral=True)
+            return await send(ctx, 'playlistNotAllow', ephemeral=True)
         if not 0 < position <= len(result['playlist']['tracks']):
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistPositionNotFound').format(position, name))
+            return await send(ctx, 'playlistPositionNotFound', position, name)
 
         await update_user(ctx.author.id, {"$pull": {f'playlist.{result["id"]}.tracks': result['playlist']['tracks'][position - 1]}})
         
         track = voicelink.decode(result['playlist']['tracks'][position - 1])
-        await ctx.send(get_lang(ctx.guild.id, 'playlistRemoved').format(track.get("title"), ctx.author, name))
+        await send(ctx, 'playlistRemoved', track.get("title"), ctx.author, name)
 
     @playlist.command(name="clear", aliases=get_aliases("clear"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -425,13 +425,13 @@ class Playlists(commands.Cog, name="playlist"):
         "Remove all songs from your favorite playlist."
         result = await check_playlist(ctx, name.lower(), share=False)
         if not result['playlist']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+            return await send(ctx, 'playlistNotFound', name, ephemeral=True)
 
         if result['playlist']['type'] in ['link', 'share']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotAllow'), ephemeral=True)
+            return await send(ctx, 'playlistNotAllow', ephemeral=True)
 
         await update_user(ctx.author.id, {"$set": {f'playlist.{result["id"]}.tracks': []}})
-        await ctx.send(get_lang(ctx.guild.id, 'playlistClear').format(name))
+        await send(ctx, 'playlistClear', name)
 
     @playlist.command(name="export", aliases=get_aliases("export"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -440,13 +440,13 @@ class Playlists(commands.Cog, name="playlist"):
         "Exports the entire playlist to a text file"
         result = await check_playlist(ctx, name.lower())
         if not result['playlist']:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNotFound').format(name), ephemeral=True)
+            return await send(ctx, 'playlistNotFound', name, ephemeral=True)
         
         if result['playlist']['type'] == 'link':
-            tracks = await search_playlist(result['playlist']['uri'], ctx.author, timeNeed=False)
+            tracks = await search_playlist(result['playlist']['uri'], ctx.author, time_needed=False)
         else:
             if not result['playlist']['tracks']:
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistNoTrack').format(result['playlist']['name']), ephemeral=True)
+                return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)
 
             playtrack = []
             for track in result['playlist']['tracks']:
@@ -455,7 +455,7 @@ class Playlists(commands.Cog, name="playlist"):
             tracks = {"name": result['playlist']['name'], "tracks": playtrack}
 
         if not tracks:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistNoTrack').format(result['playlist']['name']), ephemeral=True)
+            return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)
 
         temp = ""
         raw = "----------->Raw Info<-----------\n"
@@ -483,17 +483,17 @@ class Playlists(commands.Cog, name="playlist"):
     async def _import(self, ctx: commands.Context, name: str, attachment: discord.Attachment):
         "Create your custom playlist."
         if len(name) > 10:
-            return await ctx.send(get_lang(ctx.guild.id, 'playlistOverText'), ephemeral=True)
+            return await send(ctx, 'playlistOverText', ephemeral=True)
         
         rank, max_p, max_t = check_roles()
         user = await check_playlist(ctx, full=True)
 
         if len(user) >= max_p:
-            return await ctx.send(get_lang(ctx.guild.id, 'overPlaylistCreation').format(max_p), ephemeral=True)
+            return await send(ctx, 'overPlaylistCreation', max_p, ephemeral=True)
         
         for data in user:
             if user[data]['name'].lower() == name.lower():
-                return await ctx.send(get_lang(ctx.guild.id, 'playlistExists').format(name), ephemeral=True)
+                return await send(ctx, 'playlistExists', name, ephemeral=True)
 
         try:
             bytes = await attachment.read()
@@ -502,10 +502,10 @@ class Playlists(commands.Cog, name="playlist"):
 
             data = {'tracks': track_ids, 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
             await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlistId([data for data in user])}": data}})
-            await ctx.send(get_lang(ctx.guild.id, 'playlistCreated').format(name))
+            await send(ctx, 'playlistCreated', name)
 
         except:
-            return await ctx.send(get_lang(ctx.guild.id, "decodeError"), ephemeral=True)
+            return await send(ctx, "decodeError", ephemeral=True)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Playlists(bot))

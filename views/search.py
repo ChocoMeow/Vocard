@@ -29,12 +29,12 @@ if TYPE_CHECKING:
     from voicelink import Track
 
 class SearchDropdown(discord.ui.Select):
-    def __init__(self, tracks: list[Track], get_msg: callable) -> None:
+    def __init__(self, tracks: list[Track], texts: list[str]) -> None:
         self.view: SearchView
-        self.get_msg: callable = get_msg
+        self.texts: list[str] = texts
         
         super().__init__(
-            placeholder=get_msg('searchWait'),
+            placeholder=texts[0],
             min_values=1, max_values=len(tracks),
             options=[
                 discord.SelectOption(label=f"{i}. {track.title[:50]}", description=f"{track.author[:50]} · {track.formatted_length}")
@@ -44,18 +44,18 @@ class SearchDropdown(discord.ui.Select):
         
     async def callback(self, interaction: discord.Interaction) -> None:
         self.disabled = True
-        self.placeholder = self.get_msg('searchSuccess')
+        self.placeholder = self.texts[1]
         await interaction.response.edit_message(view=self.view)
         self.view.values = self.values          
         self.view.stop()
 
 class SearchView(discord.ui.View):
-    def __init__(self, tracks: list[Track], lang: callable) -> None:
+    def __init__(self, tracks: list[Track], texts: list[str]) -> None:
         super().__init__(timeout=60)
 
         self.response: discord.Message = None
         self.values: list[str] = None
-        self.add_item(SearchDropdown(tracks, lang))
+        self.add_item(SearchDropdown(tracks, texts))
 
     async def on_error(self, error, item, interaction):
         return

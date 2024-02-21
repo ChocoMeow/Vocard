@@ -59,14 +59,15 @@ from .placeholders import Placeholders, build_embed
 from random import shuffle, choice
 
 async def connect_channel(ctx: Union[commands.Context, Interaction], channel: VoiceChannel = None):
+    texts = await func.get_lang(ctx.guild.id, "noChannel", "noPermission")
     try:
         channel = channel or ctx.author.voice.channel if isinstance(ctx, commands.Context) else ctx.user.voice.channel
     except:
-        raise VoicelinkException(func.get_lang(ctx.guild.id, 'noChannel'))
+        raise VoicelinkException(texts[0])
 
     check = channel.permissions_for(ctx.guild.me)
     if check.connect == False or check.speak == False:
-        raise VoicelinkException(func.get_lang(ctx.guild.id, 'noPermission'))
+        raise VoicelinkException(texts[1])
 
     settings = await func.get_settings(channel.guild.id)
     player: Player = await channel.connect(
@@ -220,9 +221,9 @@ class Player(VoiceProtocol):
     @property
     def ping(self) -> float:
         return round(self._ping / 1000, 2)
-    
-    def get_msg(self, key: str) -> str:
-        return func.get_lang(self.guild.id, key)
+
+    def get_msg(self, *keys) -> Union[list[str], str]:
+        return func.get_lang_non_async(self.guild.id, *keys)
 
     def required(self, leave=False):
         if self.settings.get('votedisable'):

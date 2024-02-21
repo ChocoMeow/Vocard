@@ -141,7 +141,7 @@
     "queueTitle": "即將播放的隊列:",
     "historyTitle": "歷史隊列:",
     "viewTitle": "音樂隊列",
-    "viewDesc": "現正播放：按我 點擊 ⮯\n{1}",
+    "viewDesc": "**現正播放：[點擊我]({0}) ⮯**\n{1}",
     "viewFooter": "頁數：{0}/{1} | 總長度：{2}",
 
     "pauseError": "播放器已經暫停。",

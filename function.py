@@ -4,7 +4,7 @@ from discord.ext import commands
 from datetime import datetime
 from time import strptime
 from io import BytesIO
-from typing import Optional, Dict, Any
+from typing import Optional, Union, Dict, Any
 from addons import Settings, TOKENS
 
 from motor.motor_asyncio import (
@@ -61,13 +61,6 @@ def update_json(path: str, new_data: dict) -> None:
 
     with open(os.path.join(ROOT_DIR, path), "w") as json_file:
         json.dump(data, json_file, indent=4)
-
-def get_lang(guild_id:int, key:str) -> str:
-    lang = SETTINGS_BUFFER.get(guild_id, {}).get("lang", "EN")
-    if lang in LANGS and not LANGS[lang]:
-        LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
-
-    return LANGS.get(lang, {}).get(key, "Language pack not found!")
 
 def langs_setup() -> None:
     for language in os.listdir(os.path.join(ROOT_DIR, "langs")):
@@ -135,6 +128,45 @@ def get_aliases(name: str) -> list:
 
 def check_roles() -> tuple[str, int, int]:
     return 'Normal', 5, 500
+
+def truncate_string(text: str, length: int = 40) -> str:
+    return text[:length - 3] + "..." if len(text) > length else text
+    
+def get_lang_non_async(guild_id: int, *keys) -> Union[list[str], str]:
+    settings = SETTINGS_BUFFER.get(guild_id, {})
+    lang = settings.get("lang", "EN")
+    if lang in LANGS and not LANGS[lang]:
+        LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
+
+    if len(keys) == 1:
+        return LANGS.get(lang, {}).get(keys[0], "Language pack not found!")
+    return [LANGS.get(lang, {}).get(key, "Language pack not found!") for key in keys]
+
+async def get_lang(guild_id:int, *keys) -> Union[list[str], str]:
+    settings = await get_settings(guild_id)
+    lang = settings.get("lang", "EN")
+    if lang in LANGS and not LANGS[lang]:
+        LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
+
+    if len(keys) == 1:
+        return LANGS.get(lang, {}).get(keys[0], "Language pack not found!")
+    return [LANGS.get(lang, {}).get(key, "Language pack not found!") for key in keys]
+
+async def send(ctx: Union[commands.Context, discord.Interaction], key: str, *params, delete_after: float = None, ephemeral: bool = False) -> Optional[discord.Message]:
+    text = await get_lang(ctx.guild.id, key)
+    text = text.format(*params)
+
+    message = None
+
+    if isinstance(ctx, commands.Context):
+        message = await ctx.send(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=discord.AllowedMentions.none())
+    else:
+        if ctx.response.is_done():
+            await ctx.followup.send(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=discord.AllowedMentions.none())
+        else:
+            await ctx.response.send_message(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=discord.AllowedMentions.none())
+
+    return message
 
 async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, data: dict) -> bool:
     for mode, action in data.items():

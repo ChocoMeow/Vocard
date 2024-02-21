@@ -53,7 +53,7 @@ class Vocard(commands.Bot):
             raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in settings.json")
 
         try:
-            func.MONGO_DB = AsyncIOMotorClient(host=db_url, serverSelectionTimeoutMS=5000)
+            func.MONGO_DB = AsyncIOMotorClient(host=db_url)
             await func.MONGO_DB.server_info()
             print("Successfully connected to MongoDB!")
 
@@ -122,7 +122,7 @@ class Vocard(commands.Bot):
             return await ctx.reply(embed=embed)
 
         elif not issubclass(error.__class__, VoicelinkException):
-            error = func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
+            error = await func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
             if (guildId := ctx.guild.id) not in func.ERROR_LOGS:
                 func.ERROR_LOGS[guildId] = {}
             func.ERROR_LOGS[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
