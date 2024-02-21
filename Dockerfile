@@ -1,5 +1,5 @@
 # Use an official Python runtime as a base image
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Install build dependencies
 RUN apt-get update -y && apt-get install -y gcc python3-dev
