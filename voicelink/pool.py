@@ -438,26 +438,17 @@ class Node:
                 data: dict = await response.json()
 
             try:
-                track: dict = data["tracks"][0]
-                info: dict = track.get("info")
+                track: dict = data["data"]
             except:
                 raise TrackLoadError("Not able to find the provided track.")
 
             return [
                 Track(
-                    track_id=None,
-                    info={
-                        "title": discord_url.group("file"),
-                        "author": "Unknown",
-                        "length": info.get("length"),
-                        "uri": info.get("uri"),
-                        "position": info.get("position"),
-                        "identifier": info.get("identifier")
-                    },
+                    track_id=track["encoded"],
+                    info=track["info"],
                     requester=requester
                 )
             ]
-
         else:
             async with self._session.get(
                 url=f"{self._rest_uri}/" + NODE_VERSION + f"/loadtracks?identifier={quote(query)}",

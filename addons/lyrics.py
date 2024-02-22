@@ -103,9 +103,7 @@ class A_ZLyrics(LyricsPlatform):
         data = artist + ' ' * (title != '' and artist != '') + title
         encoded_data = quote(data.replace(' ', '+'))
 
-
-        google_page = await self.get('{}{}+site%3Aazlyrics.com'.format(
-                                        'https://duckduckgo.com/html/?q=', encoded_data))
+        google_page = await self.get('{}{}+site%3Aazlyrics.com'.format('https://duckduckgo.com/html/?q=', encoded_data))
 
         try:
             results = re.findall(r'(azlyrics\.com\/lyrics\/[a-z0-9]+\/(\w+).html)', google_page)

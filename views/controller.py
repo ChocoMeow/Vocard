@@ -76,7 +76,7 @@ class Back(ControlButton):
                 if len(self.player.previous_votes) >= (required := self.player.required()):
                     pass
                 else:
-                    return await self.send(interaction, "backVote".format(interaction.user, len(self.player.previous_votes), required))
+                    return await self.send(interaction, "backVote", interaction.user, len(self.player.previous_votes), required)
 
         if not self.player.is_playing:
             self.player.queue.backto(1)
