@@ -751,7 +751,7 @@ class Basic(commands.Cog):
                 if len(player.shuffle_votes) >= (required := player.required()):
                     pass
                 else:
-                    return await send(ctx, "shuffleVote", ctx.author, len(player.skip_votes), required)
+                    return await send(ctx, "shuffleVote", ctx.author, len(player.shuffle_votes), required)
         
         await player.shuffle("queue", ctx.author)
         await send(ctx, "shuffled")

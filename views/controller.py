@@ -305,7 +305,7 @@ class Shuffle(ControlButton):
                 if len(self.player.shuffle_votes) >= (required := self.player.required()):
                     pass
                 else:
-                    return await self.send(interaction, 'shuffleVote', interaction.user, len(self.player.skip_votes), required)
+                    return await self.send(interaction, 'shuffleVote', interaction.user, len(self.player.shuffle_votes), required)
         
         await self.player.shuffle("queue", interaction.user)
         await self.send(interaction, 'shuffled')

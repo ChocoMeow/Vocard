@@ -430,7 +430,7 @@ class Node:
                 spotify_playlist=spotify_results
             )
 
-        elif discord_url := DISCORD_MP3_URL_REGEX.match(query):
+        elif DISCORD_MP3_URL_REGEX.match(query):
             async with self._session.get(
                 url=f"{self._rest_uri}/" + NODE_VERSION + f"/loadtracks?identifier={quote(query)}",
                 headers={"Authorization": self._password}
