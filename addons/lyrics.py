@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from urllib.parse import quote
 from math import floor
 from importlib import import_module
+from typing import Optional
 
 userAgents = '''Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.1 Safari/537.36
@@ -47,13 +48,15 @@ Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.9 (KHTM
 Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.6 (KHTML, like Gecko) Chrome/ Safari/530.6
 Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.5 (KHTML, like Gecko) Chrome/ Safari/530.5'''
 
+LYRIST_ENDPOINT = "https://lyrist.vercel.app/api/"
+
 class LyricsPlatform(ABC):
     @abstractmethod
-    async def getLyrics():
+    async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
         ...
 
 class A_ZLyrics(LyricsPlatform):
-    async def get(self, url):
+    async def get(self, url) -> str:
         try:
             async with aiohttp.ClientSession() as session:
                 resp = await session.get(url=url, headers={'User-Agent': random.choice(userAgents)})
@@ -63,13 +66,12 @@ class A_ZLyrics(LyricsPlatform):
         except:
             return ""
 
-    async def getLyrics(self, title: str):
-        link = await self.googleGet(title=title)
+    async def get_lyrics(self, title: str, artist: str) -> dict[str, str]:
+        link = await self.googleGet(title=title, artist=artist)
         if not link:
             return 0
 
         page = await self.get(link)
-
         metadata = [elm.text for elm in self.htmlFindAll(page)('b')]
         
         if not metadata:
@@ -85,21 +87,19 @@ class A_ZLyrics(LyricsPlatform):
             if not lyrics:
                 return print("Lyrics not found")
 
-            rr = re.split(r"(\[[\w\S_ ]+\:])", lyrics)
-            for item in rr: 
-                if item == "": 
-                    rr.remove(item)
+            lyrics_parts = re.split(r"(\[[\w\S_ ]+\:])", lyrics)
+            lyrics_parts = [item for item in lyrics_parts if item != ""]
 
-            count = len(rr)
+            count = len(lyrics_parts)
             if count > 1:
                 if (count % 2) != 0:
-                    del rr[count-1]
-                return {rr[i].replace("[", "").replace(":]", ""): self.clearText(rr[i + 1]) for i in range(0, len(rr), 2)}
-            return {"default": self.clearText(rr[0])}
+                    del lyrics_parts[count-1]
+                return {lyrics_parts[i].replace("[", "").replace(":]", ""): self.clearText(lyrics_parts[i + 1]) for i in range(0, len(lyrics_parts), 2)}
+            return {"default": self.clearText(lyrics_parts[0])}
         except:
             return None
 
-    async def googleGet(self, acc = 0.6, artist='', title=''):
+    async def googleGet(self, acc = 0.6, artist='', title='') -> Optional[str]:
         data = artist + ' ' * (title != '' and artist != '') + title
         encoded_data = quote(data.replace(' ', '+'))
 
@@ -125,7 +125,7 @@ class A_ZLyrics(LyricsPlatform):
                 return None
         return None
 
-    def jaro_distance(self, s1, s2): 
+    def jaro_distance(self, s1, s2) -> int:
         if (s1 == s2): 
             return 1.0
     
@@ -160,11 +160,11 @@ class A_ZLyrics(LyricsPlatform):
 
         return (match/ len1 + match / len2 + (match - t + 1) / match)/ 3.0
 
-    def htmlFindAll(self, page):
+    def htmlFindAll(self, page) -> list:
         soup = bs4.BeautifulSoup(page, "html.parser")
         return soup.findAll
 
-    def clearText(self, text: str):
+    def clearText(self, text: str) -> str:
         if text.startswith("\n\n"):
             text = text.replace("\n\n", "", 1)
             
@@ -175,14 +175,29 @@ class Genius(LyricsPlatform):
         self.module = import_module("lyricsgenius")
         self.genius = self.module.Genius(func.tokens.genius_token)
 
-    async def getLyrics(self, name: str):
-        song = self.genius.search_song(title=name)
+    async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
+        song = self.genius.search_song(title=title, artist=artist)
         if not song:
             return None
         
         return {"default": song.lyrics}
 
+class Lyrist(LyricsPlatform):
+    async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
+        try:
+            request_url = LYRIST_ENDPOINT + title + "/" + artist
+            async with aiohttp.ClientSession() as session:
+                resp = await session.get(url=request_url, headers={'User-Agent': random.choice(userAgents)})
+                if resp.status != 200:
+                    return None
+                
+                data = await resp.json()
+                return {"default": data["lyrics"]}
+        except:
+            return None
+
 lyricsPlatform: dict[str, LyricsPlatform] = {
     "a_zlyrics": A_ZLyrics,
-    "genius": Genius
+    "genius": Genius,
+    "lyrist": Lyrist
 }
