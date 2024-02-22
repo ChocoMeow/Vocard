@@ -803,23 +803,24 @@ class Basic(commands.Cog):
         await send(ctx, "moved", moved_track, to)
 
     @commands.hybrid_command(name="lyrics", aliases=get_aliases("lyrics"))
-    @app_commands.describe(name="Searches for your query and displays the reutned lyrics.")
+    @app_commands.describe(title="Searches for your query and displays the reutned lyrics.")
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def lyrics(self, ctx: commands.Context, name: str = None):
+    async def lyrics(self, ctx: commands.Context, title: str = "", artist: str = ""):
         "Displays lyrics for the playing track."
-        player: voicelink.Player = ctx.guild.voice_client
-
-        if not name:
+        if not title:
+            player: voicelink.Player = ctx.guild.voice_client
             if not player or not player.is_playing:
                 return await send(ctx, "noTrackPlaying", ephemeral=True)
-            name = player.current.title + " " + player.current.author
+            
+            title = player.current.title
+            artist = player.current.author
+        
         await ctx.defer()
-
-        song: dict[str, str] = await lyricsPlatform.get(settings.lyrics_platform)().getLyrics(name)
+        song: dict[str, str] = await lyricsPlatform.get(settings.lyrics_platform)().get_lyrics(title, artist)
         if not song:
             return await send(ctx, "lyricsNotFound", ephemeral=True)
 
-        view = LyricsView(name=name, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
+        view = LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
         view.response = await ctx.send(embed=view.build_embed(), view=view)
 
     @commands.hybrid_command(name="swapdj", aliases=get_aliases("swapdj"))
