@@ -349,10 +349,10 @@ class Player(VoiceProtocol):
                 await sleep(5)
                 return await self.do_next()
 
-        if not track.requester.bot:
-            await func.update_user(track.requester.id, {
-                "$push": {"history": {"$each": [track.track_id], "$slice": -25}}
-            })
+            if not track.requester.bot:
+                await func.update_user(track.requester.id, {
+                    "$push": {"history": {"$each": [track.track_id], "$slice": -25}}
+                })
 
         if self.settings.get('controller', True):
             await self.invoke_controller()
