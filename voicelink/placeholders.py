@@ -49,6 +49,8 @@ class Placeholders:
         return self.player.current if self.player else None
 
     def channel_name(self) -> str:
+        if not self.player:
+            return "None"
         return self.player.channel.name if self.player.channel else "None"
     
     @ensure_track
@@ -93,6 +95,9 @@ class Placeholders:
         return str(self.player.queue.count) if self.player else "0"
     
     def dj(self) -> str:
+        if not self.player:
+            return self.bot.user.mention
+        
         if dj_id := self.player.settings.get("dj"):
             return f"<@&{dj_id}>"
         
@@ -109,96 +114,75 @@ class Placeholders:
 
     def bot_icon(self) -> str:
         return self.bot.user.display_avatar.url if self.player else "https://i.imgur.com/dIFBwU7.png"
-    
-    def check_callable(self, value) -> str:
-        return str(value()) if callable(value) else str(value)
-    
-    def evaluate_expression(self, s: str):
-        if not (s.startswith("{{") and s.endswith("}}")) or "?? " not in s:
-            return s
-
-        inner = s[2:-2].strip()
-        parts = inner.split("?? ")
-        expr = parts[0]
-        rest = parts[1] if len(parts) > 1 else ""
-        true_val, false_val = rest.split("//") if "//" in rest else (rest, "")
-
-        if not expr.strip() or not true_val.strip():
-            return s
-
-        operator_funcs = {
-            "!=": lambda var_name, var_val: var_name.strip() in self.variables and self.check_callable(self.variables[var_name.strip()]) != var_val.strip(),
-            "=": lambda var_name, var_val: var_name.strip() in self.variables and self.check_callable(self.variables[var_name.strip()]) == var_val.strip()
-        }
-
-        for operator, func in operator_funcs.items():
-            if operator in expr:
-                var_name, var_val = expr.split(operator)
-                return true_val.strip() if func(var_name, var_val) else false_val.strip()
-
-        if ">=" in expr or "<=" in expr:
-            expr = expr.replace(">=", ">= ")
-            expr = expr.replace("<=", "<= ")
-
-        expr_parts = expr.split()
-        for i, part in enumerate(expr_parts):
-            if part in self.variables:
-                expr_parts[i] = self.check_callable(self.variables[part])
-
-        expr = " ".join(expr_parts)
-        try:
-            return true_val.strip() if eval(expr) else false_val.strip()
-        except:
-            return ""
         
-    def replace(self, msg: str) -> str:
-        if not msg:
-            return
+    def replace(self, text: str, variables: dict[str, str]) -> str:
+        if not text or text.isspace(): return
+        pattern = r"\{\{(.*?)\}\}"
+        matches: list[str] = re.findall(pattern, text)
 
-        try:
-            msg = "".join([self.evaluate_expression(sub_s) for sub_s in re.split(r"(\{\{.*?\}\})", msg)])
-            keys = re.findall(r'@@(.*?)@@', msg)
-            for key in keys:
-                value = self.variables.get(key.lower(), None)
-                if value is not None:
-                    msg = msg.replace(f"@@{key}@@", self.check_callable(value))
-        except:
-            pass
+        for match in matches:
+            parts: list[str] = match.split("??")
+            expression = parts[0].strip()
+            true_value, false_value = "", ""
 
-        return msg
+            # Split the true and false values
+            if "//" in parts[1]:
+                true_value, false_value = [part.strip() for part in parts[1].split("//")]
+            else:
+                true_value = parts[1].strip()
+
+            try:
+                # Replace variable placeholders with their values
+                expression = re.sub(r'@@(.*?)@@', lambda x: "'" + variables.get(x.group(1), '') + "'", expression)
+                expression = re.sub(r"'(\d+)'", lambda x: str(int(x.group(1))), expression)
+                expression = re.sub(r"'(\d+)'\s*([><=!]+)\s*(\d+)", lambda x: f"{int(x.group(1))} {x.group(2)} {int(x.group(3))}", expression)
+
+                # Evaluate the expression
+                result = eval(expression, {"__builtins__": None}, variables)
+
+                # Replace the match with the true or false value based on the result
+                replacement = true_value if result else false_value
+                text = text.replace("{{" + match + "}}", replacement)
+
+            except:
+                text = text.replace("{{" + match + "}}", "")
+
+        text = re.sub(r'@@(.*?)@@', lambda x: str(variables.get(x.group(1), '')), text)
+        return text
     
-def build_embed(raw: dict, placeholder: Placeholders) -> Embed:
+def build_embed(raw: dict[str, dict], placeholder: Placeholders) -> Embed:
     embed = Embed()
     try:
+        rv = {key: func() if callable(func) else func for key, func in placeholder.variables.items()}
         if author := raw.get("author"):
             embed.set_author(
-                name = placeholder.replace(author.get("name")),
-                url = placeholder.replace(author.get("url")),
-                icon_url = placeholder.replace(author.get("icon_url"))
+                name = placeholder.replace(author.get("name"), rv),
+                url = placeholder.replace(author.get("url"), rv),
+                icon_url = placeholder.replace(author.get("icon_url"), rv)
             )
         
         if title := raw.get("title"):
-            embed.title = placeholder.replace(title.get("name"))
-            embed.url = placeholder.replace(title.get("url"))
+            embed.title = placeholder.replace(title.get("name"), rv)
+            embed.url = placeholder.replace(title.get("url"), rv)
 
         if fields := raw.get("fields", []):
             for f in fields:
-                embed.add_field(name=placeholder.replace(f.get("name")), value=placeholder.replace(f.get("value")), inline=f.get("inline", False))
+                embed.add_field(name=placeholder.replace(f.get("name"), rv), value=placeholder.replace(f.get("value", ""), rv), inline=f.get("inline", False))
 
         if footer := raw.get("footer"):
             embed.set_footer(
-                text = placeholder.replace(footer.get("text")),
-                icon_url = placeholder.replace(footer.get("icon_url"))
+                text = placeholder.replace(footer.get("text"), rv),
+                icon_url = placeholder.replace(footer.get("icon_url"), rv)
             ) 
 
         if thumbnail := raw.get("thumbnail"):
-            embed.set_thumbnail(url = placeholder.replace(thumbnail))
+            embed.set_thumbnail(url = placeholder.replace(thumbnail, rv))
         
         if image := raw.get("image"):
-            embed.set_image(url = placeholder.replace(image))
+            embed.set_image(url = placeholder.replace(image, rv))
 
-        embed.description = placeholder.replace(raw.get("description"))
-        embed.color = int(placeholder.replace(raw.get("color")))
+        embed.description = placeholder.replace(raw.get("description"), rv)
+        embed.color = int(placeholder.replace(raw.get("color"), rv))
 
     except:
         pass
