@@ -91,24 +91,21 @@ class Basic(commands.Cog):
         return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
     async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
+        if voicelink.pool.URL_REGEX.match(current): return
+
         history: dict[str, str] = {}
         for track_id in reversed(await get_user(interaction.user.id, "history")):
             track_dict = voicelink.decode(track_id)
             history[track_dict["identifier"]] = track_dict
 
+        history_tracks = [app_commands.Choice(name=truncate_string(f"🕒 {track['author']} - {track['title']}", 100), value=track['uri']) for track in history.values()][:25]
         if not current:
-            return [app_commands.Choice(name=f"🕒 {track['author']} - {track['title']}", value=track['uri']) for track in history.values()]
-        
-        if voicelink.pool.URL_REGEX.match(current): return
+            return history_tracks
 
         node = voicelink.NodePool.get_node()
         if node and node.spotify_client:
             tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
-            choices = [app_commands.Choice(name=f"🎵 {track.author} - {track.title}", value=f"{track.author} - {track.title}") for track in tracks]
-            if history:
-                choices = [app_commands.Choice(name=f"🕒 {track['author']} - {track['title']}", value=track['uri']) for track in list(history.values())[:5]] + choices
-            
-            return choices
+            return  history_tracks[:5] + [app_commands.Choice(name=f"🎵 {track.author} - {track.title}", value=f"{track.author} - {track.title}") for track in tracks]
 
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
