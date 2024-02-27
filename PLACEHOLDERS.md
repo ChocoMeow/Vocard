@@ -91,14 +91,14 @@ Change the value of `default_controller` in `settings.json`.
         "active": {
             "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
             "footer": {
-                "text": "Queue Length: @@queue_length@@ | Duration: @@track_duration@@ | Volume: @@volume@@% {{loop_mode!=Off ?? | Repeat: @@loop_mode@@}}"
+                "text": "Queue Length: @@queue_length@@ | Duration: @@track_duration@@ | Volume: @@volume@@% {{loop_mode != 'Off' ?? | Repeat: @@loop_mode@@}}"
             },
             "image": "@@track_thumbnail@@",
             "author": {
                 "name": "Music Controller | @@channel_name@@",
                 "icon_url": "@@bot_icon@@"
             },
-            "color": "@@default_embed_color@@"
+            "color": "@@track_color@@"
         },
         "inactive": {
             "title": {
