@@ -123,7 +123,7 @@ class Basic(commands.Cog):
     @app_commands.describe(query="Input a query or a searchable link.")
     @app_commands.autocomplete(query=play_autocomplete)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def play(self, ctx: commands.Context, query: str) -> None:
+    async def play(self, ctx: commands.Context, *, query: str) -> None:
         "Loads your input and added it to the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
@@ -250,7 +250,7 @@ class Basic(commands.Cog):
     @commands.hybrid_command(name="playtop", aliases=get_aliases("playtop"))
     @app_commands.describe(query="Input a query or a searchable link.")
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def playtop(self, ctx: commands.Context, query: str):
+    async def playtop(self, ctx: commands.Context, *, query: str):
         "Adds a song with the given url or query on the top of the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
