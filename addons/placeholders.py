@@ -34,9 +34,7 @@ class Placeholders:
 
         for key in keys:
             value = self.variables.get(key.lower(), None)
-            if value is None:
-                continue
-
-            msg = msg.replace(f"@@{key}@@", str(value()))
+            if value:
+                msg = msg.replace(f"@@{key}@@", str(value()))
 
         return msg

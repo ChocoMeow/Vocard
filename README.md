@@ -102,31 +102,61 @@ MONGODB_NAME = Vocard
         "port": 8000,
         "enable": false
     },
-    "emoji_source_raw": {
-        "youtube": "<:youtube:826661982760992778>",
-        "youtube music": "<:youtube:826661982760992778>",
-        "spotify": "<:spotify:826661996615172146>",
-        "soundcloud": "<:soundcloud:852729280027033632>",
-        "twitch": "<:twitch:852729278285086741>",
-        "bandcamp": "<:bandcamp:864694003811221526>",
-        "vimeo": "<:vimeo:864694001919721473>",
-        "apple": "<:applemusic:994844332374884413>",
-        "reddit": "<:reddit:996007566863773717>",
-        "tiktok": "<:tiktok:996007689798811698>"
+    "sources_settings": {
+        "youtube": {
+            "emoji": "<:youtube:826661982760992778>",
+            "color": "0xFF0000"
+        },
+        "youtube music": {
+            "emoji": "<:youtube:826661982760992778>",
+            "color": "0xFF0000"
+        },
+        "spotify": {
+            "emoji": "<:spotify:826661996615172146>",
+            "color": "0x1DB954"
+        },
+        "soundcloud": {
+            "emoji": "<:soundcloud:852729280027033632>",
+            "color": "0xFF7700"
+        },
+        "twitch": {
+            "emoji": "<:twitch:852729278285086741>",
+            "color": "0x9B4AFF"
+        },
+        "bandcamp": {
+            "emoji": "<:bandcamp:864694003811221526>",
+            "color": "0x6F98A7"
+        },
+        "vimeo": {
+            "emoji": "<:vimeo:864694001919721473>",
+            "color": "0x1ABCEA"
+        },
+        "apple": {
+            "emoji": "<:applemusic:994844332374884413>",
+            "color": "0xE298C4"
+        },
+        "reddit": {
+            "emoji": "<:reddit:996007566863773717>",
+            "color": "0xFF5700"
+        },
+        "tiktok": {
+            "emoji": "<:tiktok:996007689798811698>",
+            "color": "0x74ECE9"
+        }
     },
     "default_controller": {
         "embeds": {
             "active": {
                 "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
                 "footer": {
-                    "text": "Queue Length: @@queue_length@@ | Duration: @@duration@@ | Volume: @@volume@@% {{loop_mode!=Off ?? | Repeat: @@loop_mode@@}}"
+                    "text": "Queue Length: @@queue_length@@ | Duration: @@track_duration@@ | Volume: @@volume@@% {{loop_mode != 'Off' ?? | Repeat: @@loop_mode@@}}"
                 },
                 "image": "@@track_thumbnail@@",
                 "author": {
                     "name": "Music Controller | @@channel_name@@",
                     "icon_url": "@@bot_icon@@"
                 },
-                "color": "@@default_embed_color@@"
+                "color": "@@track_color@@"
             },
             "inactive": {
                 "header": {
@@ -140,7 +170,8 @@ MONGODB_NAME = Vocard
         "default_buttons": [
             ["back", "resume", "skip", {"stop": "red"}, "add"],
             ["tracks"]
-        ]
+        ],
+        "disableButtonText": false
     },
     "cooldowns": {
         "connect": [2, 30],
@@ -160,7 +191,7 @@ MONGODB_NAME = Vocard
 * For `bot_access_user` you can pass the [discord user id](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-). Example: `[123456789012345678]`
 * For `embed_color` you must pass a [Hexadecimal color code](https://htmlcolorcodes.com/) and add `0x` before the color code. Example: `"0xb3b3b3"`
 * For `default_max_queue` you can set a default maximum number of tracks that can be added to the queue.
-* For `lyrics_platform` you can set lyrics search engine (e.g. `A_ZLyrics`, `Genius`)<br>**NOTE: If you are using Genius as your lyrics search engine, you must install the lyricsgenius module (`pip install lyricsgenius`)**
+* For `lyrics_platform` you can set lyrics search engine (e.g. `A_ZLyrics`, `Genius`, `lyrist`)<br>**NOTE: If you are using Genius as your lyrics search engine, you must install the lyricsgenius module (`pip install lyricsgenius`)**
 * For `ipc_server` you can set the host, password and enable of the ipc server.
 * For `emoji_source_raw` you can change the source emoji of the track with discord emoji like `<:EMOJI_NAME:EMOJI_ID>`
 * For `cooldowns` you can set a custom cooldown in the command. Example: `"command_name": [The total number of tokens available, The length of the cooldown period in seconds]`

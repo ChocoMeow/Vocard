@@ -35,16 +35,16 @@ class ListView(discord.ui.View):
         self,
         player: "Player",
         author: discord.Member, 
-        isQueue = True
+        is_queue: bool = True
     ) -> None:
         super().__init__(timeout=60)
         self.player: Player = player
 
-        self.name: str = player.get_msg('queueTitle') if isQueue else player.get_msg('historyTitle')
-        self.tracks: list[Track] = player.queue.tracks() if isQueue else player.queue.history()
+        self.is_queue: bool = is_queue
+        self.tracks: list[Track] = player.queue.tracks() if is_queue else player.queue.history()
         self.response: discord.Message = None
 
-        if not isQueue:
+        if not is_queue:
             self.tracks.reverse()
         self.author: discord.Member = author
 
@@ -70,19 +70,19 @@ class ListView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user == self.author
 
-    def build_embed(self) -> discord.Embed:
+    async def build_embed(self) -> discord.Embed:
         offset: int = self.current_page * 7
         tracks: list[Track] = self.tracks[(offset-7):offset]
+        texts = await func.get_lang(self.author.guild.id, "viewTitle", "viewDesc", "nowplayingDesc", "live", "queueTitle", "historyTitle", "viewFooter")
 
-        embed = discord.Embed(title=self.player.get_msg('viewTitle'), color=func.settings.embed_color)
-        embed.description=self.player.get_msg('viewDesc').format(self.player.current.uri, f"```{self.player.current.title}```") if self.player.current else self.player.get_msg('nowplayingDesc').format("None")
+        embed = discord.Embed(title=texts[0], color=func.settings.embed_color)
+        embed.description=texts[1].format(self.player.current.uri, f"```{self.player.current.title}```") if self.player.current else texts[2].format("None")
         
-        queueText = "\n".join([
-            f"{track.emoji} `{i}.` `[" + (self.player.get_msg("live") if track.is_stream else func.time(track.length)) + f'`] **{track.title[:30]}** ' + (track.requester.mention)
+        embed.description += "\n**" + (texts[4] if self.is_queue else texts[5]) + "**\n" + "\n".join([
+            f"{track.emoji} `{i:>2}.` `[" + (texts[3] if track.is_stream else func.time(track.length)) + f']` [{func.truncate_string(track.title)}]({track.uri})' + (track.requester.mention)
             for i, track in enumerate(tracks, start=offset-6)
         ])
-        embed.add_field(name=self.name, value=queueText) 
-        embed.set_footer(text=self.player.get_msg('viewFooter').format(self.current_page, self.page, self.time))
+        embed.set_footer(text=texts[6].format(self.current_page, self.page, self.time))
 
         return embed
 
@@ -90,28 +90,28 @@ class ListView(discord.ui.View):
     async def fast_back_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if self.current_page != 1:
             self.current_page = 1
-            return await interaction.response.edit_message(embed=self.build_embed())
+            return await interaction.response.edit_message(embed=await self.build_embed())
         await interaction.response.defer()
 
     @discord.ui.button(label='Back', style=discord.ButtonStyle.blurple)
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if self.current_page > 1:
             self.current_page -= 1
-            return await interaction.response.edit_message(embed=self.build_embed())
+            return await interaction.response.edit_message(embed=await self.build_embed())
         await interaction.response.defer()
 
     @discord.ui.button(label='Next', style=discord.ButtonStyle.blurple)
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if self.current_page < self.page:
             self.current_page += 1
-            return await interaction.response.edit_message(embed=self.build_embed())
+            return await interaction.response.edit_message(embed=await self.build_embed())
         await interaction.response.defer()
 
     @discord.ui.button(label='>>', style=discord.ButtonStyle.grey)
     async def fast_next_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if self.current_page != self.page:
             self.current_page = self.page
-            return await interaction.response.edit_message(embed=self.build_embed())
+            return await interaction.response.edit_message(embed=await self.build_embed())
         await interaction.response.defer()
         
     @discord.ui.button(emoji='🗑️', style=discord.ButtonStyle.red)

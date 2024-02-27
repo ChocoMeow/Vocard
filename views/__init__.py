@@ -9,8 +9,7 @@ from .search import SearchView
 from .help import HelpView
 from .list import ListView
 from .lyrics import LyricsView
-from .chapter import ChapterView
-from .playlist import PlaylistView, CreateView
+from .playlist import PlaylistView
 from .inbox import InboxView
 from .link import LinkView
 from .debug import DebugView

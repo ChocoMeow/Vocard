@@ -45,9 +45,7 @@
     "FilterTagAlreadyInUse": "このサウンドエフェクトはすでに使用されています！削除するには/cleareffect <Tag>を使用してください。",
 
     "playlistViewTitle": "📜 {0}のすべてのプレイリスト",
-    "playlistViewHeaders": ["   ", "ID:", "時間:", "名前:", "トラック:"],
-    "playlistMaxP": "最大プレイリスト:",
-    "playlistMaxT": "最大トラック:",
+    "playlistViewHeaders": "ID:,時間:,名前:,トラック:",
     "playlistFooter": "プレイリストをキューに追加するには、/playlist play [playlist]を入力してください。",
     "playlistNotFound": "プレイリスト[{0}]が見つかりません。すべてのプレイリストを表示するには、/playlist viewを入力してください。",
     "playlistNotAccess": "申し訳ありません！このプレイリストにアクセスすることはできません！",

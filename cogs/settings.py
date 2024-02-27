@@ -31,10 +31,10 @@ from discord import app_commands
 from discord.ext import commands
 from function import (
     LANGS,
+    send,
     update_settings,
     get_settings,
     get_lang,
-    settings as sett,
     time as ctime,
     get_aliases,
     cooldown_check
@@ -52,15 +52,6 @@ class Settings(commands.Cog, name="settings"):
     def __init__(self, bot) -> None:
         self.bot: commands.Bot = bot
         self.description = "This category is only available to admin permissions on the server."
-
-    def get_settings(self, ctx: commands.Context) -> Tuple[voicelink.Player, dict]:
-        player: voicelink.Player = ctx.guild.voice_client
-        if not player:
-            settings = get_settings(ctx.guild.id)
-        else:
-            settings = player.settings
-
-        return player, settings
     
     @commands.hybrid_group(
         name="settings",
@@ -77,8 +68,8 @@ class Settings(commands.Cog, name="settings"):
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def prefix(self, ctx: commands.Context, prefix: str):
         "Change the default prefix for message commands."
-        update_settings(ctx.guild.id, {"prefix": prefix})
-        await ctx.send(get_lang(ctx.guild.id, "setPrefix").format(ctx.prefix, prefix))
+        await update_settings(ctx.guild.id, {"$set": {"prefix": prefix}})
+        await send(ctx, "setPrefix", prefix, prefix)
 
     @settings.command(name="language", aliases=get_aliases("language"))
     @commands.has_permissions(manage_guild=True)
@@ -87,10 +78,10 @@ class Settings(commands.Cog, name="settings"):
         "You can choose your preferred language, the bot message will change to the language you set."
         language = language.upper()
         if language not in LANGS:
-            return await ctx.send(get_lang(ctx.guild.id, "languageNotFound"))
+            return await send(ctx, "languageNotFound")
 
-        update_settings(ctx.guild.id, {'lang': language})
-        await ctx.send(get_lang(ctx.guild.id, 'changedLanguage').format(language))
+        await update_settings(ctx.guild.id, {"$set": {'lang': language}})
+        await send(ctx, 'changedLanguage', language)
 
     @language.autocomplete('language')
     async def autocomplete_callback(self, interaction: discord.Interaction, current: str) -> list:
@@ -103,18 +94,8 @@ class Settings(commands.Cog, name="settings"):
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def dj(self, ctx: commands.Context, role: discord.Role = None):
         "Set a DJ role or remove DJ role."
-        player: voicelink.Player = ctx.guild.voice_client
-
-        if not role:
-            if player:
-                player.settings.pop('dj', None)
-            update_settings(ctx.guild.id, {'dj': ''}, mode="unset")
-        else:
-            if player:
-                player.settings['dj'] = role.id
-            update_settings(ctx.guild.id, {'dj': role.id})
-
-        await ctx.send(get_lang(ctx.guild.id, 'setDJ').format(f"<@&{role.id}>" if role else "None"), allowed_mentions=discord.AllowedMentions.none())
+        await update_settings(ctx.guild.id, {"$set": {'dj': role.id}} if role else {"$unset": {'dj': None}})
+        await send(ctx, 'setDJ', f"<@&{role.id}>" if role else "None")
 
     @settings.command(name="queue", aliases=get_aliases("queue"))
     @app_commands.choices(mode=[
@@ -125,50 +106,44 @@ class Settings(commands.Cog, name="settings"):
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def queue(self, ctx: commands.Context, mode: str):
         "Change to another type of queue mode."
-        player, settings = self.get_settings(ctx)
-
         mode = "FairQueue" if mode.lower() == "fairqueue" else "Queue"
-        settings["queueType"] = mode
-        update_settings(ctx.guild.id, {"queueType": mode})
-        await ctx.send(get_lang(ctx.guild.id, "setqueue").format(mode))
+        await update_settings(ctx.guild.id, {"$set": {"queueType": mode}})
+        await send(ctx, "setqueue", mode)
 
     @settings.command(name="247", aliases=get_aliases("247"))
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def playforever(self, ctx: commands.Context):
         "Toggles 24/7 mode, which disables automatic inactivity-based disconnects."
-        player, settings = self.get_settings(ctx)
+        settings = await get_settings(ctx.guild.id)
         toggle = settings.get('24/7', False)
-        settings['24/7'] = not toggle
-        update_settings(ctx.guild.id, {'24/7': not toggle})
-        toggle = get_lang(ctx.guild.id, "enabled" if not toggle else "disabled")
-        await ctx.send(get_lang(ctx.guild.id, '247').format(toggle))
+        await update_settings(ctx.guild.id, {"$set": {'24/7': not toggle}})
+        await send(ctx, '247', await get_lang(ctx.guild.id, "enabled" if not toggle else "disabled"))
 
     @settings.command(name="bypassvote", aliases=get_aliases("bypassvote"))
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def bypassvote(self, ctx: commands.Context):
         "Toggles voting system."
-        player, settings = self.get_settings(ctx)
+        settings = await get_settings(ctx.guild.id)
         toggle = settings.get('votedisable', True)
-        settings['votedisable'] = not toggle
-        update_settings(ctx.guild.id, {'votedisable': not toggle})
-        toggle = get_lang(ctx.guild.id,
-                          "enabled" if not toggle else "disabled")
-        await ctx.send(get_lang(ctx.guild.id, 'bypassVote').format(toggle))
+        await update_settings(ctx.guild.id, {"$set": {'votedisable': not toggle}})
+        await send(ctx, 'bypassVote', await get_lang(ctx.guild.id, "enabled" if not toggle else "disabled"))
 
     @settings.command(name="view", aliases=get_aliases("view"))
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def view(self, ctx: commands.Context):
         "Show all the bot settings in your server."
-        player, settings = self.get_settings(ctx)
-        embed = discord.Embed(color=sett.embed_color)
-        embed.set_author(name=get_lang(ctx.guild.id, 'settingsMenu').format(ctx.guild.name), icon_url=self.bot.user.display_avatar.url)
+        settings = await get_settings(ctx.guild.id)
+
+        texts = await get_lang(ctx.guild.id, "settingsMenu", "settingsTitle", "settingsValue", "settingsTitle2", "settingsValue2", "settingsPermTitle", "settingsPermValue")
+        embed = discord.Embed(color=func.settings.embed_color)
+        embed.set_author(name=texts[0].format(ctx.guild.name), icon_url=self.bot.user.display_avatar.url)
         if ctx.guild.icon:
             embed.set_thumbnail(url=ctx.guild.icon.url)
 
-        embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle'), value=get_lang(ctx.guild.id, 'settingsValue').format(
+        embed.add_field(name=texts[1], value=texts[2].format(
             settings.get('prefix', func.settings.bot_prefix) or "None",
             settings.get('lang', 'EN'),
             settings.get('controller', True),
@@ -179,15 +154,14 @@ class Settings(commands.Cog, name="settings"):
             ctime(settings.get('playTime', 0) * 60 * 1000),
             inline=True)
         )
-        embed.add_field(name=get_lang(ctx.guild.id, 'settingsTitle2'), value=get_lang(ctx.guild.id, 'settingsValue2').format(
+        embed.add_field(name=texts[3], value=texts[4].format(
             settings.get("queueType", "Queue"),
             func.settings.max_queue,
             settings.get("duplicateTrack", True)
-        )
-        )
+        ))
 
         perms = ctx.guild.me.guild_permissions
-        embed.add_field(name=get_lang(ctx.guild.id, 'settingsPermTitle'), value=get_lang(ctx.guild.id, 'settingsPermValue').format(
+        embed.add_field(name=texts[5], value=texts[6].format(
             '<a:Check:941206936651706378>' if perms.administrator else '<a:Cross:941206918255497237>',
             '<a:Check:941206936651706378>' if perms.manage_guild else '<a:Cross:941206918255497237>',
             '<a:Check:941206936651706378>' if perms.manage_channels else '<a:Cross:941206918255497237>',
@@ -203,54 +177,52 @@ class Settings(commands.Cog, name="settings"):
         "Set the player's volume."
         player: voicelink.Player = ctx.guild.voice_client
         if player:
-            player.settings['volume'] = value
             await player.set_volume(value, ctx.author)
 
-        update_settings(ctx.guild.id, {'volume': value})
-        await ctx.send(get_lang(ctx.guild.id, 'setVolume').format(value))
+        await update_settings(ctx.guild.id, {"$set": {'volume': value}})
+        await send(ctx, 'setVolume', value)
 
     @settings.command(name="togglecontroller", aliases=get_aliases("togglecontroller"))
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def togglecontroller(self, ctx: commands.Context):
         "Toggles the music controller."
-        player, settings = self.get_settings(ctx)
-        toggle = settings.get('controller', True)
-        settings['controller'] = not toggle
-        if player and settings['controller'] is False:
-            if player.controller:
-                try:
-                    await player.controller.delete()
-                except:
-                    discord.ui.View.from_message(player.controller).stop()
+        settings = await get_settings(ctx.guild.id)
+        toggle = not settings.get('controller', True)
 
-        update_settings(ctx.guild.id, {'controller': not toggle})
-        toggle = get_lang(ctx.guild.id, "enabled" if not toggle else "disabled")
-        await ctx.send(get_lang(ctx.guild.id, 'togglecontroller').format(toggle))
+        player: voicelink.Player = ctx.guild.voice_client
+        if player and toggle is False and player.controller:
+            try:
+                await player.controller.delete()
+            except:
+                discord.ui.View.from_message(player.controller).stop()
+
+        await update_settings(ctx.guild.id, {"$set": {'controller': toggle}})
+        await send(ctx, 'togglecontroller', await get_lang(ctx.guild.id, "enabled" if toggle else "disabled"))
 
     @settings.command(name="duplicatetrack", aliases=get_aliases("duplicatetrack"))
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def duplicatetrack(self, ctx: commands.Context):
         "Toggle Vocard to prevent duplicate songs from queuing."
-        player, settings = self.get_settings(ctx)
-        toggle = settings.get('duplicateTrack', False)
+        settings = await get_settings(ctx.guild.id)
+        toggle = not settings.get('duplicateTrack', False)
+        player: voicelink.Player = ctx.guild.voice_client
         if player:
-            player.queue._allow_duplicate = not toggle
+            player.queue._allow_duplicate = toggle
 
-        update_settings(ctx.guild.id, {'duplicateTrack': not toggle})
-        toggle = get_lang(ctx.guild.id, "enabled" if toggle else "disabled")
-        return await ctx.send(get_lang(ctx.guild.id, "toggleDuplicateTrack").format(toggle))
+        await update_settings(ctx.guild.id, {"$set": {'duplicateTrack': toggle}})
+        return await send(ctx, "toggleDuplicateTrack", await get_lang(ctx.guild.id, "disabled" if toggle else "enabled"))
     
     @settings.command(name="customcontroller", aliases=get_aliases("customcontroller"))
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def customcontroller(self, ctx: commands.Context):
         "Customizes music controller embeds."
-        player, settings = self.get_settings(ctx)
+        settings = await get_settings(ctx.guild.id)
         controller_settings = settings.get("default_controller", func.settings.controller)
 
-        view = EmbedBuilderView(ctx.author, controller_settings.get("embeds").copy())
+        view = EmbedBuilderView(ctx, controller_settings.get("embeds").copy())
         view.response = await ctx.send(embed=view.build_embed(), view=view)
 
     @settings.command(name="controllermsg", aliases=get_aliases("controllermsg"))
@@ -258,13 +230,11 @@ class Settings(commands.Cog, name="settings"):
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def controllermsg(self, ctx: commands.Context):
         "Toggles to send a message when clicking the button in the music controller."
-        player, settings = self.get_settings(ctx)
-        toggle = settings.get('controller_msg', True)
+        settings = await get_settings(ctx.guild.id)
+        toggle = not settings.get('controller_msg', True)
 
-        settings['controller_msg'] = not toggle
-        update_settings(ctx.guild.id, {'controller_msg': not toggle})
-        toggle = get_lang(ctx.guild.id, "enabled" if not toggle else "disabled")
-        await ctx.send(get_lang(ctx.guild.id, 'toggleControllerMsg').format(toggle))
+        await update_settings(ctx.guild.id, {"$set": {'controller_msg': toggle}})
+        await send(ctx, 'toggleControllerMsg', await get_lang(ctx.guild.id, "enabled" if toggle else "disabled"))
 
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):

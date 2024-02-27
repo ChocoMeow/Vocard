@@ -8,10 +8,10 @@ import function as func
 
 from discord.ext import commands
 from web import IPCServer
+from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 from voicelink import VoicelinkException
-
-func.init()
+from addons import Settings
 
 class Translator(discord.app_commands.Translator):
     async def load(self):
@@ -48,8 +48,28 @@ class Vocard(commands.Bot):
 
         await self.process_commands(message)
 
-    async def setup_hook(self):
+    async def connect_db(self) -> None:
+        if not ((db_name := func.tokens.mongodb_name) and (db_url := func.tokens.mongodb_url)):
+            raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in settings.json")
+
+        try:
+            func.MONGO_DB = AsyncIOMotorClient(host=db_url)
+            await func.MONGO_DB.server_info()
+            print("Successfully connected to MongoDB!")
+
+        except Exception as e:
+            raise Exception("Not able to connect MongoDB! Reason:", e)
+        
+        func.SETTINGS_DB = func.MONGO_DB[db_name]["Settings"]
+        func.USERS_DB = func.MONGO_DB[db_name]["Users"]
+
+    async def setup_hook(self) -> None:
         func.langs_setup()
+        
+        # Connecting to MongoDB
+        await self.connect_db()
+
+        # Loading all the module in `cogs` folder
         for module in os.listdir(func.ROOT_DIR + '/cogs'):
             if module.endswith('.py'):
                 try:
@@ -83,7 +103,8 @@ class Vocard(commands.Bot):
         error = getattr(exception, 'original', exception)
         if ctx.interaction:
             error = getattr(error, 'original', error)
-        if isinstance(error, (commands.CommandNotFound, aiohttp.client_exceptions.ClientOSError)):
+            
+        if isinstance(error, (commands.CommandNotFound, aiohttp.client_exceptions.ClientOSError, discord.errors.NotFound)):
             return
 
         elif isinstance(error, (commands.CommandOnCooldown, commands.MissingPermissions, commands.RangeError, commands.BadArgument)):
@@ -102,7 +123,7 @@ class Vocard(commands.Bot):
             return await ctx.reply(embed=embed)
 
         elif not issubclass(error.__class__, VoicelinkException):
-            error = func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
+            error = await func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
             if (guildId := ctx.guild.id) not in func.ERROR_LOGS:
                 func.ERROR_LOGS[guildId] = {}
             func.ERROR_LOGS[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
@@ -113,7 +134,6 @@ class Vocard(commands.Bot):
             pass
 
 class CommandCheck(discord.app_commands.CommandTree):
-
     async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
         if not interaction.guild:
             await interaction.response.send_message("This command can only be used in guilds!")
@@ -122,11 +142,16 @@ class CommandCheck(discord.app_commands.CommandTree):
         return await super().interaction_check(interaction)
     
 async def get_prefix(bot, message: discord.Message):
-    settings = func.get_settings(message.guild.id)
+    settings = await func.get_settings(message.guild.id)
     return settings.get("prefix", func.settings.bot_prefix)
 
+# Loading settings
+func.settings = Settings(func.open_json("settings.json"))
+
+# Setup the bot object
 intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
+intents.members = True
 member_cache = discord.MemberCacheFlags(
     voice=True,
     joined=False

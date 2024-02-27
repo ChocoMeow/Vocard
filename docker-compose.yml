@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+    lavalink:
+        image: ghcr.io/lavalink-devs/lavalink:latest
+        container_name: lavalink
+        restart: unless-stopped
+        environment:
+            - _JAVA_OPTIONS=-Xmx1G
+            - SERVER_PORT=2333
+        volumes:
+            - ./application.yml:/opt/Lavalink/application.yml
+        networks:
+            - local
+        expose:
+            - "2333"
+
+    mongo:
+        image: mongo:latest
+        container_name: mongo
+        restart: unless-stopped
+        volumes:
+            - ./data/mongo/db:/data/db
+            - ./data/mongo/conf:/data/configdb
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=admin
+            - MONGO_INITDB_ROOT_PASSWORD=admin
+        expose:
+            - "27017"
+        networks:
+            - local
+        command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
+
+    vocard:
+        image: vocard
+        container_name: vocard
+        build:
+            dockerfile: ./Dockerfile
+        volumes:
+            - ./settings.json:/app/settings.json
+            - ./.env:/app/.env
+        depends_on:
+            lavalink:
+                condition: service_started
+            mongo:
+                condition: service_started
+        networks:
+            - local
+
+networks:
+    local:
+        name: local

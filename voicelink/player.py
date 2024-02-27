@@ -59,17 +59,21 @@ from .placeholders import Placeholders, build_embed
 from random import shuffle, choice
 
 async def connect_channel(ctx: Union[commands.Context, Interaction], channel: VoiceChannel = None):
+    texts = await func.get_lang(ctx.guild.id, "noChannel", "noPermission")
     try:
         channel = channel or ctx.author.voice.channel if isinstance(ctx, commands.Context) else ctx.user.voice.channel
     except:
-        raise VoicelinkException(func.get_lang(ctx.guild.id, 'noChannel'))
+        raise VoicelinkException(texts[0])
 
     check = channel.permissions_for(ctx.guild.me)
     if check.connect == False or check.speak == False:
-        raise VoicelinkException(func.get_lang(ctx.guild.id, 'noPermission'))
+        raise VoicelinkException(texts[1])
 
-    player: Player = await channel.connect(cls=Player(
-            ctx.bot if isinstance(ctx, commands.Context) else ctx.client, channel, ctx
+    settings = await func.get_settings(channel.guild.id)
+    player: Player = await channel.connect(
+        cls=Player(
+            ctx.bot if isinstance(ctx, commands.Context) else ctx.client,
+            channel, ctx, settings
         ))
     
     await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
@@ -95,6 +99,7 @@ class Player(VoiceProtocol):
         client: Optional[Client] = None, 
         channel: Optional[VoiceChannel] = None, 
         ctx: Union[commands.Context, Interaction] = None,
+        settings: dict[str, Any] = None
     ):
         self.client: Client = client
         self._bot: Client = client
@@ -104,7 +109,7 @@ class Player(VoiceProtocol):
         self._guild = channel.guild if channel else None
         self._ipc_connection: bool = False
 
-        self.settings: dict = func.get_settings(ctx.guild.id)
+        self.settings: dict = settings
         self.joinTime: float = round(time.time())
         self._volume: int = self.settings.get('volume', 100)
         self.queue: Queue = eval(self.settings.get("queueType", "Queue"))(self.settings.get("maxQueue", func.settings.max_queue), self.settings.get("duplicateTrack", True), self.get_msg)
@@ -134,7 +139,7 @@ class Player(VoiceProtocol):
         self.shuffle_votes = set()
         self.stop_votes = set()
 
-        self.ph = Placeholders(self)
+        self.ph = Placeholders(client, self)
 
     def __repr__(self):
         return (
@@ -197,7 +202,7 @@ class Player(VoiceProtocol):
         return self._volume
 
     @property
-    def filters(self) -> Filter:
+    def filters(self) -> Filters:
         """Property which returns the helper class for interacting with filters"""
         return self._filters
 
@@ -216,9 +221,9 @@ class Player(VoiceProtocol):
     @property
     def ping(self) -> float:
         return round(self._ping / 1000, 2)
-    
-    def get_msg(self, key: str) -> str:
-        return func.get_lang(self.guild.id, key)
+
+    def get_msg(self, *keys) -> Union[list[str], str]:
+        return func.get_lang_non_async(self.guild.id, *keys)
 
     def required(self, leave=False):
         if self.settings.get('votedisable'):
@@ -344,6 +349,11 @@ class Player(VoiceProtocol):
                 await sleep(5)
                 return await self.do_next()
 
+            if not track.requester.bot:
+                await func.update_user(track.requester.id, {
+                    "$push": {"history": {"$each": [track.track_id], "$slice": -25}}
+                })
+
         if self.settings.get('controller', True):
             await self.invoke_controller()
 
@@ -403,8 +413,14 @@ class Player(VoiceProtocol):
         return False
     
     async def teardown(self):
-        timeNow = round(time.time())
-        func.update_settings(self.guild.id, {"lastActice": timeNow, "playTime": round(self.settings.get("playTime", 0) + ((timeNow - self.joinTime) / 60), 2)})
+        await func.update_settings(
+            self.guild.id,
+            {"$set": {
+                "lastActice": (timeNow := round(time.time())), 
+                "playTime": round(self.settings.get("playTime", 0) + ((timeNow - self.joinTime) / 60), 2)
+            }}
+        )
+        
         if self.is_ipc_connected:
             await self.send_ws({"op": "playerClose"})
 
@@ -424,7 +440,7 @@ class Player(VoiceProtocol):
         *,
         requester: Member,
         search_type: SearchType = SearchType.ytsearch
-    ):
+    ) -> Union[List[Track], Playlist]:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
         If you passed in Spotify API credentials when you created the node,
@@ -435,22 +451,6 @@ class Player(VoiceProtocol):
         Context object on any track you search.
         """
         return await self._node.get_tracks(query, requester=requester, search_type=search_type)
-
-    async def spotifySearch(self, query: str, *, requester: Member) -> list:
-
-        try:
-            tracks = await self._node._spotify_client.trackSearch(query=query)
-        except Exception as _:
-            raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
-            
-        return [ Track(
-                    track_id=None,
-                    requester=requester,
-                    search_type=SearchType.ytsearch,
-                    spotify_track=track,
-                    info=track.to_dict()
-                )
-                for track in tracks ]
 
     async def connect(self, *, timeout: float, reconnect: bool, self_deaf: bool = True, self_mute: bool = False):
         await self.guild.change_voice_state(channel=self.channel, self_deaf=True, self_mute=self_mute)
@@ -499,7 +499,7 @@ class Player(VoiceProtocol):
         if track.spotify:
             if not track.original:
                 search: Track = (await self._node.get_tracks(
-                    f"ytmsearch:{track.author} - {track.title}",
+                    f"ytsearch:{track.author} - {track.title}",
                     requester=track.requester
                 ))
  

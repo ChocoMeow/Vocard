@@ -42,10 +42,12 @@ class Listeners(commands.Cog):
         await self.bot.wait_until_ready()
         for n in func.settings.nodes.values():
             try:
-                await self.voicelink.create_node(bot=self.bot, 
-                                                 spotify_client_id=func.tokens.spotify_client_id, 
-                                                 spotify_client_secret=func.tokens.spotify_client_secret,
-                                                 **n)
+                await self.voicelink.create_node(
+                    bot=self.bot, 
+                    spotify_client_id=func.tokens.spotify_client_id, 
+                    spotify_client_secret=func.tokens.spotify_client_secret,
+                    **n
+                )
             except Exception as e:
                 print(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
 
@@ -91,18 +93,19 @@ class Listeners(commands.Cog):
         elif before.channel and after.channel:
             if after.channel.id != player.channel.id:
                 is_joined = False
-
-        await self.bot.ipc.send({
-            "op": "updateGuild",
-            "user": {
-                "user_id": member.id,
-                "avatar_url": member.display_avatar.url,
-                "name": member.name,
-            },
-            "channel_name": member.voice.channel.name if is_joined else "",
-            "guild_id": guild,
-            "is_joined": is_joined
-        })
+                
+        if player.is_ipc_connected:
+            await self.bot.ipc.send({
+                "op": "updateGuild",
+                "user": {
+                    "user_id": member.id,
+                    "avatar_url": member.display_avatar.url,
+                    "name": member.name,
+                },
+                "channel_name": member.voice.channel.name if is_joined else "",
+                "guild_id": guild,
+                "is_joined": is_joined
+            })
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Listeners(bot))

@@ -3,20 +3,20 @@ from dotenv import load_dotenv
 
 class Settings:
     def __init__(self, settings: dict) -> None:
-        self.invite_link = "https://discord.gg/wRCgB7vBQv"
-        self.nodes = settings.get("nodes", {})
-        self.max_queue = settings.get("default_max_queue", 1000)
-        self.bot_prefix = settings.get("prefix", "")
-        self.activity = settings.get("activity", [{"listen": "/help"}])
-        self.embed_color = int(settings.get("embed_color", "0xb3b3b3"), 16)
-        self.bot_access_user = settings.get("bot_access_user", [])
-        self.emoji_source_raw = settings.get("emoji_source_raw", {})
-        self.cooldowns_settings = settings.get("cooldowns", {})
-        self.aliases_settings = settings.get("aliases", {})
-        self.controller = settings.get("default_controller", {})
-        self.lyrics_platform = settings.get("lyrics_platform", "A_ZLyrics").lower()
-        self.ipc_server = settings.get("ipc_server", {})
-        self.version = settings.get("version", "")
+        self.invite_link: str = "https://discord.gg/wRCgB7vBQv"
+        self.nodes: dict = settings.get("nodes", {})
+        self.max_queue: int = settings.get("default_max_queue", 1000)
+        self.bot_prefix: str = settings.get("prefix", "")
+        self.activity: dict = settings.get("activity", [{"listen": "/help"}])
+        self.embed_color: str = int(settings.get("embed_color", "0xb3b3b3"), 16)
+        self.bot_access_user: list = settings.get("bot_access_user", [])
+        self.sources_settings: dict = settings.get("sources_settings", {})
+        self.cooldowns_settings: dict = settings.get("cooldowns", {})
+        self.aliases_settings: dict = settings.get("aliases", {})
+        self.controller: dict = settings.get("default_controller", {})
+        self.lyrics_platform: str = settings.get("lyrics_platform", "A_ZLyrics").lower()
+        self.ipc_server: dict = settings.get("ipc_server", {})
+        self.version: str = settings.get("version", "")
 
 class TOKENS:
     def __init__(self) -> None:

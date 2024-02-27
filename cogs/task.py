@@ -110,8 +110,8 @@ class Task(commands.Cog):
     
     @tasks.loop(hours=12.0)
     async def cache_cleaner(self):
-        func.GUILD_SETTINGS.clear()
-        func.PLAYLIST_NAME.clear()
+        func.SETTINGS_BUFFER.clear()
+        func.USERS_BUFFER.clear()
 
         errorFile = func.gen_report()
         if errorFile:

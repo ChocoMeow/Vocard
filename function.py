@@ -1,75 +1,52 @@
-import discord
-import json
-import aiohttp
-import os
+import discord, json, os, copy
 
 from discord.ext import commands
 from datetime import datetime
 from time import strptime
 from io import BytesIO
-from pymongo import MongoClient
-from typing import Optional, Union, Any
+from typing import Optional, Union, Dict, Any
 from addons import Settings, TOKENS
+
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorCollection,
+)
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 if not os.path.exists(os.path.join(ROOT_DIR, "settings.json")):
     raise Exception("Settings file not set!")
 
-#-------------- API Clients --------------
-tokens: TOKENS = TOKENS()
-
-if not (tokens.mongodb_name and tokens.mongodb_url):
-    raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in .env")
-
-try:
-    mongodb = MongoClient(host=tokens.mongodb_url, serverSelectionTimeoutMS=5000)
-    mongodb.server_info()
-    if tokens.mongodb_name not in mongodb.list_database_names():
-        raise Exception(f"{tokens.mongodb_name} does not exist in your mongoDB!")
-    print("Successfully connected to MongoDB!")
-
-except Exception as e:
-    raise Exception("Not able to connect MongoDB! Reason:", e)
-
-SETTINGS_DB = mongodb[tokens.mongodb_name]['Settings']
-PLAYLISTS_DB = mongodb[tokens.mongodb_name]['Playlist']
-
 #--------------- Cache Var ---------------
+tokens: TOKENS = TOKENS()
 settings: Settings
+
+MONGO_DB: AsyncIOMotorClient
+SETTINGS_DB: AsyncIOMotorCollection
+USERS_DB: AsyncIOMotorCollection
+
 ERROR_LOGS: dict[int, dict[int, str]] = {} #Stores error that not a Voicelink Exception
 LANGS: dict[str, dict[str, str]] = {} #Stores all the languages in ./langs
-GUILD_SETTINGS: dict[int, dict[str, Any]] = {} #Cache guild language
-LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs 
-PLAYLIST_NAME: dict[str, list[str]] = {} #Cache the user's playlist name
+LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs
+SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
+USERS_BUFFER: dict[str, dict] = {}
+
+USERS_BASE: dict[str, Any] = {
+    'playlist': {
+        '200': {
+            'tracks':[],
+            'perms': {'read': [], 'write':[], 'remove': []},
+            'name':'Favourite',
+            'type':'playlist'
+        }
+    },
+    'history': [],
+    'inbox':[]
+}
+
+ALLOWED_MENTIONS = discord.AllowedMentions().none()
 
 #-------------- Vocard Functions --------------
-def get_settings(guild_id:int) -> dict:
-    settings = GUILD_SETTINGS.get(guild_id, None)
-    if not settings:
-        settings = SETTINGS_DB.find_one({"_id":guild_id})
-        if not settings:
-            SETTINGS_DB.insert_one({"_id":guild_id})
-            
-        GUILD_SETTINGS[guild_id] = settings or {}
-    return settings
-
-def update_settings(guild_id:int, data: dict, mode="set") -> bool:
-    settings = get_settings(guild_id)
-
-    for key, value in data.items():
-        if settings.get(key) != value:
-            match mode:
-                case "set":
-                    GUILD_SETTINGS[guild_id][key] = value
-                case "unset":
-                    GUILD_SETTINGS[guild_id].pop(key)
-                case _:
-                    return False
-                           
-    result = SETTINGS_DB.update_one({"_id":guild_id}, {f"${mode}":data})
-    return result.modified_count > 0
-
 def open_json(path: str) -> dict:
     try:
         with open(os.path.join(ROOT_DIR, path), encoding="utf8") as json_file:
@@ -86,20 +63,6 @@ def update_json(path: str, new_data: dict) -> None:
 
     with open(os.path.join(ROOT_DIR, path), "w") as json_file:
         json.dump(data, json_file, indent=4)
-
-def get_lang(guild_id:int, key:str) -> str:
-    lang = get_settings(guild_id).get("lang", "EN")
-    if lang in LANGS and not LANGS[lang]:
-        LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
-
-    return LANGS.get(lang, {}).get(key, "Language pack not found!")
-
-def init() -> None:
-    global settings
-
-    json = open_json("settings.json")
-    if json is not None:
-        settings = Settings(json)
 
 def langs_setup() -> None:
     for language in os.listdir(os.path.join(ROOT_DIR, "langs")):
@@ -135,8 +98,9 @@ def formatTime(number:str) -> Optional[int]:
     
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
-def emoji_source(emoji:str) -> str:
-    return settings.emoji_source_raw.get(emoji.lower(), "🔗")
+def get_source(source: str, type: str) -> str:
+    source_settings: dict = settings.sources_settings.get(source.lower(), {})
+    return source_settings.get(type, ("🔗" if type == "emoji" else settings.embed_color))
 
 def gen_report() -> Optional[discord.File]:
     if ERROR_LOGS:
@@ -167,54 +131,110 @@ def get_aliases(name: str) -> list:
 def check_roles() -> tuple[str, int, int]:
     return 'Normal', 5, 500
 
-async def requests_api(url: str) -> dict:
-    async with aiohttp.ClientSession() as session:
-        resp = await session.get(url)
-        if resp.status != 200:
-            return False
+def truncate_string(text: str, length: int = 40) -> str:
+    return text[:length - 3] + "..." if len(text) > length else text
+    
+def get_lang_non_async(guild_id: int, *keys) -> Union[list[str], str]:
+    settings = SETTINGS_BUFFER.get(guild_id, {})
+    lang = settings.get("lang", "EN")
+    if lang in LANGS and not LANGS[lang]:
+        LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
 
-        return await resp.json(encoding="utf-8")
+    if len(keys) == 1:
+        return LANGS.get(lang, {}).get(keys[0], "Language pack not found!")
+    return [LANGS.get(lang, {}).get(key, "Language pack not found!") for key in keys]
 
-async def create_account(ctx: Union[commands.Context, discord.Interaction]) -> None:
-    author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
-    if not author:
-        return 
-    from views import CreateView
-    view = CreateView()
-    embed=discord.Embed(title="Do you want to create an account on Vocard?", color=settings.embed_color)
-    embed.description = f"> Plan: `Default` | `5` Playlist | `500` tracks in each playlist."
-    embed.add_field(name="Terms of Service:", value="‌    ➥ We assure you that all your data on Vocard will not be disclosed to any third party\n"
-                                                    "‌    ➥ We will not perform any data analysis on your data\n"
-                                                    "‌    ➥ You have the right to immediately stop the services we offer to you\n"
-                                                    "‌    ➥ Please do not abuse our services, such as affecting other users\n", inline=False)
-    if isinstance(ctx, commands.Context):
-        view.response = await ctx.reply(embed=embed, view=view, ephemeral=True)
-    else:
-        view.response = await ctx.response.send_message(embed=embed, view=view, ephemeral=True)
+async def get_lang(guild_id:int, *keys) -> Union[list[str], str]:
+    settings = await get_settings(guild_id)
+    lang = settings.get("lang", "EN")
+    if lang in LANGS and not LANGS[lang]:
+        LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
 
-    await view.wait()
-    if view.value:
-        try:
-            PLAYLISTS_DB.insert_one({'_id':author.id, 'playlist': {'200':{'tracks':[],'perms':{ 'read': [], 'write':[], 'remove': []},'name':'Favourite', 'type':'playlist' }},'inbox':[] })
-        except:
-            pass
+    if len(keys) == 1:
+        return LANGS.get(lang, {}).get(keys[0], "Language pack not found!")
+    return [LANGS.get(lang, {}).get(key, "Language pack not found!") for key in keys]
+
+async def send(ctx: Union[commands.Context, discord.Interaction], key: str, *params, delete_after: float = None, ephemeral: bool = False) -> Optional[discord.Message]:
+    text = await get_lang(ctx.guild.id, key)
+    text = text.format(*params)
+
+    send_func = ctx.send if isinstance(ctx, commands.Context) else (ctx.followup.send if ctx.response.is_done() else ctx.response.send_message)
+    return await send_func(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+
+async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, data: dict) -> bool:
+    for mode, action in data.items():
+        for key, value in action.items():
+            cursors = key.split(".")
+
+            nested_data = tempStore
+            for c in cursors[:-1]:
+                nested_data = nested_data.setdefault(c, {})
+
+            if mode == "$set":
+                try:
+                    nested_data[cursors[-1]] = value
+                except TypeError:
+                    nested_data[int(cursors[-1])] = value
+
+            elif mode == "$unset":
+                nested_data.pop(cursors[-1], None)
+
+            elif mode == "$inc":
+                nested_data[cursors[-1]] = nested_data.get(cursors[-1], 0) + value
+
+            elif mode == "$push":
+                if isinstance(value, dict) and "$each" in value:
+                    nested_data.setdefault(cursors[-1], []).extend(value["$each"][value.get("$slice", len(value["$each"])):])
+                else:
+                    nested_data.setdefault(cursors[-1], []).extend([value])
+                    
+            elif mode == "$push":
+                if isinstance(value, dict) and "$each" in value:
+                    nested_data.setdefault(cursors[-1], []).extend(value["$each"])
+                    nested_data[cursors[-1]] = nested_data[cursors[-1]][value.get("$slice", len(value["$each"])):]
+                else:
+                    nested_data.setdefault(cursors[-1], []).extend([value])
+
+            elif mode == "$pull":
+                if cursors[-1] in nested_data:
+                    value = value.get("$in", []) if isinstance(value, dict) else [value]
+                    nested_data[cursors[-1]] = [item for item in nested_data[cursors[-1]] if item not in value]
+                    
+            else:
+                return False
+
+    result = await db.update_one(filter, data)
+    return result.modified_count > 0
+
+async def get_settings(guild_id:int) -> dict[str, Any]:
+    settings = SETTINGS_BUFFER.get(guild_id, None)
+    if not settings:
+        settings = await SETTINGS_DB.find_one({"_id": guild_id})
+        if not settings:
+            await SETTINGS_DB.insert_one({"_id": guild_id})
             
-async def get_playlist(user_id:int, dType:str=None, dId:str=None) -> bool:
-    user = PLAYLISTS_DB.find_one({"_id":user_id}, {"_id": 0})
+        settings = SETTINGS_BUFFER[guild_id] = settings or {}
+    return settings
+
+async def update_settings(guild_id: int, data: dict[str, dict[str, Any]]) -> bool:
+    settings = await get_settings(guild_id)
+    return await update_db(SETTINGS_DB, settings, {"_id": guild_id}, data)
+            
+async def get_user(user_id: int, d_type: Optional[str] = None, need_copy: bool = True) -> Dict[str, Any]:
+    user = USERS_BUFFER.get(user_id)
     if not user:
-        return None
-    if dType:
-        if dId and dType == "playlist":
-            return user[dType][dId] if dId in user[dType] else None
-        return user[dType]
-    return user
+        user = await USERS_DB.find_one({"_id": user_id})
+        if not user:
+            user = {"_id": user_id, **USERS_BASE}
+            await USERS_DB.insert_one(user)
+    
+        USERS_BUFFER[user_id] = user
+        
+    if d_type:
+        user = user.setdefault(d_type, copy.deepcopy(USERS_BASE.get(d_type)))
+            
+    return copy.deepcopy(user) if need_copy else user
 
-async def update_playlist(user_id:int, data:dict, *, mode:str="set", update_cache: bool=False) -> None:
-    if update_cache:
-        PLAYLIST_NAME.pop(str(user_id), None)
-    result = PLAYLISTS_DB.update_one({"_id":user_id}, {f"${mode}": data})
-    return result.modified_count > 0
-
-async def update_inbox(user_id:int, data:dict) -> bool:
-    result = PLAYLISTS_DB.update_one({"_id":user_id}, {"$push":{'inbox':data}})
-    return result.modified_count > 0
+async def update_user(user_id:int, data:dict) -> bool:
+    playlist = await get_user(user_id, need_copy=False)
+    return await update_db(USERS_DB, playlist, {"_id": user_id}, data)

@@ -14,7 +14,7 @@ Actions
 
 | Action Name | Description |
 | --- | --- |
-| player | Playing status. |
+| play | Playing status. |
 | listen | Listening status. |
 | watch | Watching status. |
 | stream | Streaming status. |
@@ -59,7 +59,10 @@ Valuables
 | channel_name | The name of the channel the bot is playing on. |
 | track_name | The name of the track currently playing. |
 | track_url | The url of the track currently playing. |
+| track_author | The name of the author of the track currently playing. |
+| track_duration | The length of the track currently playing. |
 | track_thumbnail | The thumbnail of the track currently playing. |
+| track_color | The color associated with the source of the currently playing track. For example, YouTube tracks are indicated in red. This color can be customized in the settings.json file |
 | requester | The mention name of the requester of the currently playing track. |
 | requester_name | The name of the requester of the currently playing track. |
 | requester_avatar | The avatar url of the requester of the currently playing track. |
@@ -88,14 +91,14 @@ Change the value of `default_controller` in `settings.json`.
         "active": {
             "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
             "footer": {
-                "text": "Queue Length: @@queue_length@@ | Duration: @@duration@@ | Volume: @@volume@@% {{loop_mode!=Off ?? | Repeat: @@loop_mode@@}}"
+                "text": "Queue Length: @@queue_length@@ | Duration: @@track_duration@@ | Volume: @@volume@@% {{loop_mode != 'Off' ?? | Repeat: @@loop_mode@@}}"
             },
             "image": "@@track_thumbnail@@",
             "author": {
                 "name": "Music Controller | @@channel_name@@",
                 "icon_url": "@@bot_icon@@"
             },
-            "color": "@@default_embed_color@@"
+            "color": "@@track_color@@"
         },
         "inactive": {
             "title": {

@@ -25,6 +25,7 @@ import collections
 from .exceptions import FilterInvalidArgument, FilterTagAlreadyInUse, FilterTagInvalid
 
 from typing import (
+    Dict,
     List
 )
 
@@ -36,7 +37,7 @@ class Filter:
     these filters will not work.
     """
     def __init__(self):
-        self.payload = None
+        self.payload: Dict[str, List] = None
         self.tag: str = None
 
 class Filters:
@@ -68,7 +69,7 @@ class Filters:
             payload.update(filter.payload)
         return payload
     
-    def get_filters(self) -> list:
+    def get_filters(self) -> List[Filter]:
         return self._filters
         
 class Equalizer(Filter):
@@ -185,9 +186,13 @@ class Timescale(Filter):
         self.rate = rate
         self.tag = tag
 
-        self.payload = {"timescale": {"speed": self.speed,
-                                      "pitch": self.pitch,
-                                      "rate": self.rate}}
+        self.payload = {
+            "timescale": {
+                "speed": self.speed,
+                "pitch": self.pitch,
+                "rate": self.rate
+            }
+        }
 
     @classmethod
     def vaporwave(cls):
@@ -235,10 +240,14 @@ class Karaoke(Filter):
         self.filter_width = filter_width
         self.tag = tag
 
-        self.payload = {"karaoke": {"level": self.level,
-                                    "monoLevel": self.mono_level,
-                                    "filterBand": self.filter_band,
-                                    "filterWidth": self.filter_width}}
+        self.payload = {
+            "karaoke": {
+                "level": self.level,
+                "monoLevel": self.mono_level,
+                "filterBand": self.filter_band,
+                "filterWidth": self.filter_width
+            }
+        }
 
     def __repr__(self):
         return (
@@ -262,18 +271,20 @@ class Tremolo(Filter):
         super().__init__()
 
         if frequency < 0:
-            raise FilterInvalidArgument(
-                "Tremolo frequency must be more than 0.")
+            raise FilterInvalidArgument("Tremolo frequency must be more than 0.")
         if depth < 0 or depth > 1:
-            raise FilterInvalidArgument(
-                "Tremolo depth must be between 0 and 1.")
+            raise FilterInvalidArgument("Tremolo depth must be between 0 and 1.")
 
         self.frequency = frequency
         self.depth = depth
         self.tag = tag
 
-        self.payload = {"tremolo": {"frequency": self.frequency,
-                                    "depth": self.depth}}
+        self.payload = {
+            "tremolo": {
+                "frequency": self.frequency,
+                "depth": self.depth
+            }
+        }
 
     def __repr__(self):
         return f"<Voicelink.TremoloFilter tag={self.tag} frequency={self.frequency} depth={self.depth}>"
@@ -294,18 +305,20 @@ class Vibrato(Filter):
 
         super().__init__()
         if frequency < 0 or frequency > 14:
-            raise FilterInvalidArgument(
-                "Vibrato frequency must be between 0 and 14.")
+            raise FilterInvalidArgument("Vibrato frequency must be between 0 and 14.")
         if depth < 0 or depth > 1:
-            raise FilterInvalidArgument(
-                "Vibrato depth must be between 0 and 1.")
+            raise FilterInvalidArgument("Vibrato depth must be between 0 and 1.")
 
         self.frequency = frequency
         self.depth = depth
         self.tag = tag
 
-        self.payload = {"vibrato": {"frequency": self.frequency,
-                                    "depth": self.depth}}
+        self.payload = {
+            "vibrato": {
+                "frequency": self.frequency,
+                "depth": self.depth
+            }
+        }
         
     def __repr__(self):
         return f"<Voicelink.VibratoFilter tag={self.tag} frequency={self.frequency} depth={self.depth}>"
@@ -348,17 +361,13 @@ class ChannelMix(Filter):
         super().__init__()
 
         if 0 > left_to_left > 1:
-            raise ValueError(
-                "'left_to_left' value must be more than or equal to 0 or less than or equal to 1.")
+            raise ValueError("'left_to_left' value must be more than or equal to 0 or less than or equal to 1.")
         if 0 > right_to_right > 1:
-            raise ValueError(
-                "'right_to_right' value must be more than or equal to 0 or less than or equal to 1.")
+            raise ValueError("'right_to_right' value must be more than or equal to 0 or less than or equal to 1.")
         if 0 > left_to_right > 1:
-            raise ValueError(
-                "'left_to_right' value must be more than or equal to 0 or less than or equal to 1.")
+            raise ValueError("'left_to_right' value must be more than or equal to 0 or less than or equal to 1.")
         if 0 > right_to_left > 1:
-            raise ValueError(
-                "'right_to_left' value must be more than or equal to 0 or less than or equal to 1.")
+            raise ValueError("'right_to_left' value must be more than or equal to 0 or less than or equal to 1.")
 
         self.left_to_left = left_to_left
         self.left_to_right = left_to_right
@@ -366,17 +375,19 @@ class ChannelMix(Filter):
         self.right_to_right = right_to_right
         self.tag = tag
 
-        self.payload = {"channelMix": {"leftToLeft": self.left_to_left, 
-                                        "leftToRight": self.left_to_right, 
-                                        "rightToLeft": self.right_to_left, 
-                                        "rightToRight": self.right_to_right}
-                                        }
-
+        self.payload = {
+            "channelMix": {
+                "leftToLeft": self.left_to_left, 
+                "leftToRight": self.left_to_right, 
+                "rightToLeft": self.right_to_left, 
+                "rightToRight": self.right_to_right
+            }
+        }
 
     def __repr__(self) -> str:
         return ( 
-        f"<Voicelink.ChannelMix tag={self.tag} left_to_left={self.left_to_left} left_to_right={self.left_to_right} "
-        f"right_to_left={self.right_to_left} right_to_right={self.right_to_right}>" 
+            f"<Voicelink.ChannelMix tag={self.tag} left_to_left={self.left_to_left} left_to_right={self.left_to_right} "
+            f"right_to_left={self.right_to_left} right_to_right={self.right_to_right}>" 
         )
 
 class Distortion(Filter):
@@ -409,22 +420,24 @@ class Distortion(Filter):
         self.scale = scale
         self.tag = tag
 
-        self.payload = {"distortion": {
-            "sinOffset": self.sin_offset,
-            "sinScale": self.sin_scale,
-            "cosOffset": self.cos_offset,
-            "cosScale": self.cos_scale,
-            "tanOffset": self.tan_offset,
-            "tanScale": self.tan_scale,
-            "offset": self.offset,
-            "scale": self.scale
-        }}
+        self.payload = {
+            "distortion": {
+                "sinOffset": self.sin_offset,
+                "sinScale": self.sin_scale,
+                "cosOffset": self.cos_offset,
+                "cosScale": self.cos_scale,
+                "tanOffset": self.tan_offset,
+                "tanScale": self.tan_scale,
+                "offset": self.offset,
+                "scale": self.scale
+            }
+        }
 
     def __repr__(self) -> str:
         return (
-        f"<Voicelink.Distortion tag={self.tag} sin_offset={self.sin_offset} sin_scale={self.sin_scale}> "
-        f"cos_offset={self.cos_offset} cos_scale={self.cos_scale} tan_offset={self.tan_offset} "
-        f"tan_scale={self.tan_scale} offset={self.offset} scale={self.scale}"
+            f"<Voicelink.Distortion tag={self.tag} sin_offset={self.sin_offset} sin_scale={self.sin_scale}> "
+            f"cos_offset={self.cos_offset} cos_scale={self.cos_scale} tan_offset={self.tan_offset} "
+            f"tan_scale={self.tan_scale} offset={self.offset} scale={self.scale}"
         )
 
 

@@ -45,9 +45,7 @@
     "FilterTagAlreadyInUse": "This sound effects has already in use! Please use /cleareffect <Tag> to remove it.",
 
     "playlistViewTitle": "📜 All {0}'s Playlists",
-    "playlistViewHeaders": ["   ", "ID:", "Time:", "Name:", "Tracks:"],
-    "playlistMaxP": "Max Playlist:",
-    "playlistMaxT": "Max Tracks:",
+    "playlistViewHeaders": "ID:,Time:,Name:,Tracks:",
     "playlistFooter": "Type /playlist play [playlist] to add the playlist the into queue.",
     "playlistNotFound": "Playlist [`{0}`] not found. Type /playlist view to view all your playlist.",
     "playlistNotAccess": "Sorry! You are not allowed to access this playlist!",
