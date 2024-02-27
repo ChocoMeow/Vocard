@@ -44,6 +44,8 @@ USERS_BASE: dict[str, Any] = {
     'inbox':[]
 }
 
+ALLOWED_MENTIONS = discord.AllowedMentions().none()
+
 #-------------- Vocard Functions --------------
 def open_json(path: str) -> dict:
     try:
@@ -156,17 +158,8 @@ async def send(ctx: Union[commands.Context, discord.Interaction], key: str, *par
     text = await get_lang(ctx.guild.id, key)
     text = text.format(*params)
 
-    message = None
-
-    if isinstance(ctx, commands.Context):
-        message = await ctx.send(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=discord.AllowedMentions.none())
-    else:
-        if ctx.response.is_done():
-            await ctx.followup.send(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=discord.AllowedMentions.none())
-        else:
-            await ctx.response.send_message(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=discord.AllowedMentions.none())
-
-    return message
+    send_func = ctx.send if isinstance(ctx, commands.Context) else (ctx.followup.send if ctx.response.is_done() else ctx.response.send_message)
+    return await send_func(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
 
 async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, data: dict) -> bool:
     for mode, action in data.items():

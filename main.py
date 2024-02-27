@@ -103,7 +103,8 @@ class Vocard(commands.Bot):
         error = getattr(exception, 'original', exception)
         if ctx.interaction:
             error = getattr(error, 'original', error)
-        if isinstance(error, (commands.CommandNotFound, aiohttp.client_exceptions.ClientOSError)):
+            
+        if isinstance(error, (commands.CommandNotFound, aiohttp.client_exceptions.ClientOSError, discord.errors.NotFound)):
             return
 
         elif isinstance(error, (commands.CommandOnCooldown, commands.MissingPermissions, commands.RangeError, commands.BadArgument)):
