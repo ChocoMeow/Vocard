@@ -33,7 +33,6 @@ Click on the image below to watch the tutorial on Youtube.
 
 ## Requirements
 * [Python 3.10+](https://www.python.org/downloads/)
-* [Modules in requirements](https://github.com/ChocoMeow/Vocard/blob/main/requirements.txt)
 * [Lavalink Server (Requires 4.0.0+)](https://github.com/freyacodes/Lavalink)
 
 ## Quick Start
@@ -42,161 +41,14 @@ git clone https://github.com/ChocoMeow/Vocard.git  #Clone the repository
 cd Vocard                                          #Go to the directory
 python -m pip install -r requirements.txt          #Install required packages
 ```
-After installing all packages, you must configure the bot before to start! [How To Configure](https://github.com/ChocoMeow/Vocard#configuration)<br />
+After installing all packages, you must configure the bot before to start! [How To Configure](https://docs.vocard.xyz/configuration/)<br />
 Start your bot with `python main.py`
 
 ## Configuration
-1. **Rename `.env Example` to `.env` and fill all the values**
-```sh
-TOKEN = XXXXXXXXXXXXXXXXXXXXXXXX.XXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXX
-CLIENT_ID = 123456789012345678
-CLIENT_SECRET_ID = XXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXX
-SERCET_KEY = DASHBOARD_SERCET_KEY
 
-BUG_REPORT_CHANNEL_ID = 123456789012345678
-
-SPOTIFY_CLIENT_ID = 0XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-SPOTIFY_CLIENT_SECRET = 0XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-GENIUS_TOKEN = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-MONGODB_URL = mongodb+srv://user:password@clusterURL
-MONGODB_NAME = Vocard
-```
-| Values | Description |
-| --- | --- |
-| TOKEN | Your Discord bot token [(Discord Portal)](https://discord.com/developers/applications) |
-| CLIENT_ID | Your Discord bot client id [(Discord Portal)](https://discord.com/developers/applications) |
-| CLIENT_SECRET_ID | Your Discord bot client secret id [(Discord Portal)](https://discord.com/developers/applications) ***(optional)*** |
-| SERCET_KEY | Secret key for dashboard ***(optional)*** |
-| BUG_REPORT_CHANNEL_ID | All the error messages will send to this text channel ***(optional)*** |
-| SPOTIFY_CLIENT_ID | Your Spoity client id [(Spotify Portal)](https://developer.spotify.com/dashboard/applications) ***(optional)*** |
-| SPOTIFY_CLIENT_SECRET | Your Spoity client sercret id [(Spotify Portal)](https://developer.spotify.com/dashboard/applications) ***(optional)*** |
-| GENIUS_TOKEN | Your genius api key [(Genius Lyrics API)](https://genius.com/api-clients) ***(optional)*** |
-| MONGODB_URL | Your Mongo datebase url [(Mongodb)](https://www.mongodb.com/) |
-| MONGODB_NAME | The datebase name that you created on [Mongodb](https://www.mongodb.com/) |
-
-2. **Rename `settings Example.json` to `settings.json` and customize your settings**
-***(Note: Do not change any keys from `settings.json`)***
-```json
-{
-    "nodes": {
-        "DEFAULT": {
-            "host": "127.0.0.1",
-            "port": 2333,
-            "password": "password",
-            "secure": false,
-            "identifier": "DEFAULT"
-        }   
-    },
-    "prefix": "?",
-    "activity":[
-        {"listen": "/help"}
-    ],
-    "bot_access_user": [],
-    "embed_color":"0xb3b3b3",
-    "default_max_queue": 1000,
-    "lyrics_platform": "A_ZLyrics",
-    "ipc_server": {
-        "host": "127.0.0.1",
-        "port": 8000,
-        "enable": false
-    },
-    "sources_settings": {
-        "youtube": {
-            "emoji": "<:youtube:826661982760992778>",
-            "color": "0xFF0000"
-        },
-        "youtube music": {
-            "emoji": "<:youtube:826661982760992778>",
-            "color": "0xFF0000"
-        },
-        "spotify": {
-            "emoji": "<:spotify:826661996615172146>",
-            "color": "0x1DB954"
-        },
-        "soundcloud": {
-            "emoji": "<:soundcloud:852729280027033632>",
-            "color": "0xFF7700"
-        },
-        "twitch": {
-            "emoji": "<:twitch:852729278285086741>",
-            "color": "0x9B4AFF"
-        },
-        "bandcamp": {
-            "emoji": "<:bandcamp:864694003811221526>",
-            "color": "0x6F98A7"
-        },
-        "vimeo": {
-            "emoji": "<:vimeo:864694001919721473>",
-            "color": "0x1ABCEA"
-        },
-        "apple": {
-            "emoji": "<:applemusic:994844332374884413>",
-            "color": "0xE298C4"
-        },
-        "reddit": {
-            "emoji": "<:reddit:996007566863773717>",
-            "color": "0xFF5700"
-        },
-        "tiktok": {
-            "emoji": "<:tiktok:996007689798811698>",
-            "color": "0x74ECE9"
-        }
-    },
-    "default_controller": {
-        "embeds": {
-            "active": {
-                "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
-                "footer": {
-                    "text": "Queue Length: @@queue_length@@ | Duration: @@track_duration@@ | Volume: @@volume@@% {{loop_mode != 'Off' ?? | Repeat: @@loop_mode@@}}"
-                },
-                "image": "@@track_thumbnail@@",
-                "author": {
-                    "name": "Music Controller | @@channel_name@@",
-                    "icon_url": "@@bot_icon@@"
-                },
-                "color": "@@track_color@@"
-            },
-            "inactive": {
-                "header": {
-                    "title": "There are no songs playing right now"
-                },
-                "description": "[Support](@@server_invite_link@@) | [Invite](@@invite_link@@) | [Questionnaire](https://forms.gle/Qm8vjBfg2kp13YGD7)",
-                "image": "https://i.imgur.com/dIFBwU7.png",
-                "color": "@@default_embed_color@@"
-            }
-        },
-        "default_buttons": [
-            ["back", "resume", "skip", {"stop": "red"}, "add"],
-            ["tracks"]
-        ],
-        "disableButtonText": false
-    },
-    "cooldowns": {
-        "connect": [2, 30],
-        "playlist view": [1, 30]
-    },
-    "aliases": {
-        "connect": ["join"],
-        "leave": ["stop", "bye"],
-        "play": ["p"],
-        "view": ["v"]
-    }
-}
-```
-* For `nodes` you have to provide host, port, password and identifier of the [Lavalink Server](https://github.com/freyacodes/Lavalink)
-* For `prefix` you can set the prefix of the bot. (If you don't provide any prefix, the bot will disable the message command).
-* For `activity` you can set the activity of the bot. [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#bot-activity-activity-are-updated-every-10-minutes)
-* For `bot_access_user` you can pass the [discord user id](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-). Example: `[123456789012345678]`
-* For `embed_color` you must pass a [Hexadecimal color code](https://htmlcolorcodes.com/) and add `0x` before the color code. Example: `"0xb3b3b3"`
-* For `default_max_queue` you can set a default maximum number of tracks that can be added to the queue.
-* For `lyrics_platform` you can set lyrics search engine (e.g. `A_ZLyrics`, `Genius`, `lyrist`)<br>**NOTE: If you are using Genius as your lyrics search engine, you must install the lyricsgenius module (`pip install lyricsgenius`)**
-* For `ipc_server` you can set the host, password and enable of the ipc server.
-* For `emoji_source_raw` you can change the source emoji of the track with discord emoji like `<:EMOJI_NAME:EMOJI_ID>`
-* For `cooldowns` you can set a custom cooldown in the command. Example: `"command_name": [The total number of tokens available, The length of the cooldown period in seconds]`
-* For `aliases` you can set custom aliases in the command. Example: `"command_name": [alias1, alias2, ...]`
-* For `default_controller` you can set custom embeds and buttons in controller, [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#controller-embeds)
+1. Rename `.env Example` to `.env` and [fill all the values](https://docs.vocard.xyz/configuration/#settings-up-env).
+2. Rename `settings Example.json` to `settings.json` and [customize your settings](https://docs.vocard.xyz/configuration/#settings-up-settingsjson).
+3. Now, you can start your bot with `python main.py`.
 
 ## How to update? (For Windows and Linux)
 ***Note: Make sure there are no personal files in the directory! Otherwise it will be deleted.***
