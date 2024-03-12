@@ -79,8 +79,7 @@ class Listeners(commands.Cog):
         player: voicelink.Player = member.guild.voice_client
         if not player:
             return
-        
-        guild = member.guild.id
+
         is_joined = True
         
         if not before.channel and after.channel:
@@ -94,6 +93,10 @@ class Listeners(commands.Cog):
             if after.channel.id != player.channel.id:
                 is_joined = False
                 
+        if is_joined and player.settings.get("24/7", False):
+            if player.is_paused and len([m for m in player.channel.members if not m.bot]) == 1:
+                await player.set_pause(False, member)
+                  
         if player.is_ipc_connected:
             await self.bot.ipc.send({
                 "op": "updateGuild",
@@ -103,7 +106,7 @@ class Listeners(commands.Cog):
                     "name": member.name,
                 },
                 "channel_name": member.voice.channel.name if is_joined else "",
-                "guild_id": guild,
+                "guild_id": member.guild.id,
                 "is_joined": is_joined
             })
 
