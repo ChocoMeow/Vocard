@@ -151,7 +151,7 @@ func.settings = Settings(func.open_json("settings.json"))
 # Setup the bot object
 intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
-intents.members = True
+intents.members = func.settings.ipc_server.get("enable", False)
 member_cache = discord.MemberCacheFlags(
     voice=True,
     joined=False
@@ -170,4 +170,4 @@ bot = Vocard(
 
 if __name__ == "__main__":
     update.check_version(with_msg=True)
-    bot.run(func.tokens.token, log_handler=None)
+    bot.run(func.tokens.token, root_logger=True)

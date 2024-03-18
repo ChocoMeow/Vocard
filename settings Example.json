@@ -12,6 +12,7 @@
     "activity":[
         {"listen": "/help"}
     ],
+    "logging_level": "INFO",
     "bot_access_user": [],
     "embed_color":"0xb3b3b3",
     "default_max_queue": 1000,
