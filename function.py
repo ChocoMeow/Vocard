@@ -1,4 +1,4 @@
-import discord, json, os, copy
+import discord, json, os, copy, logging
 
 from discord.ext import commands
 from datetime import datetime
@@ -20,6 +20,7 @@ if not os.path.exists(os.path.join(ROOT_DIR, "settings.json")):
 #--------------- Cache Var ---------------
 tokens: TOKENS = TOKENS()
 settings: Settings
+logger: logging.Logger = logging.getLogger("vocard")
 
 MONGO_DB: AsyncIOMotorClient
 SETTINGS_DB: AsyncIOMotorCollection

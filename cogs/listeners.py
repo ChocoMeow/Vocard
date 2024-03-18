@@ -46,10 +46,11 @@ class Listeners(commands.Cog):
                     bot=self.bot, 
                     spotify_client_id=func.tokens.spotify_client_id, 
                     spotify_client_secret=func.tokens.spotify_client_secret,
+                    logger=func.logger,
                     **n
                 )
             except Exception as e:
-                print(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
+                func.logger.error(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
 
     @commands.Cog.listener()
     async def on_voicelink_track_end(self, player: voicelink.Player, track, _):

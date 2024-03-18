@@ -120,7 +120,7 @@ class Task(commands.Cog):
                 try:
                     await report_channel.send(content=f"Report Before: <t:{round(datetime.timestamp(datetime.now()))}:F>", file=errorFile)
                 except Exception as e:
-                    print(f"Report could not be sent (Reason: {e})")
+                    func.logger.error(f"Report could not be sent (Reason: {e})")
             func.ERROR_LOGS.clear()
         
 async def setup(bot: commands.Bot):

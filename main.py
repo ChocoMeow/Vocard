@@ -4,6 +4,7 @@ import os
 import traceback
 import aiohttp
 import update
+import logging
 import function as func
 
 from discord.ext import commands
@@ -15,10 +16,10 @@ from addons import Settings
 
 class Translator(discord.app_commands.Translator):
     async def load(self):
-        print("Loaded Translator")
+        func.logger.info("Loaded Translator")
 
     async def unload(self):
-        print("Unload Translator")
+        func.logger.info("Unload Translator")
 
     async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
         if str(locale) in func.LOCAL_LANGS:
@@ -55,7 +56,7 @@ class Vocard(commands.Bot):
         try:
             func.MONGO_DB = AsyncIOMotorClient(host=db_url)
             await func.MONGO_DB.server_info()
-            print("Successfully connected to MongoDB!")
+            func.logger.info(f"Successfully connected to [{db_name}] MongoDB!")
 
         except Exception as e:
             raise Exception("Not able to connect MongoDB! Reason:", e)
@@ -74,9 +75,9 @@ class Vocard(commands.Bot):
             if module.endswith('.py'):
                 try:
                     await self.load_extension(f"cogs.{module[:-3]}")
-                    print(f"Loaded {module[:-3]}")
+                    func.logger.info(f"Loaded {module[:-3]}")
                 except Exception as e:
-                    print(traceback.format_exc())
+                    func.logger.error(f"Something went wrong while loading {module[:-3]} cog.", traceback.format_exc())
 
         if func.settings.ipc_server.get("enable", False):
             await self.ipc.start()
@@ -88,13 +89,13 @@ class Vocard(commands.Bot):
             await self.tree.sync()
 
     async def on_ready(self):
-        print("------------------")
-        print(f"Logging As {self.user}")
-        print(f"Bot ID: {self.user.id}")
-        print("------------------")
-        print(f"Discord Version: {discord.__version__}")
-        print(f"Python Version: {sys.version}")
-        print("------------------")
+        func.logger.info("------------------")
+        func.logger.info(f"Logging As {self.user}")
+        func.logger.info(f"Bot ID: {self.user.id}")
+        func.logger.info("------------------")
+        func.logger.info(f"Discord Version: {discord.__version__}")
+        func.logger.info(f"Python Version: {sys.version}")
+        func.logger.info("------------------")
 
         func.tokens.client_id = self.user.id
         func.LOCAL_LANGS.clear()
@@ -147,6 +148,7 @@ async def get_prefix(bot, message: discord.Message):
 
 # Loading settings
 func.settings = Settings(func.open_json("settings.json"))
+func.logger.setLevel(getattr(logging, func.settings.logging_level.upper(), None))
 
 # Setup the bot object
 intents = discord.Intents.default()

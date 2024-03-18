@@ -76,7 +76,8 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
             channel, ctx, settings
         ))
     
-    await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+    # if player.client.ipc._is_connected:
+        # await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
 
     return player
 
@@ -140,7 +141,7 @@ class Player(VoiceProtocol):
         self.stop_votes = set()
 
         self._ph = Placeholders(client, self)
-        self._logger: logging.Logger = self._node.logger
+        self._logger: Optional[logging.Logger] = self._node._logger
 
     def __repr__(self):
         return (
@@ -265,7 +266,7 @@ class Player(VoiceProtocol):
         self._is_connected = state.get("connected")
         self._last_position = state.get("position")
         self._ping = state.get("ping")
-        self._logger.debug(f"Player update state with data {data}")
+        self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) update state with data {data}")
 
         if self.is_ipc_connected:
             await self.send_ws({
@@ -292,7 +293,7 @@ class Player(VoiceProtocol):
             data = {"voice": data}
         )
 
-        self._logger.debug(f"Dispatched voice update to {state['event']['endpoint']} with data {data}")
+        self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) dispatched voice update to {state['event']['endpoint']} with data {data}")
 
     async def on_voice_server_update(self, data: dict):
         self._voice_state.update({"event": data})
@@ -325,7 +326,7 @@ class Player(VoiceProtocol):
         if isinstance(event, TrackStartEvent):
             self._ending_track = self._current
 
-        self._logger.debug(f"Dispatched event {event_type} to player.")
+        self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) dispatched event {event_type}.")
 
     async def do_next(self):
         if self.is_playing or not self.channel:
@@ -357,7 +358,7 @@ class Player(VoiceProtocol):
             try:
                 await self.play(track, start=track.position)
             except Exception as e:
-                print(f"Something went wrong while playing music in {self.guild.name}({self.guild.id})", e)
+                self._logger.error(f"Something went wrong while playing music in {self.guild.name}({self.guild.id})", e)
                 await sleep(5)
                 return await self.do_next()
 
@@ -368,7 +369,7 @@ class Player(VoiceProtocol):
 
         if self.settings.get('controller', True):
             await self.invoke_controller()
-
+            
         if self.is_ipc_connected:
             await self.send_ws({
                 "op": "trackUpdate", 
@@ -396,7 +397,7 @@ class Player(VoiceProtocol):
                 await self.controller.edit(embed=embed, view=view)
 
         except Exception as e:
-            print(f"Something went wrong while sending music controller to {self.guild.name}({self.guild.id})", e)
+            self._logger.error(f"Something went wrong while sending music controller to {self.guild.name}({self.guild.id})", e)
             pass
           
         self.updating = False
@@ -536,7 +537,7 @@ class Player(VoiceProtocol):
         if self.volume != 100:
             await self.set_volume(self.volume)
         
-        self._logger.debug(f"Playing {track.title} from uri {track.uri} with a length of {track.length}")
+        self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) playing {track.title} from uri {track.uri} with a length of {track.length}")
         return self._current
 
     async def add_track(self, raw_tracks: Union[Track, List[Track]], *, at_font: bool = False, duplicate: bool = True) -> int:

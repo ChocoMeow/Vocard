@@ -85,7 +85,7 @@ class A_ZLyrics(LyricsPlatform):
             lyrics = max(divs, key=len).strip()
 
             if not lyrics:
-                return print("Lyrics not found")
+                return None
 
             lyrics_parts = re.split(r"(\[[\w\S_ ]+\:])", lyrics)
             lyrics_parts = [item for item in lyrics_parts if item != ""]

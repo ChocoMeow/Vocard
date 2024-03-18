@@ -28,7 +28,6 @@ import os
 import re
 import aiohttp
 import logging
-import function as func
 
 from discord import Client, Member
 from discord.ext.commands import Bot
@@ -87,13 +86,13 @@ class Node:
         port: int,
         password: str,
         identifier: str,
-        logger: logging.Logger,
         secure: bool = False,
         heartbeat: int = 30,
         session: Optional[aiohttp.ClientSession] = None,
         spotify_client_id: Optional[str] = None,
         spotify_client_secret: Optional[str] = None,
         resume_key: Optional[str] = None,
+        logger: Optional[logging.Logger] = None
     ):
         self._bot: Bot = bot
         self._host: str = host
@@ -101,9 +100,9 @@ class Node:
         self._pool: NodePool = pool
         self._password: str = password
         self._identifier: str = identifier
-        self.logger: logging.Logger = logger
         self._heartbeat: int = heartbeat
         self._secure: bool = secure
+        self._logger: Optional[logging.Logger] = logger
        
         self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}/" + NODE_VERSION + "/websocket"
         self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
@@ -124,7 +123,7 @@ class Node:
         }
 
         self._players: Dict[int, Player] = {}
-
+        
         self._spotify_client_id: Optional[str] = spotify_client_id
         self._spotify_client_secret: Optional[str] = spotify_client_secret
         self._spotify_client: Optional[spotify.Client] = None
@@ -222,7 +221,7 @@ class Node:
                 self._available = False
 
                 retry = backoff.delay()
-                self.logger.info(f"Trying to reconnect node [{self._identifier}] with {round(retry)}s")
+                self._logger.info(f"Trying to reconnect node [{self._identifier}] with {round(retry)}s")
                 await asyncio.sleep(retry)
                 if not self.is_connected:
                     try:
@@ -296,7 +295,7 @@ class Node:
             self._task = self._bot.loop.create_task(self._listen())
             self._available = True
 
-            self.logger.info(f"Node [{self._identifier}] is connected!")
+            self._logger.info(f"Node [{self._identifier}] is connected!")
         
         except aiohttp.ClientConnectorError:
             raise NodeConnectionFailure(
@@ -544,17 +543,6 @@ class NodePool:
         return len(self._nodes.values())
     
     @classmethod
-    def _setup_logging(cls, level_name: str = "INFO") -> logging.Logger:
-        logger = logging.getLogger("voicelink")
-
-        level = getattr(logging, level_name.upper(), None)
-        if not isinstance(level, int):
-            raise ValueError(f'Invalid log level: {level_name}')
-        
-        logger.setLevel(level)
-        return logger
-    
-    @classmethod
     def get_best_node(cls, *, algorithm: NodeAlgorithm) -> Node:
         """Fetches the best node based on an NodeAlgorithm.
          This option is preferred if you want to choose the best node
@@ -615,7 +603,8 @@ class NodePool:
         spotify_client_id: Optional[str] = None,
         spotify_client_secret: Optional[str] = None,
         session: Optional[aiohttp.ClientSession] = None,
-        resume_key: Optional[str] = None
+        resume_key: Optional[str] = None,
+        logger: Optional[logging.Logger] = None
     ) -> Node:
         """Creates a Node object to be then added into the node pool.
            For Spotify searching capabilites, pass in valid Spotify API credentials.
@@ -623,14 +612,11 @@ class NodePool:
         if identifier in cls._nodes.keys():
             raise NodeCreationError(f"A node with identifier '{identifier}' already exists.")
 
-        if not cls._logger:
-            cls._logger = cls._setup_logging(func.settings.logging_level)
-
         node = Node(
             pool=cls, bot=bot, host=host, port=port, password=password,
-            identifier=identifier, logger=cls._logger,secure=secure, heartbeat=heartbeat, spotify_client_id=spotify_client_id, 
+            identifier=identifier, secure=secure, heartbeat=heartbeat, spotify_client_id=spotify_client_id, 
             session=session, spotify_client_secret=spotify_client_secret,
-            resume_key=resume_key
+            resume_key=resume_key, logger=logger
         )
 
         await node.connect()
