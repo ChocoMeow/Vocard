@@ -41,9 +41,9 @@ from discord import (
     VoiceChannel,
     VoiceProtocol,
     Member,
-    ui,
     Message,
-    Interaction
+    Interaction,
+    errors
 )
 
 from discord.ext import commands
@@ -396,6 +396,9 @@ class Player(VoiceProtocol):
             else:
                 await self.controller.edit(embed=embed, view=view)
 
+        except errors.Forbidden:
+            pass
+        
         except Exception as e:
             self._logger.error(f"Something went wrong while sending music controller to {self.guild.name}({self.guild.id})", e)
             pass
