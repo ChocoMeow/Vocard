@@ -154,6 +154,7 @@ func.logger.setLevel(getattr(logging, func.settings.logging_level.upper(), None)
 intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
 intents.members = func.settings.ipc_server.get("enable", False)
+intents.voice_states = True
 member_cache = discord.MemberCacheFlags(
     voice=True,
     joined=False
