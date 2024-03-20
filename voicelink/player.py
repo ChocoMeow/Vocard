@@ -358,7 +358,7 @@ class Player(VoiceProtocol):
             try:
                 await self.play(track, start=track.position)
             except Exception as e:
-                self._logger.error(f"Something went wrong while playing music in {self.guild.name}({self.guild.id})", e)
+                self._logger.error(f"Something went wrong while playing music in {self.guild.name}({self.guild.id})", exc_info=e)
                 await sleep(5)
                 return await self.do_next()
 
@@ -400,7 +400,7 @@ class Player(VoiceProtocol):
             pass
         
         except Exception as e:
-            self._logger.error(f"Something went wrong while sending music controller to {self.guild.name}({self.guild.id})", e)
+            self._logger.error(f"Something went wrong while sending music controller to {self.guild.name}({self.guild.id})", exc_info=e)
             pass
           
         self.updating = False

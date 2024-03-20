@@ -12,7 +12,12 @@
     "activity":[
         {"listen": "/help"}
     ],
-    "logging_level": "INFO",
+    "logging": {
+        "level": "INFO",
+        "log_path": "./logs",
+        "max-history": 30,
+        "enable": true
+    },
     "bot_access_user": [],
     "embed_color":"0xb3b3b3",
     "default_max_queue": 1000,

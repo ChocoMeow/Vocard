@@ -1,22 +1,27 @@
 import os
+
 from dotenv import load_dotenv
+from typing import (
+    Dict,
+    List
+)
 
 class Settings:
-    def __init__(self, settings: dict) -> None:
+    def __init__(self, settings: Dict) -> None:
         self.invite_link: str = "https://discord.gg/wRCgB7vBQv"
-        self.nodes: dict = settings.get("nodes", {})
+        self.nodes: Dict = settings.get("nodes", {})
         self.max_queue: int = settings.get("default_max_queue", 1000)
         self.bot_prefix: str = settings.get("prefix", "")
-        self.activity: dict = settings.get("activity", [{"listen": "/help"}])
-        self.logging_level: str = settings.get("logging_level", "INFO")
+        self.activity: Dict = settings.get("activity", [{"listen": "/help"}])
+        self.logging: Dict = settings.get("logging", {})
         self.embed_color: str = int(settings.get("embed_color", "0xb3b3b3"), 16)
-        self.bot_access_user: list = settings.get("bot_access_user", [])
-        self.sources_settings: dict = settings.get("sources_settings", {})
-        self.cooldowns_settings: dict = settings.get("cooldowns", {})
-        self.aliases_settings: dict = settings.get("aliases", {})
-        self.controller: dict = settings.get("default_controller", {})
+        self.bot_access_user: List = settings.get("bot_access_user", [])
+        self.sources_settings: Dict = settings.get("sources_settings", {})
+        self.cooldowns_settings: Dict = settings.get("cooldowns", {})
+        self.aliases_settings: Dict = settings.get("aliases", {})
+        self.controller: Dict = settings.get("default_controller", {})
         self.lyrics_platform: str = settings.get("lyrics_platform", "A_ZLyrics").lower()
-        self.ipc_server: dict = settings.get("ipc_server", {})
+        self.ipc_server: Dict = settings.get("ipc_server", {})
         self.version: str = settings.get("version", "")
 
 class TOKENS:

@@ -11,6 +11,7 @@ from discord.ext import commands
 from web import IPCServer
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 from voicelink import VoicelinkException
 from addons import Settings
 
@@ -59,7 +60,8 @@ class Vocard(commands.Bot):
             func.logger.info(f"Successfully connected to [{db_name}] MongoDB!")
 
         except Exception as e:
-            raise Exception("Not able to connect MongoDB! Reason:", e)
+            func.logger.error("Not able to connect MongoDB! Reason:", exc_info=e)
+            exit()
         
         func.SETTINGS_DB = func.MONGO_DB[db_name]["Settings"]
         func.USERS_DB = func.MONGO_DB[db_name]["Users"]
@@ -77,7 +79,7 @@ class Vocard(commands.Bot):
                     await self.load_extension(f"cogs.{module[:-3]}")
                     func.logger.info(f"Loaded {module[:-3]}")
                 except Exception as e:
-                    func.logger.error(f"Something went wrong while loading {module[:-3]} cog.", traceback.format_exc())
+                    func.logger.error(f"Something went wrong while loading {module[:-3]} cog.", exc_info=e)
 
         if func.settings.ipc_server.get("enable", False):
             await self.ipc.start()
@@ -146,9 +148,23 @@ async def get_prefix(bot, message: discord.Message):
     settings = await func.get_settings(message.guild.id)
     return settings.get("prefix", func.settings.bot_prefix)
 
-# Loading settings
+# Loading settings and logger
 func.settings = Settings(func.open_json("settings.json"))
-LOGGING_LEVEL = getattr(logging, func.settings.logging_level.upper())
+
+LOG_SETTINGS = func.settings.logging
+
+if LOG_SETTINGS.get("enable", True):
+    log_path = LOG_SETTINGS.get("log_path", "./log")
+    if not os.path.exists(log_path):
+        os.makedirs(log_path)
+
+    file_handler = TimedRotatingFileHandler(filename=f'{log_path}/vocard.log', encoding="utf-8", backupCount=LOG_SETTINGS.get("max-history", 30), when="d")
+    file_handler.namer = lambda name: name.replace(".log", "") + ".log"
+    file_handler.setFormatter(logging.Formatter('{asctime} [{levelname:<8}] {name}: {message}', '%Y-%m-%d %H:%M:%S', style='{'))
+
+    discord_logger = logging.getLogger("discord")
+    discord_logger.addHandler(file_handler)
+    func.logger.addHandler(file_handler)
 
 # Setup the bot object
 intents = discord.Intents.default()
@@ -173,4 +189,8 @@ bot = Vocard(
 
 if __name__ == "__main__":
     update.check_version(with_msg=True)
-    bot.run(func.tokens.token, root_logger=True, log_level=LOGGING_LEVEL)
+    bot.run(
+        func.tokens.token,
+        log_level=getattr(logging, LOG_SETTINGS.get("level", "INFO").upper()),
+        root_logger=True
+    )
