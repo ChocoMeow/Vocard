@@ -113,15 +113,5 @@ class Task(commands.Cog):
         func.SETTINGS_BUFFER.clear()
         func.USERS_BUFFER.clear()
 
-        errorFile = func.gen_report()
-        if errorFile:
-            report_channel = self.bot.get_channel(func.report_channel_id)
-            if report_channel:
-                try:
-                    await report_channel.send(content=f"Report Before: <t:{round(datetime.timestamp(datetime.now()))}:F>", file=errorFile)
-                except Exception as e:
-                    func.logger.error(f"Report could not be sent!", exc_info=e)
-            func.ERROR_LOGS.clear()
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(Task(bot))

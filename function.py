@@ -1,9 +1,7 @@
 import discord, json, os, copy, logging
 
 from discord.ext import commands
-from datetime import datetime
 from time import strptime
-from io import BytesIO
 from typing import Optional, Union, Dict, Any
 from addons import Settings, TOKENS
 
@@ -26,7 +24,6 @@ MONGO_DB: AsyncIOMotorClient
 SETTINGS_DB: AsyncIOMotorCollection
 USERS_DB: AsyncIOMotorCollection
 
-ERROR_LOGS: dict[int, dict[int, str]] = {} #Stores error that not a Voicelink Exception
 LANGS: dict[str, dict[str, str]] = {} #Stores all the languages in ./langs
 LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs
 SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
@@ -102,21 +99,6 @@ def formatTime(number:str) -> Optional[int]:
 def get_source(source: str, type: str) -> str:
     source_settings: dict = settings.sources_settings.get(source.lower(), {})
     return source_settings.get(type, ("🔗" if type == "emoji" else settings.embed_color))
-
-def gen_report() -> Optional[discord.File]:
-    if ERROR_LOGS:
-        errorText = ""
-        for guild_id, error in ERROR_LOGS.items():
-            errorText += f"Guild ID: {guild_id}\n" + "-" * 30 + "\n"
-            for index, (key, value) in enumerate(error.items() , start=1):
-                errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
-
-        buffer = BytesIO(errorText.encode('utf-8'))
-        file = discord.File(buffer, filename='report.txt')
-        buffer.close()
-
-        return file        
-    return None
 
 def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
     if ctx.author.id in settings.bot_access_user:
