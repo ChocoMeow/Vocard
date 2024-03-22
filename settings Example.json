@@ -13,10 +13,15 @@
         {"listen": "/help"}
     ],
     "logging": {
-        "level": "INFO",
-        "log_path": "./logs",
-        "max-history": 30,
-        "enable": true
+        "file": {
+            "path": "./logs",
+            "enable": true
+        },
+        "level": {
+            "discord": "INFO",
+            "vocard": "INFO"
+        },
+        "max-history": 30
     },
     "bot_access_user": [],
     "embed_color":"0xb3b3b3",

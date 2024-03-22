@@ -152,19 +152,20 @@ async def get_prefix(bot, message: discord.Message):
 func.settings = Settings(func.open_json("settings.json"))
 
 LOG_SETTINGS = func.settings.logging
-
-if LOG_SETTINGS.get("enable", True):
-    log_path = LOG_SETTINGS.get("log_path", "./log")
+if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
+    log_path = os.path.abspath(LOG_FILE.get("path", "./logs"))
     if not os.path.exists(log_path):
         os.makedirs(log_path)
 
     file_handler = TimedRotatingFileHandler(filename=f'{log_path}/vocard.log', encoding="utf-8", backupCount=LOG_SETTINGS.get("max-history", 30), when="d")
     file_handler.namer = lambda name: name.replace(".log", "") + ".log"
-    file_handler.setFormatter(logging.Formatter('{asctime} [{levelname:<8}] {name}: {message}', '%Y-%m-%d %H:%M:%S', style='{'))
+    file_handler.setFormatter(logging.Formatter('{asctime} [{levelname:<8}] {name} {filename}:{lineno}: {message}', '%Y-%m-%d %H:%M:%S', style='{'))
 
-    discord_logger = logging.getLogger("discord")
-    discord_logger.addHandler(file_handler)
-    func.logger.addHandler(file_handler)
+    for log_name, log_level in LOG_SETTINGS.get("level", {}).items():
+        _logger = logging.getLogger(log_name)
+        _logger.setLevel(log_level)
+        
+    logging.getLogger().addHandler(file_handler)
 
 # Setup the bot object
 intents = discord.Intents.default()
@@ -189,8 +190,4 @@ bot = Vocard(
 
 if __name__ == "__main__":
     update.check_version(with_msg=True)
-    bot.run(
-        func.tokens.token,
-        log_level=getattr(logging, LOG_SETTINGS.get("level", "INFO").upper()),
-        root_logger=True
-    )
+    bot.run(func.tokens.token, root_logger=True)
