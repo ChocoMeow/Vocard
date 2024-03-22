@@ -2,8 +2,14 @@ import discord, json, os, copy, logging
 
 from discord.ext import commands
 from time import strptime
-from typing import Optional, Union, Dict, Any
 from addons import Settings, TOKENS
+
+from typing import (
+    Optional,
+    Union,
+    Dict,
+    Any
+)
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -29,7 +35,7 @@ LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languag
 SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
 USERS_BUFFER: dict[str, dict] = {}
 
-USERS_BASE: dict[str, Any] = {
+USER_BASE: dict[str, Any] = {
     'playlist': {
         '200': {
             'tracks':[],
@@ -208,13 +214,13 @@ async def get_user(user_id: int, d_type: Optional[str] = None, need_copy: bool =
     if not user:
         user = await USERS_DB.find_one({"_id": user_id})
         if not user:
-            user = {"_id": user_id, **USERS_BASE}
+            user = {"_id": user_id, **USER_BASE}
             await USERS_DB.insert_one(user)
     
         USERS_BUFFER[user_id] = user
         
     if d_type:
-        user = user.setdefault(d_type, copy.deepcopy(USERS_BASE.get(d_type)))
+        user = user.setdefault(d_type, copy.deepcopy(USER_BASE.get(d_type)))
             
     return copy.deepcopy(user) if need_copy else user
 

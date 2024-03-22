@@ -127,10 +127,8 @@ class Vocard(commands.Bot):
 
         elif not issubclass(error.__class__, VoicelinkException):
             error = await func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
-            if (guildId := ctx.guild.id) not in func.ERROR_LOGS:
-                func.ERROR_LOGS[guildId] = {}
-            func.ERROR_LOGS[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-
+            func.logger.error(f"An unexpected error occurred in the {ctx.command.name} command on the {ctx.guild.name}({ctx.guild.id}).", exc_info=exception)
+            
         try:
             return await ctx.reply(error, ephemeral=True)
         except:
