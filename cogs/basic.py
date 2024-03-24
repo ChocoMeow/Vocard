@@ -769,11 +769,13 @@ class Basic(commands.Cog):
             return await send(ctx, "missingPerms_pos", ephemeral=True)
 
         track1, track2 = player.queue.swap(position1, position2)
-        await player.send_ws({
-            "op": "swapTrack",
-            "position1": {"index": position1, "track_id": track1.track_id},
-            "position2": {"index": position2, "track_id": track2.track_id}
-        }, requester=ctx.author)
+        
+        if player.is_ipc_connected:
+            await player.send_ws({
+                "op": "swapTrack",
+                "position1": {"index": position1, "track_id": track1.track_id},
+                "position2": {"index": position2, "track_id": track2.track_id}
+            }, requester=ctx.author)
         await send(ctx, "swapped", track1.title, track2.title)
 
     @commands.hybrid_command(name="move", aliases=get_aliases("move"))
@@ -792,11 +794,12 @@ class Basic(commands.Cog):
             return await send(ctx, "missingPerms_pos", ephemeral=True)
 
         moved_track = player.queue.move(target, to)
-        await player.send_ws({
-            "op": "moveTrack",
-            "position": {"index": target, "track_id": moved_track.track_id},
-            "newPosition": {"index": to}
-        }, requester=ctx.author)
+        if player.is_ipc_connected:
+            await player.send_ws({
+                "op": "moveTrack",
+                "position": {"index": target, "track_id": moved_track.track_id},
+                "newPosition": {"index": to}
+            }, requester=ctx.author)
         await send(ctx, "moved", moved_track, to)
 
     @commands.hybrid_command(name="lyrics", aliases=get_aliases("lyrics"))
