@@ -611,7 +611,10 @@ class NodePool:
         """
         if identifier in cls._nodes.keys():
             raise NodeCreationError(f"A node with identifier '{identifier}' already exists.")
-
+        
+        if not logger:
+            logger = logging.getLogger("voicelink")
+            
         node = Node(
             pool=cls, bot=bot, host=host, port=port, password=password,
             identifier=identifier, secure=secure, heartbeat=heartbeat, spotify_client_id=spotify_client_id, 

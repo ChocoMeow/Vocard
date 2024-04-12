@@ -390,7 +390,10 @@ class Player(VoiceProtocol):
                 self.controller = await self.context.channel.send(embed=embed, view=view)
 
             elif not await self.is_position_fresh():
-                await self.controller.delete()
+                try:
+                    await self.controller.delete()
+                except:
+                    pass
                 self.controller = await self.context.channel.send(embed=embed, view=view)
 
             else:
@@ -466,8 +469,9 @@ class Player(VoiceProtocol):
         self._node._players[self.guild.id] = self
         self._is_connected = True
 
-        self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been connected to {self.channel.name}({self.channel.id}).")
-
+        if self.channel:
+            self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been connected to {self.channel.name}({self.channel.id}).")
+            
     async def stop(self):
         """Stops the currently playing track."""
         self._current = None

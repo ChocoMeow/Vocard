@@ -147,7 +147,15 @@ async def send(ctx: Union[commands.Context, discord.Interaction], key: str, *par
     text = await get_lang(ctx.guild.id, key)
     text = text.format(*params)
 
-    send_func = ctx.send if isinstance(ctx, commands.Context) else (ctx.followup.send if ctx.response.is_done() else ctx.response.send_message)
+    if isinstance(ctx, commands.Context):
+        send_func = ctx.send
+    else:
+        if not ctx.response.is_done():
+            send_func = ctx.response.send_message
+            
+        else:
+            return await ctx.followup.send(text, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+        
     return await send_func(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
 
 async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, data: dict) -> bool:

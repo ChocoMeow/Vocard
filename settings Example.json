@@ -10,7 +10,7 @@
     },
     "prefix": "?",
     "activity":[
-        {"type": "listen", "name": "/help", "status": "online"}
+        {"type": "listening", "name": "/help", "status": "online"}
     ],
     "logging": {
         "file": {

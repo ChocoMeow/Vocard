@@ -86,29 +86,30 @@ class Task(commands.Cog):
                 await player.teardown()
                 continue
             
-            members = player.channel.members
-            if (not player.is_playing and player.queue.is_empty) or not any(False if member.bot or member.voice.self_deaf else True for member in members):
-                if not player.settings.get('24/7', False):
-                    await player.teardown()
-                    continue
-                else:
-                    if not player.is_paused:
-                        await player.set_pause(True)
-            else:
-                if not player.guild.me:
-                    await player.teardown()
-                    continue
-                elif not player.guild.me.voice:
-                    await player.connect(timeout=0.0, reconnect=True)
-
             try:
+                members = player.channel.members
+                if (not player.is_playing and player.queue.is_empty) or not any(False if member.bot or member.voice.self_deaf else True for member in members):
+                    if not player.settings.get('24/7', False):
+                        await player.teardown()
+                        continue
+                    else:
+                        if not player.is_paused:
+                            await player.set_pause(True)
+                else:
+                    if not player.guild.me:
+                        await player.teardown()
+                        continue
+                    elif not player.guild.me.voice:
+                        await player.connect(timeout=0.0, reconnect=True)
+
                 if player.dj not in members:
                     for m in members:
                         if not m.bot:
                             player.dj = m
                             break
-            except:
-                pass
+                        
+            except Exception as e:
+                func.logger.error("Error occurred while checking the player!", exc_info=e)
     
     @tasks.loop(hours=12.0)
     async def cache_cleaner(self):

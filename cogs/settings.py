@@ -26,7 +26,6 @@ import voicelink
 import psutil
 import function as func
 
-from typing import Tuple
 from discord import app_commands
 from discord.ext import commands
 from function import (
@@ -39,14 +38,18 @@ from function import (
     get_aliases,
     cooldown_check
 )
+
 from views import DebugView, HelpView, EmbedBuilderView
 
-def formatBytes(bytes: int, unit: bool = False):
+def format_bytes(bytes: int, unit: bool = False):
     if bytes <= 1_000_000_000:
         return f"{bytes / (1024 ** 2):.1f}" + ("MB" if unit else "")
     
     else:
         return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
+
+def status_icon(status: bool) -> str:
+    return "✅" if status else "❌"
 
 class Settings(commands.Cog, name="settings"):
     def __init__(self, bot) -> None:
@@ -162,10 +165,12 @@ class Settings(commands.Cog, name="settings"):
 
         perms = ctx.guild.me.guild_permissions
         embed.add_field(name=texts[5], value=texts[6].format(
-            '<a:Check:941206936651706378>' if perms.administrator else '<a:Cross:941206918255497237>',
-            '<a:Check:941206936651706378>' if perms.manage_guild else '<a:Cross:941206918255497237>',
-            '<a:Check:941206936651706378>' if perms.manage_channels else '<a:Cross:941206918255497237>',
-            '<a:Check:941206936651706378>' if perms.manage_messages else '<a:Cross:941206918255497237>'), inline=False
+                status_icon(perms.administrator),
+                status_icon(perms.manage_guild),
+                status_icon(perms.manage_channels),
+                status_icon(perms.manage_messages)
+            ),
+            inline=False
         )
         await ctx.send(embed=embed)
 
@@ -242,15 +247,15 @@ class Settings(commands.Cog, name="settings"):
             return await interaction.response.send_message("You are not able to use this command!")
 
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage(func.ROOT_DIR)
 
         available_memory, total_memory = memory.available, memory.total
         used_disk_space, total_disk_space = disk.used, disk.total
         embed = discord.Embed(title="📄 Debug Panel", color=func.settings.embed_color)
         embed.description = "```==    System Info    ==\n" \
                             f"• CPU:     {psutil.cpu_freq().current}Mhz ({psutil.cpu_percent()}%)\n" \
-                            f"• RAM:     {formatBytes(total_memory - available_memory)}/{formatBytes(total_memory, True)} ({memory.percent}%)\n" \
-                            f"• DISK:    {formatBytes(total_disk_space - used_disk_space)}/{formatBytes(total_disk_space, True)} ({disk.percent}%)```"
+                            f"• RAM:     {format_bytes(total_memory - available_memory)}/{format_bytes(total_memory, True)} ({memory.percent}%)\n" \
+                            f"• DISK:    {format_bytes(total_disk_space - used_disk_space)}/{format_bytes(total_disk_space, True)} ({disk.percent}%)```"
 
         embed.add_field(
             name="🤖 Bot Information",
@@ -269,7 +274,7 @@ class Settings(commands.Cog, name="settings"):
                 value=f"```• ADDRESS:  {node._host}:{node._port}\n" \
                       f"• PLAYERS:  {len(node._players)}\n" \
                       f"• CPU:      {node.stats.cpu_process_load:.1f}%\n" \
-                      f"• RAM:      {formatBytes(node.stats.free)}/{formatBytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
+                      f"• RAM:      {format_bytes(node.stats.free)}/{format_bytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
                       f"• LATENCY:  {node.latency:.2f}ms\n" \
                       f"• UPTIME:   {func.time(node.stats.uptime)}```",
                 inline=True
