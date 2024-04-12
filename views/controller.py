@@ -26,14 +26,14 @@ import voicelink
 import function as func
 
 from discord.ext import commands
-from . import ButtonOnCooldown
 from function import (
     get_user,
     update_user,
     check_roles
 )
-
 from typing import Dict
+
+from . import ButtonOnCooldown
 
 def key(interaction: discord.Interaction):
     return interaction.user
@@ -202,7 +202,7 @@ class Add(ControlButton):
 class Loop(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔁",
+            emoji="🔂" if kwargs["player"].queue.repeat == "Off" else "🔁",
             label="buttonLoop",
             **kwargs
         )
@@ -212,8 +212,11 @@ class Loop(ControlButton):
             return await self.send(interaction, 'missingPerms_mode', ephemeral=True)
 
         mode = await self.player.set_repeat()
+        self.emoji = "🔂" if mode == "off" else "🔁"
+        
+        await interaction.response.edit_message(view=self.view)
         await self.send(interaction, 'repeat', mode.capitalize())
-
+        
 class VolumeUp(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
