@@ -1,7 +1,6 @@
 import discord
 import sys
 import os
-import traceback
 import aiohttp
 import update
 import logging
@@ -10,7 +9,6 @@ import function as func
 from discord.ext import commands
 from web import IPCServer
 from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from voicelink import VoicelinkException
 from addons import Settings
