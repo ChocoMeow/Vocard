@@ -26,7 +26,6 @@ import discord
 import function as func
 
 from discord.ext import commands, tasks
-from datetime import datetime
 from addons import Placeholders
 
 class Task(commands.Cog):
@@ -56,18 +55,21 @@ class Task(commands.Cog):
 
         try:
             act_data = func.settings.activity[(self.current_act + 1) % len(func.settings.activity) - 1]
-
             act_original = self.bot.activity
-            act_type = self.act_type.get(list(act_data.keys())[0].lower(), discord.ActivityType.playing)
-            act_name = self.placeholder.replace(list(act_data.values())[0])
+            act_type = getattr(discord.ActivityType, act_data.get("type", "").lower(), discord.ActivityType.playing)
+            act_name = self.placeholder.replace(act_data.get("name", ""))
+
+            status_type = getattr(discord.Status, act_data.get("status", "").lower(), None)
 
             if act_original.type != act_type or act_original.name != act_name:
                 new_act = discord.Activity(type=act_type, name=act_name)
-                await self.bot.change_presence(activity=new_act)
+                await self.bot.change_presence(activity=new_act, status=status_type)
                 self.current_act = (self.current_act + 1) % len(func.settings.activity)
 
-        except:
-            pass
+                func.logger.info(f"Changed the bot status to {act_name}")
+
+        except Exception as e:
+            func.logger.error("Error occurred while changing the bot status!", exc_info=e)
 
     @tasks.loop(minutes=5.0)
     async def player_check(self):
