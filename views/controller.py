@@ -26,11 +26,6 @@ import voicelink
 import function as func
 
 from discord.ext import commands
-from function import (
-    get_user,
-    update_user,
-    check_roles
-)
 from typing import Dict
 
 from . import ButtonOnCooldown
@@ -186,14 +181,14 @@ class Add(ControlButton):
             return await self.send(interaction, "noTrackPlaying")
         if track.is_stream:
             return await self.send(interaction, "playlistAddError")
-        user = await get_user(interaction.user.id, 'playlist')
-        rank, max_p, max_t = check_roles()
+        user = await func.get_user(interaction.user.id, 'playlist')
+        rank, max_p, max_t = func.check_roles()
         if len(user['200']['tracks']) >= max_t:
             return await self.send(interaction, "playlistlimited", max_t, ephemeral=True)
 
         if track.track_id in user['200']['tracks']:
             return await self.send(interaction, "playlistrepeated", ephemeral=True)
-        respond = await update_user(interaction.user.id, {"$push": {'playlist.200.tracks': track.track_id}})
+        respond = await func.update_user(interaction.user.id, {"$push": {'playlist.200.tracks': track.track_id}})
         if respond:
             await self.send(interaction, "playlistAdded", track.title, interaction.user.mention, user['200']['name'], ephemeral=True)
         else:
@@ -201,18 +196,35 @@ class Add(ControlButton):
 
 class Loop(ControlButton):
     def __init__(self, **kwargs):
+        self.btn_emojis: dict[str, str] = {
+            "off": "🔁",
+            "track": "🔂",
+            "queue": "🔁"
+        }
+        
         super().__init__(
-            emoji="🔂" if kwargs["player"].queue.repeat == "Off" else "🔁",
+            emoji=self.get_next_loop_emoji(kwargs["player"]),
             label="buttonLoop",
             **kwargs
         )
+    
+    def get_next_loop_emoji(self, player) -> str:
+        current_repeat_mode = player.queue.repeat.lower()
+        if current_repeat_mode not in self.btn_emojis:
+            raise ValueError(f"Invalid repeat mode: {current_repeat_mode}")
+        
+        emojis = list(self.btn_emojis.keys())
+        current_index = emojis.index(current_repeat_mode)
+        
+        next_index = (current_index + 1) % len(emojis)
+        return self.btn_emojis[emojis[next_index]]
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
             return await self.send(interaction, 'missingPerms_mode', ephemeral=True)
 
         mode = await self.player.set_repeat()
-        self.emoji = "🔂" if mode == "off" else "🔁"
+        self.emoji = self.get_next_loop_emoji(self.player)
         
         await interaction.response.edit_message(view=self.view)
         await self.send(interaction, 'repeat', mode.capitalize())
