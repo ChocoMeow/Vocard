@@ -704,11 +704,14 @@ class Player(VoiceProtocol):
     async def get_recommendations(self, *, track: Track = None) -> bool:
         """Get recommendations from Youtube or Spotify."""
         if not track:
-            track = choice(self.queue.history(incTrack=True)[-5:])
-
+            try:
+                track = choice(self.queue.history(incTrack=True)[-5:])
+            except IndexError:
+                return False
+            
         if track.spotify:
             spotify_tracks = await self._node._spotify_client.similar_track(seed_tracks=track.identifier)
-
+            
             tracks = [
                 Track(
                     track_id=None,
