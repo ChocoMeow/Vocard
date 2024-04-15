@@ -213,11 +213,7 @@ class Loop(ControlButton):
         if current_repeat_mode not in self.btn_emojis:
             raise ValueError(f"Invalid repeat mode: {current_repeat_mode}")
         
-        emojis = list(self.btn_emojis.keys())
-        current_index = emojis.index(current_repeat_mode)
-        
-        next_index = (current_index + 1) % len(emojis)
-        return self.btn_emojis[emojis[next_index]]
+        return self.btn_emojis[current_repeat_mode]
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
