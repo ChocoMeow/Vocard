@@ -177,6 +177,12 @@ class DebugView(discord.ui.View):
     async def run_command(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.panel.execute(interaction)
     
-    @discord.ui.button(label='Cogs', emoji="🔃")
+    @discord.ui.button(label='Cogs', emoji="⚙️")
     async def reload_cog(self, interaction: discord.Interaction, button: discord.ui.Button):
         return await interaction.response.send_message("Reload Cogs", view=CogsView(self.bot), ephemeral=True)
+    
+    @discord.ui.button(label="Re-Sync", emoji="🔄")
+    async def sync(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(content="🔄 Synchronizing all your commands and language settings!")
+        await self.bot.tree.sync()
+        await interaction.edit_original_response(content="✅ All commands and settings have been successfully synchronized!")
