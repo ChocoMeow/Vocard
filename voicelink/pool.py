@@ -528,7 +528,6 @@ class NodePool:
     """
 
     _nodes: Dict[str, Node] = {}
-    _logger: Optional[logging.Logger] = None
 
     def __repr__(self):
         return f"<Voicelink.NodePool node_count={self.node_count}>"

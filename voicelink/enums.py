@@ -77,6 +77,7 @@ class NodeAlgorithm(Enum):
     # We don't have to define anything special for these, since these just serve as flags
     by_ping = auto()
     by_region = auto()
+    by_players = auto()
 
     def __str__(self) -> str:
         return self.value
