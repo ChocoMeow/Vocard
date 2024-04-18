@@ -22,7 +22,6 @@ SOFTWARE.
 """
 
 import discord
-import function
 import io
 import contextlib
 import textwrap

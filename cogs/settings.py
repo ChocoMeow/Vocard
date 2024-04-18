@@ -259,7 +259,8 @@ class Settings(commands.Cog, name="settings"):
 
         embed.add_field(
             name="🤖 Bot Information",
-            value=f"```• LATENCY: {self.bot.latency:.2f}ms\n" \
+            value=f"```• VERSION: {func.settings.version}\n" \
+                  f"• LATENCY: {self.bot.latency:.2f}ms\n" \
                   f"• GUILDS:  {len(self.bot.guilds)}\n" \
                   f"• USERS:   {sum([guild.member_count for guild in self.bot.guilds])}\n" \
                   f"• PLAYERS: {len(self.bot.voice_clients)}```",
