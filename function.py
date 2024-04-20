@@ -133,6 +133,13 @@ def get_lang_non_async(guild_id: int, *keys) -> Union[list[str], str]:
         return LANGS.get(lang, {}).get(keys[0], "Language pack not found!")
     return [LANGS.get(lang, {}).get(key, "Language pack not found!") for key in keys]
 
+def format_bytes(bytes: int, unit: bool = False):
+    if bytes <= 1_000_000_000:
+        return f"{bytes / (1024 ** 2):.1f}" + ("MB" if unit else "")
+    
+    else:
+        return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
+    
 async def get_lang(guild_id:int, *keys) -> Union[list[str], str]:
     settings = await get_settings(guild_id)
     lang = settings.get("lang", "EN")

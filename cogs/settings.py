@@ -36,17 +36,11 @@ from function import (
     get_lang,
     time as ctime,
     get_aliases,
-    cooldown_check
+    cooldown_check,
+    format_bytes
 )
 
 from views import DebugView, HelpView, EmbedBuilderView
-
-def format_bytes(bytes: int, unit: bool = False):
-    if bytes <= 1_000_000_000:
-        return f"{bytes / (1024 ** 2):.1f}" + ("MB" if unit else "")
-    
-    else:
-        return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
 
 def status_icon(status: bool) -> str:
     return "✅" if status else "❌"
@@ -269,17 +263,23 @@ class Settings(commands.Cog, name="settings"):
 
         node: voicelink.Node
         for name, node in voicelink.NodePool._nodes.items():
-            total_memory = node.stats.used + node.stats.free
-            embed.add_field(
-                name=f"{name} Node - " + ("🟢 Connected" if node._available else "🔴 Disconnected"),
-                value=f"```• ADDRESS:  {node._host}:{node._port}\n" \
-                      f"• PLAYERS:  {len(node._players)}\n" \
-                      f"• CPU:      {node.stats.cpu_process_load:.1f}%\n" \
-                      f"• RAM:      {format_bytes(node.stats.free)}/{format_bytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
-                      f"• LATENCY:  {node.latency:.2f}ms\n" \
-                      f"• UPTIME:   {func.time(node.stats.uptime)}```",
-                inline=True
-            )
+            if node._available:
+                total_memory = node.stats.used + node.stats.free
+                embed.add_field(
+                    name=f"{name} Node - 🟢 Connected",
+                    value=f"```• ADDRESS: {node._host}:{node._port}\n" \
+                        f"• PLAYERS: {len(node._players)}\n" \
+                        f"• CPU:     {node.stats.cpu_process_load:.1f}%\n" \
+                        f"• RAM:     {format_bytes(node.stats.free)}/{format_bytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
+                        f"• LATENCY: {node.latency:.2f}ms\n" \
+                        f"• UPTIME:  {func.time(node.stats.uptime)}```"
+                )
+            else:
+                embed.add_field(
+                    name=f"{name} Node - 🔴 Disconnected",
+                    value=f"```• ADDRESS: {node._host}:{node._port}\n" \
+                        f"• PLAYERS: {len(node._players)}\nNo extra data is available for display```",
+                )
 
         await interaction.response.send_message(embed=embed, view=DebugView(self.bot), ephemeral=True)
 

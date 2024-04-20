@@ -315,7 +315,7 @@ class Node:
 
         return self
               
-    async def disconnect(self) -> None:
+    async def disconnect(self, remove_from_pool: bool = False) -> None:
         """Disconnects a connected Lavalink node and removes it from the node pool.
            This also destroys any players connected to the node.
         """
@@ -326,9 +326,12 @@ class Node:
             await self.spotify_client.close()
 
         await self._websocket.close()
-        del self._pool._nodes[self._identifier]
+        if remove_from_pool:
+            del self._pool._nodes[self._identifier]
         self._available = False
         self._task.cancel()
+        
+        self._logger.info(f"Node [{self._identifier}] is disconnected!")
 
     async def reconnect(self) -> None:
         await asyncio.sleep(10)
