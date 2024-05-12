@@ -157,7 +157,7 @@ def login():
         'redirect_uri': REDIRECT_URI,
         'scope': 'identify'
     }
-    return redirect(f'{DISCORD_API_BASE_URL}/oauth2/authorize?{"&".join([f"{k}={v}" for k, v in params.items()])}')
+    return redirect(f'{DISCORD_API_BASE_URL}/oauth2/authorize?{"&".join([f"{k}={v}" for k, v in params.items()])}&prompt=none') # autologin
 
 # Logout page
 @app.route('/logout')
