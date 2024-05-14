@@ -1,4 +1,11 @@
 {
+    "token": "YOUR_BOT_TOKEN",
+    "client_id": "YOUR_BOT_CLIENT_ID",
+    "spotify_client_id": "YOUR_SPOTIFY_CLIENT_ID",
+    "spotify_client_secret": "YOUR_SPOTIFY_CLIENT_SECRET",
+    "genius_token": "YOUR_GENIUS_TOKEN",
+    "mongodb_url": "YOUR_MONGODB_URL",
+    "mongodb_name": "YOUR_MONGODB_DB_NAME",
     "nodes": {
         "DEFAULT": {
             "host": "127.0.0.1",
@@ -9,7 +16,7 @@
         }   
     },
     "prefix": "?",
-    "activity":[
+    "activity": [
         {"type": "listening", "name": "/help", "status": "online"}
     ],
     "logging": {
@@ -19,15 +26,17 @@
         },
         "level": {
             "discord": "INFO",
-            "vocard": "INFO"
+            "vocard": "INFO",
+            "ipc_client": "INFO"
         },
         "max-history": 30
     },
     "bot_access_user": [],
     "embed_color":"0xb3b3b3",
     "default_max_queue": 1000,
-    "lyrics_platform": "A_ZLyrics",
+    "lyrics_platform": "lyrist",
     "ipc_server": {
+        "sercet_key": "YOUR_PASSWORD",
         "host": "127.0.0.1",
         "port": 8000,
         "enable": false

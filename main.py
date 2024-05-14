@@ -97,7 +97,7 @@ class Vocard(commands.Bot):
         func.logger.info(f"Python Version: {sys.version}")
         func.logger.info("------------------")
 
-        func.tokens.client_id = self.user.id
+        func.settings.client_id = self.user.id
         func.LOCAL_LANGS.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
@@ -138,8 +138,8 @@ class CommandCheck(discord.app_commands.CommandTree):
             await interaction.response.send_message("This command can only be used in guilds!")
             return False
 
-        return await super().interaction_check(interaction)
-    
+        return True
+
 async def get_prefix(bot, message: discord.Message):
     settings = await func.get_settings(message.guild.id)
     return settings.get("prefix", func.settings.bot_prefix)
@@ -166,7 +166,7 @@ if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
 # Setup the bot object
 intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
-intents.members = func.settings.ipc_server.get("enable", False)
+intents.members = func.settings.ipc_client.get("enable", False)
 intents.voice_states = True
 member_cache = discord.MemberCacheFlags(
     voice=True,
@@ -186,4 +186,4 @@ bot = Vocard(
 
 if __name__ == "__main__":
     update.check_version(with_msg=True)
-    bot.run(func.tokens.token, root_logger=True)
+    bot.run(func.settings.token, root_logger=True)

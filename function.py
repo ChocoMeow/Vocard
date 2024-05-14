@@ -2,7 +2,7 @@ import discord, json, os, copy, logging
 
 from discord.ext import commands
 from time import strptime
-from addons import Settings, TOKENS
+from addons import Settings
 
 from typing import (
     Optional,
@@ -22,7 +22,6 @@ if not os.path.exists(os.path.join(ROOT_DIR, "settings.json")):
     raise Exception("Settings file not set!")
 
 #--------------- Cache Var ---------------
-tokens: TOKENS = TOKENS()
 settings: Settings
 logger: logging.Logger = logging.getLogger("vocard")
 

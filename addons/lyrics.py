@@ -173,7 +173,7 @@ class A_ZLyrics(LyricsPlatform):
 class Genius(LyricsPlatform):
     def __init__(self) -> None:
         self.module = import_module("lyricsgenius")
-        self.genius = self.module.Genius(func.tokens.genius_token)
+        self.genius = self.module.Genius(func.settings.genius_token)
 
     async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
         song = self.genius.search_song(title=title, artist=artist)
