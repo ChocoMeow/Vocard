@@ -76,8 +76,7 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
             channel, ctx, settings
         ))
     
-    # if player.client.ipc._is_connected:
-        # await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+    await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
 
     return player
 
@@ -104,11 +103,13 @@ class Player(VoiceProtocol):
     ):
         self.client: Client = client
         self._bot: Client = client
+        self._ipc = self._bot.ipc
+        self._ipc_connection = False
+        
         self.context = ctx
         self.dj: Member = ctx.user if isinstance(ctx, Interaction) else ctx.author
         self.channel: VoiceChannel = channel
         self._guild = channel.guild if channel else None
-        self._ipc_connection: bool = False
 
         self.settings: dict = settings
         self.joinTime: float = round(time.time())
@@ -240,7 +241,7 @@ class Player(VoiceProtocol):
 
     @property
     def is_ipc_connected(self) -> bool:
-        return bool(self._ipc_connection and len(self.bot.ipc.connections))
+        return self._ipc._is_connected and self._ipc_connection
     
     def is_user_join(self, user: Member):
         if user not in self.channel.members:
@@ -278,6 +279,7 @@ class Player(VoiceProtocol):
 
     async def _dispatch_voice_update(self, voice_data: Dict[str, Any] = None):
         if {"sessionId", "event"} != self._voice_state.keys():
+            self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) dispatched voice update failed {voice_data}")
             return
 
         state = voice_data or self._voice_state
@@ -548,7 +550,7 @@ class Player(VoiceProtocol):
         return self._current
 
     async def add_track(self, raw_tracks: Union[Track, List[Track]], *, at_font: bool = False, duplicate: bool = True) -> int:
-        tracks = []
+        tracks: List[Track] = []
 
         _duplicate_tracks = () if self.queue._allow_duplicate and duplicate else (track.uri for track in self.queue._queue)
 
@@ -565,6 +567,7 @@ class Player(VoiceProtocol):
                 
                 position = self.queue.put_at_front(raw_tracks) if at_font else self.queue.put(raw_tracks)
                 tracks.append(raw_tracks)
+                
         finally:
             if tracks:
                 if self.is_ipc_connected:

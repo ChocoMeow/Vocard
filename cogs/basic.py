@@ -865,6 +865,9 @@ class Basic(commands.Cog):
 
         if not player.is_playing:
             await player.do_next()
+        
+        if player.is_ipc_connected:
+            await player.send_ws({"op": "toggleAutoplay", "status": check})
 
     @commands.hybrid_command(name="help", aliases=get_aliases("help"))
     @app_commands.autocomplete(category=help_autocomplete)

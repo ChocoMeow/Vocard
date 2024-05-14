@@ -7,7 +7,7 @@ import logging
 import function as func
 
 from discord.ext import commands
-from web import IPCServer
+from ipc import IPCClient
 from motor.motor_asyncio import AsyncIOMotorClient
 from logging.handlers import TimedRotatingFileHandler
 from voicelink import VoicelinkException
@@ -29,12 +29,7 @@ class Vocard(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ipc = IPCServer(
-            self,
-            host=func.settings.ipc_server["host"],
-            port=func.settings.ipc_server["port"],
-            sercet_key=func.tokens.sercet_key
-        )
+        self.ipc: IPCClient
 
     async def on_message(self, message: discord.Message, /) -> None:
         if message.author.bot or not message.guild:
@@ -49,7 +44,7 @@ class Vocard(commands.Bot):
         await self.process_commands(message)
 
     async def connect_db(self) -> None:
-        if not ((db_name := func.tokens.mongodb_name) and (db_url := func.tokens.mongodb_url)):
+        if not ((db_name := func.settings.mongodb_name) and (db_url := func.settings.mongodb_url)):
             raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in settings.json")
 
         try:
@@ -79,8 +74,17 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     func.logger.error(f"Something went wrong while loading {module[:-3]} cog.", exc_info=e)
 
-        if func.settings.ipc_server.get("enable", False):
-            await self.ipc.start()
+        if func.settings.ipc_client.get("enable", False):
+            try:
+                self.ipc = IPCClient(
+                    self,
+                    host=func.settings.ipc_client["host"],
+                    port=func.settings.ipc_client["port"],
+                    password=func.settings.ipc_client["password"]
+                )
+                await self.ipc.connect()
+            except Exception as e:
+                func.logger.error(f"Cannot connected to dashboard! - Reason: {e}")
 
         if not func.settings.version or func.settings.version != update.__version__:
             func.update_json("settings.json", new_data={"version": update.__version__})
