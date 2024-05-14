@@ -36,7 +36,7 @@
     "default_max_queue": 1000,
     "lyrics_platform": "lyrist",
     "ipc_server": {
-        "sercet_key": "YOUR_PASSWORD",
+        "password": "YOUR_PASSWORD",
         "host": "127.0.0.1",
         "port": 8000,
         "enable": false
