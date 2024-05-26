@@ -2,10 +2,11 @@ import function as func
 
 from typing import (
     List,
-    Dict
+    Dict,
+    Union
 )
 
-from discord import Member, VoiceChannel
+from discord import User, Member, VoiceChannel
 from discord.ext import commands
 from voicelink import Player, Track, Playlist, NodePool, decode, LoopType
 
@@ -58,22 +59,29 @@ async def connect_channel(member: Member, bot: commands.Bot):
     except:
         return
 
-async def initUser(bot: commands.Bot, data: Dict) -> Dict:
+async def initBot(bot: commands.Bot, data: Dict) -> Dict:
     user_id = data.get("user_id")
     user = bot.get_user(user_id)
-    if not user: 
-        return
+    if not user:
+        user = await bot.fetch_user(user_id)
+
+    if user:
+        return {
+            "op": "initBot",
+            "user_id": user_id,
+            "bot_name": bot.user.display_name,
+            "bot_avatar": bot.user.display_avatar.url,
+            "bot_id": bot.user.id
+        }
     
-    guild_id = None
-    for guild in user.mutual_guilds:
-        member = guild.get_member(user.id)
-        if member.voice and member.voice.channel:
-            guild_id = guild.id
-            
+async def initUser(bot: commands.Bot, data: Dict) -> Dict:
+    user_id = data.get("user_id")
+    data = await func.get_user(user_id)
+    
     return {
         "op": "initUser",
         "user_id": user_id,
-        "guild_id": guild_id
+        "data": data
     }
     
 async def initPlayer(player: Player, member: Member, data: Dict):
@@ -96,6 +104,22 @@ async def initPlayer(player: Player, member: Member, data: Dict):
         "is_paused": player.is_paused,
         "is_dj": player.is_privileged(member, check_user_join=False),
         "autoplay": player.settings.get("autoplay", False)
+    }
+
+async def getRecommendation(bot: commands.Bot, data: Dict): 
+    node = NodePool.get_node()
+    if not node:
+        return
+    
+    track_data = decode(track_id := data.get("track_id"))
+    track = Track(track_id=track_id, info=track_data, requester=bot.user)
+    tracks: List[Track] = await node.get_recommendations(track)
+
+    return {
+        "op": "getRecommendation",
+        "user_id": data.get("user_id"),
+        "region": data.get("region"),
+        "tracks": [track.track_id for track in tracks] if tracks else []
     }
 
 async def skipTo(player: Player, member: Member, data: Dict):
@@ -381,8 +405,10 @@ async def removePlaylistTrack(member: Member, data: Dict):
     
     await func.update_user(member.id, {"$pull": {f'playlist.{pId}.tracks': track_id }})
 
-methods: Dict[str, SystemMethod] = {
+methods: Dict[str, Union[SystemMethod, PlayerMethod, UserMethod]] = {
+    "initBot": SystemMethod(initBot),
     "initUser": SystemMethod(initUser),
+    "getRecommendation": SystemMethod(getRecommendation),
     "closeConnection": PlayerMethod(closeConnection),
     "initPlayer": PlayerMethod(initPlayer),
     "skipTo": PlayerMethod(skipTo),
@@ -409,32 +435,42 @@ async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
         return
 
     try:
-        env: Dict = {}
+        env: Dict = {"bot": bot, "data": data}
         args: List = []
         
-        if guild_id := data.get("guild_id"):
-            if not (guild := bot.get_guild(guild_id)):
-                return
-            env["guild"] = guild
-                
         params = method.params
-        if "member" in params:
-            if not (guild := env.get("guild")) or not (member := guild.get_member(user_id)):
-                return
-            env["member"] = member
-            
-        if "player" in params:
-            if not (guild := env.get("guild")) or not (player := guild.voice_client):
-                if not method.auto_connect or not (member := env.get("member")):
+        if not (type(method) == SystemMethod):
+            if guild_id := data.get("guild_id"):
+                if (guild := bot.get_guild(guild_id)):
+                    env["guild"] = guild
+
+            else:
+                user: User = bot.get_user(user_id)
+                if not user:
                     return
-                player = await connect_channel(member, bot)
-            env["player"] = player
-        
-        if "bot" in params:
-            env["bot"] = bot
-        
-        if "data" in params:
-            env["data"] = data
+                
+                for guild in user.mutual_guilds:
+                    member = guild.get_member(user_id)
+                    if member.voice and member.voice.channel:
+                        env["guild"] = guild
+                        env["member"] = member
+                        break
+
+            if "member" in params and "member" not in env:
+                if not (guild := env.get("guild")) or not (member := guild.get_member(user_id)):
+                    return
+                env["member"] = member
+                
+            if "player" in params:
+                if not (guild := env.get("guild")) or not (player := guild.voice_client):
+                    if not method.auto_connect or not (member := env.get("member")):
+                        return
+                    player = await connect_channel(member, bot)
+
+                if player.channel.id != member.voice.channel.id:
+                    return
+                
+                env["player"] = player
         
         for param in params:
             args.append(env.get(param))

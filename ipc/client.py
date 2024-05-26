@@ -1,6 +1,5 @@
 import aiohttp
 import asyncio
-import traceback
 import logging
 
 from discord.ext import commands
