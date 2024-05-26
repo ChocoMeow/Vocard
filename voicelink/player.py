@@ -76,7 +76,7 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
             channel, ctx, settings
         ))
     
-    await player.send_ws({"op": "createPlayer", "members_id": [member.id for member in channel.members]})
+    await player.send_ws({"op": "createPlayer", "member_ids": [member.id for member in channel.members]})
 
     return player
 
@@ -368,7 +368,7 @@ class Player(VoiceProtocol):
                 self._bot.loop.create_task(func.update_user(track.requester.id, {
                     "$push": {"history": {"$each": [track.track_id], "$slice": -25}}
                 }))
-
+                
         if self.settings.get('controller', True):
             await self.invoke_controller()
             
@@ -712,34 +712,9 @@ class Player(VoiceProtocol):
             except IndexError:
                 return False
             
-        if track.spotify:
-            spotify_tracks = await self._node._spotify_client.similar_track(seed_tracks=track.identifier)
-            
-            tracks = [
-                Track(
-                    track_id=None,
-                    search_type=SearchType.ytsearch,
-                    spotify_track=track,
-                    info=track.to_dict(),
-                    requester=self.client.user
-                )
-                for track in spotify_tracks
-            ]
-
-        else:
-            if track.source != 'youtube':
-                return False
-
-            tracks = await self.get_tracks(
-                f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}", 
-                requester=self.client.user
-            )
-
+        tracks = self._node.get_recommendations(track)
         if tracks:
-            if isinstance(tracks, Playlist):
-                await self.add_track(tracks.tracks, duplicate=False)
-            else:
-                await self.add_track(tracks, duplicate=False)
+            await self.add_track(tracks, duplicate=False)
             
             self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been requested recommendations.")
             return True

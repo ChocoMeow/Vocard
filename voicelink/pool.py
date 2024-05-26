@@ -525,6 +525,35 @@ class Node:
             )
             for track in tracks ]
 
+    async def get_recommendations(self, track: Track, limit: int = None) -> List[Track]:
+        if track.spotify:
+            spotify_tracks = await self._spotify_client.similar_track(seed_tracks=track.identifier)
+            
+            tracks = [
+                Track(
+                    track_id=None,
+                    search_type=SearchType.ytsearch,
+                    spotify_track=track,
+                    info=track.to_dict(),
+                    requester=self.bot.user
+                )
+                for track in spotify_tracks
+            ]
+
+        else:
+            if track.source != 'youtube':
+                return []
+
+            tracks = await self.get_tracks(
+                f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}", 
+                requester=self.bot.user
+            )
+
+        if isinstance(tracks, Playlist):
+            tracks = tracks.tracks
+
+        return tracks[:limit] if limit else tracks
+        
 class NodePool:
     """The base class for the node pool.
        This holds all the nodes that are to be used by the bot.
