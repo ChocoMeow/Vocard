@@ -312,7 +312,7 @@ class Basic(commands.Cog):
             if player.queue._repeat.mode == voicelink.LoopType.track:
                 await player.set_repeat(voicelink.LoopType.off.name)
                 
-            await player.stop() if player.is_playing else await player.do_next()        
+            await player.stop() if player.is_playing else await player.do_next()
 
     @commands.hybrid_command(name="pause", aliases=get_aliases("pause"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -660,17 +660,8 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await send(ctx, "missingPerms_queue", ephemeral=True)
 
-        removedTrack = player.queue.remove(position1, position2, member=member)
-
-        if player.is_ipc_connected and removedTrack:
-            await player.send_ws({
-                "op": "removeTrack",
-                "positions": [track["position"] for track in removedTrack],
-                "track_ids": [track["track"].track_id for track in removedTrack],
-                "current_queue_position": player.queue._position
-            }, requester=ctx.author)
-
-        await send(ctx, "removed", len(removedTrack))
+        removed_tracks = await player.remove_track(position1, position2, remove_target=member, requester=ctx.author)
+        await send(ctx, "removed", len(removed_tracks.keys()))
 
     @commands.hybrid_command(name="forward", aliases=get_aliases("forward"))
     @app_commands.describe(position="Input a amount that you to forward to. Exmaple: 1:20")
@@ -769,14 +760,7 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await send(ctx, "missingPerms_pos", ephemeral=True)
 
-        track1, track2 = player.queue.swap(position1, position2)
-        
-        if player.is_ipc_connected:
-            await player.send_ws({
-                "op": "swapTrack",
-                "position1": {"index": position1, "track_id": track1.track_id},
-                "position2": {"index": position2, "track_id": track2.track_id}
-            }, requester=ctx.author)
+        track1, track2 = await player.swap_track(position1, position2)        
         await send(ctx, "swapped", track1.title, track2.title)
 
     @commands.hybrid_command(name="move", aliases=get_aliases("move"))
@@ -794,13 +778,7 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await send(ctx, "missingPerms_pos", ephemeral=True)
 
-        moved_track = player.queue.move(target, to)
-        if player.is_ipc_connected:
-            await player.send_ws({
-                "op": "moveTrack",
-                "position": {"index": target, "track_id": moved_track.track_id},
-                "newPosition": {"index": to}
-            }, requester=ctx.author)
+        moved_track = await player.move_track(target, to, ctx.author)
         await send(ctx, "moved", moved_track, to)
 
     @commands.hybrid_command(name="lyrics", aliases=get_aliases("lyrics"))

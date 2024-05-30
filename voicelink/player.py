@@ -27,13 +27,7 @@ import function as func
 from math import ceil
 from asyncio import sleep
 from views import InteractiveController
-from typing import (
-    Any,
-    Dict,
-    Optional,
-    Union,
-    List
-)
+from typing import Any, Dict, Optional, Union, List, Tuple
 
 from discord import (
     Client,
@@ -331,7 +325,7 @@ class Player(VoiceProtocol):
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) dispatched event {event_type}.")
 
     async def do_next(self):
-        if self.is_playing or not self.channel:
+        if self._current or self.is_playing or not self.channel:
             return
         
         if self._paused:
@@ -368,7 +362,7 @@ class Player(VoiceProtocol):
                 self._bot.loop.create_task(func.update_user(track.requester.id, {
                     "$push": {"history": {"$each": [track.track_id], "$slice": -25}}
                 }))
-                
+
         if self.settings.get('controller', True):
             await self.invoke_controller()
             
@@ -553,9 +547,10 @@ class Player(VoiceProtocol):
         tracks: List[Track] = []
 
         _duplicate_tracks = () if self.queue._allow_duplicate and duplicate else (track.uri for track in self.queue._queue)
-
+        raw_tracks = raw_tracks[0] if isinstance(raw_tracks, List) and len(raw_tracks) == 1 else raw_tracks
+        
         try:
-            if (isList := isinstance(raw_tracks, List)):
+            if (is_list := isinstance(raw_tracks, List)):
                 for track in raw_tracks:
                     if track.uri in _duplicate_tracks:
                         continue
@@ -571,11 +566,22 @@ class Player(VoiceProtocol):
         finally:
             if tracks:
                 if self.is_ipc_connected:
-                    await self.send_ws({"op": "addTrack", "tracks": [track.track_id for track in tracks]}, tracks[0].requester)
+                    await self.send_ws({"op": "addTrack", "tracks": [track.track_id for track in tracks], "position": -1 if is_list else position}, tracks[0].requester)
 
                 self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been added {len(tracks)} tracks into the queue.")
-                return len(tracks) if isList else position
-        
+                return len(tracks) if is_list else position
+    
+    async def remove_track(self, index: int, index2: int = None, remove_target: Member = None, requester: Member = None) -> Dict[int, Track]:
+        removed_tracks = self.queue.remove(index, index2, remove_target)
+        if removed_tracks and self.is_ipc_connected:
+            await self.send_ws({
+                "op": "removeTrack",
+                "indexes": list(removed_tracks.keys()),
+                "first_track_id": list(removed_tracks.values())[0].track_id
+            }, requester=requester)
+
+        return removed_tracks
+    
     async def seek(self, position: float, requester: Member = None) -> float:
         """Seeks to a position in the currently playing track milliseconds"""
         if position < 0 or position > self._current.original.length:
@@ -628,6 +634,24 @@ class Player(VoiceProtocol):
         
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been shuffled the queue.")
 
+    async def swap_track(self, index1: int, index2: int, requester: Member = None) -> Tuple[Track, Track]:
+       track1, track2 = self.queue.swap(index1, index2)
+       if self.is_ipc_connected:
+           await self.send_ws({
+                "op": "swapTrack",
+                "index1": {"index": index1, "trackId": track1.track_id},
+                "index2": {"index": index2, "trackId": track2.track_id}
+            }, requester)
+       return track1, track2
+
+    async def move_track(self, index: int, new_index: int, requester: Member = None) -> Optional[Track]:
+        moved_track = self.queue.move(index, new_index)
+
+        if self.is_ipc_connected:
+            await self.send_ws({"op": "moveTrack", "movedTrack": {"index": index, "trackId": moved_track.track_id}, "newIndex": new_index}, requester)
+
+        return moved_track
+    
     async def set_repeat(self, mode: str = None) -> str:
         if not mode:
             mode = self.queue._repeat.next().name

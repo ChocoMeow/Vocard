@@ -166,40 +166,16 @@ async def backTo(player: Player, member: Member, data: Dict):
         player.queue.backto(index + 1)
         await player.stop()
 
-async def moveTrack(player: Player, member: Member, data: Dict):
+async def moveTrack(player: Player, member: Member, data: Dict) -> None:
     if not player.is_privileged(member):
         return missingPermission(member.id)
 
-    c = player.queue._position - 1
-    position = data.get("position")
-    new_position = data.get("newPosition")
-
-    moveItem = player.queue._queue[position]
-    player.queue._queue.remove(moveItem)
-    player.queue._queue.insert(new_position, moveItem)
+    index = data.get("index")
+    new_index = data.get("newIndex")
+    if index == new_index:
+        return
     
-    if position > c and new_position <= c:
-        player.queue._position += 1
-
-    elif position < c and new_position >= c:
-        player.queue._position -= 1
-    
-    elif position == c:
-        player.queue._position = new_position + 1
-
-    return {
-        "op": "moveTrack",
-        "position": {
-            "index": position - c,
-            "track_id": moveItem.track_id
-        },
-        "newPosition": {
-            "index": new_position - c
-        },
-        "guild_id": player.guild.id,
-        "requester_id": member.id,
-        "skip_users": [member.id]
-    }
+    await player.move_track(index, new_index, member)
 
 async def addTracks(player: Player, member: Member, data: Dict): 
     raw_tracks = data.get("tracks", [])
@@ -249,28 +225,12 @@ async def repeatTrack(player: Player, member: Member, data: Dict):
     
     await player.set_repeat()
 
-async def removeTrack(player: Player, member: Member, data: Dict):
+async def removeTrack(player: Player, member: Member, data: Dict) -> None:
     if not player.is_privileged(member):
         return missingPermission(member.id)
     
-    position = data.get("position")
-    verify_id = data.get("track_id")
-
-    track = player.queue._queue[position]
-    if track.track_id == verify_id:
-        player.queue._queue.remove(track)
-
-    if position < player.queue._position:
-         player.queue._position -= 1
-
-    return {
-        "op": "removeTrack", 
-        "positions": [position],
-        "track_ids": [track.track_id],
-        "current_queue_position": player.queue._position,
-        "requester_id": member.id,
-        "guild_id": player.guild.id
-    }
+    index, index2 = data.get("index"), data.get("index2")
+    await player.remove_track(index, index2, requester=member)
         
 async def updatePause(player: Player, member: Member, data: Dict):
     pause = data.get("pause", True)
