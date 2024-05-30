@@ -25,7 +25,7 @@ from .exceptions import QueueFull, OutofList
 from .objects import Track
 from .enums import LoopType
 
-from typing import Optional, Tuple, List, Callable
+from typing import Optional, Tuple, List, Callable, Dict
 from itertools import cycle
 from discord import Member
 
@@ -124,11 +124,11 @@ class Queue:
         elif queue_type == "history":
             self._queue[:self._position] = replacement
 
-    def swap(self, num1: int, num2: int) -> Tuple[Track, Track]:
+    def swap(self, track_index1: int, track_index2: int) -> Tuple[Track, Track]:
         try:
-            pos = self._position - 1
-            self._queue[pos + num1], self._queue[pos + num2] = self._queue[pos + num2], self._queue[pos + num1]
-            return self._queue[pos + num1], self._queue[pos + num2]
+            adjusted_position = self._position - 1
+            self._queue[adjusted_position + track_index1], self._queue[adjusted_position + track_index2] = self._queue[adjusted_position + track_index2], self._queue[adjusted_position + track_index1]
+            return self._queue[adjusted_position + track_index1], self._queue[adjusted_position + track_index2]
         except IndexError:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
@@ -137,14 +137,14 @@ class Queue:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
         try:
-            moveItem = self._queue[self._position + target - 1]
-            self._queue.remove(moveItem)
-            self.put_at_index(to, moveItem)
-            return moveItem
+            item = self._queue[self._position + target - 1]
+            self._queue.remove(item)
+            self.put_at_index(to, item)
+            return item
         except:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
-    def remove(self, index: int, index2: int = None, member: Member = None) -> Optional[List[Track]]:
+    def remove(self, index: int, index2: int = None, member: Member = None) -> Dict[int, Track]:
         pos = self._position - 1
 
         if index2 is None:
@@ -154,16 +154,15 @@ class Queue:
             index, index2 = index2, index
 
         try:
-            count = []
+            removed_tracks: Dict[str, Track] = {}
             for i, track in enumerate(self._queue[pos + index: pos + index2 + 1]):
-                if member:
-                    if track.requester != member:
-                        continue
+                if member and track.requester != member:
+                    continue
             
                 self._queue.remove(track)
-                count.append({"position": pos + index + i, "track": track})
+                removed_tracks[pos + index + i] = track
 
-            return count
+            return removed_tracks
         except:
             raise OutofList(self.get_msg("voicelinkOutofList"))
 
