@@ -402,7 +402,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
             "user_id": str(user_id)
         }
 
-methods: Dict[str, Union[SystemMethod, PlayerMethod, UserMethod]] = {
+methods: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "initBot": SystemMethod(initBot, credit=0),
     "initUser": SystemMethod(initUser, credit=0),
     # "getRecommendation": SystemMethod(getRecommendation, credit=4),
