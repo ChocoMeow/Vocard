@@ -405,7 +405,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
 methods: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "initBot": SystemMethod(initBot, credit=0),
     "initUser": SystemMethod(initUser, credit=0),
-    # "getRecommendation": SystemMethod(getRecommendation, credit=4),
+    "getRecommendation": SystemMethod(getRecommendation, credit=4),
     "closeConnection": PlayerMethod(closeConnection, credit=0),
     "initPlayer": PlayerMethod(initPlayer),
     "skipTo": PlayerMethod(skipTo),
