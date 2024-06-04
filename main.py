@@ -76,12 +76,7 @@ class Vocard(commands.Bot):
 
         if func.settings.ipc_client.get("enable", False):
             try:
-                self.ipc = IPCClient(
-                    self,
-                    host=func.settings.ipc_client["host"],
-                    port=func.settings.ipc_client["port"],
-                    password=func.settings.ipc_client["password"]
-                )
+                self.ipc = IPCClient(self, **func.settings.ipc_client)
                 await self.ipc.connect()
             except Exception as e:
                 func.logger.error(f"Cannot connected to dashboard! - Reason: {e}")

@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 import logging
+import function as func
 
 from discord.ext import commands
 from typing import Optional
@@ -14,7 +15,10 @@ class IPCClient:
         host: str,
         port: int,
         password: str,
-        heartbeat: int = 30
+        heartbeat: int = 30,
+        secure: bool = False,
+        *arg,
+        **kwargs
     ) -> None:
         
         self._bot: commands.Bot = bot
@@ -22,11 +26,12 @@ class IPCClient:
         self._port: int = port
         self._password: str = password
         self._heartbeat: int = heartbeat
+        self._is_secure: bool = secure
         self._is_connected: bool = False
         self._is_connecting: bool = False
         self._logger: logging.Logger = logging.getLogger("ipc_client")
         
-        self._websocket_url: str = f"ws://{self._host}:{self._port}/ws_bot"
+        self._websocket_url: str = f"{'wss' if self._is_secure else 'ws'}://{self._host}:{self._port}/ws_bot"
         self._session: Optional[aiohttp.ClientSession] = None
         self._websocket: Optional[aiohttp.ClientWebSocketResponse] = None
         self._task: Optional[asyncio.Task] = None
@@ -34,6 +39,7 @@ class IPCClient:
         self._heanders = {
             "Authorization": self._password,
             "User-Id": str(bot.user.id),
+            "Client-Version": func.settings.version
         }
 
     async def _listen(self) -> None:
