@@ -652,7 +652,7 @@ class Player(VoiceProtocol):
 
         return moved_track
     
-    async def set_repeat(self, mode: str = None) -> str:
+    async def set_repeat(self, mode: str = None, requester: Member = None) -> str:
         if not mode:
             mode = self.queue._repeat.next().name
             
@@ -667,7 +667,7 @@ class Player(VoiceProtocol):
             raise VoicelinkException("Invalid repeat mode.")
         
         if self.is_ipc_connected:
-            await self.send_ws({"op": "repeatTrack", "repeatMode": mode})
+            await self.send_ws({"op": "repeatTrack", "repeatMode": mode}, requester)
 
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been update the repeat mode to {mode}.")
         return mode
@@ -736,7 +736,7 @@ class Player(VoiceProtocol):
             except IndexError:
                 return False
             
-        tracks = self._node.get_recommendations(track)
+        tracks = await self._node.get_recommendations(track)
         if tracks:
             await self.add_track(tracks, duplicate=False)
             
@@ -745,7 +745,7 @@ class Player(VoiceProtocol):
         return False
     
     async def send_ws(self, payload, requester: Member = None):
-        payload['guild_id'] = self.guild.id
+        payload['guild_id'] = str(self.guild.id)
         if requester:
-            payload['requester_id'] = requester.id
+            payload['requester_id'] = str(requester.id)
         await self.bot.ipc.send(payload)

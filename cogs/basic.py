@@ -616,7 +616,7 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await send(ctx, "missingPerms_mode", ephemeral=True)
 
-        await player.set_repeat(mode)
+        await player.set_repeat(mode, ctx.author)
         await send(ctx, "repeat", mode.capitalize())
 
     @commands.hybrid_command(name="clear", aliases=get_aliases("clear"))
@@ -760,7 +760,7 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await send(ctx, "missingPerms_pos", ephemeral=True)
 
-        track1, track2 = await player.swap_track(position1, position2)        
+        track1, track2 = await player.swap_track(position1, position2, ctx.author)        
         await send(ctx, "swapped", track1.title, track2.title)
 
     @commands.hybrid_command(name="move", aliases=get_aliases("move"))

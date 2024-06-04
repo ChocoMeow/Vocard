@@ -41,7 +41,7 @@ from function import (
 from datetime import datetime
 from views import PlaylistView, InboxView, HelpView
 
-def assign_playlistId(existed: list) -> str:
+def assign_playlist_id(existed: list) -> str:
     for i in range(200, 210):
         if str(i) not in existed:
             return str(i)
@@ -240,7 +240,7 @@ class Playlists(commands.Cog, name="playlist"):
                 return await send(ctx, "playlistNotInvaildUrl", ephemeral=True)
 
         data = {'uri': link, 'perms': {'read': []}, 'name': name, 'type': 'link'} if link else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-        await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlistId([data for data in user])}": data}})
+        await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlist_id([data for data in user])}": data}})
         await send(ctx, "playlistCreated", name)
 
     @playlist.command(name="delete", aliases=get_aliases("delete"))
@@ -352,7 +352,7 @@ class Playlists(commands.Cog, name="playlist"):
         
         update_data, dId = {}, {dId for dId in user["playlist"]}
         for data in view.newplaylist[:(max_p - len(user['playlist']))]:
-            addId = assign_playlistId(dId)
+            addId = assign_playlist_id(dId)
             await update_user(data['sender'], {"$push": {f"playlist.{data['referId']}.perms.read": ctx.author.id}})
             update_data[f'playlist.{addId}'] = {
                 'user': data['sender'], 'referId': data['referId'],
@@ -501,7 +501,7 @@ class Playlists(commands.Cog, name="playlist"):
             track_ids = track_ids.decode().split(",")
 
             data = {'tracks': track_ids, 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-            await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlistId([data for data in user])}": data}})
+            await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlist_id([data for data in user])}": data}})
             await send(ctx, 'playlistCreated', name)
 
         except:
