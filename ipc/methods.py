@@ -349,7 +349,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
             return {
                 "op": "updatePlaylist",
                 "status": "error",
-                "msg": f"You cannot create more than {max_p} playlists!",
+                "msg": f"You cannot create more than '{max_p}' playlists!",
                 "field": "create-playlist-name",
                 "user_id": str(user_id)
             }
@@ -359,7 +359,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
                 return {
                     "op": "updatePlaylist",
                     "status": "error",
-                    "msg": f"Playlist [{name}] already exists.",
+                    "msg": f"Playlist '{name}' already exists.",
                     "field": "create-playlist-name",
                     "user_id": str(user_id)
                 }
@@ -382,7 +382,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
             "op": "updatePlaylist",
             "status": "created",
             "playlist_id": assgined_playlist_id,
-            "msg": f"You have created {name} playlist.",
+            "msg": f"You have created '{name}' playlist.",
             "user_id": str(user_id),
             "data": data
         }
@@ -392,13 +392,101 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
         if playlist['type'] == 'share':
             await func.update_user(playlist['user'], {"$pull": {f"playlist.{playlist['referId']}.perms.read": user_id}})
 
-        await func.update_user(user_id, {"$unset": {f"playlist.{playlist['id']}": 1}})
+        await func.update_user(user_id, {"$unset": {f"playlist.{playlist_id}": 1}})
 
         return {
             "op": "updatePlaylist",
             "status": "deleted",
             "playlist_id": playlist_id,
-            "msg": f"You have removed playlist {playlist['name']}",
+            "msg": f"You have removed playlist '{playlist['name']}'",
+            "user_id": str(user_id)
+        }
+    
+    elif _type == "renamePlaylist":
+        name = data.get("name")
+        if not name:
+            return {
+                "op": "updatePlaylist",
+                "status": "error",
+                "msg": f"You must enter name for this field!",
+                "field": "rename-playlist-name",
+                "user_id": str(user_id)
+            }
+        
+        playlist = await func.get_user(user_id, "playlist")
+        for data in playlist.values():
+            if data['name'].lower() == name.lower():
+                return {
+                    "op": "updatePlaylist",
+                    "status": "error",
+                    "msg": f"Playlist '{data['name']}' already exists.",
+                    "field": "rename-playlist-name",
+                    "user_id": str(user_id)
+                }
+
+        await func.update_user(user_id, {"$set": {f'playlist.{playlist_id}.name': name}})
+        return {
+            "op": "updatePlaylist",
+            "status": "renamed",
+            "name": name,
+            "playlist_id": playlist_id,
+            "msg": f"You have renamed the playlist to '{name}'.",
+            "field": "rename-playlist-name",
+            "user_id": str(user_id)
+        }
+    
+    elif _type == "addTrack":
+        track_id = data.get("track_id")
+        if not track_id:
+            return error_msg("No track ID could be located.", user_id=user_id, level='error')
+        
+        playlist = await _getPlaylist(user_id, playlist_id)
+        if playlist['type'] in ['share', 'link']:
+            return error_msg("You cannot add songs to a linked playlist through Vocard.", user_id=user_id, level='error')
+        
+        rank, max_p, max_t = func.check_roles()
+        if len(playlist['tracks']) >= max_t:
+            return error_msg(f"You have reached the limit! You can only add {max_t} songs to your playlist.", user_id=user_id)
+
+        decoded_track = Track(track_id=track_id, info=decode(track_id), requester=None)
+        if decoded_track.is_stream:
+            return error_msg("You are not allowed to add streaming videos to your playlist.", user_id=user_id)
+        
+        await func.update_user(user_id, {"$push": {f'playlist.{playlist_id}.tracks': track_id}})
+        return {
+            "op": "updatePlaylist",
+            "status": "addTrack",
+            "playlist_id": playlist_id,
+            "track_id": track_id,
+            "msg": f"Added {decoded_track.title} into '{playlist['name']}' playlist.",
+            "user_id": str(user_id)
+        }
+        
+    elif _type == "removeTrack":
+        track_id, track_position = data.get("track_id"), data.get("track_position", 0)
+        if not track_id:
+            return error_msg("No track ID could be located.", user_id=user_id, level='error')
+        
+        playlist = await _getPlaylist(user_id, playlist_id)
+        if playlist['type'] in ['share', 'link']:
+            return error_msg("You cannot remove songs from a linked playlist through Vocard.", user_id=user_id, level='error')
+        
+        if not 0 <= track_position < len(playlist['tracks']):
+            return error_msg("Cannot find the position from your playlist.", user_id=user_id, level="error")
+
+        if playlist['tracks'][track_position] != track_id:
+            return error_msg("Something wrong while removing the track from your playlist.", user_id=user_id, level='error')
+        
+        await func.update_user(user_id, {"$pull": {f'playlist.{playlist_id}.tracks': playlist['tracks'][track_position]}})
+        
+        decoded_track = decode(playlist['tracks'][track_position])
+        return {
+            "op": "updatePlaylist",
+            "status": "removeTrack",
+            "playlist_id": playlist_id,
+            "track_position": track_position,
+            "track_id": track_id,
+            "msg": f"Removed '{decoded_track['title']}' from '{playlist['name']}' playlist.",
             "user_id": str(user_id)
         }
 
