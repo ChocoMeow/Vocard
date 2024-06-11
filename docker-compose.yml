@@ -46,8 +46,20 @@ services:
             ## Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
             ## Read more: https://docs.docker.com/storage/bind-mounts/ 
             - ./settings.json:/app/settings.json
-        env_file:
-            - .env
+#        env_file:
+#            - .env
+        environment:
+            - TOKEN=XXXXXXXXXXXXXXXXXXXXXXXX.XXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXX
+            - CLIENT_ID=123456789012345678
+            - CLIENT_SECRET_ID=XXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXX
+            - SERCET_KEY=DASHBOARD_SERCET_KEY
+            - BUG_REPORT_CHANNEL_ID=123456789012345678
+            - SPOTIFY_CLIENT_ID=0XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            - SPOTIFY_CLIENT_SECRET=0XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            - GENIUS_TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            - MONGODB_URL=mongodb+srv://user:password@clusterURL
+            - MONGODB_NAME=Vocard
+
         depends_on:
             lavalink:
                 condition: service_started
