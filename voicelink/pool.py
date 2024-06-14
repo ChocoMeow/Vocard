@@ -511,7 +511,7 @@ class Node:
                 "please obtain Spotify API credentials here: https://developer.spotify.com/"
             )
                 
-            tracks = await self._spotify_client.trackSearch(query=query)
+            tracks = await self._spotify_client.track_search(query=query)
         except Exception as _:
             raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
             
