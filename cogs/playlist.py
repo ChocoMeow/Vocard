@@ -35,7 +35,8 @@ from function import (
     get_lang,
     settings,
     get_aliases,
-    cooldown_check
+    cooldown_check,
+    logger
 )
 
 from datetime import datetime
@@ -504,8 +505,9 @@ class Playlists(commands.Cog, name="playlist"):
             await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlist_id([data for data in user])}": data}})
             await send(ctx, 'playlistCreated', name)
 
-        except:
-            return await send(ctx, "decodeError", ephemeral=True)
+        except Exception as e:
+            logger.error("Decode Error", exc_info=e)
+            raise e
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Playlists(bot))

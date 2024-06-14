@@ -167,17 +167,12 @@ intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
 intents.members = func.settings.ipc_client.get("enable", False)
 intents.voice_states = True
-member_cache = discord.MemberCacheFlags(
-    voice=True,
-    joined=False
-)
 
 bot = Vocard(
     command_prefix=get_prefix,
     help_command=None,
     tree_cls=CommandCheck,
     chunk_guilds_at_startup=False,
-    member_cache_flags=member_cache,
     activity=discord.Activity(type=discord.ActivityType.listening, name="Starting..."),
     case_insensitive=True,
     intents=intents

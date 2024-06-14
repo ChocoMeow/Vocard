@@ -36,7 +36,8 @@ from function import (
     get_lang,
     truncate_string,
     cooldown_check,
-    get_aliases
+    get_aliases,
+    logger
 )
 
 from addons import lyricsPlatform
@@ -531,7 +532,7 @@ class Basic(commands.Cog):
             track_ids = bytes.split(b"\n")[-1]
             track_ids = track_ids.decode().split(",")
             
-            tracks = (voicelink.Track(track_id=track_id, info=voicelink.decode(track_id), requester=ctx.author) for track_id in track_ids)
+            tracks = [voicelink.Track(track_id=track_id, info=voicelink.decode(track_id), requester=ctx.author) for track_id in track_ids]
             if not tracks:
                 return await send(ctx, "noTrackFound")
 
@@ -541,8 +542,9 @@ class Basic(commands.Cog):
         except voicelink.QueueFull as e:
             return await ctx.send(e, ephemeral=True)
 
-        except:
-            return await send(ctx, "decodeError", ephemeral=True)
+        except Exception as e:
+            logger.error("error", exc_info=e)
+            raise e
 
         finally:
             if not player.is_playing:
