@@ -1,4 +1,4 @@
-import time, traceback
+import time
 import function as func
 
 from typing import List, Dict, Union, Optional
@@ -8,6 +8,17 @@ from discord.ext import commands
 from voicelink import Player, Track, Playlist, NodePool, decode, LoopType
 
 RATELIMIT_COUNTER: Dict[int, Dict[str, float]] = {}
+SCOPES = {
+    "prefix": str,
+    "lang": str,
+    "queueType": str,
+    "dj": int,
+    "controller": bool,
+    "24/7": bool,
+    "votedisable": bool,
+    "duplicateTrack": bool,
+    "default_controller": dict
+}
 
 class TempCtx():
     def __init__(self, author: Member, channel: VoiceChannel) -> None:
@@ -238,7 +249,14 @@ async def removeTrack(player: Player, member: Member, data: Dict) -> None:
     
     index, index2 = data.get("index"), data.get("index2")
     await player.remove_track(index, index2, requester=member)
-        
+
+async def updateVolume(player: Player, member: Member, data: Dict) -> None:
+    if not member.guild_permissions.manage_guild:
+        return missingPermission(member.id)
+    
+    volume = data.get("volume", 100)
+    await player.set_volume(volume=volume, requester=member)
+
 async def updatePause(player: Player, member: Member, data: Dict) -> None:
     pause = data.get("pause", True)
     if not player.is_privileged(member):
@@ -389,10 +407,11 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
         
     elif _type == "removePlaylist":
         playlist = await _getPlaylist(user_id, playlist_id)
-        if playlist['type'] == 'share':
-            await func.update_user(playlist['user'], {"$pull": {f"playlist.{playlist['referId']}.perms.read": user_id}})
+        if playlist:
+            if playlist['type'] == 'share':
+                await func.update_user(playlist['user'], {"$pull": {f"playlist.{playlist['referId']}.perms.read": user_id}})
 
-        await func.update_user(user_id, {"$unset": {f"playlist.{playlist_id}": 1}})
+            await func.update_user(user_id, {"$unset": {f"playlist.{playlist_id}": 1}})
 
         return {
             "op": "updatePlaylist",
@@ -490,10 +509,98 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
             "user_id": str(user_id)
         }
 
+async def getMutualGuilds(bot: commands.Bot, data: Dict) -> None:
+    user_id = int(data.get("user_id"))
+    user = bot.get_user(user_id)
+    if not user:
+        user = await bot.fetch_user(user_id)
+
+    payload = {"op": "getMutualGuilds", "servers": {}, "user_id": str(user_id)}
+    for guild in user.mutual_guilds:
+        member = guild.get_member(user_id)
+        if member.guild_permissions.manage_guild:
+            payload["servers"][str(guild.id)] = {
+                "avatar": guild.icon.url if guild.icon else None,
+                "name": guild.name,
+                "member_count": guild.member_count
+            }
+
+    return payload
+
+async def getSettings(bot: commands.Bot, data: Dict) -> None:
+    user_id = int(data.get("user_id"))
+    guild_id  = int(data.get("guild_id"))
+
+    guild = bot.get_guild(guild_id)
+    if not guild:
+        return error_msg("Vocard don't have access to required guild.", user_id=user_id, level="error")
+
+    member = guild.get_member(user_id)
+    if not member:
+        return error_msg("You are not in the required guild.", user_id=user_id, level="error")
+    
+    if not member.guild_permissions.manage_guild:
+        return error_msg("You don't have permission to access the settings.", user_id=user_id, level='error')
+    
+    settings = await func.get_settings(guild_id)
+    if "dj" in settings:
+        role = guild.get_role(settings["dj"])
+        if role:
+            settings["dj"] = role.name
+
+    return {
+        "op": "getSettings",
+        "settings": settings,
+        "options": {
+            "languages": list(func.LANGS.keys()),
+            "queue_modes": ["Queue", "FairQueue"],
+            "roles": [role.name for role in guild.roles]
+        },
+        "guild": {
+            "avatar": guild.icon.url if guild.icon else None,
+            "name": guild.name,
+            "id": str(guild_id)
+        },
+        "user_id": str(user_id)
+    }
+
+async def updateSettings(bot: commands.Bot, data: Dict) -> None:
+    user_id = int(data.get("user_id"))
+    guild_id  = int(data.get("guild_id"))
+
+    guild = bot.get_guild(guild_id)
+    if not guild:
+        return error_msg("Vocard don't have access to required guild.", user_id=user_id, level="error")
+
+    member = guild.get_member(user_id)
+    if not member:
+        return error_msg("You are not in the required guild.", user_id=user_id, level="error")
+    
+    if not member.guild_permissions.manage_guild:
+        return error_msg("You don't have permission to change the settings.", user_id=user_id, level='error')
+    
+    data = data.get("settings", {})
+    if "dj" in data:
+        for role in guild.roles:
+            if role.name.lower() == data["dj"]:
+                data["dj"] = role.id
+                break
+
+    for key, value in data.copy().items():
+        if key not in SCOPES or not isinstance(value, SCOPES[key]):
+            del data[key]
+
+    await func.update_settings(guild.id, {"$set": data})
+
 methods: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "initBot": SystemMethod(initBot, credit=0),
     "initUser": SystemMethod(initUser, credit=0),
-    "getRecommendation": SystemMethod(getRecommendation, credit=4),
+    "getPlaylist": SystemMethod(getPlaylist),
+    "updatePlaylist": SystemMethod(updatePlaylist),
+    "getMutualGuilds": SystemMethod(getMutualGuilds),
+    "getSettings": SystemMethod(getSettings),
+    "updateSettings": SystemMethod(updateSettings),
+    "getRecommendation": SystemMethod(getRecommendation, credit=5),
     "closeConnection": PlayerMethod(closeConnection, credit=0),
     "initPlayer": PlayerMethod(initPlayer),
     "skipTo": PlayerMethod(skipTo),
@@ -504,11 +611,10 @@ methods: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "shuffleTrack": PlayerMethod(shuffleTrack),
     "repeatTrack": PlayerMethod(repeatTrack),
     "removeTrack": PlayerMethod(removeTrack),
+    "updateVolume": PlayerMethod(updateVolume),
     "updatePause": PlayerMethod(updatePause),
     "updatePosition": PlayerMethod(updatePosition),
     "toggleAutoplay": PlayerMethod(toggleAutoplay),
-    "getPlaylist": SystemMethod(getPlaylist),
-    "updatePlaylist": SystemMethod(updatePlaylist)
 }
 
 async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
@@ -571,7 +677,6 @@ async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
             await ipc_client.send(resp)
 
     except Exception as e:
-        print(traceback.print_exc())
         payload = {
             "op": "errorMsg",
             "level": "error",
