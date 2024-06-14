@@ -144,5 +144,13 @@ class Client:
 
             return Playlist(data, tracks)
     
+    async def get_categories(self) -> List[Category]:
+        if not self._categories:
+            request_url = BASE_URL + "browse/categories"
+            data = await self.get_request(request_url)
+            self._categories = [Category(item) for item in data.get("items", [])]
+
+        return self._categories
+    
     async def close(self) -> None:
         await self.session.close()

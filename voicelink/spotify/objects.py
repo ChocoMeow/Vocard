@@ -123,3 +123,13 @@ class Playlist:
             f"<Voicelink.spotify.Playlist name={self.name} owner={self.owner} id={self.id} "
             f"total_tracks={self.total_tracks} tracks={self.tracks}>"
         )
+
+class Category:
+    def __init__(self, data: dict) -> None:
+        self.href: str = data.get("href")
+        self.id: str = data.get("id")
+        self.name: str = data.get("name")
+        self.icon: str = data.get("icon", [])[0].get("url")
+    
+    def __repr__(self) -> str:
+        return (f"<Voicelink.spotify.Category name={self.name} id={self.id}")
