@@ -109,7 +109,8 @@ async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
         "is_playing": player.is_playing,
         "is_paused": player.is_paused,
         "is_dj": player.is_privileged(member, check_user_join=False),
-        "autoplay": player.settings.get("autoplay", False)
+        "autoplay": player.settings.get("autoplay", False),
+        "volume": player.volume
     }
 
 async def closeConnection(player: Player, member: Member, data: Dict) -> None:
@@ -255,6 +256,7 @@ async def updateVolume(player: Player, member: Member, data: Dict) -> None:
         return missingPermission(member.id)
     
     volume = data.get("volume", 100)
+    await func.update_settings(player.guild.id, {"$set": {"volume": volume}})
     await player.set_volume(volume=volume, requester=member)
 
 async def updatePause(player: Player, member: Member, data: Dict) -> None:
@@ -303,7 +305,7 @@ async def toggleAutoplay(player: Player, member: Member, data: Dict) -> Dict:
         "op": "toggleAutoplay",
         "status": check,
         "guild_id": player.guild.id,
-        "requester_id": member.id
+        "requester_id": str(member.id)
     }
 
 async def _loadPlaylist(playlist: Dict) -> Optional[List[Track]]:
@@ -608,10 +610,10 @@ methods: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "moveTrack": PlayerMethod(moveTrack),
     "addTracks": PlayerMethod(addTracks, auto_connect=True),
     "getTracks": PlayerMethod(getTracks, auto_connect=True),
-    "shuffleTrack": PlayerMethod(shuffleTrack),
+    "shuffleTrack": PlayerMethod(shuffleTrack, credit=3),
     "repeatTrack": PlayerMethod(repeatTrack),
     "removeTrack": PlayerMethod(removeTrack),
-    "updateVolume": PlayerMethod(updateVolume),
+    "updateVolume": PlayerMethod(updateVolume, credit=2),
     "updatePause": PlayerMethod(updatePause),
     "updatePosition": PlayerMethod(updatePosition),
     "toggleAutoplay": PlayerMethod(toggleAutoplay),

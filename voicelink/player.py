@@ -607,9 +607,10 @@ class Player(VoiceProtocol):
     async def set_volume(self, volume: int, requester: Member = None) -> int:
         """Sets the volume of the player as an integer. Lavalink accepts values from 0 to 500."""
         await self._node.send(method=0, guild_id=self._guild.id, data={"volume": volume})
+        self._volume = volume
+
         if self.is_ipc_connected:
             await self.send_ws({"op": "updateVolume", "volume": volume}, requester)
-        self._volume = volume
 
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been update the volume to {volume}.")
         return self._volume
