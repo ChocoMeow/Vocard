@@ -101,7 +101,7 @@ async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
             "avatar_url": member.display_avatar.url,
             "name": member.name
         } for member in player.channel.members ],
-        "tracks": [ track.track_id for track in player.queue._queue ],
+        "tracks": [ {"track_id": track.track_id, "requester_id": str(track.requester.id)} for track in player.queue._queue ],
         "repeat_mode": player.queue.repeat.lower(),
         "channel_name": player.channel.name,
         "current_queue_position": player.queue._position + (0 if player.is_playing else 1),
