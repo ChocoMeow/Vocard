@@ -1,6 +1,8 @@
 import time
 import function as func
 
+from datetime import timezone
+
 from typing import List, Dict, Union, Optional
 
 from discord import User, Member, VoiceChannel
@@ -84,6 +86,11 @@ async def initUser(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
     data = await func.get_user(user_id)
     
+    for inbox in data.get("inbox", []):
+        dt = inbox["time"]
+        utc_time = dt.replace(tzinfo=timezone.utc)
+        inbox['time'] = utc_time.timestamp()
+
     return {
         "op": "initUser",
         "user_id": str(user_id),
@@ -113,8 +120,12 @@ async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
         "volume": player.volume
     }
 
-async def closeConnection(player: Player, member: Member, data: Dict) -> None:
-    player._ipc_connection = False
+async def closeConnection(bot: commands.Bot, data: Dict) -> None:
+    guild_id = int(data.get("guild_id"))
+    guild = bot.get_guild(guild_id)
+    player: Player = guild.voice_client
+    if player:
+        player._ipc_connection = False
 
 async def getRecommendation(bot: commands.Bot, data: Dict) -> None: 
     node = NodePool.get_node()
@@ -337,7 +348,7 @@ async def _getPlaylist(user_id: int, playlist_id: str) -> Dict:
 
     return playlist
 
-async def getPlaylist(bot: commands.Bot, data: Dict) -> None:
+async def getPlaylist(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
     playlist_id = str(data.get("playlist_id"))
 
@@ -347,7 +358,7 @@ async def getPlaylist(bot: commands.Bot, data: Dict) -> None:
     
     return payload
     
-async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
+async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
     playlist_id = str(data.get("playlist_id"))
     _type = data.get("type")
@@ -511,7 +522,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> None:
             "user_id": str(user_id)
         }
 
-async def getMutualGuilds(bot: commands.Bot, data: Dict) -> None:
+async def getMutualGuilds(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
     user = bot.get_user(user_id)
     if not user:
@@ -529,7 +540,7 @@ async def getMutualGuilds(bot: commands.Bot, data: Dict) -> None:
 
     return payload
 
-async def getSettings(bot: commands.Bot, data: Dict) -> None:
+async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
     guild_id  = int(data.get("guild_id"))
 
@@ -603,7 +614,7 @@ methods: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "getSettings": SystemMethod(getSettings),
     "updateSettings": SystemMethod(updateSettings),
     "getRecommendation": SystemMethod(getRecommendation, credit=5),
-    "closeConnection": PlayerMethod(closeConnection, credit=0),
+    "closeConnection": SystemMethod(closeConnection, credit=0),
     "initPlayer": PlayerMethod(initPlayer),
     "skipTo": PlayerMethod(skipTo),
     "backTo": PlayerMethod(backTo),
