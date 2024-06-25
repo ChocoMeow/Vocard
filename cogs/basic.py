@@ -31,6 +31,7 @@ from function import (
     send,
     time as ctime,
     formatTime,
+    format_time,
     get_source,
     get_user,
     get_lang,
@@ -329,15 +330,12 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             if ctx.author in player.pause_votes:
                 return await send(ctx, "voted", ephemeral=True)
-            else:
-                player.pause_votes.add(ctx.author)
-                if len(player.pause_votes) >= (required := player.required()):
-                    pass
-                else:
-                    return await send(ctx, "pauseVote", ctx.author, len(player.pause_votes), required)
+            
+            player.pause_votes.add(ctx.author)
+            if len(player.pause_votes) < (required := player.required()):
+                return await send(ctx, "pauseVote", ctx.author, len(player.pause_votes), required)
 
         await player.set_pause(True, ctx.author)
-        player.pause_votes.clear()
         await send(ctx, "paused", ctx.author)
 
     @commands.hybrid_command(name="resume", aliases=get_aliases("resume"))
@@ -354,15 +352,12 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             if ctx.author in player.resume_votes:
                 return await send(ctx, "voted", ephemeral=True)
-            else:
-                player.resume_votes.add(ctx.author)
-                if len(player.resume_votes) >= (required := player.required()):
-                    pass
-                else:
-                    return await send(ctx, "resumeVote", ctx.author, len(player.resume_votes), required)
+            
+            player.resume_votes.add(ctx.author)
+            if len(player.resume_votes) < (required := player.required()):
+                return await send(ctx, "resumeVote", ctx.author, len(player.resume_votes), required)
 
         await player.set_pause(False, ctx.author)
-        player.resume_votes.clear()
         await send(ctx, "resumed", ctx.author)
 
     @commands.hybrid_command(name="skip", aliases=get_aliases("skip"))
@@ -374,6 +369,9 @@ class Basic(commands.Cog):
         if not player:
             return await send(ctx, "noPlayer", ephemeral=True)
 
+        if not player.node._available:
+            return await send(ctx, "nodeReconnect")
+        
         if not player.is_playing:
             return await send(ctx, "skipError", ephemeral=True)
 
@@ -384,19 +382,13 @@ class Basic(commands.Cog):
                 return await send(ctx, "voted", ephemeral=True)
             else:
                 player.skip_votes.add(ctx.author)
-                if len(player.skip_votes) >= (required := player.required()):
-                    pass
-                else:
+                if len(player.skip_votes) < (required := player.required()):
                     return await send(ctx, "skipVote", ctx.author, len(player.skip_votes), required)
-
-        if not player.node._available:
-            return await send(ctx, "nodeReconnect")
 
         if index:
             player.queue.skipto(index)
 
         await send(ctx, "skipped", ctx.author)
-
         if player.queue._repeat.mode == voicelink.LoopType.track:
             await player.set_repeat(voicelink.LoopType.off.name)
             
@@ -411,18 +403,16 @@ class Basic(commands.Cog):
         if not player:
             return await send(ctx, "noPlayer", ephemeral=True)
 
+        if not player.node._available:
+            return await send(ctx, "nnodeReconnectode")
+        
         if not player.is_privileged(ctx.author):
             if ctx.author in player.previous_votes:
                 return await send(ctx, "voted", ephemeral=True)
-            else:
-                player.previous_votes.add(ctx.author)
-                if len(player.previous_votes) >= (required := player.required()):
-                    pass
-                else:
-                    return await send(ctx, "backVote", ctx.author, len(player.previous_votes), required)
-
-        if not player.node._available:
-            return await send(ctx, "nnodeReconnectode")
+            
+            player.previous_votes.add(ctx.author)
+            if len(player.previous_votes) < (required := player.required()):
+                return await send(ctx, "backVote", ctx.author, len(player.previous_votes), required)
 
         if not player.is_playing:
             player.queue.backto(index)
@@ -432,7 +422,6 @@ class Basic(commands.Cog):
             await player.stop()
 
         await send(ctx, "backed", ctx.author)
-
         if player.queue._repeat.mode == voicelink.LoopType.track:
             await player.set_repeat(voicelink.LoopType.off.name)
 
@@ -451,8 +440,7 @@ class Basic(commands.Cog):
         if not player.current or player.position == 0:
             return await send(ctx, "noTrackPlaying", ephemeral=True)
 
-        num = formatTime(position)
-        if num is None:
+        if not (num := format_time(position)):
             return await send(ctx, "timeFormatError", ephemeral=True)
 
         await player.seek(num, ctx.author)
@@ -679,9 +667,8 @@ class Basic(commands.Cog):
 
         if not player.current:
             return await send(ctx, "noTrackPlaying", ephemeral=True)
-        
-        num = formatTime(position)
-        if num is None:
+
+        if not (num := format_time(position)):
             return await send(ctx, "timeFormatError", ephemeral=True)
 
         await player.seek(int(player.position + num))
@@ -702,8 +689,7 @@ class Basic(commands.Cog):
         if not player.current:
             return await send(ctx, "noTrackPlaying", ephemeral=True)
         
-        num = formatTime(position)
-        if num is None:
+        if not (num := format_time(position)):
             return await send(ctx, "timeFormatError", ephemeral=True)
 
         await player.seek(int(player.position - num))
@@ -737,12 +723,10 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             if ctx.author in player.shuffle_votes:
                 return await send(ctx, "voted", ephemeral=True)
-            else:
-                player.shuffle_votes.add(ctx.author)
-                if len(player.shuffle_votes) >= (required := player.required()):
-                    pass
-                else:
-                    return await send(ctx, "shuffleVote", ctx.author, len(player.shuffle_votes), required)
+            
+            player.shuffle_votes.add(ctx.author)
+            if len(player.shuffle_votes) < (required := player.required()):
+                return await send(ctx, "shuffleVote", ctx.author, len(player.shuffle_votes), required)
         
         await player.shuffle("queue", ctx.author)
         await send(ctx, "shuffled")

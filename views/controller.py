@@ -109,7 +109,6 @@ class Resume(ControlButton):
                 if len(votes) < (required := self.player.required()):
                     return await self.send(interaction, f"{vote_type}Vote", interaction.user, len(votes), required)
 
-        votes.clear()
         self.emoji = emoji
         if not self.disable_button_text:
             self.label = await func.get_lang(interaction.guild.id, button)
@@ -391,7 +390,7 @@ class Tracks(discord.ui.Select):
         if self.player.settings.get("controller_msg", True):
             await func.send(interaction, "skipped", interaction.user)
 
-btnType = {
+BUTTONTYPE: Dict[str, ControlButton] = {
     "back": Back,
     "resume": Resume,
     "skip": Skip,
@@ -408,7 +407,7 @@ btnType = {
     "rewind": Rewind
 }
 
-btnColor = {
+BUTTONCOLOR: Dict[str, discord.ButtonStyle] = {
     "blue": discord.ButtonStyle.primary,
     "grey": discord.ButtonStyle.secondary,
     "red": discord.ButtonStyle.danger,
@@ -426,8 +425,8 @@ class InteractiveController(discord.ui.View):
                 if isinstance(btn, Dict):
                     color = list(btn.values())[0]
                     btn = list(btn.keys())[0]
-                btnClass = btnType.get(btn.lower())
-                style = btnColor.get(color.lower(), btnColor["grey"])
+                btnClass = BUTTONTYPE.get(btn.lower())
+                style = BUTTONCOLOR.get(color.lower(), BUTTONCOLOR["grey"])
                 if not btnClass or (self.player.queue.is_empty and btn == "tracks"):
                     continue
                 self.add_item(btnClass(player=player, style=style, row=row))

@@ -83,11 +83,11 @@ def time(millis:int) -> str:
     minutes=(millis/(1000*60))%60
     hours=(millis/(1000*60*60))%24
     if hours > 1:
-        return "%02d:%02d:%02d" % (hours, minutes, seconds)
+        return "%d:%02d:%02d" % (hours, minutes, seconds)
     else:
         return "%02d:%02d" % (minutes, seconds)
 
-def formatTime(number:str) -> Optional[int]:
+def format_time(number:str) -> int:
     try:
         try:
             num = strptime(number, '%M:%S')
@@ -97,7 +97,7 @@ def formatTime(number:str) -> Optional[int]:
             except ValueError:
                 num = strptime(number, '%H:%M:%S')
     except:
-        return None
+        return 0
     
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 

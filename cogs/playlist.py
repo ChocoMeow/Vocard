@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, voicelink
+import discord, voicelink, time
 
 from io import StringIO
 from discord import app_commands
@@ -39,7 +39,6 @@ from function import (
     logger
 )
 
-from datetime import datetime
 from views import PlaylistView, InboxView, HelpView
 
 def assign_playlist_id(existed: list) -> str:
@@ -298,7 +297,7 @@ class Playlists(commands.Cog, name="playlist"):
             {"$push": {"inbox": {
                 'sender': ctx.author.id, 
                 'referId': result['id'],
-                'time': datetime.now(),
+                'time': time.time(),
                 'title': f'Playlist invitation from {ctx.author}',
                 'description': f"You are invited to use this playlist.\nPlaylist Name: {result['playlist']['name']}\nPlaylist type: {result['playlist']['type']}",
                 'type': 'invite'
@@ -357,7 +356,8 @@ class Playlists(commands.Cog, name="playlist"):
             await update_user(data['sender'], {"$push": {f"playlist.{data['referId']}.perms.read": ctx.author.id}})
             update_data[f'playlist.{addId}'] = {
                 'user': data['sender'], 'referId': data['referId'],
-                'name': f"Share{data['time'].strftime('%M%S')}", 'type': 'share'
+                'name': f"Share{time.strftime('%M%S', time.gmtime(int(data['time'])))}",
+                'type': 'share'
             }
             update_data["inbox"] = view.inbox
             dId.add(addId)

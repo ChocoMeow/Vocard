@@ -85,11 +85,6 @@ async def initBot(bot: commands.Bot, data: Dict) -> Dict:
 async def initUser(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
     data = await func.get_user(user_id)
-    
-    for inbox in data.get("inbox", []):
-        dt = inbox["time"]
-        utc_time = dt.replace(tzinfo=timezone.utc)
-        inbox['time'] = utc_time.timestamp()
 
     return {
         "op": "initUser",
@@ -150,11 +145,10 @@ async def skipTo(player: Player, member: Member, data: Dict) -> None:
 
         elif member in player.skip_votes:
             return error_msg(player.get_msg('voted'), user_id=member.id)
+        
         else:
             player.skip_votes.add(member)
-            if len(player.skip_votes) >= (required := player.required()):
-                pass
-            else:
+            if len(player.skip_votes) < (required := player.required()):
                 return error_msg(player.get_msg('skipVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
 
     index = data.get("index", 1)
@@ -172,11 +166,10 @@ async def backTo(player: Player, member: Member, data: Dict) -> None:
 
         elif member in player.skip_votes:
             return error_msg(player.get_msg('voted'), user_id=member.id)
+        
         else:
             player.skip_votes.add(member)
-            if len(player.skip_votes) >= (required := player.required()):
-                pass
-            else:
+            if len(player.skip_votes) < (required := player.required()):
                 return error_msg(player.get_msg('backVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
     
     index = data.get("index", 1)
@@ -220,32 +213,26 @@ async def addTracks(player: Player, member: Member, data: Dict) -> None:
     if not player.is_playing:
         await player.do_next()
 
-async def getTracks(player: Player, member: Member, data: Dict) -> Dict:
+async def getTracks(bot: commands.Bot, data: Dict) -> Dict:
     query = data.get("query", None)
 
     if query:
-        payload = {"op": "getTracks", "user_id": str(member.id)}
-        tracks = await player.get_tracks(query, requester=member)
+        payload = {"op": "getTracks", "user_id": data.get("user_id"), "callback": data.get("callback")}
+        tracks = await NodePool.get_node().get_tracks(query=query, requester=None)
         if not tracks:
             return payload
-        
-        if isinstance(tracks, Playlist):
-            tracks = [ track for track in tracks.tracks[:50] ]
 
-        payload["tracks"] = [ track.track_id for track in tracks ]
+        payload["tracks"] = [ track.track_id for track in (tracks.tracks if isinstance(tracks, Playlist) else tracks ) ]
         return payload
     
 async def shuffleTrack(player: Player, member: Member, data: Dict) -> None:
     if not player.is_privileged(member):
-
         if member in player.shuffle_votes:
             return error_msg(player.get_msg('voted'), user_id=member.id) 
-        else:
-            player.shuffle_votes.add(member)
-            if len(player.shuffle_votes) >= (required := player.required()):
-                pass
-            else:
-                return error_msg(player.get_msg('shuffleVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
+
+        player.shuffle_votes.add(member)
+        if len(player.shuffle_votes) < (required := player.required()):
+            return error_msg(player.get_msg('shuffleVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
     
     await player.shuffle(data.get("type", "queue"), member)
 
@@ -276,23 +263,19 @@ async def updatePause(player: Player, member: Member, data: Dict) -> None:
         if pause:
             if member in player.pause_votes:
                 return error_msg(player.get_msg('voted'), user_id=member.id)
-            else:
-                player.pause_votes.add(member)
-                if len(player.pause_votes) >= (required := player.required()):
-                    pass
-                else:
-                    return error_msg(player.get_msg('pauseVote').format(member, len(player.pause_votes), required), guild_id=player.guild.id)
+
+            player.pause_votes.add(member)
+            if len(player.pause_votes) < (required := player.required()):
+                return error_msg(player.get_msg('pauseVote').format(member, len(player.pause_votes), required), guild_id=player.guild.id)
+
         else:
             if member in player.resume_votes:
                 return error_msg(player.get_msg('voted'), user_id=member.id)
-            else:
-                player.resume_votes.add(member)
-                if len(player.resume_votes) >= (required := player.required()):
-                    pass
-                else:
-                    return error_msg(player.get_msg('resumeVote').format(member, len(player.resume_votes), required), guild_id=player.guild.id)
+            
+            player.resume_votes.add(member)
+            if len(player.resume_votes) < (required := player.required()):
+                return error_msg(player.get_msg('resumeVote').format(member, len(player.resume_votes), required), guild_id=player.guild.id)
 
-    player.pause_votes.clear() if pause else player.resume_votes.clear()
     await player.set_pause(pause, member)
 
 async def updatePosition(player: Player, member: Member, data: Dict) -> None:
@@ -641,7 +624,7 @@ async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
         RATELIMIT_COUNTER[user_id] = {"time": time.time(), "count": 0}
     
     else:
-        if RATELIMIT_COUNTER[user_id]["count"] >= 200:
+        if RATELIMIT_COUNTER[user_id]["count"] >= 100:
             return await ipc_client.send({"op": "rateLimited", "user_id": str(user_id)})
         RATELIMIT_COUNTER[user_id]["count"] += method.credit
 
