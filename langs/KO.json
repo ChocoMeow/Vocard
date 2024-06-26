@@ -187,5 +187,8 @@
     "voicelinkOutofList": "유효한 트랙 인덱스를 제공해주세요!",
     "voicelinkDuplicateTrack": "죄송합니다. 이 트랙은 이미 큐에 있습니다.",
 
-    "deocdeError": "파일 디코딩 중 문제가 발생했습니다!"
+    "deocdeError": "파일 디코딩 중 문제가 발생했습니다!",
+    "invalidStartTime": "효력 없는 시작 시간! 시간은 `00:00` 과 `{0}` 사이에 설정해야 합니다.",
+    "invalidEndTime": "효력 없는 종료 시간! 시간은 `00:00` 과 `{0}` 사이에 설정해야 합니다.",
+    "invalidTimeOrder": "종료 시간은 시작 시간보다 클수 있어야 합니다."
 }

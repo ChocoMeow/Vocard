@@ -496,7 +496,7 @@ class Player(VoiceProtocol):
         
         self._node._players.pop(self.guild.id)
         await self.send(method=RequestMethod.delete)
-        
+    
     async def play(
         self,
         track: Track,
@@ -511,41 +511,58 @@ class Player(VoiceProtocol):
 
         if track.spotify:
             if not track.original:
-                search: Track = (await self._node.get_tracks(
-                    f"ytsearch:{track.author} - {track.title}",
-                    requester=track.requester
-                ))
- 
-                if not search:
-                    raise TrackLoadError("Can't not found a playable source!")
+                search_results = await self._node.get_tracks(f"ytmsearch:{track.author} - {track.title}", requester=track.requester)
+                if not search_results:
+                    raise TrackLoadError("Can't find a playable source!")
+                track.original = search_results[0]
 
-                track.original = search[0]
-            
         data = {
             "encodedTrack": track.original.track_id if track.original else track.track_id,
-            "position": str(start if start else track.position),
-            "endTime": str(end if end else track.original.length)
+            "position": str(start if start else track.position)
         }
+
+        if end or track.end_time:
+            data["endTime"] = str(end if end else track.end_time)
+
         await self.send(method=RequestMethod.patch, query=f"noReplace={ignore_if_playing}", data=data)
 
         self._current = track
 
         if self.volume != 100:
             await self.set_volume(self.volume)
-        
+
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) playing {track.title} from uri {track.uri} with a length of {track.length}")
         return self._current
 
-    async def add_track(self, raw_tracks: Union[Track, List[Track]], *, at_font: bool = False, duplicate: bool = True) -> int:
+    def _validate_time(self, track: Track, start_time: int, end_time: int) -> None:
+        if start_time or end_time:
+            if not end_time:
+                end_time = track.length
+
+            if start_time >= end_time:
+                raise VoicelinkException(self.get_msg("invalidStartTime"))
+
+            track_length = track.length
+            if not 0 <= start_time <= track_length:
+                raise VoicelinkException(self.get_msg("invalidStartTime", func.time(track_length)))
+            if not 0 <= end_time <= track_length:
+                raise VoicelinkException(self.get_msg("invalidEndTime", func.time(track_length)))
+
+            track.position = start_time
+            track.end_time = end_time
+
+    async def add_track(self, raw_tracks: Union[Track, List[Track]], *, start_time: int = 0, end_time: int = 0, at_front: bool = False, duplicate: bool = True) -> int:
         tracks: List[Track] = []
         _duplicate_tracks = [] if self.queue._allow_duplicate and duplicate else [track.uri for track in self.queue._queue]
         raw_tracks = raw_tracks[0] if isinstance(raw_tracks, List) and len(raw_tracks) == 1 else raw_tracks
-        
+
         try:
             if (is_list := isinstance(raw_tracks, List)):
                 for track in raw_tracks:
                     if track.uri in _duplicate_tracks:
                         continue
+
+                    self._validate_time(track, start_time, end_time)
                     self.queue.put_at_front(track) if at_front else self.queue.put(track)  
                     tracks.append(track)
                     _duplicate_tracks.append(track.uri)
@@ -553,7 +570,8 @@ class Player(VoiceProtocol):
                 if raw_tracks.uri in _duplicate_tracks:
                     raise DuplicateTrack(self.get_msg("voicelinkDuplicateTrack"))
                 
-                position = self.queue.put_at_front(raw_tracks) if at_font else self.queue.put(raw_tracks)
+                self._validate_time(raw_tracks, start_time, end_time)
+                position = self.queue.put_at_front(raw_tracks) if at_front else self.queue.put(raw_tracks)
                 tracks.append(raw_tracks)
                 
         finally:

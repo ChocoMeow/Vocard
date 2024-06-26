@@ -187,5 +187,8 @@
     "voicelinkOutofList": "Bitte gib einen gültigen Track-Index an!",
     "voicelinkDuplicateTrack": "Entschuldigung, dieser Track ist bereits in der Warteschlange.",
 
-    "deocdeError": "Beim Dekodieren der Datei ist etwas schief gelaufen!"
+    "deocdeError": "Beim Dekodieren der Datei ist etwas schief gelaufen!",
+    "invalidStartTime": "Ungültiger Startzeit! Die Zeit muss innerhalb von `00:00` und `{0}` liegen.",
+    "invalidEndTime": "Ungültiger Endzeit! Die Zeit muss innerhalb von `00:00` und `{0}` liegen.",
+    "invalidTimeOrder": "Der Endzeit darf nicht kleiner oder gleich dem Startzeit sein."
 }

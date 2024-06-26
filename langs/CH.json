@@ -187,5 +187,8 @@
     "voicelinkOutofList": "請提供有效的歌曲索引！",
     "voicelinkDuplicateTrack": "抱歉，此歌曲已在隊列中。",
 
-    "deocdeError": "解碼文件時出現問題！"
+    "deocdeError": "解碼文件時出現問題！",
+    "invalidStartTime": "無效的開始時間! 時間必須在 `00:00` 和 `{0}` 之間。",
+    "invalidEndTime": "無效的結束時間! 時間必須在 `00:00` 和 `{0}` 之間。",
+    "invalidTimeOrder": "結束時間不能小於或等於開始時間。"
 }

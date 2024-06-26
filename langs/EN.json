@@ -187,5 +187,8 @@
     "voicelinkOutofList": "Please provide a valid track index!",
     "voicelinkDuplicateTrack": "Sorry, this track is already in the queue.",
 
-    "deocdeError": "Something went wrong while decoding the file!"
+    "deocdeError": "Something went wrong while decoding the file!",
+    "invalidStartTime": "Invalid start time, it must be between `00:00` and `{0}`",
+    "invalidEndTime": "Invalid end time, it must be between `00:00` and `{0}`",
+    "invalidTimeOrder": "End time cannot be less than or equal to start time"
 }

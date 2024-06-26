@@ -1,4 +1,5 @@
 import time
+import time, re
 import function as func
 
 from datetime import timezone
@@ -8,6 +9,7 @@ from typing import List, Dict, Union, Optional
 from discord import User, Member, VoiceChannel
 from discord.ext import commands
 from voicelink import Player, Track, Playlist, NodePool, decode, LoopType
+from addons import lyricsPlatform
 
 RATELIMIT_COUNTER: Dict[int, Dict[str, float]] = {}
 SCOPES = {
@@ -560,6 +562,21 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
         "user_id": str(user_id)
     }
 
+async def getLyrics(bot: commands.Bot, data: Dict) -> Dict:
+    title, artist, platform = data.get("title", ""), data.get("artist", ""), data.get("platform", "")
+    if not platform or platform not in lyricsPlatform:
+        platform = func.settings.lyrics_platform
+    
+    song: dict[str, str] = await lyricsPlatform.get(platform)().get_lyrics(title, artist)
+    payload = {
+        "op": "getLyrics",
+        "user_id": data.get("user_id"),
+        "lyrics": {_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()} if song else {},
+        "callback": data.get("callback")
+    }
+
+    return payload        
+
 async def updateSettings(bot: commands.Bot, data: Dict) -> None:
     user_id = int(data.get("user_id"))
     guild_id  = int(data.get("guild_id"))
@@ -588,22 +605,23 @@ async def updateSettings(bot: commands.Bot, data: Dict) -> None:
 
     await func.update_settings(guild.id, {"$set": data})
 
-methods: Dict[str, Union[SystemMethod, PlayerMethod]] = {
+METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "initBot": SystemMethod(initBot, credit=0),
     "initUser": SystemMethod(initUser, credit=0),
     "getPlaylist": SystemMethod(getPlaylist),
     "updatePlaylist": SystemMethod(updatePlaylist),
     "getMutualGuilds": SystemMethod(getMutualGuilds),
     "getSettings": SystemMethod(getSettings),
+    "getLyrics": SystemMethod(getLyrics),
     "updateSettings": SystemMethod(updateSettings),
     "getRecommendation": SystemMethod(getRecommendation, credit=5),
     "closeConnection": SystemMethod(closeConnection, credit=0),
+    "getTracks": SystemMethod(getTracks, credit=5),
     "initPlayer": PlayerMethod(initPlayer),
     "skipTo": PlayerMethod(skipTo),
     "backTo": PlayerMethod(backTo),
     "moveTrack": PlayerMethod(moveTrack),
     "addTracks": PlayerMethod(addTracks, auto_connect=True),
-    "getTracks": PlayerMethod(getTracks, auto_connect=True),
     "shuffleTrack": PlayerMethod(shuffleTrack, credit=3),
     "repeatTrack": PlayerMethod(repeatTrack),
     "removeTrack": PlayerMethod(removeTrack),
@@ -615,7 +633,7 @@ methods: Dict[str, Union[SystemMethod, PlayerMethod]] = {
 
 async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
     op: str = data.get("op", "")
-    method = methods.get(op)
+    method = METHODS.get(op)
     if not method or not (user_id := data.get("user_id")):
         return
 

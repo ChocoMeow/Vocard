@@ -62,7 +62,8 @@ class Track:
         "requester",
         "is_stream",
         "is_seekable",
-        "position"
+        "position",
+        "end_time"
     )
 
     def __init__(
@@ -101,6 +102,8 @@ class Track:
         self.is_stream: bool = info.get("isStream", False)
         self.is_seekable: bool = info.get("isSeekable", True)
         self.position: int = info.get("position", 0)
+
+        self.end_time: Optional[int] = None
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Track):

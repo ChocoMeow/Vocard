@@ -30,7 +30,6 @@ from function import (
     settings,
     send,
     time as ctime,
-    formatTime,
     format_time,
     get_source,
     get_user,
@@ -122,10 +121,14 @@ class Basic(commands.Cog):
         await send(ctx, 'connect', player.channel)
                 
     @commands.hybrid_command(name="play", aliases=get_aliases("play"))
-    @app_commands.describe(query="Input a query or a searchable link.")
+    @app_commands.describe(
+        query="Input a query or a searchable link.",
+        start="Specify a time you would like to start, e.g. 1:00",
+        end="Specify a time you would like to end, e.g. 4:00"
+    )
     @app_commands.autocomplete(query=play_autocomplete)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def play(self, ctx: commands.Context, *, query: str) -> None:
+    async def play(self, ctx: commands.Context, *, query: str, start: str = "0", end: str = "0") -> None:
         "Loads your input and added it to the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
@@ -140,10 +143,10 @@ class Basic(commands.Cog):
 
         try:
             if isinstance(tracks, voicelink.Playlist):
-                index = await player.add_track(tracks.tracks)
+                index = await player.add_track(tracks.tracks, start_time=format_time(start), end_time=format_time(end))
                 await send(ctx, "playlistLoad", tracks.name, index)
             else:
-                position = await player.add_track(tracks[0])
+                position = await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end))
                 texts = await get_lang(ctx.guild.id, "live", "trackLoad_pos", "trackLoad")
                 await ctx.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         except voicelink.QueueFull as e:
@@ -250,10 +253,14 @@ class Basic(commands.Cog):
                 await player.do_next()
 
     @commands.hybrid_command(name="playtop", aliases=get_aliases("playtop"))
-    @app_commands.describe(query="Input a query or a searchable link.")
+    @app_commands.describe(
+        query="Input a query or a searchable link.",
+        start="Specify a time you would like to start, e.g. 1:00",
+        end="Specify a time you would like to end, e.g. 4:00"
+    )
     @app_commands.autocomplete(query=play_autocomplete)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def playtop(self, ctx: commands.Context, *, query: str):
+    async def playtop(self, ctx: commands.Context, *, query: str, start: str = "0", end: str = "0"):
         "Adds a song with the given url or query on the top of the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
@@ -268,10 +275,10 @@ class Basic(commands.Cog):
         
         try:
             if isinstance(tracks, voicelink.Playlist):
-                index = await player.add_track(tracks.tracks, at_font=True)
+                index = await player.add_track(tracks.tracks, start_time=format_time(start), end_time=format_time(end), at_font=True)
                 await send(ctx, "playlistLoad", tracks.name, index)
             else:
-                position = await player.add_track(tracks[0], at_font=True)
+                position = await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end), at_font=True)
                 texts = await get_lang(ctx.guild.id, "live", "trackLoad_pos", "trackLoad")
                 await ctx.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         
@@ -283,9 +290,13 @@ class Basic(commands.Cog):
                 await player.do_next()
 
     @commands.hybrid_command(name="forceplay", aliases=get_aliases("forceplay"))
-    @app_commands.describe(query="Input a query or a searchable link.")
+    @app_commands.describe(
+        query="Input a query or a searchable link.",
+        start="Specify a time you would like to start, e.g. 1:00",
+        end="Specify a time you would like to end, e.g. 4:00"
+    )
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def forceplay(self, ctx: commands.Context, query: str):
+    async def forceplay(self, ctx: commands.Context, *, query: str, start: str = "0", end: str = "0"):
         "Enforce playback using the given URL or query."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
@@ -300,11 +311,11 @@ class Basic(commands.Cog):
         
         try:
             if isinstance(tracks, voicelink.Playlist):
-                index = await player.add_track(tracks.tracks, at_font=True)
+                index = await player.add_track(tracks.tracks, start_time=format_time(start), end_time=format_time(end), at_font=True)
                 await send(ctx, "playlistLoad", tracks.name, index)
             else:
                 texts = await get_lang(ctx.guild.id, "live", "trackLoad")
-                await player.add_track(tracks[0], at_font=True)
+                await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end), at_font=True)
                 await ctx.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length), allowed_mentions=False)
 
         except voicelink.QueueFull as e:
@@ -404,7 +415,7 @@ class Basic(commands.Cog):
             return await send(ctx, "noPlayer", ephemeral=True)
 
         if not player.node._available:
-            return await send(ctx, "nnodeReconnectode")
+            return await send(ctx, "nodeReconnectode")
         
         if not player.is_privileged(ctx.author):
             if ctx.author in player.previous_votes:
