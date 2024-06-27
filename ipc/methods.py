@@ -202,12 +202,12 @@ async def addTracks(player: Player, member: Member, data: Dict) -> None:
         await player.add_track(tracks)
 
     elif _type == "forcePlay":
-        await player.add_track(tracks, at_font=True)
+        await player.add_track(tracks, at_front=True)
         if player.is_playing:
             return await player.stop()
     
     elif _type == "addNext":
-        await player.add_track(tracks, at_font=True)
+        await player.add_track(tracks, at_front=True)
 
     if not player.is_playing:
         await player.do_next()

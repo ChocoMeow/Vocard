@@ -275,10 +275,10 @@ class Basic(commands.Cog):
         
         try:
             if isinstance(tracks, voicelink.Playlist):
-                index = await player.add_track(tracks.tracks, start_time=format_time(start), end_time=format_time(end), at_font=True)
+                index = await player.add_track(tracks.tracks, start_time=format_time(start), end_time=format_time(end), at_front=True)
                 await send(ctx, "playlistLoad", tracks.name, index)
             else:
-                position = await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end), at_font=True)
+                position = await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end), at_front=True)
                 texts = await get_lang(ctx.guild.id, "live", "trackLoad_pos", "trackLoad")
                 await ctx.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         
@@ -311,11 +311,11 @@ class Basic(commands.Cog):
         
         try:
             if isinstance(tracks, voicelink.Playlist):
-                index = await player.add_track(tracks.tracks, start_time=format_time(start), end_time=format_time(end), at_font=True)
+                index = await player.add_track(tracks.tracks, start_time=format_time(start), end_time=format_time(end), at_front=True)
                 await send(ctx, "playlistLoad", tracks.name, index)
             else:
                 texts = await get_lang(ctx.guild.id, "live", "trackLoad")
-                await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end), at_font=True)
+                await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end), at_front=True)
                 await ctx.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length), allowed_mentions=False)
 
         except voicelink.QueueFull as e:
