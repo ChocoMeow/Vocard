@@ -92,7 +92,7 @@ class Basic(commands.Cog):
         return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
     async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
-        if voicelink.pool.URL_REGEX.match(current): return
+        if voicelink.pool.URL_REGEX.match(current): return []
 
         history: dict[str, str] = {}
         for track_id in reversed(await get_user(interaction.user.id, "history")):
