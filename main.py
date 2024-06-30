@@ -74,9 +74,9 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     func.logger.error(f"Something went wrong while loading {module[:-3]} cog.", exc_info=e)
 
+        self.ipc = IPCClient(self, **func.settings.ipc_client)
         if func.settings.ipc_client.get("enable", False):
             try:
-                self.ipc = IPCClient(self, **func.settings.ipc_client)
                 await self.ipc.connect()
             except Exception as e:
                 func.logger.error(f"Cannot connected to dashboard! - Reason: {e}")
