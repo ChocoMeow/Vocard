@@ -14,8 +14,8 @@ class IPCServer:
     def __init__(
         self, 
         bot: commands.Bot,
-        host: str = "127.0.0.1",
-        port: int = 8000,
+        host: str = "0.0.0.0",
+        port: int = 37121,
         sercet_key: Optional[str] = None
     ):
         self.bot = bot
