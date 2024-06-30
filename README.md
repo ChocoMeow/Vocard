@@ -12,24 +12,39 @@ Demo: [Discord Bot Demo](https://discord.com/api/oauth2/authorize?client_id=8903
     <img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Dendel%26type%3Dpatrons&style=for-the-badge" alt="Patreon">
 </a>
 
+# Table Of Contents
+- [Tutorial](#tutorial)
+- [Previews](#previews)
+  - [Discord Bot](#discord-bot)
+  - [Dashboard](#dashboard)
+- [Run the Project](#run-the-project)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Docker installation](#docker-installation)
+- [How to update? (For Windows and Linux)](#how-to-update-for-windows-and-linux)
+
+---
+
+## Previews
+#### Discord Bot
+| | |
+|:-------------------------:|:-------------------------:|
+|<img src="https://user-images.githubusercontent.com/94597336/227766331-dfa7d360-18d7-4014-ac6a-4fca55907d99.png" width="450">    |This bot can be deeply customised.<br> You can change media buttons,<br> player layout, player text and etc.<br><br><br><img src="https://user-images.githubusercontent.com/94597336/227766379-c824512e-a6f7-4ca5-9342-cc8e78d52491.png" width="450">|
+|<img src="https://user-images.githubusercontent.com/94597336/227766408-37d733f7-c849-4cbd-9e17-0cd5800affb3.png" width="450">    |<img src="https://user-images.githubusercontent.com/94597336/227766416-22ae3d91-40d9-44c0-bde1-9d40bd54c3af.png" width="450">|
+
+#### Dashboard
+<img src="https://github.com/ChocoMeow/Vocard/assets/94597336/53f31f9f-57c5-452c-8317-114125ddbf03">
+<img src="https://github.com/ChocoMeow/Vocard/assets/94597336/b2acd87a-e910-4247-8d5a-418f3782f63f">
+
 # Tutorial
 Click on the image below to watch the tutorial on Youtube.
 
 [![Discord Music Bot](https://img.youtube.com/vi/f_Z0RLRZzWw/maxresdefault.jpg)](https://www.youtube.com/watch?v=f_Z0RLRZzWw)
  
-## Screenshot
-### Discord Bot
-<img src="https://user-images.githubusercontent.com/94597336/227766331-dfa7d360-18d7-4014-ac6a-4fca55907d99.png">
-<img src="https://user-images.githubusercontent.com/94597336/227766379-c824512e-a6f7-4ca5-9342-cc8e78d52491.png">
-<img src="https://user-images.githubusercontent.com/94597336/227766408-37d733f7-c849-4cbd-9e17-0cd5800affb3.png">
-<img src="https://user-images.githubusercontent.com/94597336/227766416-22ae3d91-40d9-44c0-bde1-9d40bd54c3af.png">
-
-### Dashboard
-<img src="https://github.com/ChocoMeow/Vocard/assets/94597336/53f31f9f-57c5-452c-8317-114125ddbf03">
-<img src="https://github.com/ChocoMeow/Vocard/assets/94597336/b2acd87a-e910-4247-8d5a-418f3782f63f">
-
-## Run the Projects
-[![Run on Repl.it](https://replit.com/badge/github/ChocoMeow/Vocard)](https://replit.com/new/github/ChocoMeow/Vocard)
+## Run the Project
+[![Run on Repl.it](https://replit.com/badge/github/ChocoMeow/Vocard)](https://replit.com/new/github/ChocoMeow/Vocard)<br>
+[Run in Docker](#docker-installation)
 
 ## Requirements
 * [Python 3.10+](https://www.python.org/downloads/)
@@ -44,6 +59,7 @@ python -m pip install -r requirements.txt          #Install required packages
 ```
 After installing all packages, you must configure the bot before to start! [How To Configure](https://github.com/ChocoMeow/Vocard#configuration)<br />
 Start your bot with `python main.py`
+
 
 ## Configuration
 1. **Rename `.env Example` to `.env` and fill all the values**
@@ -63,6 +79,7 @@ GENIUS_TOKEN = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 MONGODB_URL = mongodb+srv://user:password@clusterURL
 MONGODB_NAME = Vocard
 ```
+### Environments
 | Values | Description |
 | --- | --- |
 | TOKEN | Your Discord bot token [(Discord Portal)](https://discord.com/developers/applications) |
@@ -102,47 +119,7 @@ MONGODB_NAME = Vocard
         "port": 8000,
         "enable": false
     },
-    "sources_settings": {
-        "youtube": {
-            "emoji": "<:youtube:826661982760992778>",
-            "color": "0xFF0000"
-        },
-        "youtube music": {
-            "emoji": "<:youtube:826661982760992778>",
-            "color": "0xFF0000"
-        },
-        "spotify": {
-            "emoji": "<:spotify:826661996615172146>",
-            "color": "0x1DB954"
-        },
-        "soundcloud": {
-            "emoji": "<:soundcloud:852729280027033632>",
-            "color": "0xFF7700"
-        },
-        "twitch": {
-            "emoji": "<:twitch:852729278285086741>",
-            "color": "0x9B4AFF"
-        },
-        "bandcamp": {
-            "emoji": "<:bandcamp:864694003811221526>",
-            "color": "0x6F98A7"
-        },
-        "vimeo": {
-            "emoji": "<:vimeo:864694001919721473>",
-            "color": "0x1ABCEA"
-        },
-        "apple": {
-            "emoji": "<:applemusic:994844332374884413>",
-            "color": "0xE298C4"
-        },
-        "reddit": {
-            "emoji": "<:reddit:996007566863773717>",
-            "color": "0xFF5700"
-        },
-        "tiktok": {
-            "emoji": "<:tiktok:996007689798811698>",
-            "color": "0x74ECE9"
-        }
+    "sources_settings": ...
     },
     "default_controller": {
         "embeds": {
@@ -197,6 +174,23 @@ MONGODB_NAME = Vocard
 * For `cooldowns` you can set a custom cooldown in the command. Example: `"command_name": [The total number of tokens available, The length of the cooldown period in seconds]`
 * For `aliases` you can set custom aliases in the command. Example: `"command_name": [alias1, alias2, ...]`
 * For `default_controller` you can set custom embeds and buttons in controller, [Example Here](https://github.com/ChocoMeow/Vocard/blob/main/PLACEHOLDERS.md#controller-embeds)
+
+
+## Docker installation
+To install Vocard using Docker, follow these steps:
+
+#### Download and Extract Vocard:
+Download the .zip file of Vocard from the [repository](https://github.com/ChocoMeow/Vocard) and extract it on your host machine.
+
+#### Configure Docker:
+Ensure port 37123 is available and allowed by your firewall. Adjust the docker-compose.yml file with the appropriate [environment](#environments) variables.
+
+#### Build Docker:
+Run the following commands in your terminal or use docker-compose.yml with installation wizard (if availible):
+```sh
+docker-compose build
+docker-compose up -d
+```
 
 ## How to update? (For Windows and Linux)
 ***Note: Make sure there are no personal files in the directory! Otherwise it will be deleted.***
