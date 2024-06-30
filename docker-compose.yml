@@ -2,6 +2,8 @@ version: "3.8"
 
 services:
     lavalink:
+    ## If having issues with latest lavalink package try this one instead:
+    ## ghcr.io/lavalink-devs/lavalink@sha256:1ad5dcdef90b6c98aaac948874de0a2d286914847fcc0a1b4a8c593f47cdbb45
         image: ghcr.io/lavalink-devs/lavalink:latest
         container_name: lavalink
         restart: unless-stopped
@@ -14,7 +16,7 @@ services:
             ## Read more: https://docs.docker.com/storage/bind-mounts/ 
             - ./application.yml:/opt/Lavalink/application.yml
         networks:
-            - local
+            - vocardbot
         expose:
             - "2333"
 
@@ -39,6 +41,7 @@ services:
     #     command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
 
     vocard:
+    ## Choco, you should add :latest tag istead of :v2.6.8 to your current build, so you won't have to rewrite docker-compose.yml after each update
         image: ghcr.io/chocomeow/vocard:v2.6.8
         container_name: vocard
         volumes:
@@ -66,8 +69,8 @@ services:
             # mongo:
             #     condition: service_started
         networks:
-            - local
+            - vocardbot
 
 networks:
-    local:
-        name: local
+    vocardbot:
+        name: vocardbot
