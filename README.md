@@ -183,7 +183,7 @@ To install Vocard using Docker, follow these steps:
 Download the .zip file of Vocard from the [repository](https://github.com/ChocoMeow/Vocard) and extract it on your host machine.
 
 #### Configure Docker:
-Ensure port 37123 is available and allowed by your firewall. Adjust the docker-compose.yml file with the appropriate [environment](#environments) variables.
+Adjust the docker-compose.yml file with the appropriate [environment](#environments) variables.
 
 #### Build Docker:
 Run the following commands in your terminal, or use the docker-compose.yml with the installation wizard (if available):
@@ -191,12 +191,38 @@ Run the following commands in your terminal, or use the docker-compose.yml with 
 docker-compose build
 docker-compose up -d
 ```
-#### How to update containers
+#### Dashboard setup (Optional)
+Modify required files before you install the containers.
+
+Or you can add a docker volume ```./:/app``` in docker-compose.yml. <br>The volume ```./:/app``` in Docker basically connects the current directory on your computer (./) to a Vocard root directory named ```/app``` inside the Docker container. It's like a direct link that lets you work on files in your computer's current folder and have those changes affect what's happening inside the container. Changes will take an effect once container is restarted. 
+
+Open Vocard root directory
+
+- Make sure that port 37123 is open and not blocked by your firewall, as it will be used for the dashboard.
+- Open /web/webapp.py and set appropriate ```REDIRECT_URI``` value for your host.
+- In docker-compose.yml uncomment
+```sh
+#expose:
+    #- "37123"
+```
+- In settings.json set "enable" to "true"
+```json
+ "ipc_server": {
+        "host": "0.0.0.0",
+        "port": 37121,
+        "enable": true
+    },
+```
+- Save changes and proceed with regular Docker installation.
+
+
+
+### How to update containers
 To update Vocard or Lavalink containers, simply delete and re-create the containers using the already configured docker-compose.yml.
 
 ## How to update? (For Windows and Linux)
 ***Note: Make sure there are no personal files in the directory! Otherwise it will be deleted.***
-```sh
+
 # Check the current version
 python update.py -c
 
