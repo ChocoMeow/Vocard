@@ -4,8 +4,8 @@ from uuid import uuid4
 class IPCClient:
     def __init__(
         self,
-        host = "127.0.0.1", 
-        port = 8000, 
+        host = "0.0.0.0", 
+        port = 37121, 
         secret_key = None,
         callback = None
     ):
