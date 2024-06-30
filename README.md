@@ -120,7 +120,7 @@ MONGODB_NAME = Vocard
         "enable": false
     },
     "sources_settings": ...
-    },
+    {},
     "default_controller": {
         "embeds": {
             "active": {
