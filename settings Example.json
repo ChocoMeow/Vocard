@@ -100,7 +100,7 @@
         "connect": ["join"],
         "leave": ["stop", "q"],
         "play": ["p"],
-        "view": ["v"]
+        "view": ["v"],
         "skip": ["s"]
     }
 }
