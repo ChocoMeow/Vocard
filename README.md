@@ -186,7 +186,7 @@ Download the .zip file of Vocard from the [repository](https://github.com/ChocoM
 Ensure port 37123 is available and allowed by your firewall. Adjust the docker-compose.yml file with the appropriate [environment](#environments) variables.
 
 #### Build Docker:
-Run the following commands in your terminal or use docker-compose.yml with installation wizard (if availible):
+Run the following commands in your terminal, or use the docker-compose.yml with the installation wizard if available:
 ```sh
 docker-compose build
 docker-compose up -d
