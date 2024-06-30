@@ -49,8 +49,6 @@ services:
             ## Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
             ## Read more: https://docs.docker.com/storage/bind-mounts/ 
             - ./settings.json:/app/settings.json
-#        env_file:
-#            - .env
         environment:
             - TOKEN=XXXXXXXXXXXXXXXXXXXXXXXX.XXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXX
             - CLIENT_ID=123456789012345678
