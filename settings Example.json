@@ -1,11 +1,11 @@
 {
     "nodes": {
         "DEFAULT": {
-            "host": "127.0.0.1",
+            "host": "lavalink",
             "port": 2333,
-            "password": "password",
+            "password": "youshallnotpass",
             "secure": false,
-            "identifier": "DEFAULT"
+            "identifier": "VOCARD"
         }   
     },
     "prefix": "?",
@@ -17,8 +17,8 @@
     "default_max_queue": 1000,
     "lyrics_platform": "A_ZLyrics",
     "ipc_server": {
-        "host": "127.0.0.1",
-        "port": 8000,
+        "host": "0.0.0.0",
+        "port": 37121,
         "enable": false
     },
     "sources_settings": {
