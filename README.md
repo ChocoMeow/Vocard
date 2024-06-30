@@ -186,11 +186,13 @@ Download the .zip file of Vocard from the [repository](https://github.com/ChocoM
 Ensure port 37123 is available and allowed by your firewall. Adjust the docker-compose.yml file with the appropriate [environment](#environments) variables.
 
 #### Build Docker:
-Run the following commands in your terminal, or use the docker-compose.yml with the installation wizard if available:
+Run the following commands in your terminal, or use the docker-compose.yml with the installation wizard (if available):
 ```sh
 docker-compose build
 docker-compose up -d
 ```
+#### How to update containers
+To update Vocard or Lavalink containers, simply delete and re-create the containers using the already configured docker-compose.yml.
 
 ## How to update? (For Windows and Linux)
 ***Note: Make sure there are no personal files in the directory! Otherwise it will be deleted.***
