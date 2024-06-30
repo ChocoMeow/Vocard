@@ -215,23 +215,21 @@ Open Vocard root directory
 ```
 - Save changes and proceed with regular Docker installation.
 
-
-
 ### How to update containers
 To update Vocard or Lavalink containers, simply delete and re-create the containers using the already configured docker-compose.yml.
 
+---
 ## How to update? (For Windows and Linux)
 ***Note: Make sure there are no personal files in the directory! Otherwise it will be deleted.***
 
-# Check the current version
-python update.py -c
+#### Check the current version
+```python update.py -c```
 
-# Install the latest version
-python update.py -l
+#### Install the latest version
+```python update.py -l```
 
-# Install the specified version
-python update.py -v VERSION
+#### Install the specified version
+```python update.py -v VERSION```
 
-# Install the beta version
-python update.py -b
-```
+#### Install the beta version
+```python update.py -b```
