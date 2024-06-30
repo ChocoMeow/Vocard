@@ -68,8 +68,8 @@ services:
             #     condition: service_started
         networks:
             - vocardbot
-        expose:
-            - "37123"
+        #expose:
+            #- "37123"
 
 networks:
     vocardbot:
