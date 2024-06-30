@@ -98,8 +98,9 @@
     },
     "aliases": {
         "connect": ["join"],
-        "leave": ["stop", "bye"],
+        "leave": ["stop", "q"],
         "play": ["p"],
         "view": ["v"]
+        "skip": ["s"]
     }
 }
