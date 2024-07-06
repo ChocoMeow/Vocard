@@ -684,36 +684,58 @@ class Player(VoiceProtocol):
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been update the repeat mode to {mode}.")
         return mode
     
-    async def add_filter(self, filter: Filter, fast_apply=False) -> Filters:
+    async def add_filter(self, filter: Filter, requester: Member = None, fast_apply: bool = False) -> Filters:
         try:
             self._filters.add_filter(filter=filter)
         except FilterTagAlreadyInUse:
             raise FilterTagAlreadyInUse(self.get_msg("FilterTagAlreadyInUse"))
+        
         payload = self._filters.get_all_payloads()
         await self.send(method=RequestMethod.patch, data={"filters": payload})
         if fast_apply:
             await self.seek(self.position)
         
+        if self.is_ipc_connected:
+            await self.send_ws({
+                "op": "updateFilter",
+                "filter": {"tag": filter.tag, "scope": filter.scope, "payload": filter.payload},
+                "type": "add"
+            }, requester)
+
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been applied a {filter.tag} filter.")
         return self._filters
 
-    async def remove_filter(self, filter_tag: str, fast_apply=False) -> Filters:
+    async def remove_filter(self, filter_tag: str, requester: Member = None, fast_apply: bool = False) -> Filters:
         self._filters.remove_filter(filter_tag=filter_tag)
         payload = self._filters.get_all_payloads()
         await self.send(method=RequestMethod.patch, data={"filters": payload})
         if fast_apply:
             await self.seek(self.position)
         
+        if self.is_ipc_connected:
+            await self.send_ws({
+                "op": "updateFilter",
+                "filter": {"tag": filter_tag},
+                "type": "remove"
+            }, requester)
+
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been removed a {filter_tag} filter.")
         return self._filters
     
-    async def reset_filter(self, *, fast_apply=False) -> None:
+    async def reset_filter(self, *, requester: Member = None, fast_apply=False) -> None:
         if not self._filters:
             raise FilterInvalidArgument("You must have filters applied first in order to use this method.")
+        
         self._filters.reset_filters()
         await self.send(method=RequestMethod.patch, data={"filters": {}})
         if fast_apply:
             await self.seek(self.position)
+
+        if self.is_ipc_connected:
+            await self.send_ws({
+                "op": "updateFilter",
+                "type": "reset"
+            }, requester)
 
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been removed all filters.")
 

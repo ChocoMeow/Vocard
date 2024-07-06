@@ -5,7 +5,7 @@ from typing import List, Dict, Union, Optional
 
 from discord import User, Member, VoiceChannel
 from discord.ext import commands
-from voicelink import Player, Track, Playlist, NodePool, decode, LoopType
+from voicelink import Player, Track, Playlist, NodePool, decode, LoopType, Filters
 from addons import lyricsPlatform
 
 RATELIMIT_COUNTER: Dict[int, Dict[str, float]] = {}
@@ -111,7 +111,9 @@ async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
         "is_paused": player.is_paused,
         "is_dj": player.is_privileged(member, check_user_join=False),
         "autoplay": player.settings.get("autoplay", False),
-        "volume": player.volume
+        "volume": player.volume,
+        "filters": [{"tag": filter.tag, "scope": filter.scope, "payload": filter.payload} for filter in player.filters.get_filters()],
+        "available_filters": [{"tag": name, "scope": filter.scope, "payload": filter.payload} for name, filter in Filters.get_available_filters().items()]
     }
 
 async def closeConnection(bot: commands.Bot, data: Dict) -> None:
