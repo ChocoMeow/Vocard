@@ -106,7 +106,7 @@ class Basic(commands.Cog):
         node = voicelink.NodePool.get_node()
         if node and node.spotify_client:
             tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
-            return  history_tracks[:5] + [app_commands.Choice(name=f"🎵 {track.author} - {track.title}", value=f"{track.author} - {track.title}") for track in tracks]
+            return  history_tracks[:5] + [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
 
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
