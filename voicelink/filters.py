@@ -76,15 +76,15 @@ class Filters:
     @classmethod
     def get_available_filters(cls) -> Dict[str, Filter]:
         return {
-            "karaoke": Karaoke(),
-            "tremolo": Tremolo(),
-            "vibrato": Vibrato(),
-            "rotation": Rotation(),
-            "distortion": Distortion(),
-            "lowpass": LowPass(),
-            "nightcore": Timescale.nightcore(),
-            "vaporwave": Timescale.vaporwave(),
-            "8d": Rotation.nightD(),
+            "karaoke": Karaoke,
+            "tremolo": Tremolo,
+            "vibrato": Vibrato,
+            "rotation": Rotation,
+            "distortion": Distortion,
+            "lowpass": LowPass,
+            "nightcore": Timescale.nightcore,
+            "vaporwave": Timescale.vaporwave,
+            "8d": Rotation.nightD,
         }
         
 class Equalizer(Filter):

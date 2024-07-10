@@ -27,7 +27,7 @@ import function as func
 from math import ceil
 from asyncio import sleep
 from views import InteractiveController
-from typing import Any, Dict, Optional, Union, List, Tuple
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 from discord import (
     Client,

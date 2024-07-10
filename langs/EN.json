@@ -32,16 +32,8 @@
     "pingTitle2": "Player Info:",
     "pingfield1": "```Shard ID: {0}/{1}\nShard Latency: {2:.3f}s {3}\nRegion: {4}```",
     "pingfield2": "```Node: {0} - {1:.3f}s\nPlayers: {2}\nVoice Region: {3}```",
-    "karaoke": "You have updated the level to **{0}**, monoLevel to **{1}**, filterBand to **{2}** and filterWidth to **{3}**",
-    "tremolo&vibrato": "You updated the frequency to **{0}** and depth to **{1}**",
-    "rotation": "You have updated the rotationHz to **{0}**",
-    "distortion": "You have enabled distortion.",
-    "lowpass": "You have updated the lowPass to **{0}**",
-    "channelmix": "You have updated the channelMix. Left-to-left: **{0}**, Right-to-right: **{1}**, Left-to-right: **{2}**, Right-to-left: **{3}**",
-    "nightcore": "You have added nightcore sound effects.",
-    "8d": "You have added 8D sound effects.",
-    "vaporwave": "You have added vaporwave sound effects.",
-    "cleareffect": "The sound effects have been cleared!",
+    "addEffect": "Apply the effect `{0}` filter.",
+    "clearEffect": "The sound effects have been cleared!",
     "FilterTagAlreadyInUse": "This sound effects has already in use! Please use /cleareffect <Tag> to remove it.",
 
     "playlistViewTitle": "📜 All {0}'s Playlists",
@@ -105,6 +97,7 @@
     "playlistAdded": "❤️ Added **{0}** into {1}'s playlist [`{2}`]!",
 
     "playerDropdown": "Select a song to skip to ...",
+    "playerFilter": "Select a filter to apply ...",
 
     "buttonBack": "Back",
     "buttonPause": "Pause",
