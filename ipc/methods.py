@@ -93,6 +93,11 @@ async def initUser(bot: commands.Bot, data: Dict) -> Dict:
     
 async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
     player._ipc_connection = True
+    available_filters = []
+    for name, filter_cls in Filters.get_available_filters().items():
+        filter = filter_cls()
+        available_filters.append({"tag": name, "scope": filter.scope, "payload": filter.payload})
+
     return {
         "op": "initPlayer",
         "guild_id": str(player.guild.id),
@@ -113,7 +118,7 @@ async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
         "autoplay": player.settings.get("autoplay", False),
         "volume": player.volume,
         "filters": [{"tag": filter.tag, "scope": filter.scope, "payload": filter.payload} for filter in player.filters.get_filters()],
-        "available_filters": [{"tag": name, "scope": filter.scope, "payload": filter.payload} for name, filter in Filters.get_available_filters().items()]
+        "available_filters": available_filters
     }
 
 async def closeConnection(bot: commands.Bot, data: Dict) -> None:
@@ -135,7 +140,7 @@ async def getRecommendation(bot: commands.Bot, data: Dict) -> None:
     return {
         "op": "getRecommendation",
         "user_id": str(data.get("user_id")),
-        "region": data.get("region"),
+        "callback": data.get("callback"),
         "tracks": [track.track_id for track in tracks] if tracks else []
     }
 
@@ -302,6 +307,29 @@ async def toggleAutoplay(player: Player, member: Member, data: Dict) -> Dict:
         "guild_id": player.guild.id,
         "requester_id": str(member.id)
     }
+
+async def updateFilter(player: Player, member: Member, data: Dict) -> None:
+    updateType = data.get("type", "add")
+    filter_tag = data.get("tag")
+
+    if updateType == "add":
+        available_filters = Filters.get_available_filters()
+        filter_cls = available_filters.get(filter_tag)
+        if not filter_cls:
+            return
+        
+        payload = {}
+        if "payload" in data:
+            payload = data.get("payload").get(list(data.get("payload").keys()[0]), {})
+        if player.filters.has_filter(filter_tag=filter_tag):
+            player.filters.remove_filter(filter_tag=filter_tag)
+        await player.add_filter(filter=filter_cls(**payload), requester=member)
+
+    elif updateType == "remove":
+        await player.remove_filter(filter_tag=filter_tag, requester=member)
+
+    else:
+        await player.reset_filter(requester=member)
 
 async def _loadPlaylist(playlist: Dict) -> Optional[List[Track]]:
     if playlist.get("type") == "link":
@@ -628,6 +656,7 @@ METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "updatePause": PlayerMethod(updatePause),
     "updatePosition": PlayerMethod(updatePosition),
     "toggleAutoplay": PlayerMethod(toggleAutoplay),
+    "updateFilter": PlayerMethod(updateFilter),
 }
 
 async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
