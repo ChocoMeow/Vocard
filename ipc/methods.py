@@ -85,6 +85,16 @@ async def initUser(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
     data = await func.get_user(user_id)
 
+    for mail in data.get("inbox"):
+        sender = bot.get_user(mail.get("sender"))
+        if not sender:
+            sender = await bot.fetch_user(mail.get("sender"))
+
+        if not sender:
+            data.get("inbox").remove(mail)
+
+        mail["sender"] = {"avatar_url": sender.display_avatar.url, "name": sender.display_name, "id": str(sender.id)}
+
     return {
         "op": "initUser",
         "user_id": str(user_id),
@@ -309,6 +319,9 @@ async def toggleAutoplay(player: Player, member: Member, data: Dict) -> Dict:
     }
 
 async def updateFilter(player: Player, member: Member, data: Dict) -> None:
+    if not player.is_privileged(member):
+        return missingPermission(member.id)
+    
     updateType = data.get("type", "add")
     filter_tag = data.get("tag")
 
@@ -418,7 +431,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                     "user_id": str(user_id)
                 }
 
-        assgined_playlist_id = _assign_playlist_id([data for data in playlist])
+        assgined_playlist_id = _assign_playlist_id(list(playlist.keys()))
         data = {'uri': playlist_url, 'perms': {'read': []}, 'name': name, 'type': 'link'} if playlist_url else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
         await func.update_user(user_id, {"$set": {f"playlist.{assgined_playlist_id}": data}})
         return {
@@ -534,6 +547,54 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
             "user_id": str(user_id)
         }
 
+    elif _type == "updateInbox":
+        user = await func.get_user(user_id)
+        is_accpet = data.get("accept", False)
+
+        if is_accpet and len(list(user.get("playlist").keys())) >= max_p:
+            return error_msg(f"You cannot create more than '{max_p}' playlists!", user_id=user_id, level = "error")
+
+        info = data.get("refer_id", "").split("-")
+        sender_id, refer_id = info[0], info[1]
+        inbox = user.get("inbox")
+
+        payload = {"op": "updatePlaylist", "status": "updateInbox", "user_id": str(user_id), "accpet": is_accpet, "sender_id": sender_id, "refer_id": refer_id}
+        for index, mail in enumerate(inbox.copy()):
+            if not (str(mail.get("sender")) == sender_id and mail.get("referId") == refer_id):
+                continue
+            
+            del inbox[index]
+            if is_accpet:
+                share_playlists = await func.get_user(mail["sender"], "playlist")
+                if refer_id not in share_playlists:
+                    return error_msg("The shared playlist couldn’t be found. It’s possible that the user has already deleted it.", user_id=user_id)
+                
+                assgined_playlist_id = _assign_playlist_id(list(user.get("playlist", []).keys()))
+                playlist_name = f"Share{time.strftime('%M%S', time.gmtime(int(mail['time'])))}"
+                share_playlist = share_playlists.get(refer_id)
+                share_playlist.update({
+                    "name": playlist_name,
+                    "type": "share"
+                })
+                await func.update_user(mail['sender'], {"$push": {f"playlist.{mail['referId']}.perms.read": user_id}})
+                await func.update_user(user_id, {"$set": {
+                    f'playlist.{assgined_playlist_id}': {
+                        'user': mail['sender'], 'referId': mail['referId'],
+                        'name': playlist_name,
+                        'type': 'share'
+                    },
+                    "inbox": inbox
+                }})
+
+                payload.update({
+                    "playlist_id": assgined_playlist_id,
+                    "msg": f"You have created '{playlist_name}' playlist.",
+                    "data": share_playlist,
+                })
+
+            await func.update_user(user_id, {"$set": {"inbox": inbox}})
+            return payload
+
 async def getMutualGuilds(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
     user = bot.get_user(user_id)
@@ -602,7 +663,7 @@ async def getLyrics(bot: commands.Bot, data: Dict) -> Dict:
         "callback": data.get("callback")
     }
 
-    return payload        
+    return payload
 
 async def updateSettings(bot: commands.Bot, data: Dict) -> None:
     user_id = int(data.get("user_id"))
@@ -634,9 +695,9 @@ async def updateSettings(bot: commands.Bot, data: Dict) -> None:
 
 METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "initBot": SystemMethod(initBot, credit=0),
-    "initUser": SystemMethod(initUser, credit=0),
+    "initUser": SystemMethod(initUser, credit=2),
     "getPlaylist": SystemMethod(getPlaylist),
-    "updatePlaylist": SystemMethod(updatePlaylist),
+    "updatePlaylist": SystemMethod(updatePlaylist, credit=2),
     "getMutualGuilds": SystemMethod(getMutualGuilds),
     "getSettings": SystemMethod(getSettings),
     "getLyrics": SystemMethod(getLyrics),
