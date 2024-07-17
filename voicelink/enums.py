@@ -59,6 +59,17 @@ class SearchType(Enum):
     def __str__(self) -> str:
         return self.value
 
+class RequestMethod(Enum):
+    """The enum for the different request methods in Voicelink
+    """
+    get = "get"
+    patch = "patch"
+    delete = "delete"
+    post = "post"
+
+    def __str__(self) -> str:
+        return self.value
+    
 class NodeAlgorithm(Enum):
     """The enum for the different node algorithms in Voicelink.
     

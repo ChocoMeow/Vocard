@@ -2,7 +2,7 @@ import discord, json, os, copy, logging
 
 from discord.ext import commands
 from time import strptime
-from addons import Settings, TOKENS
+from addons import Settings
 
 from typing import (
     Optional,
@@ -22,7 +22,6 @@ if not os.path.exists(os.path.join(ROOT_DIR, "settings.json")):
     raise Exception("Settings file not set!")
 
 #--------------- Cache Var ---------------
-tokens: TOKENS = TOKENS()
 settings: Settings
 logger: logging.Logger = logging.getLogger("vocard")
 
@@ -84,11 +83,11 @@ def time(millis:int) -> str:
     minutes=(millis/(1000*60))%60
     hours=(millis/(1000*60*60))%24
     if hours > 1:
-        return "%02d:%02d:%02d" % (hours, minutes, seconds)
+        return "%d:%02d:%02d" % (hours, minutes, seconds)
     else:
         return "%02d:%02d" % (minutes, seconds)
 
-def formatTime(number:str) -> Optional[int]:
+def format_time(number:str) -> int:
     try:
         try:
             num = strptime(number, '%M:%S')
@@ -98,7 +97,7 @@ def formatTime(number:str) -> Optional[int]:
             except ValueError:
                 num = strptime(number, '%H:%M:%S')
     except:
-        return None
+        return 0
     
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 

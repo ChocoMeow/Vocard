@@ -28,9 +28,6 @@ Click on the image below to watch the tutorial on Youtube.
 <img src="https://github.com/ChocoMeow/Vocard/assets/94597336/53f31f9f-57c5-452c-8317-114125ddbf03">
 <img src="https://github.com/ChocoMeow/Vocard/assets/94597336/b2acd87a-e910-4247-8d5a-418f3782f63f">
 
-## Run the Projects
-[![Run on Repl.it](https://replit.com/badge/github/ChocoMeow/Vocard)](https://replit.com/new/github/ChocoMeow/Vocard)
-
 ## Requirements
 * [Python 3.10+](https://www.python.org/downloads/)
 * [Lavalink Server (Requires 4.0.0+)](https://github.com/freyacodes/Lavalink)
@@ -45,9 +42,7 @@ After installing all packages, you must configure the bot before to start! [How 
 Start your bot with `python main.py`
 
 ## Configuration
-
-1. Rename `.env Example` to `.env` and [fill all the values](https://docs.vocard.xyz/configuration/#settings-up-env).
-2. Rename `settings Example.json` to `settings.json` and [customize your settings](https://docs.vocard.xyz/configuration/#settings-up-settingsjson).
+1. Rename `settings Example.json` to `settings.json` and [customize your settings](https://docs.vocard.xyz/configuration/#settings-up-settingsjson).
 3. Now, you can start your bot with `python main.py`.
 
 ## How to update? (For Windows and Linux)

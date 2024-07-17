@@ -13,8 +13,8 @@ class Track:
 
     def __init__(self, data: dict, image = None) -> None:
         self.name: str = data.get('name', 'Unknown')
-        self.artists: str = ", ".join(artist["name"] for artist in data.get('artists'))
-        self.artist_id: list[str] = [artist['id'] for artist in data.get('artists')]
+        self.artists: str = ", ".join(filter(None, (artist["name"] for artist in data.get('artists'))))
+        self.artist_id: list[str] = [artist["id"] for artist in data.get('artists')]
         self.length: int = data.get('duration_ms')
         self.id: str = data.get('id')
         self.image: str = images[0]["url"] if (images := data.get("album", {}).get("images")) else image
@@ -55,7 +55,7 @@ class Album:
 
     def __init__(self, data: dict) -> None:
         self.name: str = data.get('name', 'Unknown')
-        self.artists: str = ", ".join(artist["name"] for artist in data.get('artists'))
+        self.artists: str = ", ".join(filter(None, (artist["name"] for artist in data.get('artists'))))
         self.image: str = data["images"][0]["url"]
         self.tracks: list[Track] = [Track(track, image=self.image) for track in data["tracks"]["items"]]
         self.total_tracks: int = data["total_tracks"]
@@ -123,3 +123,13 @@ class Playlist:
             f"<Voicelink.spotify.Playlist name={self.name} owner={self.owner} id={self.id} "
             f"total_tracks={self.total_tracks} tracks={self.tracks}>"
         )
+
+class Category:
+    def __init__(self, data: dict) -> None:
+        self.href: str = data.get("href")
+        self.id: str = data.get("id")
+        self.name: str = data.get("name")
+        self.icon: str = data.get("icon", [])[0].get("url")
+    
+    def __repr__(self) -> str:
+        return (f"<Voicelink.spotify.Category name={self.name} id={self.id}")

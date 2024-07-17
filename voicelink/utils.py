@@ -27,9 +27,15 @@ import socket
 from timeit import default_timer as timer
 from itertools import zip_longest
 
+from typing import Dict, Optional
+
 __all__ = [
     "ExponentialBackoff",
-    "NodeStats"
+    "NodeStats",
+    "NodeInfoVersion",
+    "NodeInfo",
+    "Plugin",
+    "Ping"
 ]
 
 class ExponentialBackoff:
@@ -85,26 +91,56 @@ class NodeStats:
        Gives critical information on the node, which is updated every minute.
     """
 
-    def __init__(self, data: dict) -> None:
+    def __init__(self, data: Dict) -> None:
 
-        memory: dict = data.get("memory")
-        self.used = memory.get("used")
-        self.free = memory.get("free")
-        self.reservable = memory.get("reservable")
-        self.allocated = memory.get("allocated")
+        memory: Dict = data.get("memory")
+        self.used: int = memory.get("used")
+        self.free: int = memory.get("free")
+        self.reservable: int = memory.get("reservable")
+        self.allocated: int = memory.get("allocated")
 
-        cpu: dict = data.get("cpu")
-        self.cpu_cores = cpu.get("cores")
-        self.cpu_system_load = cpu.get("systemLoad")
-        self.cpu_process_load = cpu.get("lavalinkLoad")
+        cpu: Dict = data.get("cpu")
+        self.cpu_cores: int = cpu.get("cores")
+        self.cpu_system_load: float = cpu.get("systemLoad")
+        self.cpu_process_load: float = cpu.get("lavalinkLoad")
 
-        self.players_active = data.get("playingPlayers")
-        self.players_total = data.get("players")
-        self.uptime = data.get("uptime")
+        self.players_active: int = data.get("playingPlayers")
+        self.players_total: int = data.get("players")
+        self.uptime: int = data.get("uptime")
 
     def __repr__(self) -> str:
         return f"<Voicelink.NodeStats total_players={self.players_total!r} playing_active={self.players_active!r}>"
 
+class NodeInfoVersion:
+    """The base class for the node info object.
+       Gives version information on the node.
+    """
+    def __init__(self, data: Dict) -> None:
+        self.semver: str = data.get("semver")
+        self.major: int = data.get("major")
+        self.minor: int = data.get("minor")
+        self.patch: int = data.get("patch")
+        self.pre_release: Optional[str] = data.get("preRelease")
+        self.build: Optional[str] = data.get("build")
+
+class NodeInfo:
+    """The base class for the node info object.
+       Gives basic information on the node.
+    """
+    def __init__(self, data: Dict) -> None:
+        self.version: NodeInfoVersion = NodeInfoVersion(data.get("version"))
+        self.build_time: int = data.get("buildTime")
+        self.jvm: str = data.get("jvm")
+        self.lavaplayer: str = data.get("lavaplayer")
+        self.plugins: Optional[Dict[str, Plugin]] = [Plugin(plugin_data) for plugin_data in data.get("plugins")]
+
+class Plugin:
+    """The base class for the plugin object.
+       Gives basic information on the plugin.
+    """
+    def __init__(self, data: Dict) -> None:
+        self.name: str = data.get("name")
+        self.version: str = data.get("version")
 
 class Ping:
     # Thanks to https://github.com/zhengxiaowai/tcping for the nice ping impl

@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
+import discord, time
 import function as func
 
 from typing import Any
@@ -63,7 +63,7 @@ class InboxView(discord.ui.View):
         )
 
         if self.current:
-            embed.add_field(name="Message Info:", value=f"```{self.current['description']}\nSender ID: {self.current['sender']}\nPlaylist ID: {self.current['referId']}\nInvite Time: {self.current['time'].strftime('%d-%m %H:%M:%S')}```")
+            embed.add_field(name="Message Info:", value=f"```{self.current['description']}\nSender ID: {self.current['sender']}\nPlaylist ID: {self.current['referId']}\nInvite Time: {time.strftime('%d-%m %H:%M:%S', time.gmtime(int(self.current['time'])))}```")
         return embed
     
     async def button_change(self, interaction: discord.Interaction):

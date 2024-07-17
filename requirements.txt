@@ -1,12 +1,8 @@
-discord.py==2.3.2
+discord.py==2.4.0
 motor==3.3.2
 dnspython==2.2.1
 tldextract==3.2.1
 validators==0.18.2
 humanize==4.0.0
-python-dotenv==0.20.0
 beautifulsoup4==4.11.1
-websockets==10.4
-Flask==2.2.3
-Flask-SocketIO==5.3.2
 psutil==5.9.8

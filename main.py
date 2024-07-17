@@ -7,7 +7,7 @@ import logging
 import function as func
 
 from discord.ext import commands
-from web import IPCServer
+from ipc import IPCClient
 from motor.motor_asyncio import AsyncIOMotorClient
 from logging.handlers import TimedRotatingFileHandler
 from voicelink import VoicelinkException
@@ -29,12 +29,7 @@ class Vocard(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ipc = IPCServer(
-            self,
-            host=func.settings.ipc_server["host"],
-            port=func.settings.ipc_server["port"],
-            sercet_key=func.tokens.sercet_key
-        )
+        self.ipc: IPCClient
 
     async def on_message(self, message: discord.Message, /) -> None:
         if message.author.bot or not message.guild:
@@ -49,7 +44,7 @@ class Vocard(commands.Bot):
         await self.process_commands(message)
 
     async def connect_db(self) -> None:
-        if not ((db_name := func.tokens.mongodb_name) and (db_url := func.tokens.mongodb_url)):
+        if not ((db_name := func.settings.mongodb_name) and (db_url := func.settings.mongodb_url)):
             raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in settings.json")
 
         try:
@@ -79,8 +74,12 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     func.logger.error(f"Something went wrong while loading {module[:-3]} cog.", exc_info=e)
 
-        if func.settings.ipc_server.get("enable", False):
-            await self.ipc.start()
+        self.ipc = IPCClient(self, **func.settings.ipc_client)
+        if func.settings.ipc_client.get("enable", False):
+            try:
+                await self.ipc.connect()
+            except Exception as e:
+                func.logger.error(f"Cannot connected to dashboard! - Reason: {e}")
 
         if not func.settings.version or func.settings.version != update.__version__:
             func.update_json("settings.json", new_data={"version": update.__version__})
@@ -97,7 +96,7 @@ class Vocard(commands.Bot):
         func.logger.info(f"Python Version: {sys.version}")
         func.logger.info("------------------")
 
-        func.tokens.client_id = self.user.id
+        func.settings.client_id = self.user.id
         func.LOCAL_LANGS.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
@@ -138,8 +137,8 @@ class CommandCheck(discord.app_commands.CommandTree):
             await interaction.response.send_message("This command can only be used in guilds!")
             return False
 
-        return await super().interaction_check(interaction)
-    
+        return True
+
 async def get_prefix(bot, message: discord.Message):
     settings = await func.get_settings(message.guild.id)
     return settings.get("prefix", func.settings.bot_prefix)
@@ -166,19 +165,14 @@ if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
 # Setup the bot object
 intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
-intents.members = func.settings.ipc_server.get("enable", False)
+intents.members = func.settings.ipc_client.get("enable", False)
 intents.voice_states = True
-member_cache = discord.MemberCacheFlags(
-    voice=True,
-    joined=False
-)
 
 bot = Vocard(
     command_prefix=get_prefix,
     help_command=None,
     tree_cls=CommandCheck,
     chunk_guilds_at_startup=False,
-    member_cache_flags=member_cache,
     activity=discord.Activity(type=discord.ActivityType.listening, name="Starting..."),
     case_insensitive=True,
     intents=intents
@@ -186,4 +180,4 @@ bot = Vocard(
 
 if __name__ == "__main__":
     update.check_version(with_msg=True)
-    bot.run(func.tokens.token, root_logger=True)
+    bot.run(func.settings.token, root_logger=True)
