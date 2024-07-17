@@ -40,7 +40,7 @@ class IPCClient:
         data = json.loads(message)
 
         payload = {
-            "sercet": self.secret_key,
+            "secret": self.secret_key,
             "data": data | {"user_id": user.id, "guild_id": user.guild_id}
         }
 
