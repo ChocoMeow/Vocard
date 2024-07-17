@@ -16,20 +16,20 @@ class IPCServer:
         bot: commands.Bot,
         host: str = "127.0.0.1",
         port: int = 8000,
-        sercet_key: Optional[str] = None
+        secret_key: Optional[str] = None
     ):
         self.bot = bot
         self.host = host
         self.port = port
-        self.sercet_key = sercet_key
+        self.secret_key = secret_key
 
         self.user = {}
         self.connections = set()
     
     def is_secure(self, data: dict) -> bool:
-        if (key := data.get("sercet")):
-            return str(key) == str(self.sercet_key)
-        return bool(self.sercet_key is None)
+        if (key := data.get("secret")):
+            return str(key) == str(self.secret_key)
+        return bool(self.secret_key is None)
     
     async def start(self):
         try:

@@ -33,7 +33,7 @@ class Vocard(commands.Bot):
             self,
             host=func.settings.ipc_server["host"],
             port=func.settings.ipc_server["port"],
-            sercet_key=func.tokens.sercet_key
+            secret_key=func.tokens.secret_key
         )
 
     async def on_message(self, message: discord.Message, /) -> None:

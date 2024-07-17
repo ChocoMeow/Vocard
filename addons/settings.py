@@ -25,7 +25,7 @@ class TOKENS:
         self.token = os.getenv("TOKEN")
         self.client_id = os.getenv("CLIENT_ID")
         self.client_secret_id = os.getenv("CLIENT_SECRET_ID")
-        self.sercet_key = os.getenv("SERCET_KEY")
+        self.secret_key = os.getenv("SECRET_KEY")
         self.bug_report_channel_id = int(os.getenv("BUG_REPORT_CHANNEL_ID"))
         self.spotify_client_id = os.getenv("SPOTIFY_CLIENT_ID")
         self.spotify_client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
