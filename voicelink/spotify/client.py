@@ -26,7 +26,7 @@ import time
 import aiohttp
 
 from base64 import b64encode
-from typing import List, Union
+from typing import List, Union, Dict, Any
 from .objects import Track, Album, Artist, Playlist, Category
 from .exceptions import InvalidSpotifyURL, SpotifyRequestException 
 
@@ -54,8 +54,8 @@ class Client:
         self._bearer_token: str = None
         self._expiry: int = 0
         self._auth_token: str = b64encode(f"{self._client_id}:{self._client_secret}".encode())
-        self._grant_headers: dict[str, str] = {"Authorization": f"Basic {self._auth_token.decode()}"}
-        self._bearer_headers: dict[str, str] = None
+        self._grant_headers: Dict[str, str] = {"Authorization": f"Basic {self._auth_token.decode()}"}
+        self._bearer_headers: Dict[str, str] = None
 
         self._categories: List[Category] = []
 
@@ -68,13 +68,13 @@ class Client:
                     f"Error fetching bearer token: {resp.status} {resp.reason}"
                 )
 
-            data: dict = await resp.json()
+            data: Dict = await resp.json()
 
         self._bearer_token = data["access_token"]
         self._expiry = time.time() + (int(data["expires_in"]) - 10)
         self._bearer_headers = {"Authorization": f"Bearer {self._bearer_token}"}
 
-    async def get_request(self, url: str) -> dict:
+    async def get_request(self, url: str) -> Dict:
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
 
@@ -134,7 +134,7 @@ class Client:
                             f"Error while fetching results: {resp.status} {resp.reason}"
                         )
 
-                    next_data: dict = await resp.json()
+                    next_data: Dict = await resp.json()
 
                 tracks += [
                     Track(track["track"])

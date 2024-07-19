@@ -37,9 +37,18 @@ class Filter:
     these filters will not work.
     """
     def __init__(self):
-        self.payload: Dict[str, List] = None
-        self.scope: Dict[str, List] = None
+        self.payload: Dict[str, float] = None
+        self.scope: Dict[str, List[int]] = None
         self.tag: str = None
+
+    def _init_with_scope(self, scope: Dict[str, List[int]], **kwargs):
+        self.scope = scope
+        for prop, (min_val, max_val) in scope.items():
+            setattr(self, prop, kwargs.get(prop, scope[prop][0]))
+            if not min_val <= getattr(self, prop) <= max_val:
+                raise FilterInvalidArgument(f"{self.__class__.__name__} {prop} must be between {min_val} and {max_val}.")
+        self.tag = kwargs.get("tag")
+        self.payload = {self.__class__.__name__.lower(): {prop: getattr(self, prop) for prop in scope}}
 
 class Filters:
     def __init__(self) -> None:
@@ -187,18 +196,11 @@ class Timescale(Filter):
         rate: float = 1.0
     ):
         super().__init__()
-
-        self.scope = {"speed": [0, 5], "pitch": [0, 5], "rate": [0, 5]}
-        self.speed = speed
-        self.pitch = pitch
-        self.rate = rate 
-
-        for prop, (min_val, max_val) in self.scope.items():
-            if not min_val <= getattr(self, prop) <= max_val:
-                raise FilterInvalidArgument(f"Timescale {prop} must be between {min_val} and {max_val}.")
-
-        self.tag = tag
-        self.payload = {"timescale": {prop: getattr(self, prop) for prop in self.scope}}
+        self._init_with_scope({
+            "speed": [0, 5],
+            "pitch": [0, 5],
+            "rate": [0, 5]
+        }, tag=tag, speed=speed, pitch=pitch, rate=rate)
 
     @classmethod
     def vaporwave(cls):
@@ -238,19 +240,12 @@ class Karaoke(Filter):
         filter_width: float = 100.0
     ):
         super().__init__()
-
-        self.scope = {"level": [0, 5], "monoLevel": [0, 5], "filterBand": [0, 500], "filterWidth": [0, 300]}
-        self.level = level
-        self.monoLevel = mono_level
-        self.filterBand = filter_band
-        self.filterWidth = filter_width
-
-        for prop, (min_val, max_val) in self.scope.items():
-            if not min_val <= getattr(self, prop) <= max_val:
-                raise FilterInvalidArgument(f"Karaoke {prop} must be between {min_val} and {max_val}.")
-
-        self.tag = tag
-        self.payload = {"karaoke": {prop: getattr(self, prop) for prop in self.scope}}
+        self._init_with_scope({
+            "level": [0, 5],
+            "monoLevel": [0, 5],
+            "filterBand": [0, 500],
+            "filterWidth": [0, 300]
+        }, tag=tag, level=level, mono_level=mono_level, filter_band=filter_band, filter_width=filter_width)
 
     def __repr__(self):
         return (f"<Voicelink.KaraokeFilter tag={self.tag} payload={self.payload}")
@@ -268,17 +263,10 @@ class Tremolo(Filter):
         depth: float = 0.5
     ):
         super().__init__()
-
-        self.scope = {"frequency": [0, 5], "depth": [0, 1]}
-        self.frequency = frequency
-        self.depth = depth
-
-        for prop, (min_val, max_val) in self.scope.items():
-            if not min_val <= getattr(self, prop) <= max_val:
-                raise FilterInvalidArgument(f"Tremolo {prop} must be between {min_val} and {max_val}.")
-
-        self.tag = tag
-        self.payload = {"tremolo": {prop: getattr(self, prop) for prop in self.scope}}
+        self._init_with_scope({
+            "frequency": [0, 5],
+            "depth": [0, 1]
+        }, tag=tag, frequency=frequency, depth=depth)
 
     def __repr__(self):
         return f"<Voicelink.TremoloFilter tag={self.tag} payload={self.payload}"
@@ -296,17 +284,10 @@ class Vibrato(Filter):
         depth: float = 0.5
     ):
         super().__init__()
-
-        self.scope = {"frequency": [0, 14], "depth": [0, 1]}
-        self.frequency = frequency
-        self.depth = depth
-
-        for prop, (min_val, max_val) in self.scope.items():
-            if not min_val <= getattr(self, prop) <= max_val:
-                raise FilterInvalidArgument(f"Vibrato {prop} must be between {min_val} and {max_val}.")
-
-        self.tag = tag
-        self.payload = {"vibrato": {prop: getattr(self, prop) for prop in self.scope}}
+        self._init_with_scope({
+            "frequency": [0, 14],
+            "depth": [0, 1]
+        }, tag=tag, frequenc=frequency, depth=depth)
         
     def __repr__(self):
         return f"<Voicelink.VibratoFilter tag={self.tag} payload={self.payload}"
@@ -318,16 +299,9 @@ class Rotation(Filter):
 
     def __init__(self, *, tag: str = "rotation", rotation_hertz: float = 5):
         super().__init__()
-
-        self.scope = {"rotationHz": [0, 10]}
-        self.rotationHz = rotation_hertz
-
-        for prop, (min_val, max_val) in self.scope.items():
-            if not min_val <= getattr(self, prop) <= max_val:
-                raise FilterInvalidArgument(f"Rotation {prop} must be between {min_val} and {max_val}.")
-
-        self.tag = tag
-        self.payload = {"rotation": {prop: getattr(self, prop) for prop in self.scope}}
+        self._init_with_scope({
+            "rotationHz": [0, 10]
+        }, tag=tag, rotationHz=rotation_hertz)
 
     @classmethod
     def nightD(cls):
@@ -335,7 +309,6 @@ class Rotation(Filter):
 
     def __repr__(self) -> str:
         return f"<Voicelink.RotationFilter tag={self.tag} payload={self.payload}"
-
 
 class ChannelMix(Filter):
     """Filter which manually adjusts the panning of the audio, which can make
@@ -352,24 +325,12 @@ class ChannelMix(Filter):
         right_to_left: float = 0
     ):
         super().__init__()
-
-        self.scope = {
+        self._init_with_scope({
             "leftToLeft": [0, 1],
             "leftToRight": [0, 1],
             "rightToLeft": [0, 1],
             "rightToRight": [0, 1]
-        }
-        self.leftToLeft = left_to_left
-        self.leftToRight = right_to_right
-        self.rightToLeft = left_to_right
-        self.rightToRight = right_to_left
-        
-        for prop, (min_val, max_val) in self.scope.items():
-            if not min_val <= getattr(self, prop) <= max_val:
-                raise FilterInvalidArgument(f"ChannelMix {prop} must be between {min_val} and {max_val}.")
-
-        self.tag = tag
-        self.payload = {"channelMix": {prop: getattr(self, prop) for prop in self.scope}}
+        }, tag=tag, leftToLeft=left_to_left, leftToRight=left_to_right, rightToLeft=right_to_left, rightToRight=right_to_right)
 
     def __repr__(self) -> str:
         return (f"<Voicelink.ChannelMix tag={self.tag} payload={self.payload}")
@@ -393,8 +354,7 @@ class Distortion(Filter):
         scale: float = 1
     ):
         super().__init__()
-
-        self.scope = {
+        self._init_with_scope({
             "sinOffset": [0, 1],
             "sinScale": [0, 1],
             "cosOffset": [0, 1],
@@ -403,22 +363,16 @@ class Distortion(Filter):
             "tanScale": [0, 1],
             "offset": [0, 1],
             "scale": [0, 1],
-        }
-        self.sinOffset = sin_offset
-        self.sinScale = sin_scale
-        self.cosOffset = cos_offset
-        self.cosScale = cos_scale
-        self.tanOffset = tan_offset
-        self.tanScale = tan_scale
-        self.offset = offset
-        self.scale = scale
-        
-        for prop, (min_val, max_val) in self.scope.items():
-            if not min_val <= getattr(self, prop) <= max_val:
-                raise FilterInvalidArgument(f"Distortion {prop} must be between {min_val} and {max_val}.")
-
-        self.tag = tag
-        self.payload = {"distortion": {prop: getattr(self, prop) for prop in self.scope}}
+        },
+        tag = tag,
+        sinOffset = sin_offset,
+        sinScale = sin_scale,
+        cosOffset = cos_offset,
+        cosScale = cos_scale,
+        tanOffset = tan_offset,
+        tanScale = tan_scale,
+        offset = offset,
+        scale = scale)
 
     def __repr__(self) -> str:
         return (f"<Voicelink.Distortion tag={self.tag} payload={self.payload}")
@@ -430,16 +384,9 @@ class LowPass(Filter):
 
     def __init__(self, *, tag: str = "lowpass", smoothing: float = 20):
         super().__init__()
-
-        self.scope = {"smoothing": [0, 100]}
-        self.smoothing = smoothing
-
-        for prop, (min_val, max_val) in self.scope.items():
-            if not min_val <= getattr(self, prop) <= max_val:
-                raise FilterInvalidArgument(f"LowPass {prop} must be between {min_val} and {max_val}.")
-
-        self.tag = tag
-        self.payload = {"lowPass": {prop: getattr(self, prop) for prop in self.scope}}
+        self._init_with_scope({
+            "smoothing": [0, 100]
+        }, tag = tag, smoothing = smoothing)
 
     def __repr__(self) -> str:
         return f"<Voicelink.LowPass tag={self.tag} payload={self.payload}>"
