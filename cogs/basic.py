@@ -191,9 +191,6 @@ class Basic(commands.Cog):
                 await interaction.response.send_message((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         except voicelink.QueueFull as e:
             await interaction.response.send_message(e)
-        
-        except Exception as e:
-            return await interaction.response.send_message(e, ephemeral=True)
 
         finally:
             if not player.is_playing:

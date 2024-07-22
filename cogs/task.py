@@ -36,7 +36,6 @@ class Task(commands.Cog):
         self.cache_cleaner.start()
 
         self.current_act = 0
-        self.last_activity: discord.Activity = None
         self.placeholder = Placeholders(bot)
 
     def cog_unload(self):
@@ -50,15 +49,15 @@ class Task(commands.Cog):
 
         try:
             act_data = func.settings.activity[(self.current_act + 1) % len(func.settings.activity) - 1]
-            act_original = self.last_activity or self.bot.activity
+            act_original = self.bot.activity
             act_type = getattr(discord.ActivityType, act_data.get("type", "").lower(), discord.ActivityType.playing)
             act_name = self.placeholder.replace(act_data.get("name", ""))
 
             status_type = getattr(discord.Status, act_data.get("status", "").lower(), None)
 
             if act_original.type != act_type or act_original.name != act_name:
-                self.last_activity = discord.Activity(type=act_type, name=act_name)
-                await self.bot.change_presence(activity=self.last_activity, status=status_type)
+                self.bot.activity = discord.Activity(type=act_type, name=act_name)
+                await self.bot.change_presence(activity=self.bot.activity, status=status_type)
                 self.current_act = (self.current_act + 1) % len(func.settings.activity)
 
                 func.logger.info(f"Changed the bot status to {act_name}")
