@@ -20,7 +20,9 @@ socketio = SocketIO(app)
 # Discord OAuth2 credentials
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET_ID")
-REDIRECT_URI = 'http://127.0.0.1:5000/callback'
+HOST = os.getenv("DASHBOARD_HOST")
+PORT = os.getenv("DASHBOARD_PORT")
+REDIRECT_URI = f'http://{HOST}:{PORT}/callback'
 DISCORD_API_BASE_URL = 'https://discord.com/api'
 
 USERS = {}
@@ -208,4 +210,4 @@ def handle_message(user: User, msg):
     asyncio.run(ipc_client.send(msg, user))
 
 if __name__ == '__main__':
-    socketio.run(app, host="127.0.0.1", port=5000)
+    socketio.run(app, host=HOST, port=PORT, allow_unsafe_werkzeug=True)

@@ -1,9 +1,9 @@
 {
     "nodes": {
         "DEFAULT": {
-            "host": "127.0.0.1",
+            "host": "lavalink",
             "port": 2333,
-            "password": "password",
+            "password": "youshallnotpass",
             "secure": false,
             "identifier": "DEFAULT"
         }   
