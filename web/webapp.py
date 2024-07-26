@@ -24,7 +24,6 @@ HOST = os.getenv("DASHBOARD_HOST")
 PORT = os.getenv("DASHBOARD_PORT")
 IS_SECURE = os.getenv("DASHBOARD_SECURE", "False").lower() == "true"
 
-print(IS_SECURE, HOST, PORT)
 REDIRECT_URI = f'http{'s' if IS_SECURE else ''}://{HOST}:{PORT}/callback'
 DISCORD_API_BASE_URL = 'https://discord.com/api'
 
