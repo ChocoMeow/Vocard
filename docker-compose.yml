@@ -8,6 +8,13 @@ services:
         environment:
             - _JAVA_OPTIONS=-Xmx1G
             - SERVER_PORT=2333
+            - LAVALINK_SERVER_PASSWORD=youshallnotpass
+        healthcheck:
+            test: 'curl -H "Authorization: youshallnotpass" -s http://localhost:2333/version'
+            interval: 10s
+            timeout: 10s
+            retries: 5
+            start_period: 10s
         volumes:
             - ./application.yml:/opt/Lavalink/application.yml
         networks:
@@ -15,21 +22,21 @@ services:
         expose:
             - "2333"
 
-    mongo:
-        image: mongo:latest
-        container_name: mongo
-        restart: unless-stopped
-        volumes:
-            - ./data/mongo/db:/data/db
-            - ./data/mongo/conf:/data/configdb
-        environment:
-            - MONGO_INITDB_ROOT_USERNAME=admin
-            - MONGO_INITDB_ROOT_PASSWORD=admin
-        expose:
-            - "27017"
-        networks:
-            - local
-        command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
+    # mongo:
+    #     image: mongo:latest
+    #     container_name: mongo
+    #     restart: unless-stopped
+    #     volumes:
+    #         - ./data/mongo/db:/data/db
+    #         - ./data/mongo/conf:/data/configdb
+    #     environment:
+    #         - MONGO_INITDB_ROOT_USERNAME=admin
+    #         - MONGO_INITDB_ROOT_PASSWORD=admin
+    #     expose:
+    #         - "27017"
+    #     networks:
+    #         - local
+    #     command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
 
     vocard:
         image: vocard
@@ -39,11 +46,14 @@ services:
         volumes:
             - ./settings.json:/app/settings.json
             - ./.env:/app/.env
+            - ./logs/supervisor/:/var/log
         depends_on:
             lavalink:
-                condition: service_started
-            mongo:
-                condition: service_started
+                condition: service_healthy
+            # mongo:
+            #     condition: service_started
+        ports:
+            - "5555:5555"
         networks:
             - local
 
