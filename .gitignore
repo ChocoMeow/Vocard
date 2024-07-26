@@ -1,5 +1,5 @@
 Vocard.rar
 .env
 *.pyc
-logs
 settings.json
+logs
