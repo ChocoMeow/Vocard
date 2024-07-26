@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, session, request, render_template, abort, Response, stream_with_context
+from flask import Flask, redirect, url_for, session, request, render_template, Response, stream_with_context
 from flask_socketio import SocketIO, emit, join_room, leave_room, rooms, disconnect
 from ipc import IPCClient
 from objects import User
@@ -14,7 +14,7 @@ import functools
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY")
+app.secret_key = os.getenv("DASHBOARD_SERCET_KEY")
 socketio = SocketIO(app)
 
 # Discord OAuth2 credentials
@@ -22,7 +22,10 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET_ID")
 HOST = os.getenv("DASHBOARD_HOST")
 PORT = os.getenv("DASHBOARD_PORT")
-REDIRECT_URI = f'http://{HOST}:{PORT}/callback'
+IS_SECURE = os.getenv("DASHBOARD_SECURE", "False").lower() == "true"
+
+print(IS_SECURE, HOST, PORT)
+REDIRECT_URI = f'http{'s' if IS_SECURE else ''}://{HOST}:{PORT}/callback'
 DISCORD_API_BASE_URL = 'https://discord.com/api'
 
 USERS = {}

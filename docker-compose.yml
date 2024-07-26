@@ -45,21 +45,8 @@ services:
             dockerfile: ./Dockerfile
         volumes:
             - ./settings.json:/app/settings.json
+            - ./.env:/app/.env
             - ./logs/supervisor/:/var/log
-        environment:
-            - TOKEN=YOUR_BOT_TOKEN
-            - CLIENT_ID=YOUR_BOT_CLIENT_ID
-            - CLIENT_SECRET_ID=YOUR_BOT_CLIENT_SECRET_ID
-            - SECRET_KEY=DASHBOARD_SECRET_KEY
-            - BUG_REPORT_CHANNEL_ID=YOUR_DISCORD_CHANNEL_ID
-            - SPOTIFY_CLIENT_ID=YOUR_SPOTIFY_CLIENT_ID
-            - SPOTIFY_CLIENT_SECRET=YOUR_SPOTIFY_CLIENT_SECRET
-            - GENIUS_TOKEN=YOUR_GENIUS_TOKEN
-            - MONGODB_URL=YOUR_MONGODB_URL
-            - MONGODB_NAME=YOUR_MONGODB_DB_NAME
-            - DASHBOARD_HOST=0.0.0.0
-            - DASHBOARD_PORT=5555
-
         depends_on:
             lavalink:
                 condition: service_healthy
