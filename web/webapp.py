@@ -14,7 +14,7 @@ import functools
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("DASHBOARD_SERCET_KEY")
+app.secret_key = os.getenv("DASHBOARD_SECRET_KEY")
 socketio = SocketIO(app)
 
 # Discord OAuth2 credentials
