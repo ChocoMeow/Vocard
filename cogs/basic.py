@@ -99,15 +99,18 @@ class Basic(commands.Cog):
             track_dict = voicelink.decode(track_id)
             history[track_dict["identifier"]] = track_dict
 
-        history_tracks = [app_commands.Choice(name=truncate_string(f"🕒 {track['author']} - {track['title']}", 100), value=track['uri']) for track in history.values()][:25]
+        history_tracks = [app_commands.Choice(name=truncate_string(f"🕒 {track['author']} - {track['title']}", 100), value=track['uri']) for track in history.values() if len(track['uri']) <= 100][:25]
         if not current:
             return history_tracks
 
         node = voicelink.NodePool.get_node()
         if node and node.spotify_client:
-            tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
-            return  history_tracks[:5] + [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
-
+            try:
+                tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
+                return history_tracks[:5] + [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
+            except voicelink.TrackLoadError:
+                return history_tracks
+            
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -136,6 +139,9 @@ class Basic(commands.Cog):
 
         if not player.is_user_join(ctx.author):
             return await send(ctx, "notInChannel", ctx.author.mention, player.channel.mention, ephemeral=True)
+
+        if ctx.interaction:
+            await ctx.interaction.response.defer()
 
         tracks = await player.get_tracks(query, requester=ctx.author)
         if not tracks:
@@ -177,6 +183,7 @@ class Basic(commands.Cog):
         if not player.is_user_join(interaction.user):
             return await send(interaction, "notInChannel", interaction.user.mention, player.channel.mention, ephemeral=True)
 
+        await interaction.response.defer()
         tracks = await player.get_tracks(query, requester=interaction.user)
         if not tracks:
             return await send(interaction, "noTrackFound")
@@ -190,7 +197,7 @@ class Basic(commands.Cog):
                 texts = await get_lang(interaction.guild.id, "live", "trackLoad_pos", "trackLoad")
                 await interaction.response.send_message((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         except voicelink.QueueFull as e:
-            await interaction.response.send_message(e)
+            await interaction.followup.send(e)
 
         finally:
             if not player.is_playing:
@@ -265,7 +272,10 @@ class Basic(commands.Cog):
 
         if not player.is_user_join(ctx.author):
             return await send(ctx, "notInChannel", ctx.author.mention, player.channel.mention, ephemeral=True)
-            
+        
+        if ctx.interaction:
+            await ctx.interaction.response.defer()
+
         tracks = await player.get_tracks(query, requester=ctx.author)
         if not tracks:
             return await send(ctx, "noTrackFound")
@@ -301,6 +311,9 @@ class Basic(commands.Cog):
 
         if not player.is_privileged(ctx.author):
             return await send(ctx, "missingPerms_function", ephemeral=True)
+        
+        if ctx.interaction:
+            await ctx.interaction.response.defer()
             
         tracks = await player.get_tracks(query, requester=ctx.author)
         if not tracks:
