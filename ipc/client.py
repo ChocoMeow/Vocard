@@ -46,20 +46,20 @@ class IPCClient:
         while True:
             try:
                 msg = await self._websocket.receive()
-                self._logger.debug(f"Receive Message: {msg}")
+                self._logger.debug(f"Received Message: {msg}")
             except:
                 break
-            
+
             if msg.type in [aiohttp.WSMsgType.CLOSE, aiohttp.WSMsgType.CLOSED]:
                 self._is_connected = False
-
-                self._logger.info("Trying to reconnect dashboard in 10s")
+                self._logger.info("Connection closed. Trying to reconnect in 10s.")
                 await asyncio.sleep(10)
+
                 if not self._is_connected:
                     try:
                         await self.connect()
-                    except:
-                        pass
+                    except Exception as e:
+                        self._logger.error("Reconnection failed.")
             else:
                 self._bot.loop.create_task(process_methods(self, self._bot, msg.json()))
 
@@ -73,27 +73,27 @@ class IPCClient:
             if not self._session:
                 self._session = aiohttp.ClientSession()
 
-            if self._is_connecting:
+            if self._is_connecting or self._is_connected:
                 return
             
             self._is_connecting = True
             self._websocket = await self._session.ws_connect(
                 self._websocket_url, headers=self._heanders, heartbeat=self._heartbeat
             )
-        
+
             self._task = self._bot.loop.create_task(self._listen())
             self._is_connected = True
             
             self._logger.info("Connected to dashboard!")
         
         except aiohttp.ClientConnectorError:
-            raise Exception("The connection is failed.")
-        
-        except aiohttp.WSServerHandshakeError:
-            raise Exception("The password is invalid.")
-        
+            raise Exception("Connection failed.")
+            
+        except aiohttp.WSServerHandshakeError as e:
+            self._logger.error("Access forbidden: Missing bot ID, version mismatch, or invalid password.")
+            
         except Exception as e:
-            self._logger.error("Error occured while connecting to dashboard!", exc_info=e)
+            self._logger.error("Error occurred while connecting to dashboard.", exc_info=e)
         
         finally:
             self._is_connecting = False
