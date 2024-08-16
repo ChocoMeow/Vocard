@@ -315,9 +315,6 @@ class Node:
         for player in self.players.copy().values():
             await player.teardown()
         
-        if self.spotify_client:
-            await self.spotify_client.close()
-
         await self._websocket.close()
         if remove_from_pool:
             del self._pool._nodes[self._identifier]
