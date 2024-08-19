@@ -235,6 +235,14 @@ class Settings(commands.Cog, name="settings"):
         await update_settings(ctx.guild.id, {"$set": {'controller_msg': toggle}})
         await send(ctx, 'toggleControllerMsg', await get_lang(ctx.guild.id, "enabled" if toggle else "disabled"))
 
+    @settings.command(name="stageannounce", aliases=get_aliases("stageannounce"))
+    @commands.has_permissions(manage_guild=True)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def stageannounce(self, ctx: commands.Context, template: str = None):
+        """Customize the channel topic template"""
+        await update_settings(ctx.guild.id, {"$set": {'stage_announce_template': template}})
+        await send(ctx, "SetStageAnnounceTemplate")
+
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):
         if interaction.user.id not in func.settings.bot_access_user:

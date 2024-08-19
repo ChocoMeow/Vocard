@@ -183,5 +183,7 @@
     "deocdeError": "解碼文件時出現問題！",
     "invalidStartTime": "無效的開始時間! 時間必須在 `00:00` 和 `{0}` 之間。",
     "invalidEndTime": "無效的結束時間! 時間必須在 `00:00` 和 `{0}` 之間。",
-    "invalidTimeOrder": "結束時間不能小於或等於開始時間。"
+    "invalidTimeOrder": "結束時間不能小於或等於開始時間。",
+
+    "SetStageAnnounceTemplate": "完成！從現在開始，像您現在的語音狀態將根據您的模板命名。您應該在幾秒鐘內看到它更新。"
 }
