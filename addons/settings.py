@@ -27,6 +27,7 @@ class Settings:
         self.cooldowns_settings: Dict[str, List[int]] = settings.get("cooldowns", {})
         self.aliases_settings: Dict[str, List[str]] = settings.get("aliases", {})
         self.controller: Dict[str, Dict[str, Any]] = settings.get("default_controller", {})
+        self.voice_status_template: str = settings.get("default_voice_status_template", "")
         self.lyrics_platform: str = settings.get("lyrics_platform", "A_ZLyrics").lower()
         self.ipc_client: Dict[str, Union[str, bool, int]] = settings.get("ipc_client", {})
         self.version: str = settings.get("version", "")

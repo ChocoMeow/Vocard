@@ -113,6 +113,7 @@
         ],
         "disableButtonText": false
     },
+    "default_voice_status_template": "{{@@track_name@@ != 'None' ?? Now Playing: @@track_name@@ // Waiting for song requests}}",
     "cooldowns": {
         "connect": [2, 30],
         "playlist view": [1, 30]

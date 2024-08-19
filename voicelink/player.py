@@ -781,7 +781,7 @@ class Player(VoiceProtocol):
         return False
     
     async def update_voice_status(self, remove_status: bool = False) -> None:
-        template = self.settings.get("stage_announce_template")
+        template = self.settings.get("stage_announce_template", func.settings.voice_status_template)
         if not template or not self.channel:
             return
         
