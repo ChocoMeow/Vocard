@@ -345,7 +345,7 @@ class Player(VoiceProtocol):
         self.shuffle_votes.clear()
         self.stop_votes.clear()
 
-        track: Track = self.queue.get()
+        track = self.queue.get()
 
         if not track:
             if self.settings.get("autoplay", False) and await self.get_recommendations():
@@ -762,7 +762,7 @@ class Player(VoiceProtocol):
         if self.volume != 100:
             await self.set_volume(self.volume)
     
-    async def get_recommendations(self, *, track: Track = None) -> bool:
+    async def get_recommendations(self, *, track: Optional[Track] = None) -> bool:
         """Get recommendations from Youtube or Spotify."""
         if not track:
             try:

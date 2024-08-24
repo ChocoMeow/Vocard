@@ -515,12 +515,12 @@ class Node:
             )
             for track in tracks ]
 
-    async def get_recommendations(self, track: Track, limit: int = None) -> List[Track]:
-        if not self.spotify_client:
-            return
-        
+    async def get_recommendations(self, track: Track, limit: int = None) -> List[Optional[Track]]:
         if track.spotify:
-            spotify_tracks = await self._spotify_client.similar_track(seed_tracks=track.identifier, limit=limit)
+            if not self.spotify_client:
+                return []
+            
+            spotify_tracks = await self.spotify_client.similar_track(seed_tracks=track.identifier, limit=limit)
             
             tracks = [
                 Track(
