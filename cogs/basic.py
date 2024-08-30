@@ -195,7 +195,7 @@ class Basic(commands.Cog):
             else:
                 position = await player.add_track(tracks[0])
                 texts = await get_lang(interaction.guild.id, "live", "trackLoad_pos", "trackLoad")
-                await interaction.response.send_message((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
+                await interaction.followup.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
         except voicelink.QueueFull as e:
             await interaction.followup.send(e)
 

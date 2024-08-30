@@ -619,11 +619,11 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
 
     guild = bot.get_guild(guild_id)
     if not guild:
-        return error_msg("Vocard don't have access to required guild.", user_id=user_id, level="error")
+        return error_msg("Vocard don't have access to requested guild.", user_id=user_id, level="error")
 
     member = guild.get_member(user_id)
     if not member:
-        return error_msg("You are not in the required guild.", user_id=user_id, level="error")
+        return error_msg("You are not in the requested guild.", user_id=user_id, level="error")
     
     if not member.guild_permissions.manage_guild:
         return error_msg("You don't have permission to access the settings.", user_id=user_id, level='error')
@@ -768,7 +768,7 @@ async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
                         return
                     player = await connect_channel(member, bot)
 
-                if player.channel.id != member.voice.channel.id:
+                if not player or player.channel.id != member.voice.channel.id:
                     return
                 
                 env["player"] = player

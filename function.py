@@ -78,11 +78,15 @@ def langs_setup() -> None:
 
     return
 
-def time(millis:int) -> str:
-    seconds=(millis/1000)%60
-    minutes=(millis/(1000*60))%60
-    hours=(millis/(1000*60*60))%24
-    if hours > 1:
+def time(millis: int) -> str:
+    seconds = (millis // 1000) % 60
+    minutes = (millis // (1000 * 60)) % 60
+    hours = (millis // (1000 * 60 * 60)) % 24
+    days = millis // (1000 * 60 * 60 * 24)
+
+    if days > 0:
+        return "%d days, %02d:%02d:%02d" % (days, hours, minutes, seconds)
+    elif hours > 0:
         return "%d:%02d:%02d" % (hours, minutes, seconds)
     else:
         return "%02d:%02d" % (minutes, seconds)
