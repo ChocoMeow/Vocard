@@ -134,17 +134,18 @@ class Settings(commands.Cog, name="settings"):
         "Show all the bot settings in your server."
         settings = await get_settings(ctx.guild.id)
 
-        texts = await get_lang(ctx.guild.id, "settingsMenu", "settingsTitle", "settingsValue", "settingsTitle2", "settingsValue2", "settingsPermTitle", "settingsPermValue")
+        texts = await get_lang(ctx.guild.id, "settingsMenu", "settingsTitle", "settingsValue", "settingsTitle2", "settingsValue2", "settingsTitle3", "settingsPermTitle", "settingsPermValue")
         embed = discord.Embed(color=func.settings.embed_color)
         embed.set_author(name=texts[0].format(ctx.guild.name), icon_url=self.bot.user.display_avatar.url)
         if ctx.guild.icon:
             embed.set_thumbnail(url=ctx.guild.icon.url)
 
+        dj_role = ctx.guild.get_role(settings.get('dj', 0))
         embed.add_field(name=texts[1], value=texts[2].format(
-            settings.get('prefix', func.settings.bot_prefix) or "None",
+            settings.get('prefix', func.settings.bot_prefix) or 'None',
             settings.get('lang', 'EN'),
             settings.get('controller', True),
-            f"<@&{settings['dj']}>" if 'dj' in settings else '`None`',
+            dj_role.name if dj_role else 'None',
             settings.get('votedisable', False),
             settings.get('24/7', False),
             settings.get('volume', 100),
@@ -157,8 +158,11 @@ class Settings(commands.Cog, name="settings"):
             settings.get("duplicateTrack", True)
         ))
 
+        if stage_template := settings.get("stage_announce_template"):
+            embed.add_field(name=texts[5], value=f"```{stage_template}```", inline=False)
+
         perms = ctx.guild.me.guild_permissions
-        embed.add_field(name=texts[5], value=texts[6].format(
+        embed.add_field(name=texts[6], value=texts[7].format(
                 status_icon(perms.administrator),
                 status_icon(perms.manage_guild),
                 status_icon(perms.manage_channels),
