@@ -35,6 +35,8 @@ class Placeholders:
             "track_requester_id": self.track_requester_id,
             "track_requester_name": self.track_requester_name,
             "track_requester_avatar": self.track_requester_avatar,
+            "track_source_name": self.track_source_name,
+            "track_source_emoji": self.track_source_emoji,
             "queue_length": self.queue_length,
             "volume": self.volume,
             "dj": self.dj,
@@ -84,6 +86,14 @@ class Placeholders:
     @ensure_track
     def track_color(self, track: Track) -> int:
         return int(func.get_source(track.source, "color"), 16)
+    
+    @ensure_track
+    def track_source_name(self, track: Track) -> str:
+        return track.source
+    
+    @ensure_track
+    def track_source_emoji(self, track: Track) -> str:
+        return track.emoji
     
     def track_thumbnail(self) -> str:
         if not self.player or not self.player.current:
