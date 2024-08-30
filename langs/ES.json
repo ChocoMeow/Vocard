@@ -23,11 +23,12 @@
     "toggleControllerMsg": "Ahora tiene `{0}` mensajes del controlador de música.",
     "settingsMenu": "Configuración del servidor | {0}",
     "settingsTitle": "❤️ Información básica:",
-    "settingsValue": "Prefijo: `{0}`\nIdioma: `{1}`\nHabilitar controlador de música: `{2}`\nRol de DJ: {3}\nBypass de votación: `{4}`\n24/7: `{5}`\nVolumen predeterminado: `{6}%`\nTiempo de reproducción: `{7}`",
+    "settingsValue": "```Prefijo: {0}\nIdioma: {1}\nHabilitar controlador de música: {2}\nRol de DJ: @{3}\nBypass de votación: {4}\n24/7: {5}\nVolumen predeterminado: {6}%\nTiempo de reproducción: {7}```",
     "settingsTitle2": "🔗 Información de la cola:",
-    "settingsValue2": "Modo de cola: `{0}`\nMáximo de canciones: `{1}`\nPermitir pistas duplicadas: `{2}`",
+    "settingsValue2": "```Modo de cola: {0}\nMáximo de canciones: {1}\nPermitir pistas duplicadas: {2}```",
+    "settingsTitle3": "🎤 Información del estado de voz:",
     "settingsPermTitle": "✨ Permisos:",
-    "settingsPermValue": "{0} Administrador\n{1} Administrar servidor\n{2} Administrar canal\n{3} Administrar mensajes",
+    "settingsPermValue": "```{0} Administrador\n{1} Administrar servidor\n{2} Administrar canal\n{3} Administrar mensajes```",
     "pingTitle1": "Información del bot:",
     "pingTitle2": "Información del reproductor:",
     "pingfield1": "```ID de fragmento: {0}/{1}\nLatencia de fragmento: {2:.3f}s {3}\nRegión: {4}```",
@@ -183,5 +184,7 @@
     "deocdeError": "¡Algo salió mal al decodificar el archivo!",
     "invalidStartTime": "Tiempo de inicio inválido! El tiempo debe estar entre `00:00` y `{0}`.",
     "invalidEndTime": "Tiempo de finalización inválido! El tiempo debe estar entre `00:00` y `{0}`.",
-    "invalidTimeOrder": "El tiempo final no puede ser menor o igual que el tiempo de inicio."
+    "invalidTimeOrder": "El tiempo final no puede ser menor o igual que el tiempo de inicio.",
+
+    "SetStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos."
 }

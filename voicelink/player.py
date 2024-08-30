@@ -365,7 +365,9 @@ class Player(VoiceProtocol):
 
         if self.settings.get('controller', True):
             await self.invoke_controller()
-            
+
+        await self.update_voice_status()
+
         if self.is_ipc_connected:
             await self.send_ws({
                 "op": "trackUpdate", 
@@ -428,7 +430,7 @@ class Player(VoiceProtocol):
                 "playTime": round(self.settings.get("playTime", 0) + ((timeNow - self.joinTime) / 60), 2)
             }}
         )
-        
+        await self.update_voice_status(remove_status=True)
         if self.is_ipc_connected:
             await self.send_ws({"op": "playerClose"})
 
@@ -778,6 +780,25 @@ class Player(VoiceProtocol):
             return True
         return False
     
+    async def update_voice_status(self, remove_status: bool = False) -> None:
+        template = self.settings.get("stage_announce_template", func.settings.voice_status_template)
+        if not template or not self.channel:
+            return
+        
+        try:
+            rv = {key: func() if callable(func) else func for key, func in self._ph.variables.items()}
+            status = None if remove_status else self._ph.replace(text=template, variables=rv)
+            # if self.channel.status != status:
+            await self.channel.edit(status=status)
+
+        except Exception as e:
+            self._logger.error(
+                f"Failed to update voice status in channel '{self.channel.name}' "
+                f"({self.channel.id}) for guild '{self.channel.guild}' "
+                f"({self.channel.guild.id})", 
+                exc_info=e
+            )
+
     async def send_ws(self, payload, requester: Member = None):
         payload['guild_id'] = str(self.guild.id)
         if requester:
