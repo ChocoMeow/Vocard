@@ -597,19 +597,16 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
 
 async def getMutualGuilds(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("user_id"))
-    user = bot.get_user(user_id)
-    if not user:
-        user = await bot.fetch_user(user_id)
 
-    payload = {"op": "getMutualGuilds", "servers": {}, "user_id": str(user_id)}
-    for guild in user.mutual_guilds:
-        member = guild.get_member(user_id)
-        if member.guild_permissions.manage_guild:
-            payload["servers"][str(guild.id)] = {
-                "avatar": guild.icon.url if guild.icon else None,
-                "name": guild.name,
+    payload = {"op": "getMutualGuilds", "mutualGuilds": {}, "inviteGuilds": {}, "user_id": str(user_id)}
+    for guild_id, guild_info in data.get("guilds", {}).items():
+        if guild := bot.get_guild(int(guild_id)):
+            payload["mutualGuilds"][guild_id] = {
+                **guild_info,
                 "member_count": guild.member_count
             }
+        else:
+            payload["inviteGuilds"][guild_id] = {**guild_info}
 
     return payload
 

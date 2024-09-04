@@ -103,7 +103,6 @@ class Basic(commands.Cog):
         if not current:
             return history_tracks
 
-        await interaction.response.defer()
         node = voicelink.NodePool.get_node()
         if node and node.spotify_client:
             try:
