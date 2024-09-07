@@ -18,7 +18,8 @@ SCOPES = {
     "24/7": bool,
     "votedisable": bool,
     "duplicateTrack": bool,
-    "default_controller": dict
+    "default_controller": dict,
+    "stage_announce_template": str
 }
 
 class TempCtx():

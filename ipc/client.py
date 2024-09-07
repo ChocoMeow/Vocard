@@ -64,7 +64,7 @@ class IPCClient:
                 self._bot.loop.create_task(process_methods(self, self._bot, msg.json()))
 
     async def send(self, data: dict):
-        if self._is_connected:
+        if self.is_connected:
             self._logger.debug(f"Send Message: {data}")
             await self._websocket.send_json(data)
 
@@ -104,3 +104,7 @@ class IPCClient:
         self._is_connected = False
         self._task.cancel()
         self._logger.info("Disconnected to dashboard!")
+    
+    @property
+    def is_connected(self) -> bool:
+        return self._is_connected

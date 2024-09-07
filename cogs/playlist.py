@@ -195,18 +195,18 @@ class Playlists(commands.Cog, name="playlist"):
         text = await get_lang(ctx.guild.id, "playlistViewTitle", "playlistViewHeaders", "playlistFooter")
         embed = discord.Embed(
             title=text[0].format(ctx.author.display_name),
-            description='```prolog\n   %4s %10s %10s %10s\n' % tuple(text[1].split(",")),
+            description='```prolog\n   %4s %10s %12s %10s\n' % tuple(text[1].split(",")),
             color=settings.embed_color
         )
         
         for index in range(max_p):
             try:
                 info = results[index]
-                track_info = (info['emoji'], info['id'], f"[{info['time']}]", info['name'], f"{len(info['tracks'])}/{max_t}")
+                track_info = (info['emoji'], info['id'], f"[{info['time']}]", info['name'], f"{len(info['tracks'])}")
             except IndexError:
-                track_info = ("🎵", "-"*3, "[--:--]", "-"*6, f"-/{max_t}")
+                track_info = ("🎵", "-"*3, "[--:--]", "-"*6, f"-")
 
-            embed.description += '%0s %3s. %10s %10s %10s\n' % track_info
+            embed.description += '%0s %3s. %10s %12s %10s\n' % track_info
             
         embed.description += "```"
         embed.set_footer(text=text[2])
