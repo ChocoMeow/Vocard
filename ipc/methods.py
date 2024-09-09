@@ -266,6 +266,10 @@ async def removeTrack(player: Player, member: Member, data: Dict) -> None:
     index, index2 = data.get("index"), data.get("index2")
     await player.remove_track(index, index2, requester=member)
 
+async def clearQueue(player: Player, member: Member, data: Dict) -> None:
+    queue_type = data.get("queue_type", "").lower()
+    await player.clear_queue(queue_type, member)
+
 async def updateVolume(player: Player, member: Member, data: Dict) -> None:
     if not member.guild_permissions.manage_guild:
         return missingPermission(member.id)
@@ -711,6 +715,7 @@ METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "shuffleTrack": PlayerMethod(shuffleTrack, credit=3),
     "repeatTrack": PlayerMethod(repeatTrack),
     "removeTrack": PlayerMethod(removeTrack),
+    "clearQueue": PlayerMethod(clearQueue),
     "updateVolume": PlayerMethod(updateVolume, credit=2),
     "updatePause": PlayerMethod(updatePause),
     "updatePosition": PlayerMethod(updatePosition),

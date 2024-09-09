@@ -646,13 +646,7 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await send(ctx, "missingPerms_queue", ephemeral=True)
 
-        queue = queue.lower()
-        if queue == 'history':
-            player.queue.history_clear(player.is_playing)
-        else:
-            queue = "queue"
-            player.queue.clear()
-
+        await player.clear_queue(queue, ctx.author)
         await send(ctx, "cleared", queue.capitalize())
 
     @commands.hybrid_command(name="remove", aliases=get_aliases("remove"))

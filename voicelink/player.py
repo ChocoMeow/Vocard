@@ -633,6 +633,7 @@ class Player(VoiceProtocol):
         return self._volume
 
     async def shuffle(self, queue_type: str, requester: Member = None) -> None:
+        """Shuffles the tracks in the specified queue or history."""
         replacement = self.queue.tracks() if queue_type == "queue" else self.queue.history()
         if len(replacement) < 3:
             raise VoicelinkException(self.get_msg('shuffleError'))
@@ -707,6 +708,19 @@ class Player(VoiceProtocol):
 
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been applied a {filter.tag} filter.")
         return self._filters
+
+    async def clear_queue(self, queue_type: str, requester: Member = None) -> None:
+        queue_type = queue_type.lower()
+        if queue_type == 'history':
+            self.queue.history_clear(self.is_playing)
+        elif queue_type == "queue":
+            self.queue.clear()
+        
+        if self.is_ipc_connected:
+            await self.send_ws({
+                "op": "clearQueue",
+                "queue_type": queue_type
+            }, requester)
 
     async def remove_filter(self, filter_tag: str, requester: Member = None, fast_apply: bool = False) -> Filters:
         self._filters.remove_filter(filter_tag=filter_tag)
