@@ -39,13 +39,19 @@ class PlayerMethod(SystemMethod):
         super().__init__(function, credit=credit)
         self.params: List[str] = ["player", "member", "data"]
         self.auto_connect: bool = auto_connect
-        
-def missingPermission(user_id: int):
-    payload = {"op": "errorMsg", "level": "info", "msg": "Only the DJ or admins may use this funciton!"}
-    payload["user_id"] = str(user_id)
-    return payload
 
-def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str = "info"):
+def require_permission(only_admin: bool = False):
+    def decorator(func) -> callable:
+        async def wrapper(player: Player, member: Member, dict: Dict) -> Optional[Dict]:
+            if only_admin and not member.guild_permissions.manage_guild:
+                return error_msg("Only the admins may use this funciton!", user_id=member.id)
+            if not player.is_privileged(member):
+                return error_msg("Only the DJ or admins may use this funciton!", user_id=member.id)
+            return await func(player, member, dict)
+        return wrapper
+    return decorator
+
+def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str = "info") -> Dict:
     payload = {"op": "errorMsg", "level": level, "msg": msg}
     if user_id:
         payload["user_id"] = str(user_id)
@@ -197,10 +203,8 @@ async def backTo(player: Player, member: Member, data: Dict) -> None:
         player.queue.backto(index + 1)
         await player.stop()
 
+@require_permission()
 async def moveTrack(player: Player, member: Member, data: Dict) -> None:
-    if not player.is_privileged(member):
-        return missingPermission(member.id)
-
     index = data.get("index")
     new_index = data.get("newIndex")
     if index == new_index:
@@ -253,27 +257,22 @@ async def shuffleTrack(player: Player, member: Member, data: Dict) -> None:
     
     await player.shuffle(data.get("type", "queue"), member)
 
+@require_permission()
 async def repeatTrack(player: Player, member: Member, data: Dict) -> None:
-    if not player.is_privileged(member):
-        return missingPermission(member.id)
-    
     await player.set_repeat(requester=member)
 
+@require_permission()
 async def removeTrack(player: Player, member: Member, data: Dict) -> None:
-    if not player.is_privileged(member):
-        return missingPermission(member.id)
-    
     index, index2 = data.get("index"), data.get("index2")
     await player.remove_track(index, index2, requester=member)
 
+@require_permission()
 async def clearQueue(player: Player, member: Member, data: Dict) -> None:
     queue_type = data.get("queue_type", "").lower()
     await player.clear_queue(queue_type, member)
 
+@require_permission(only_admin=True)
 async def updateVolume(player: Player, member: Member, data: Dict) -> None:
-    if not member.guild_permissions.manage_guild:
-        return missingPermission(member.id)
-    
     volume = data.get("volume", 100)
     await func.update_settings(player.guild.id, {"$set": {"volume": volume}})
     await player.set_volume(volume=volume, requester=member)
@@ -299,10 +298,8 @@ async def updatePause(player: Player, member: Member, data: Dict) -> None:
 
     await player.set_pause(pause, member)
 
-async def updatePosition(player: Player, member: Member, data: Dict) -> None:
-    if not player.is_privileged(member):
-        return missingPermission(member.id)
-    
+@require_permission()
+async def updatePosition(player: Player, member: Member, data: Dict) -> None:    
     position = data.get("position");
     await player.seek(position, member);
 
@@ -323,10 +320,8 @@ async def toggleAutoplay(player: Player, member: Member, data: Dict) -> Dict:
         "requester_id": str(member.id)
     }
 
+@require_permission()
 async def updateFilter(player: Player, member: Member, data: Dict) -> None:
-    if not player.is_privileged(member):
-        return missingPermission(member.id)
-    
     updateType = data.get("type", "add")
     filter_tag = data.get("tag")
 
