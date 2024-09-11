@@ -22,12 +22,14 @@ SOFTWARE.
 """
 
 import discord
-import function
 import io
 import contextlib
 import textwrap
 import traceback
+import voicelink
+import function as func
 
+from typing import Optional
 from discord.ext import commands
 
 class ExceuteModal(discord.ui.Modal):
@@ -49,13 +51,76 @@ class ExceuteModal(discord.ui.Modal):
         self.code = self.children[0].value
         self.stop()
 
+class AddNodeModal(discord.ui.Modal):
+    def __init__(self, view, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        
+        self.view: NodesPanel = view
+        
+        self.add_item(
+            discord.ui.TextInput(
+                label="Host",
+                placeholder="Enter the lavalink host e.g 0.0.0.0"
+            )
+        )
+        self.add_item(
+            discord.ui.TextInput(
+                label="Port",
+                placeholder="Enter the lavalink port e.g 2333"
+            )
+        )
+        self.add_item(
+            discord.ui.TextInput(
+                label="Password",
+                placeholder="Enter the lavalink password"
+            )
+        )
+        self.add_item(
+            discord.ui.TextInput(
+                label="Secure",
+                placeholder="Specify if your Lavalink uses SSL. Enter 'true' or 'false'"
+            )
+        )
+        self.add_item(
+            discord.ui.TextInput(
+                label="Identifier",
+                placeholder="Enter a name for your lavalink server"
+            )
+        )
+        
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            config = {
+                "host": self.children[0].value,
+                "port": int(self.children[1].value),
+                "password": self.children[2].value,
+                "secure": self.children[3].value.lower() == "true",
+                "identifier": self.children[4].value
+            }
+        except Exception:
+            return await interaction.response.send_message("Some of your input is invalid! Please try again.", ephemeral=True)
+        
+        await interaction.response.defer()
+        try:
+            await voicelink.NodePool.create_node(
+                bot=interaction.client,
+                spotify_client_id=func.settings.spotify_client_id, 
+                spotify_client_secret=func.settings.spotify_client_secret,
+                logger=func.logger,
+                **config
+            )
+            await interaction.followup.send(f"Node {self.children[4].value} is connected!", ephemeral=True)
+            await self.view.message.edit(embed=self.view.build_embed(), view=self.view)
+            
+        except Exception as e:
+            return await interaction.followup.send(e, ephemeral=True)
+        
 class CogsDropdown(discord.ui.Select):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
 
         super().__init__(
             placeholder="Select a cog to reload...",
-            min_values=1, max_values=1,
             options=[discord.SelectOption(label="All", description="All the cogs")] +
             [
                 discord.SelectOption(label=name.capitalize(), description=cog.description[:50])
@@ -76,6 +141,42 @@ class CogsDropdown(discord.ui.Select):
 
         await interaction.response.send_message(f"Reloaded `{selected}` sucessfully!", ephemeral=True)
 
+class NodesDropdown(discord.ui.Select):
+    def __init__(self, bot: commands.Bot):
+        self.bot: commands.Bot = bot
+        self.view: NodesPanel
+    
+        super().__init__(
+            placeholder="Select a node to edit...",
+            options=self.get_nodes()
+        )
+    
+    def get_nodes(self) -> list[discord.SelectOption]:
+        nodes = [
+            discord.SelectOption(
+                label=name,
+                description=("🟢 Connected" if node._available else "🔴 Disconnected") + f" - Players: {node.player_count} ({node.latency if node._available else 0:.2f}ms)")
+            for name, node in voicelink.NodePool._nodes.items()
+        ]
+        
+        if not nodes:
+            nodes = [discord.SelectOption(label="The node could not be found!")]
+            
+        return nodes
+    
+    def update(self) -> None:
+        self.options = self.get_nodes()
+        
+    async def callback(self, interaction: discord.Interaction) -> None:
+        selected_node = self.values[0]
+        node = voicelink.NodePool._nodes.get(selected_node, None)
+        if not node:
+            return await interaction.response.send_message("The node could not be found!", ephemeral=True)
+        
+        self.view.selected_node = node
+        await interaction.response.defer()
+        await self.view.message.edit(embed=self.view.build_embed(), view=self.view)
+        
 class ExceutePanel(discord.ui.View):
     def __init__(self, bot, *, timeout = 180):
         self.bot: commands.Bot = bot
@@ -160,12 +261,104 @@ class ExceutePanel(discord.ui.View):
         result = ''.join(traceback.format_exception(self._error, self._error, self._error.__traceback__))
         await self.message.edit(content=f"```py\n{result}```")
 
+class NodesPanel(discord.ui.View):
+    def __init__(self, bot, *, timeout: float | None = 180):
+        super().__init__(timeout=timeout)
+        self.message: Optional[discord.Message] = None
+        self.selected_node: Optional[voicelink.Node] = None
+        
+        self.add_item(NodesDropdown(bot))
+    
+    def update_btn_status(self) -> None:
+        for child in self._children:
+            if isinstance(child, discord.ui.Button) and child.label != "Add":
+                child.disabled = self.selected_node is None
+            
+            if isinstance(child, discord.ui.Select):
+                child.update()
+        
+    def build_embed(self) -> discord.Embed:
+        self.update_btn_status()
+        embed = discord.Embed(title="📡 Nodes Panel", color=func.settings.embed_color)
+        
+        if not voicelink.NodePool._nodes:
+            embed.description = "```There are no nodes are connected!```"
+        
+        else:
+            for name, node in voicelink.NodePool._nodes.items():
+                if self.selected_node and self.selected_node._identifier != node._identifier:
+                    continue
+                
+                if node._available:
+                    total_memory = node.stats.used + node.stats.free
+                    embed.add_field(
+                        name=f"{name} Node - 🟢 Connected",
+                        value=f"```• ADDRESS: {node._host}:{node._port}\n" \
+                            f"• PLAYERS: {len(node._players)}\n" \
+                            f"• CPU:     {node.stats.cpu_process_load:.1f}%\n" \
+                            f"• RAM:     {func.format_bytes(node.stats.free)}/{func.format_bytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
+                            f"• LATENCY: {node.latency:.2f}ms\n" \
+                            f"• UPTIME:  {func.time(node.stats.uptime)}```"
+                    )
+                else:
+                    embed.add_field(
+                        name=f"{name} Node - 🔴 Disconnected",
+                        value=f"```• ADDRESS: {node._host}:{node._port}\n" \
+                            f"• PLAYERS: {len(node._players)}\nNo extra data is available for display```",
+                    )
+                    
+        return embed
+    
+    async def on_error(self, interaction: discord.Interaction, error, item) -> None:
+        return await interaction.followup.send(error, ephemeral=True)
+    
+    @discord.ui.button(label="Add", emoji="➕", style=discord.ButtonStyle.green)
+    async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
+        modal = AddNodeModal(self, title="Create Node")
+        await interaction.response.send_modal(modal)
+    
+    @discord.ui.button(label="Remove", emoji="➖", style=discord.ButtonStyle.red, disabled=True)
+    async def remove(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.selected_node:
+            return await interaction.response.send_message("Please ensure that you have selected a node!", ephemeral=True)
+
+        identifier = self.selected_node._identifier
+        await self.selected_node.disconnect(remove_from_pool=True)
+        
+        self.selected_node = None
+        
+        await self.message.edit(embed=self.build_embed(), view=self)
+        await interaction.response.send_message(f"Removed {identifier} Node from the bot.", ephemeral=True)
+        
+    @discord.ui.button(label="Reconnect", disabled=True, row=1)
+    async def reconnect(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+        if self.selected_node.is_connected:
+            await self.selected_node.disconnect()
+            await self.selected_node.connect()
+            await self.message.edit(embed=self.build_embed(), view=self)
+    
+    @discord.ui.button(label="Connect", disabled=True, row=1)
+    async def connect(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+        if not self.selected_node.is_connected:
+            await self.selected_node.connect()
+            await self.message.edit(embed=self.build_embed(), view=self)
+        
+    @discord.ui.button(label="Disconnect", style=discord.ButtonStyle.red, disabled=True, row=1)
+    async def disconnect(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+        if self.selected_node.is_connected:
+            await self.selected_node.disconnect()
+            
+            await self.message.edit(embed=self.build_embed(), view=self)
+        
 class CogsView(discord.ui.View):
     def __init__(self, bot, *, timeout: float | None = 180):
         super().__init__(timeout=timeout)
 
         self.add_item(CogsDropdown(bot))
-
+   
 class DebugView(discord.ui.View):
     def __init__(self, bot, *, timeout: float | None = 180):
         self.bot: commands.Bot = bot
@@ -177,13 +370,18 @@ class DebugView(discord.ui.View):
     async def run_command(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.panel.execute(interaction)
     
-    @discord.ui.button(label='Cogs', emoji="🔃")
+    @discord.ui.button(label='Cogs', emoji="⚙️")
     async def reload_cog(self, interaction: discord.Interaction, button: discord.ui.Button):
         return await interaction.response.send_message("Reload Cogs", view=CogsView(self.bot), ephemeral=True)
     
-    @discord.ui.button(label='Send Logs', emoji="📥", style=discord.ButtonStyle.red)
-    async def send_error_logs(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not function.ERROR_LOGS:
-            return await interaction.response.send_message("Sorry there are not error logs!", ephemeral=True)
-        
-        await interaction.response.send_message(file=function.gen_report(), ephemeral=True)
+    @discord.ui.button(label="Re-Sync", emoji="🔄")
+    async def sync(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🔄 Synchronizing all your commands and language settings!", ephemeral=True)
+        await self.bot.tree.sync()
+        await interaction.edit_original_response(content="✅ All commands and settings have been successfully synchronized!")
+    
+    @discord.ui.button(label="Nodes", emoji="📡")
+    async def nodes(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = NodesPanel(self.bot)
+        await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
+        view.message = await interaction.original_response()

@@ -23,25 +23,18 @@
     "toggleControllerMsg": "Ahora tiene `{0}` mensajes del controlador de música.",
     "settingsMenu": "Configuración del servidor | {0}",
     "settingsTitle": "❤️ Información básica:",
-    "settingsValue": "Prefijo: `{0}`\nIdioma: `{1}`\nHabilitar controlador de música: `{2}`\nRol de DJ: {3}\nBypass de votación: `{4}`\n24/7: `{5}`\nVolumen predeterminado: `{6}%`\nTiempo de reproducción: `{7}`",
+    "settingsValue": "```Prefijo: {0}\nIdioma: {1}\nHabilitar controlador de música: {2}\nRol de DJ: @{3}\nBypass de votación: {4}\n24/7: {5}\nVolumen predeterminado: {6}%\nTiempo de reproducción: {7}```",
     "settingsTitle2": "🔗 Información de la cola:",
-    "settingsValue2": "Modo de cola: `{0}`\nMáximo de canciones: `{1}`\nPermitir pistas duplicadas: `{2}`",
+    "settingsValue2": "```Modo de cola: {0}\nMáximo de canciones: {1}\nPermitir pistas duplicadas: {2}```",
+    "settingsTitle3": "🎤 Información del estado de voz:",
     "settingsPermTitle": "✨ Permisos:",
-    "settingsPermValue": "{0} Administrador\n{1} Administrar servidor\n{2} Administrar canal\n{3} Administrar mensajes",
+    "settingsPermValue": "```{0} Administrador\n{1} Administrar servidor\n{2} Administrar canal\n{3} Administrar mensajes```",
     "pingTitle1": "Información del bot:",
     "pingTitle2": "Información del reproductor:",
     "pingfield1": "```ID de fragmento: {0}/{1}\nLatencia de fragmento: {2:.3f}s {3}\nRegión: {4}```",
     "pingfield2": "```Nodo: {0} - {1:.3f}s\nReproductores: {2}\nRegión de voz: {3}```",
-    "karaoke": "Ha actualizado el nivel a **{0}**, monoLevel a **{1}**, filterBand a **{2}** y filterWidth a **{3}**.",
-    "tremolo&vibrato": "Ha actualizado la frecuencia a **{0}** y la profundidad a **{1}**.",
-    "rotation": "Ha actualizado la rotación Hz a **{0}**.",
-    "distortion": "Ha habilitado la distorsión.",
-    "lowpass": "Ha actualizado el paso bajo a **{0}**",
-    "channelmix": "Ha actualizado la mezcla de canales. De izquierda a izquierda: **{0}**, de derecha a derecha: **{1}**, de izquierda a derecha: **{2}**, de derecha a izquierda: **{3}**.",
-    "nightcore": "Ha agregado efectos de sonido nightcore.",
-    "8d": "Ha agregado efectos de sonido 8D.",
-    "vaporwave": "Ha agregado efectos de sonido vaporwave.",
-    "cleareffect": "¡Los efectos de sonido se han borrado!",
+    "addEffect": "plica el efecto `{0}` filtro.",
+    "clearEffect": "¡Los efectos de sonido se han borrado!",
     "FilterTagAlreadyInUse": "¡Este efecto de sonido ya está en uso! Utilice /cleareffect <Tag> para eliminarlo.",
 
     "playlistViewTitle": "📜 Todas las listas de reproducción de {0}",
@@ -105,6 +98,7 @@
     "playlistAdded": "❤️ Agregado **{0}** a la lista de reproducción de {1} [`{2}`]!",
 
     "playerDropdown": "Seleccione una canción para saltar a ...",
+    "playerFilter": "Seleccione un filtro para aplicar ...",
 
     "buttonBack": "Atrás",
     "buttonPause": "Pausa",
@@ -187,5 +181,10 @@
     "voicelinkOutofList": "¡Proporcione un índice de pista válido!",
     "voicelinkDuplicateTrack": "Lo siento, esta canción ya está en la cola.",
 
-    "deocdeError": "¡Algo salió mal al decodificar el archivo!"
+    "deocdeError": "¡Algo salió mal al decodificar el archivo!",
+    "invalidStartTime": "Tiempo de inicio inválido! El tiempo debe estar entre `00:00` y `{0}`.",
+    "invalidEndTime": "Tiempo de finalización inválido! El tiempo debe estar entre `00:00` y `{0}`.",
+    "invalidTimeOrder": "El tiempo final no puede ser menor o igual que el tiempo de inicio.",
+
+    "SetStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos."
 }

@@ -1,24 +1,24 @@
 import discord
 import sys
 import os
-import traceback
 import aiohttp
 import update
+import logging
 import function as func
 
 from discord.ext import commands
-from web import IPCServer
+from ipc import IPCClient
 from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 from voicelink import VoicelinkException
 from addons import Settings
 
 class Translator(discord.app_commands.Translator):
     async def load(self):
-        print("Loaded Translator")
+        func.logger.info("Loaded Translator")
 
     async def unload(self):
-        print("Unload Translator")
+        func.logger.info("Unload Translator")
 
     async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
         if str(locale) in func.LOCAL_LANGS:
@@ -29,12 +29,7 @@ class Vocard(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ipc = IPCServer(
-            self,
-            host=func.settings.ipc_server["host"],
-            port=func.settings.ipc_server["port"],
-            secret_key=func.tokens.secret_key
-        )
+        self.ipc: IPCClient
 
     async def on_message(self, message: discord.Message, /) -> None:
         if message.author.bot or not message.guild:
@@ -49,16 +44,17 @@ class Vocard(commands.Bot):
         await self.process_commands(message)
 
     async def connect_db(self) -> None:
-        if not ((db_name := func.tokens.mongodb_name) and (db_url := func.tokens.mongodb_url)):
+        if not ((db_name := func.settings.mongodb_name) and (db_url := func.settings.mongodb_url)):
             raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in settings.json")
 
         try:
             func.MONGO_DB = AsyncIOMotorClient(host=db_url)
             await func.MONGO_DB.server_info()
-            print("Successfully connected to MongoDB!")
+            func.logger.info(f"Successfully connected to [{db_name}] MongoDB!")
 
         except Exception as e:
-            raise Exception("Not able to connect MongoDB! Reason:", e)
+            func.logger.error("Not able to connect MongoDB! Reason:", exc_info=e)
+            exit()
         
         func.SETTINGS_DB = func.MONGO_DB[db_name]["Settings"]
         func.USERS_DB = func.MONGO_DB[db_name]["Users"]
@@ -74,12 +70,16 @@ class Vocard(commands.Bot):
             if module.endswith('.py'):
                 try:
                     await self.load_extension(f"cogs.{module[:-3]}")
-                    print(f"Loaded {module[:-3]}")
+                    func.logger.info(f"Loaded {module[:-3]}")
                 except Exception as e:
-                    print(traceback.format_exc())
+                    func.logger.error(f"Something went wrong while loading {module[:-3]} cog.", exc_info=e)
 
-        if func.settings.ipc_server.get("enable", False):
-            await self.ipc.start()
+        self.ipc = IPCClient(self, **func.settings.ipc_client)
+        if func.settings.ipc_client.get("enable", False):
+            try:
+                await self.ipc.connect()
+            except Exception as e:
+                func.logger.error(f"Cannot connected to dashboard! - Reason: {e}")
 
         if not func.settings.version or func.settings.version != update.__version__:
             func.update_json("settings.json", new_data={"version": update.__version__})
@@ -88,15 +88,15 @@ class Vocard(commands.Bot):
             await self.tree.sync()
 
     async def on_ready(self):
-        print("------------------")
-        print(f"Logging As {self.user}")
-        print(f"Bot ID: {self.user.id}")
-        print("------------------")
-        print(f"Discord Version: {discord.__version__}")
-        print(f"Python Version: {sys.version}")
-        print("------------------")
+        func.logger.info("------------------")
+        func.logger.info(f"Logging As {self.user}")
+        func.logger.info(f"Bot ID: {self.user.id}")
+        func.logger.info("------------------")
+        func.logger.info(f"Discord Version: {discord.__version__}")
+        func.logger.info(f"Python Version: {sys.version}")
+        func.logger.info("------------------")
 
-        func.tokens.client_id = self.user.id
+        func.settings.client_id = self.user.id
         func.LOCAL_LANGS.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
@@ -124,10 +124,8 @@ class Vocard(commands.Bot):
 
         elif not issubclass(error.__class__, VoicelinkException):
             error = await func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
-            if (guildId := ctx.guild.id) not in func.ERROR_LOGS:
-                func.ERROR_LOGS[guildId] = {}
-            func.ERROR_LOGS[guildId][round(datetime.timestamp(datetime.now()))] = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-
+            func.logger.error(f"An unexpected error occurred in the {ctx.command.name} command on the {ctx.guild.name}({ctx.guild.id}).", exc_info=exception)
+            
         try:
             return await ctx.reply(error, ephemeral=True)
         except:
@@ -139,30 +137,42 @@ class CommandCheck(discord.app_commands.CommandTree):
             await interaction.response.send_message("This command can only be used in guilds!")
             return False
 
-        return await super().interaction_check(interaction)
-    
+        return True
+
 async def get_prefix(bot, message: discord.Message):
     settings = await func.get_settings(message.guild.id)
     return settings.get("prefix", func.settings.bot_prefix)
 
-# Loading settings
+# Loading settings and logger
 func.settings = Settings(func.open_json("settings.json"))
+
+LOG_SETTINGS = func.settings.logging
+if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
+    log_path = os.path.abspath(LOG_FILE.get("path", "./logs"))
+    if not os.path.exists(log_path):
+        os.makedirs(log_path)
+
+    file_handler = TimedRotatingFileHandler(filename=f'{log_path}/vocard.log', encoding="utf-8", backupCount=LOG_SETTINGS.get("max-history", 30), when="d")
+    file_handler.namer = lambda name: name.replace(".log", "") + ".log"
+    file_handler.setFormatter(logging.Formatter('{asctime} [{levelname:<8}] {name}: {message}', '%Y-%m-%d %H:%M:%S', style='{'))
+
+    for log_name, log_level in LOG_SETTINGS.get("level", {}).items():
+        _logger = logging.getLogger(log_name)
+        _logger.setLevel(log_level)
+        
+    logging.getLogger().addHandler(file_handler)
 
 # Setup the bot object
 intents = discord.Intents.default()
 intents.message_content = True if func.settings.bot_prefix else False
-intents.members = True
-member_cache = discord.MemberCacheFlags(
-    voice=True,
-    joined=False
-)
+intents.members = func.settings.ipc_client.get("enable", False)
+intents.voice_states = True
 
 bot = Vocard(
     command_prefix=get_prefix,
     help_command=None,
     tree_cls=CommandCheck,
     chunk_guilds_at_startup=False,
-    member_cache_flags=member_cache,
     activity=discord.Activity(type=discord.ActivityType.listening, name="Starting..."),
     case_insensitive=True,
     intents=intents
@@ -170,4 +180,4 @@ bot = Vocard(
 
 if __name__ == "__main__":
     update.check_version(with_msg=True)
-    bot.run(func.tokens.token, log_handler=None)
+    bot.run(func.settings.token, root_logger=True)

@@ -1,11 +1,15 @@
-import discord, json, os, copy
+import discord, json, os, copy, logging
 
 from discord.ext import commands
-from datetime import datetime
 from time import strptime
-from io import BytesIO
-from typing import Optional, Union, Dict, Any
-from addons import Settings, TOKENS
+from addons import Settings
+
+from typing import (
+    Optional,
+    Union,
+    Dict,
+    Any
+)
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -18,20 +22,19 @@ if not os.path.exists(os.path.join(ROOT_DIR, "settings.json")):
     raise Exception("Settings file not set!")
 
 #--------------- Cache Var ---------------
-tokens: TOKENS = TOKENS()
 settings: Settings
+logger: logging.Logger = logging.getLogger("vocard")
 
 MONGO_DB: AsyncIOMotorClient
 SETTINGS_DB: AsyncIOMotorCollection
 USERS_DB: AsyncIOMotorCollection
 
-ERROR_LOGS: dict[int, dict[int, str]] = {} #Stores error that not a Voicelink Exception
 LANGS: dict[str, dict[str, str]] = {} #Stores all the languages in ./langs
 LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languages in ./local_langs
 SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
 USERS_BUFFER: dict[str, dict] = {}
 
-USERS_BASE: dict[str, Any] = {
+USER_BASE: dict[str, Any] = {
     'playlist': {
         '200': {
             'tracks':[],
@@ -75,16 +78,20 @@ def langs_setup() -> None:
 
     return
 
-def time(millis:int) -> str:
-    seconds=(millis/1000)%60
-    minutes=(millis/(1000*60))%60
-    hours=(millis/(1000*60*60))%24
-    if hours > 1:
-        return "%02d:%02d:%02d" % (hours, minutes, seconds)
+def time(millis: int) -> str:
+    seconds = (millis // 1000) % 60
+    minutes = (millis // (1000 * 60)) % 60
+    hours = (millis // (1000 * 60 * 60)) % 24
+    days = millis // (1000 * 60 * 60 * 24)
+
+    if days > 0:
+        return "%d days, %02d:%02d:%02d" % (days, hours, minutes, seconds)
+    elif hours > 0:
+        return "%d:%02d:%02d" % (hours, minutes, seconds)
     else:
         return "%02d:%02d" % (minutes, seconds)
 
-def formatTime(number:str) -> Optional[int]:
+def format_time(number:str) -> int:
     try:
         try:
             num = strptime(number, '%M:%S')
@@ -94,28 +101,13 @@ def formatTime(number:str) -> Optional[int]:
             except ValueError:
                 num = strptime(number, '%H:%M:%S')
     except:
-        return None
+        return 0
     
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
 def get_source(source: str, type: str) -> str:
     source_settings: dict = settings.sources_settings.get(source.lower(), {})
     return source_settings.get(type, ("🔗" if type == "emoji" else settings.embed_color))
-
-def gen_report() -> Optional[discord.File]:
-    if ERROR_LOGS:
-        errorText = ""
-        for guild_id, error in ERROR_LOGS.items():
-            errorText += f"Guild ID: {guild_id}\n" + "-" * 30 + "\n"
-            for index, (key, value) in enumerate(error.items() , start=1):
-                errorText += f"Error No: {index}, Time: {datetime.fromtimestamp(key)}\n" + value + "-" * 30 + "\n\n"
-
-        buffer = BytesIO(errorText.encode('utf-8'))
-        file = discord.File(buffer, filename='report.txt')
-        buffer.close()
-
-        return file        
-    return None
 
 def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
     if ctx.author.id in settings.bot_access_user:
@@ -144,6 +136,13 @@ def get_lang_non_async(guild_id: int, *keys) -> Union[list[str], str]:
         return LANGS.get(lang, {}).get(keys[0], "Language pack not found!")
     return [LANGS.get(lang, {}).get(key, "Language pack not found!") for key in keys]
 
+def format_bytes(bytes: int, unit: bool = False):
+    if bytes <= 1_000_000_000:
+        return f"{bytes / (1024 ** 2):.1f}" + ("MB" if unit else "")
+    
+    else:
+        return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
+    
 async def get_lang(guild_id:int, *keys) -> Union[list[str], str]:
     settings = await get_settings(guild_id)
     lang = settings.get("lang", "EN")
@@ -158,7 +157,15 @@ async def send(ctx: Union[commands.Context, discord.Interaction], key: str, *par
     text = await get_lang(ctx.guild.id, key)
     text = text.format(*params)
 
-    send_func = ctx.send if isinstance(ctx, commands.Context) else (ctx.followup.send if ctx.response.is_done() else ctx.response.send_message)
+    if isinstance(ctx, commands.Context):
+        send_func = ctx.send
+    else:
+        if not ctx.response.is_done():
+            send_func = ctx.response.send_message
+            
+        else:
+            return await ctx.followup.send(text, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+        
     return await send_func(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
 
 async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, data: dict) -> bool:
@@ -225,13 +232,13 @@ async def get_user(user_id: int, d_type: Optional[str] = None, need_copy: bool =
     if not user:
         user = await USERS_DB.find_one({"_id": user_id})
         if not user:
-            user = {"_id": user_id, **USERS_BASE}
+            user = {"_id": user_id, **USER_BASE}
             await USERS_DB.insert_one(user)
     
         USERS_BUFFER[user_id] = user
         
     if d_type:
-        user = user.setdefault(d_type, copy.deepcopy(USERS_BASE.get(d_type)))
+        user = user.setdefault(d_type, copy.deepcopy(USER_BASE.get(d_type)))
             
     return copy.deepcopy(user) if need_copy else user
 

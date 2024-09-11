@@ -26,14 +26,15 @@ import time
 import aiohttp
 
 from base64 import b64encode
-from typing import List, Union
-from .objects import Track, Album, Artist, Playlist
+from typing import List, Union, Dict, Any
+from .objects import Track, Album, Artist, Playlist, Category
 from .exceptions import InvalidSpotifyURL, SpotifyRequestException 
 
+BASE_URL = "https://api.spotify.com/v1/"
 GRANT_URL = "https://accounts.spotify.com/api/token"
-REQUEST_URL = "https://api.spotify.com/v1/{type}s/{id}"
-SEARCH_URL = "https://api.spotify.com/v1/search?q={query}&type={type}&limit={limit}"
-SUGGESTION_URL = "https://api.spotify.com/v1/recommendations?limit={limit}&seed_tracks={seed_tracks}"
+REQUEST_URL = BASE_URL + "{type}s/{id}"
+SEARCH_URL = BASE_URL + "search?q={query}&type={type}&limit={limit}"
+SUGGESTION_URL = BASE_URL + "recommendations?limit={limit}&seed_tracks={seed_tracks}"
 SPOTIFY_URL_REGEX = re.compile(
     r"https?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)"
 )
@@ -45,16 +46,18 @@ class Client:
     """
 
     def __init__(self, client_id: str, client_secret: str) -> None:
-        self._client_id = client_id
-        self._client_secret = client_secret
+        self._client_id: str = client_id
+        self._client_secret: str = client_secret
 
-        self.session = aiohttp.ClientSession()
+        self.session: aiohttp.ClientSession = aiohttp.ClientSession()
 
         self._bearer_token: str = None
-        self._expiry = 0
-        self._auth_token = b64encode(f"{self._client_id}:{self._client_secret}".encode())
-        self._grant_headers = {"Authorization": f"Basic {self._auth_token.decode()}"}
-        self._bearer_headers = None
+        self._expiry: int = 0
+        self._auth_token: str = b64encode(f"{self._client_id}:{self._client_secret}".encode())
+        self._grant_headers: Dict[str, str] = {"Authorization": f"Basic {self._auth_token.decode()}"}
+        self._bearer_headers: Dict[str, str] = None
+
+        self._categories: List[Category] = []
 
     async def _fetch_bearer_token(self) -> None:
         _data = {"grant_type": "client_credentials"}
@@ -65,48 +68,35 @@ class Client:
                     f"Error fetching bearer token: {resp.status} {resp.reason}"
                 )
 
-            data: dict = await resp.json()
+            data: Dict = await resp.json()
 
         self._bearer_token = data["access_token"]
         self._expiry = time.time() + (int(data["expires_in"]) - 10)
         self._bearer_headers = {"Authorization": f"Bearer {self._bearer_token}"}
 
-    async def trackSearch(self, query: str, track: str = "track", limit: int = 10) -> List[Track]:
+    async def get_request(self, url: str) -> Dict:
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
 
-        request_url = SEARCH_URL.format(query=query, type=track, limit=limit)
-
-        async with self.session.get(request_url, headers=self._bearer_headers) as resp:
+        async with self.session.get(url, headers=self._bearer_headers) as resp:
             if resp.status != 200:
                 raise SpotifyRequestException(
                     f"Error while fetching results: {resp.status} {resp.reason}"
                 )
             
-            data: dict = await resp.json()
+            return await resp.json()
 
+    async def track_search(self, query: str, track: str = "track", limit: int = 10) -> List[Track]:
+        request_url = SEARCH_URL.format(query=query, type=track, limit=limit)
+        data = await self.get_request(request_url)
         return [ Track(track) for track in data['tracks']['items'] ]
 
     async def similar_track(self, seed_tracks: str, *, limit: int = 5) -> List[Track]:
-        if not self._bearer_token or time.time() >= self._expiry:
-            await self._fetch_bearer_token()
-        
         request_url = SUGGESTION_URL.format(limit=limit, seed_tracks=seed_tracks)
-
-        async with self.session.get(request_url, headers=self._bearer_headers) as resp:
-            if resp.status != 200:
-                raise SpotifyRequestException(
-                    f"Error while fetching results: {resp.status} {resp.reason}"
-                )
-            
-            data: dict = await resp.json()
-
-            return [ Track(track) for track in data['tracks'] ]
+        data = await self.get_request(request_url)
+        return [ Track(track) for track in data['tracks'] ]
             
     async def search(self, *, query: str) -> Union[Track, Album, Playlist]:
-        if not self._bearer_token or time.time() >= self._expiry:
-            await self._fetch_bearer_token()
-
         result = SPOTIFY_URL_REGEX.match(query)
         spotify_type = result.group("type")
         spotify_id = result.group("id")
@@ -118,13 +108,7 @@ class Client:
         if isArtist := (spotify_type == "artist"):
             request_url += "/top-tracks?market=US"
 
-        async with self.session.get(request_url, headers=self._bearer_headers) as resp:
-            if resp.status != 200:
-                raise SpotifyRequestException(
-                    f"Error while fetching results: {resp.status} {resp.reason}"
-                )
-
-            data: dict = await resp.json()
+        data = await self.get_request(request_url)
 
         if spotify_type == "track":
             return Track(data)
@@ -150,7 +134,7 @@ class Client:
                             f"Error while fetching results: {resp.status} {resp.reason}"
                         )
 
-                    next_data: dict = await resp.json()
+                    next_data: Dict = await resp.json()
 
                 tracks += [
                     Track(track["track"])
@@ -159,6 +143,14 @@ class Client:
                 next_page_url = next_data["next"]
 
             return Playlist(data, tracks)
+    
+    async def get_categories(self) -> List[Category]:
+        if not self._categories:
+            request_url = f"{BASE_URL}browse/categories"
+            data = await self.get_request(request_url)
+            self._categories = [Category(item) for item in data.get("items", [])]
+
+        return self._categories
     
     async def close(self) -> None:
         await self.session.close()

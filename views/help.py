@@ -56,8 +56,8 @@ class HelpView(discord.ui.View):
         self.response: discord.Message = None
         self.categorys: list[str] = [ name.capitalize() for name, cog in bot.cogs.items() if len([c for c in cog.walk_commands()]) ]
 
-        self.add_item(discord.ui.Button(label='Support', emoji=':support:915152950471581696', url=func.settings.invite_link))
-        self.add_item(discord.ui.Button(label='Invite', emoji=':invite:915152589056790589', url=f'https://discord.com/oauth2/authorize?client_id={bot.user.id}&permissions=2184260928&scope=bot%20applications.commands'))
+        self.add_item(discord.ui.Button(label='Website', emoji='🌎', url='https://vocard.xyz'))
+        self.add_item(discord.ui.Button(label='Document', emoji=':support:915152950471581696', url='https://docs.vocard.xyz'))
         self.add_item(discord.ui.Button(label='Github', emoji=':github:1098265017268322406', url='https://github.com/ChocoMeow/Vocard'))
         self.add_item(discord.ui.Button(label='Donate', emoji=':patreon:913397909024800878', url='https://www.patreon.com/Vocard'))
         self.add_item(HelpDropdown(self.categorys))

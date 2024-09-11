@@ -85,7 +85,7 @@ class A_ZLyrics(LyricsPlatform):
             lyrics = max(divs, key=len).strip()
 
             if not lyrics:
-                return print("Lyrics not found")
+                return None
 
             lyrics_parts = re.split(r"(\[[\w\S_ ]+\:])", lyrics)
             lyrics_parts = [item for item in lyrics_parts if item != ""]
@@ -173,7 +173,7 @@ class A_ZLyrics(LyricsPlatform):
 class Genius(LyricsPlatform):
     def __init__(self) -> None:
         self.module = import_module("lyricsgenius")
-        self.genius = self.module.Genius(func.tokens.genius_token)
+        self.genius = self.module.Genius(func.settings.genius_token)
 
     async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
         song = self.genius.search_song(title=title, artist=artist)

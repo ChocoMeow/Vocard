@@ -1,4 +1,11 @@
 {
+    "token": "YOUR_BOT_TOKEN",
+    "client_id": "YOUR_BOT_CLIENT_ID",
+    "spotify_client_id": "YOUR_SPOTIFY_CLIENT_ID",
+    "spotify_client_secret": "YOUR_SPOTIFY_CLIENT_SECRET",
+    "genius_token": "YOUR_GENIUS_TOKEN",
+    "mongodb_url": "YOUR_MONGODB_URL",
+    "mongodb_name": "YOUR_MONGODB_DB_NAME",
     "nodes": {
         "DEFAULT": {
             "host": "lavalink",
@@ -9,16 +16,30 @@
         }   
     },
     "prefix": "?",
-    "activity":[
-        {"listen": "/help"}
+    "activity": [
+        {"type": "listening", "name": "/help", "status": "online"}
     ],
+    "logging": {
+        "file": {
+            "path": "./logs",
+            "enable": true
+        },
+        "level": {
+            "discord": "INFO",
+            "vocard": "INFO",
+            "ipc_client": "INFO"
+        },
+        "max-history": 30
+    },
     "bot_access_user": [],
     "embed_color":"0xb3b3b3",
     "default_max_queue": 1000,
-    "lyrics_platform": "A_ZLyrics",
-    "ipc_server": {
+    "lyrics_platform": "lyrist",
+    "ipc_client": {
         "host": "127.0.0.1",
         "port": 8000,
+        "password": "YOUR_PASSWORD",
+        "secure": false,
         "enable": false
     },
     "sources_settings": {
@@ -66,7 +87,7 @@
     "default_controller": {
         "embeds": {
             "active": {
-                "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: @@requester@@ | DJ: @@dj@@**",
+                "description": "**Now Playing: ```[@@track_name@@]```\nLink: [Click Me](@@track_url@@) | Requester: <#@@track_requester_id@@> | DJ: @@dj@@**",
                 "footer": {
                     "text": "Queue Length: @@queue_length@@ | Duration: @@track_duration@@ | Volume: @@volume@@% {{loop_mode != 'Off' ?? | Repeat: @@loop_mode@@}}"
                 },
@@ -92,6 +113,7 @@
         ],
         "disableButtonText": false
     },
+    "default_voice_status_template": "{{@@track_name@@ != 'None' ?? @@track_source_emoji@@ Now Playing: @@track_name@@ // Waiting for song requests}}",
     "cooldowns": {
         "connect": [2, 30],
         "playlist view": [1, 30]

@@ -23,25 +23,18 @@
     "toggleControllerMsg": "現在您已從音樂控制器 `{0}` 消息。",
     "settingsMenu": "伺服器設置 | {0}",
     "settingsTitle": "❤️ 基本資訊：",
-    "settingsValue": "前綴：`{0}`\n語言：`{1}`\n啟用音樂控制器：`{2}`\nDJ 角色：{3}\n投票繞過：`{4}`\n24/7：`{5}`\n默認音量：`{6}%`\n播放時間：`{7}`",
+    "settingsValue": "```前綴：{0}\n語言：{1}\n音樂控制器：{2}\nDJ 角色：@{3}\n投票繞過：{4}\n24/7：{5}\n默認音量：{6}%\n播放時間：{7}```",
     "settingsTitle2": "🔗 隊列資訊：",
-    "settingsValue2": "隊列模式：`{0}`\n最大歌曲數：`{1}`\n允許重複曲目：`{2}`",
+    "settingsValue2": "```隊列模式：{0}\n最大歌曲數：{1}\n允許重複曲目：{2}```",
+    "settingsTitle3": "🎤 語音狀態資訊：",
     "settingsPermTitle": "✨ 權限：",
-    "settingsPermValue": "{0} 管理員\n{1} 管理伺服器\n{2} 管理頻道\n{3} 管理訊息",
+    "settingsPermValue": "```{0} 管理員\n{1} 管理伺服器\n{2} 管理頻道\n{3} 管理訊息```",
     "pingTitle1": "機器人資訊：",
     "pingTitle2": "播放器信息：",
     "pingfield1": "```分片 ID: {0}/{1}\n分片延遲: {2:.3f}s {3}\n區域: {4}```",
     "pingfield2": "```節點: {0} - {1:.3f}s\n播放器數量: {2}\n語音區域: {3}```",
-    "karaoke": "你已更新等級到 **{0}**，單聲道等級到 **{1}**，濾波頻帶到 **{2}**，濾波寬度到 **{3}**",
-    "tremolo&vibrato": "你已更新頻率到 {0}，深度到 {1}",
-    "rotation": "你已更新旋轉 Hz 到 {0}",
-    "distortion": "你已啟用失真。",
-    "lowpass": "你已更新低通濾波器到 {0}",
-    "channelmix": "你已更新聲道混音。左左: {0}，右右: {1}，左右: {2}，右左: {3}",
-    "nightcore": "你已加入夜蒼聲音效果。",
-    "8d": "你已加入 8D 聲音效果。",
-    "vaporwave": "你已加入 vaporwave 聲音效果。",
-    "cleareffect": "聲音效果已清除！",
+    "addEffect": "套用音效`{0}`濾鏡。",
+    "clearEffect": "聲音效果已清除！",
     "FilterTagAlreadyInUse": "此聲音效果已在使用中！請使用 /cleareffect <Tag> 移除它。",
 
     "playlistViewTitle": "📜 所有 {0} 的播放清單",
@@ -105,6 +98,7 @@
     "playlistAdded": "❤️ 已將 **{0}** 添加到 {1} 的播放清單中 [`{2}`]!",
 
     "playerDropdown": "選擇要跳轉到的音軌...",
+    "playerFilter": "選擇要套用的篩選器...",
 
     "buttonBack": "返回",
     "buttonPause": "暫停",
@@ -187,5 +181,10 @@
     "voicelinkOutofList": "請提供有效的歌曲索引！",
     "voicelinkDuplicateTrack": "抱歉，此歌曲已在隊列中。",
 
-    "deocdeError": "解碼文件時出現問題！"
+    "deocdeError": "解碼文件時出現問題！",
+    "invalidStartTime": "無效的開始時間! 時間必須在 `00:00` 和 `{0}` 之間。",
+    "invalidEndTime": "無效的結束時間! 時間必須在 `00:00` 和 `{0}` 之間。",
+    "invalidTimeOrder": "結束時間不能小於或等於開始時間。",
+
+    "SetStageAnnounceTemplate": "完成！從現在開始，像您現在的語音狀態將根據您的模板命名。您應該在幾秒鐘內看到它更新。"
 }

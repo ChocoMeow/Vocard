@@ -37,8 +37,18 @@ class Filter:
     these filters will not work.
     """
     def __init__(self):
-        self.payload: Dict[str, List] = None
+        self.payload: Dict[str, float] = None
+        self.scope: Dict[str, List[int]] = None
         self.tag: str = None
+
+    def _init_with_scope(self, scope: Dict[str, List[int]], **kwargs):
+        self.scope = scope
+        for prop, (min_val, max_val) in scope.items():
+            setattr(self, prop, kwargs.get(prop, scope[prop][0]))
+            if not min_val <= getattr(self, prop) <= max_val:
+                raise FilterInvalidArgument(f"{self.__class__.__name__} {prop} must be between {min_val} and {max_val}.")
+        self.tag = kwargs.get("tag")
+        self.payload = {self.__class__.__name__.lower(): {prop: getattr(self, prop) for prop in scope}}
 
 class Filters:
     def __init__(self) -> None:
@@ -71,6 +81,20 @@ class Filters:
     
     def get_filters(self) -> List[Filter]:
         return self._filters
+    
+    @classmethod
+    def get_available_filters(cls) -> Dict[str, Filter]:
+        return {
+            "karaoke": Karaoke,
+            "tremolo": Tremolo,
+            "vibrato": Vibrato,
+            "rotation": Rotation,
+            "distortion": Distortion,
+            "lowpass": LowPass,
+            "nightcore": Timescale.nightcore,
+            "vaporwave": Timescale.vaporwave,
+            "8d": Rotation.nightD,
+        }
         
 class Equalizer(Filter):
     """
@@ -80,7 +104,7 @@ class Equalizer(Filter):
     The format for the levels is: List[Tuple[int, float]]
     """
 
-    def __init__(self, *, tag: str, levels: list):
+    def __init__(self, *, tag: str = "equalizer", levels: list):
         super().__init__()
 
         self.eq = self._factory(levels)
@@ -156,7 +180,6 @@ class Equalizer(Filter):
         ]
         return cls(tag="piano", levels=levels)
 
-
 class Timescale(Filter):
     """Filter which changes the speed and pitch of a track.
        You can make some very nice effects with this filter,
@@ -167,32 +190,17 @@ class Timescale(Filter):
     def __init__(
         self, 
         *, 
-        tag: str,
+        tag: str = "timescale",
         speed: float = 1.0, 
         pitch: float = 1.0, 
         rate: float = 1.0
     ):
         super().__init__()
-
-        if speed < 0:
-            raise FilterInvalidArgument("Timescale speed must be more than 0.")
-        if pitch < 0:
-            raise FilterInvalidArgument("Timescale pitch must be more than 0.")
-        if rate < 0:
-            raise FilterInvalidArgument("Timescale rate must be more than 0.")
-
-        self.speed = speed
-        self.pitch = pitch
-        self.rate = rate
-        self.tag = tag
-
-        self.payload = {
-            "timescale": {
-                "speed": self.speed,
-                "pitch": self.pitch,
-                "rate": self.rate
-            }
-        }
+        self._init_with_scope({
+            "speed": [0, 5],
+            "pitch": [0, 5],
+            "rate": [0, 5]
+        }, tag=tag, speed=speed, pitch=pitch, rate=rate)
 
     @classmethod
     def vaporwave(cls):
@@ -215,8 +223,7 @@ class Timescale(Filter):
         return cls(tag="nightcore", speed=1.25, pitch=1.3)                    
 
     def __repr__(self):
-        return f"<Voicelink.TimescaleFilter tag={self.tag} speed={self.speed} pitch={self.pitch} rate={self.rate}>"
-
+        return f"<Voicelink.TimescaleFilter tag={self.tag} payload={self.payload}>"
 
 class Karaoke(Filter):
     """Filter which filters the vocal track from any song and leaves the instrumental.
@@ -226,35 +233,22 @@ class Karaoke(Filter):
     def __init__(
         self,
         *,
-        tag: str,
+        tag: str = "karaoke",
         level: float = 1.0,
         mono_level: float = 1.0,
         filter_band: float = 220.0,
         filter_width: float = 100.0
     ):
         super().__init__()
-
-        self.level = level
-        self.mono_level = mono_level
-        self.filter_band = filter_band
-        self.filter_width = filter_width
-        self.tag = tag
-
-        self.payload = {
-            "karaoke": {
-                "level": self.level,
-                "monoLevel": self.mono_level,
-                "filterBand": self.filter_band,
-                "filterWidth": self.filter_width
-            }
-        }
+        self._init_with_scope({
+            "level": [0, 5],
+            "monoLevel": [0, 5],
+            "filterBand": [0, 500],
+            "filterWidth": [0, 300]
+        }, tag=tag, level=level, mono_level=mono_level, filter_band=filter_band, filter_width=filter_width)
 
     def __repr__(self):
-        return (
-            f"<Voicelink.KaraokeFilter tag={self.tag} level={self.level} mono_level={self.mono_level} "
-            f"filter_band={self.filter_band} filter_width={self.filter_width}>"
-        )
-
+        return (f"<Voicelink.KaraokeFilter tag={self.tag} payload={self.payload}")
 
 class Tremolo(Filter):
     """Filter which produces a wavering tone in the music,
@@ -264,31 +258,18 @@ class Tremolo(Filter):
     def __init__(
         self, 
         *, 
-        tag: str,
+        tag: str = "tremolo",
         frequency: float = 2.0, 
         depth: float = 0.5
     ):
         super().__init__()
-
-        if frequency < 0:
-            raise FilterInvalidArgument("Tremolo frequency must be more than 0.")
-        if depth < 0 or depth > 1:
-            raise FilterInvalidArgument("Tremolo depth must be between 0 and 1.")
-
-        self.frequency = frequency
-        self.depth = depth
-        self.tag = tag
-
-        self.payload = {
-            "tremolo": {
-                "frequency": self.frequency,
-                "depth": self.depth
-            }
-        }
+        self._init_with_scope({
+            "frequency": [0, 5],
+            "depth": [0, 1]
+        }, tag=tag, frequency=frequency, depth=depth)
 
     def __repr__(self):
-        return f"<Voicelink.TremoloFilter tag={self.tag} frequency={self.frequency} depth={self.depth}>"
-
+        return f"<Voicelink.TremoloFilter tag={self.tag} payload={self.payload}"
 
 class Vibrato(Filter):
     """Filter which produces a wavering tone in the music, similar to the Tremolo filter,
@@ -298,51 +279,36 @@ class Vibrato(Filter):
     def __init__(
         self, 
         *, 
-        tag: str,
+        tag: str = "vibrato",
         frequency: float = 2.0, 
         depth: float = 0.5
     ):
-
         super().__init__()
-        if frequency < 0 or frequency > 14:
-            raise FilterInvalidArgument("Vibrato frequency must be between 0 and 14.")
-        if depth < 0 or depth > 1:
-            raise FilterInvalidArgument("Vibrato depth must be between 0 and 1.")
-
-        self.frequency = frequency
-        self.depth = depth
-        self.tag = tag
-
-        self.payload = {
-            "vibrato": {
-                "frequency": self.frequency,
-                "depth": self.depth
-            }
-        }
+        self._init_with_scope({
+            "frequency": [0, 14],
+            "depth": [0, 1]
+        }, tag=tag, frequenc=frequency, depth=depth)
         
     def __repr__(self):
-        return f"<Voicelink.VibratoFilter tag={self.tag} frequency={self.frequency} depth={self.depth}>"
-
+        return f"<Voicelink.VibratoFilter tag={self.tag} payload={self.payload}"
 
 class Rotation(Filter):
     """Filter which produces a stereo-like panning effect, which sounds like
     the audio is being rotated around the listener's head
     """
 
-    def __init__(self, *, tag: str, rotation_hertz: float = 5):
+    def __init__(self, *, tag: str = "rotation", rotation_hertz: float = 5):
         super().__init__()
-
-        self.rotation_hertz = rotation_hertz
-        self.tag = tag
-        self.payload = {"rotation": {"rotationHz": self.rotation_hertz}}
+        self._init_with_scope({
+            "rotationHz": [0, 10]
+        }, tag=tag, rotationHz=rotation_hertz)
 
     @classmethod
     def nightD(cls):
         return cls(tag="8d", rotation_hertz=0.2)
 
     def __repr__(self) -> str:
-        return f"<Voicelink.RotationFilter tag={self.tag} rotation_hertz={self.rotation_hertz}>"
-
+        return f"<Voicelink.RotationFilter tag={self.tag} payload={self.payload}"
 
 class ChannelMix(Filter):
     """Filter which manually adjusts the panning of the audio, which can make
@@ -352,43 +318,22 @@ class ChannelMix(Filter):
     def __init__(
         self,
         *,
-        tag: str,
+        tag: str = "channelMix",
         left_to_left: float = 1,
         right_to_right: float = 1,
         left_to_right: float = 0,
         right_to_left: float = 0
     ):
         super().__init__()
-
-        if 0 > left_to_left > 1:
-            raise ValueError("'left_to_left' value must be more than or equal to 0 or less than or equal to 1.")
-        if 0 > right_to_right > 1:
-            raise ValueError("'right_to_right' value must be more than or equal to 0 or less than or equal to 1.")
-        if 0 > left_to_right > 1:
-            raise ValueError("'left_to_right' value must be more than or equal to 0 or less than or equal to 1.")
-        if 0 > right_to_left > 1:
-            raise ValueError("'right_to_left' value must be more than or equal to 0 or less than or equal to 1.")
-
-        self.left_to_left = left_to_left
-        self.left_to_right = left_to_right
-        self.right_to_left = right_to_left
-        self.right_to_right = right_to_right
-        self.tag = tag
-
-        self.payload = {
-            "channelMix": {
-                "leftToLeft": self.left_to_left, 
-                "leftToRight": self.left_to_right, 
-                "rightToLeft": self.right_to_left, 
-                "rightToRight": self.right_to_right
-            }
-        }
+        self._init_with_scope({
+            "leftToLeft": [0, 1],
+            "leftToRight": [0, 1],
+            "rightToLeft": [0, 1],
+            "rightToRight": [0, 1]
+        }, tag=tag, leftToLeft=left_to_left, leftToRight=left_to_right, rightToLeft=right_to_left, rightToRight=right_to_right)
 
     def __repr__(self) -> str:
-        return ( 
-            f"<Voicelink.ChannelMix tag={self.tag} left_to_left={self.left_to_left} left_to_right={self.left_to_right} "
-            f"right_to_left={self.right_to_left} right_to_right={self.right_to_right}>" 
-        )
+        return (f"<Voicelink.ChannelMix tag={self.tag} payload={self.payload}")
 
 class Distortion(Filter):
     """Filter which generates a distortion effect. Useful for certain filter implementations where
@@ -398,7 +343,7 @@ class Distortion(Filter):
     def __init__(
         self,
         *,
-        tag: str,
+        tag: str = "distortion",
         sin_offset: float =  0,
         sin_scale: float = 1,
         cos_offset: float = 0,
@@ -409,51 +354,39 @@ class Distortion(Filter):
         scale: float = 1
     ):
         super().__init__()
-
-        self.sin_offset = sin_offset
-        self.sin_scale = sin_scale
-        self.cos_offset = cos_offset
-        self.cos_scale = cos_scale
-        self.tan_offset = tan_offset
-        self.tan_scale = tan_scale
-        self.offset = offset
-        self.scale = scale
-        self.tag = tag
-
-        self.payload = {
-            "distortion": {
-                "sinOffset": self.sin_offset,
-                "sinScale": self.sin_scale,
-                "cosOffset": self.cos_offset,
-                "cosScale": self.cos_scale,
-                "tanOffset": self.tan_offset,
-                "tanScale": self.tan_scale,
-                "offset": self.offset,
-                "scale": self.scale
-            }
-        }
+        self._init_with_scope({
+            "sinOffset": [0, 1],
+            "sinScale": [0, 1],
+            "cosOffset": [0, 1],
+            "cosScale": [0, 1],
+            "tanOffset": [0, 1],
+            "tanScale": [0, 1],
+            "offset": [0, 1],
+            "scale": [0, 1],
+        },
+        tag = tag,
+        sinOffset = sin_offset,
+        sinScale = sin_scale,
+        cosOffset = cos_offset,
+        cosScale = cos_scale,
+        tanOffset = tan_offset,
+        tanScale = tan_scale,
+        offset = offset,
+        scale = scale)
 
     def __repr__(self) -> str:
-        return (
-            f"<Voicelink.Distortion tag={self.tag} sin_offset={self.sin_offset} sin_scale={self.sin_scale}> "
-            f"cos_offset={self.cos_offset} cos_scale={self.cos_scale} tan_offset={self.tan_offset} "
-            f"tan_scale={self.tan_scale} offset={self.offset} scale={self.scale}"
-        )
-
+        return (f"<Voicelink.Distortion tag={self.tag} payload={self.payload}")
 
 class LowPass(Filter):
     """Filter which supresses higher frequencies and allows lower frequencies to pass.
     You can also do this with the Equalizer filter, but this is an easier way to do it.
     """
 
-    def __init__(self, *, tag: str, smoothing: float = 20):
+    def __init__(self, *, tag: str = "lowpass", smoothing: float = 20):
         super().__init__()
-
-        self.smoothing = smoothing
-        self.tag = tag
-        self.payload = {"lowPass": {"smoothing": self.smoothing}}
+        self._init_with_scope({
+            "smoothing": [0, 100]
+        }, tag = tag, smoothing = smoothing)
 
     def __repr__(self) -> str:
-        return f"<Voicelink.LowPass tag={self.tag} smoothing={self.smoothing}>"
-
-
+        return f"<Voicelink.LowPass tag={self.tag} payload={self.payload}>"

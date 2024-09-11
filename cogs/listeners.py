@@ -44,12 +44,13 @@ class Listeners(commands.Cog):
             try:
                 await self.voicelink.create_node(
                     bot=self.bot, 
-                    spotify_client_id=func.tokens.spotify_client_id, 
-                    spotify_client_secret=func.tokens.spotify_client_secret,
+                    spotify_client_id=func.settings.spotify_client_id, 
+                    spotify_client_secret=func.settings.spotify_client_secret,
+                    logger=func.logger,
                     **n
                 )
             except Exception as e:
-                print(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
+                func.logger.error(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
 
     @commands.Cog.listener()
     async def on_voicelink_track_end(self, player: voicelink.Player, track, _):
@@ -79,8 +80,7 @@ class Listeners(commands.Cog):
         player: voicelink.Player = member.guild.voice_client
         if not player:
             return
-        
-        guild = member.guild.id
+
         is_joined = True
         
         if not before.channel and after.channel:
@@ -94,16 +94,20 @@ class Listeners(commands.Cog):
             if after.channel.id != player.channel.id:
                 is_joined = False
                 
-        if player.is_ipc_connected:
+        if is_joined and player.settings.get("24/7", False):
+            if player.is_paused and len([m for m in player.channel.members if not m.bot]) == 1:
+                await player.set_pause(False, member)
+                  
+        if self.bot.ipc._is_connected:
             await self.bot.ipc.send({
                 "op": "updateGuild",
                 "user": {
-                    "user_id": member.id,
+                    "user_id": str(member.id),
                     "avatar_url": member.display_avatar.url,
                     "name": member.name,
                 },
                 "channel_name": member.voice.channel.name if is_joined else "",
-                "guild_id": guild,
+                "guild_id": str(member.guild.id),
                 "is_joined": is_joined
             })
 

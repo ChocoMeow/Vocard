@@ -9,24 +9,25 @@ services:
             - _JAVA_OPTIONS=-Xmx1G
             - SERVER_PORT=2333
             - LAVALINK_SERVER_PASSWORD=youshallnotpass
-        healthcheck:
-            test: 'curl -H "Authorization: youshallnotpass" -s http://localhost:2333/version'
-            interval: 10s
-            timeout: 10s
-            retries: 5
-            start_period: 10s
         volumes:
+            ## Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
+            ## Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
+            ## Read more: https://docs.docker.com/storage/bind-mounts/ 
             - ./application.yml:/opt/Lavalink/application.yml
         networks:
             - local
         expose:
             - "2333"
 
+    # # You can selfhost MongoDB. Just uncomment lines starting with single "#" below.
     # mongo:
     #     image: mongo:latest
     #     container_name: mongo
     #     restart: unless-stopped
     #     volumes:
+    #         # Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
+    #         # Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
+    #         # Read more: https://docs.docker.com/storage/bind-mounts/ 
     #         - ./data/mongo/db:/data/db
     #         - ./data/mongo/conf:/data/configdb
     #     environment:
@@ -39,21 +40,19 @@ services:
     #     command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
 
     vocard:
-        image: vocard
         container_name: vocard
+        volumes:
+            ## Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
+            ## Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
+            ## Read more: https://docs.docker.com/storage/bind-mounts/ 
+            - ./settings.json:/app/settings.json
         build:
             dockerfile: ./Dockerfile
-        volumes:
-            - ./settings.json:/app/settings.json
-            - ./.env:/app/.env
-            - ./logs/supervisor/:/var/log
         depends_on:
             lavalink:
-                condition: service_healthy
+                condition: service_started
             # mongo:
             #     condition: service_started
-        ports:
-            - "5555:5555"
         networks:
             - local
 

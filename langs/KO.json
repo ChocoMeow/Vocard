@@ -23,25 +23,18 @@
     "toggleControllerMsg": "이제 음악 컨트롤러로부터 `{0}` 메시지가 있습니다.",
     "settingsMenu": "서버 설정 | {0}",
     "settingsTitle": "❤️ 기본 정보:",
-    "settingsValue": "접두사: `{0}`\n언어: `{1}`\n음악 컨트롤러 사용: `{2}`\nDJ 역할: {3}\n투표 우회: `{4}`\n24/7 모드: `{5}`\n기본 볼륨: `{6}%`\n재생 시간: `{7}`",
+    "settingsValue": "```접두사: {0}\n언어: {1}\n음악 컨트롤러 사용: {2}\nDJ 역할: @{3}\n투표 우회: {4}\n24/7 모드: {5}\n기본 볼륨: {6}%\n재생 시간: {7}```",
     "settingsTitle2": "🔗 대기열 정보:",
-    "settingsValue2": "큐 모드: `{0}`\n최대 노래: `{1}`\n중복된 트랙 허용: `{2}`",
+    "settingsValue2": "```큐 모드: {0}\n최대 노래: {1}\n중복된 트랙 허용: {2}```",
+    "settingsTitle3": "🎤 음성 상태 정보:",
     "settingsPermTitle": "✨ 권한:",
-    "settingsPermValue": "{0} 관리자\n{1} 서버 관리\n{2} 채널 관리\n{3} 메시지 관리",
+    "settingsPermValue": "```{0} 관리자\n{1} 서버 관리\n{2} 채널 관리\n{3} 메시지 관리```",
     "pingTitle1": "봇 정보:",
     "pingTitle2": "플레이어 정보:",
     "pingfield1": "```쉬드 ID: {0}/{1}\n쉬드 대기 시간: {2:.3f}s {3}\n지역: {4}```",
     "pingfield2": "```노드: {0} - {1:.3f}s\n플레이어: {2}\n음성 지역: {3}```",
-    "karaoke": "**{0}** 레벨, 모노 레벨 **{1}**, 필터 밴드 **{2}**, 필터 너비 **{3}**으로 업데이트되었습니다.",
-    "tremolo&vibrato": "주파수를 **{0}**으로, 깊이를 **{1}**으로 업데이트했습니다.",
-    "rotation": "회전 주파수를 **{0}**으로 업데이트했습니다.",
-    "distortion": "왜곡이 활성화되었습니다.",
-    "lowpass": "LowPass를 **{0}**으로 업데이트했습니다.",
-    "channelmix": "채널 믹스를 업데이트했습니다. 왼쪽-왼쪽: **{0}**, 오른쪽-오른쪽: **{1}**, 왼쪽-오른쪽: **{2}**, 오른쪽-왼쪽: **{3}**",
-    "nightcore": "나이트코어 효과를 추가했습니다.",
-    "8d": "8D 효과를 추가했습니다.",
-    "vaporwave": "Vaporwave 효과를 추가했습니다.",
-    "cleareffect": "효과가 삭제되었습니다!",
+    "addEffect": "`{0}` 필터를 적용하세요.",
+    "clearEffect": "효과가 삭제되었습니다!",
     "FilterTagAlreadyInUse": "이 필터는 이미 사용 중입니다! 삭제하려면 /cleareffect <Tag>를 사용하십시오.",
 
     "playlistViewTitle": "📜 {0}의 모든 재생 목록",
@@ -105,6 +98,7 @@
     "playlistAdded": "❤️ **{0}**을(를) {1}의 재생목록 [`{2}`] 에 추가했습니다!",
 
     "playerDropdown": "건너뛰기 할 노래를 선택하세요...",
+    "playerFilter": "적용할 필터를 선택하세요...",
 
     "buttonBack": "이전",
     "buttonPause": "일시정지",
@@ -187,5 +181,10 @@
     "voicelinkOutofList": "유효한 트랙 인덱스를 제공해주세요!",
     "voicelinkDuplicateTrack": "죄송합니다. 이 트랙은 이미 큐에 있습니다.",
 
-    "deocdeError": "파일 디코딩 중 문제가 발생했습니다!"
+    "deocdeError": "파일 디코딩 중 문제가 발생했습니다!",
+    "invalidStartTime": "효력 없는 시작 시간! 시간은 `00:00` 과 `{0}` 사이에 설정해야 합니다.",
+    "invalidEndTime": "효력 없는 종료 시간! 시간은 `00:00` 과 `{0}` 사이에 설정해야 합니다.",
+    "invalidTimeOrder": "종료 시간은 시작 시간보다 클수 있어야 합니다.",
+
+    "SetStageAnnounceTemplate": "완료! 이제부터 지금 있는 음성 상태는 귀하의 템플릿에 따라 이름이 지정됩니다. 몇 초 후에 업데이트되는 것을 볼 수 있을 것입니다."
 }

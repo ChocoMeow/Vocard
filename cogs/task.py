@@ -26,7 +26,6 @@ import discord
 import function as func
 
 from discord.ext import commands, tasks
-from datetime import datetime
 from addons import Placeholders
 
 class Task(commands.Cog):
@@ -36,12 +35,6 @@ class Task(commands.Cog):
         self.player_check.start()
         self.cache_cleaner.start()
 
-        self.act_type = {
-            "play": discord.ActivityType.playing,
-            "listen": discord.ActivityType.listening,
-            "watch": discord.ActivityType.watching,
-            "stream": discord.ActivityType.streaming
-        }
         self.current_act = 0
         self.placeholder = Placeholders(bot)
 
@@ -56,18 +49,21 @@ class Task(commands.Cog):
 
         try:
             act_data = func.settings.activity[(self.current_act + 1) % len(func.settings.activity) - 1]
-
             act_original = self.bot.activity
-            act_type = self.act_type.get(list(act_data.keys())[0].lower(), discord.ActivityType.playing)
-            act_name = self.placeholder.replace(list(act_data.values())[0])
+            act_type = getattr(discord.ActivityType, act_data.get("type", "").lower(), discord.ActivityType.playing)
+            act_name = self.placeholder.replace(act_data.get("name", ""))
+
+            status_type = getattr(discord.Status, act_data.get("status", "").lower(), None)
 
             if act_original.type != act_type or act_original.name != act_name:
-                new_act = discord.Activity(type=act_type, name=act_name)
-                await self.bot.change_presence(activity=new_act)
+                self.bot.activity = discord.Activity(type=act_type, name=act_name)
+                await self.bot.change_presence(activity=self.bot.activity, status=status_type)
                 self.current_act = (self.current_act + 1) % len(func.settings.activity)
 
-        except:
-            pass
+                func.logger.info(f"Changed the bot status to {act_name}")
+
+        except Exception as e:
+            func.logger.error("Error occurred while changing the bot status!", exc_info=e)
 
     @tasks.loop(minutes=5.0)
     async def player_check(self):
@@ -84,44 +80,35 @@ class Task(commands.Cog):
                 await player.teardown()
                 continue
             
-            members = player.channel.members
-            if (not player.is_playing and player.queue.is_empty) or not any(False if member.bot or member.voice.self_deaf else True for member in members):
-                if not player.settings.get('24/7', False):
-                    await player.teardown()
-                    continue
-                else:
-                    if not player.is_paused:
-                        await player.set_pause(True)
-            else:
-                if not player.guild.me:
-                    await player.teardown()
-                    continue
-                elif not player.guild.me.voice:
-                    await player.connect(timeout=0.0, reconnect=True)
-
             try:
+                members = player.channel.members
+                if (not player.is_playing and player.queue.is_empty) or not any(False if member.bot or member.voice.self_deaf else True for member in members):
+                    if not player.settings.get('24/7', False):
+                        await player.teardown()
+                        continue
+                    else:
+                        if not player.is_paused:
+                            await player.set_pause(True)
+                else:
+                    if not player.guild.me:
+                        await player.teardown()
+                        continue
+                    elif not player.guild.me.voice:
+                        await player.connect(timeout=0.0, reconnect=True)
+
                 if player.dj not in members:
                     for m in members:
                         if not m.bot:
                             player.dj = m
                             break
-            except:
-                pass
+                        
+            except Exception as e:
+                func.logger.error("Error occurred while checking the player!", exc_info=e)
     
     @tasks.loop(hours=12.0)
     async def cache_cleaner(self):
         func.SETTINGS_BUFFER.clear()
         func.USERS_BUFFER.clear()
 
-        errorFile = func.gen_report()
-        if errorFile:
-            report_channel = self.bot.get_channel(func.report_channel_id)
-            if report_channel:
-                try:
-                    await report_channel.send(content=f"Report Before: <t:{round(datetime.timestamp(datetime.now()))}:F>", file=errorFile)
-                except Exception as e:
-                    print(f"Report could not be sent (Reason: {e})")
-            func.ERROR_LOGS.clear()
-        
 async def setup(bot: commands.Bot):
     await bot.add_cog(Task(bot))

@@ -26,7 +26,6 @@ import voicelink
 import psutil
 import function as func
 
-from typing import Tuple
 from discord import app_commands
 from discord.ext import commands
 from function import (
@@ -37,16 +36,14 @@ from function import (
     get_lang,
     time as ctime,
     get_aliases,
-    cooldown_check
+    cooldown_check,
+    format_bytes
 )
+
 from views import DebugView, HelpView, EmbedBuilderView
 
-def formatBytes(bytes: int, unit: bool = False):
-    if bytes <= 1_000_000_000:
-        return f"{bytes / (1024 ** 2):.1f}" + ("MB" if unit else "")
-    
-    else:
-        return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
+def status_icon(status: bool) -> str:
+    return "✅" if status else "❌"
 
 class Settings(commands.Cog, name="settings"):
     def __init__(self, bot) -> None:
@@ -137,17 +134,18 @@ class Settings(commands.Cog, name="settings"):
         "Show all the bot settings in your server."
         settings = await get_settings(ctx.guild.id)
 
-        texts = await get_lang(ctx.guild.id, "settingsMenu", "settingsTitle", "settingsValue", "settingsTitle2", "settingsValue2", "settingsPermTitle", "settingsPermValue")
+        texts = await get_lang(ctx.guild.id, "settingsMenu", "settingsTitle", "settingsValue", "settingsTitle2", "settingsValue2", "settingsTitle3", "settingsPermTitle", "settingsPermValue")
         embed = discord.Embed(color=func.settings.embed_color)
         embed.set_author(name=texts[0].format(ctx.guild.name), icon_url=self.bot.user.display_avatar.url)
         if ctx.guild.icon:
             embed.set_thumbnail(url=ctx.guild.icon.url)
 
+        dj_role = ctx.guild.get_role(settings.get('dj', 0))
         embed.add_field(name=texts[1], value=texts[2].format(
-            settings.get('prefix', func.settings.bot_prefix) or "None",
+            settings.get('prefix', func.settings.bot_prefix) or 'None',
             settings.get('lang', 'EN'),
             settings.get('controller', True),
-            f"<@&{settings['dj']}>" if 'dj' in settings else '`None`',
+            dj_role.name if dj_role else 'None',
             settings.get('votedisable', False),
             settings.get('24/7', False),
             settings.get('volume', 100),
@@ -160,12 +158,17 @@ class Settings(commands.Cog, name="settings"):
             settings.get("duplicateTrack", True)
         ))
 
+        if stage_template := settings.get("stage_announce_template"):
+            embed.add_field(name=texts[5], value=f"```{stage_template}```", inline=False)
+
         perms = ctx.guild.me.guild_permissions
-        embed.add_field(name=texts[5], value=texts[6].format(
-            '<a:Check:941206936651706378>' if perms.administrator else '<a:Cross:941206918255497237>',
-            '<a:Check:941206936651706378>' if perms.manage_guild else '<a:Cross:941206918255497237>',
-            '<a:Check:941206936651706378>' if perms.manage_channels else '<a:Cross:941206918255497237>',
-            '<a:Check:941206936651706378>' if perms.manage_messages else '<a:Cross:941206918255497237>'), inline=False
+        embed.add_field(name=texts[6], value=texts[7].format(
+                status_icon(perms.administrator),
+                status_icon(perms.manage_guild),
+                status_icon(perms.manage_channels),
+                status_icon(perms.manage_messages)
+            ),
+            inline=False
         )
         await ctx.send(embed=embed)
 
@@ -236,25 +239,34 @@ class Settings(commands.Cog, name="settings"):
         await update_settings(ctx.guild.id, {"$set": {'controller_msg': toggle}})
         await send(ctx, 'toggleControllerMsg', await get_lang(ctx.guild.id, "enabled" if toggle else "disabled"))
 
+    @settings.command(name="stageannounce", aliases=get_aliases("stageannounce"))
+    @commands.has_permissions(manage_guild=True)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def stageannounce(self, ctx: commands.Context, template: str = None):
+        """Customize the channel topic template"""
+        await update_settings(ctx.guild.id, {"$set": {'stage_announce_template': template}})
+        await send(ctx, "SetStageAnnounceTemplate")
+
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):
         if interaction.user.id not in func.settings.bot_access_user:
             return await interaction.response.send_message("You are not able to use this command!")
 
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage(func.ROOT_DIR)
 
         available_memory, total_memory = memory.available, memory.total
         used_disk_space, total_disk_space = disk.used, disk.total
         embed = discord.Embed(title="📄 Debug Panel", color=func.settings.embed_color)
         embed.description = "```==    System Info    ==\n" \
                             f"• CPU:     {psutil.cpu_freq().current}Mhz ({psutil.cpu_percent()}%)\n" \
-                            f"• RAM:     {formatBytes(total_memory - available_memory)}/{formatBytes(total_memory, True)} ({memory.percent}%)\n" \
-                            f"• DISK:    {formatBytes(total_disk_space - used_disk_space)}/{formatBytes(total_disk_space, True)} ({disk.percent}%)```"
+                            f"• RAM:     {format_bytes(total_memory - available_memory)}/{format_bytes(total_memory, True)} ({memory.percent}%)\n" \
+                            f"• DISK:    {format_bytes(total_disk_space - used_disk_space)}/{format_bytes(total_disk_space, True)} ({disk.percent}%)```"
 
         embed.add_field(
             name="🤖 Bot Information",
-            value=f"```• LATENCY: {self.bot.latency:.2f}ms\n" \
+            value=f"```• VERSION: {func.settings.version}\n" \
+                  f"• LATENCY: {self.bot.latency:.2f}ms\n" \
                   f"• GUILDS:  {len(self.bot.guilds)}\n" \
                   f"• USERS:   {sum([guild.member_count for guild in self.bot.guilds])}\n" \
                   f"• PLAYERS: {len(self.bot.voice_clients)}```",
@@ -263,17 +275,23 @@ class Settings(commands.Cog, name="settings"):
 
         node: voicelink.Node
         for name, node in voicelink.NodePool._nodes.items():
-            total_memory = node.stats.used + node.stats.free
-            embed.add_field(
-                name=f"{name} Node - " + ("🟢 Connected" if node._available else "🔴 Disconnected"),
-                value=f"```• ADDRESS:  {node._host}:{node._port}\n" \
-                      f"• PLAYERS:  {len(node._players)}\n" \
-                      f"• CPU:      {node.stats.cpu_process_load:.1f}%\n" \
-                      f"• RAM:      {formatBytes(node.stats.free)}/{formatBytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
-                      f"• LATENCY:  {node.latency:.2f}ms\n" \
-                      f"• UPTIME:   {func.time(node.stats.uptime)}```",
-                inline=True
-            )
+            if node._available:
+                total_memory = node.stats.used + node.stats.free
+                embed.add_field(
+                    name=f"{name} Node - 🟢 Connected",
+                    value=f"```• ADDRESS: {node._host}:{node._port}\n" \
+                        f"• PLAYERS: {len(node._players)}\n" \
+                        f"• CPU:     {node.stats.cpu_process_load:.1f}%\n" \
+                        f"• RAM:     {format_bytes(node.stats.free)}/{format_bytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
+                        f"• LATENCY: {node.latency:.2f}ms\n" \
+                        f"• UPTIME:  {func.time(node.stats.uptime)}```"
+                )
+            else:
+                embed.add_field(
+                    name=f"{name} Node - 🔴 Disconnected",
+                    value=f"```• ADDRESS: {node._host}:{node._port}\n" \
+                        f"• PLAYERS: {len(node._players)}\nNo extra data is available for display```",
+                )
 
         await interaction.response.send_message(embed=embed, view=DebugView(self.bot), ephemeral=True)
 

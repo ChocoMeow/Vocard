@@ -26,14 +26,9 @@ import voicelink
 import function as func
 
 from discord.ext import commands
-from . import ButtonOnCooldown
-from function import (
-    get_user,
-    update_user,
-    check_roles
-)
-
 from typing import Dict
+
+from . import ButtonOnCooldown
 
 def key(interaction: discord.Interaction):
     return interaction.user
@@ -48,7 +43,7 @@ class ControlButton(discord.ui.Button):
         self.player: voicelink.Player = player
         
         self.disable_button_text: bool = func.settings.controller.get("disableButtonText", False)
-        super().__init__(label=player.get_msg(label) if label and not self.disable_button_text else None, **kwargs)
+        super().__init__(label=self.player.get_msg(label) if label and not self.disable_button_text else None, **kwargs)
 
     async def send(self, interaction: discord.Interaction, key:str, *params, ephemeral: bool = False) -> None:
         stay = self.player.settings.get("controller_msg", True)
@@ -114,7 +109,6 @@ class Resume(ControlButton):
                 if len(votes) < (required := self.player.required()):
                     return await self.send(interaction, f"{vote_type}Vote", interaction.user, len(votes), required)
 
-        votes.clear()
         self.emoji = emoji
         if not self.disable_button_text:
             self.label = await func.get_lang(interaction.guild.id, button)
@@ -186,14 +180,14 @@ class Add(ControlButton):
             return await self.send(interaction, "noTrackPlaying")
         if track.is_stream:
             return await self.send(interaction, "playlistAddError")
-        user = await get_user(interaction.user.id, 'playlist')
-        rank, max_p, max_t = check_roles()
+        user = await func.get_user(interaction.user.id, 'playlist')
+        rank, max_p, max_t = func.check_roles()
         if len(user['200']['tracks']) >= max_t:
             return await self.send(interaction, "playlistlimited", max_t, ephemeral=True)
 
         if track.track_id in user['200']['tracks']:
             return await self.send(interaction, "playlistrepeated", ephemeral=True)
-        respond = await update_user(interaction.user.id, {"$push": {'playlist.200.tracks': track.track_id}})
+        respond = await func.update_user(interaction.user.id, {"$push": {'playlist.200.tracks': track.track_id}})
         if respond:
             await self.send(interaction, "playlistAdded", track.title, interaction.user.mention, user['200']['name'], ephemeral=True)
         else:
@@ -201,19 +195,35 @@ class Add(ControlButton):
 
 class Loop(ControlButton):
     def __init__(self, **kwargs):
+        self.btn_emojis: dict[str, str] = {
+            "off": "🔁",
+            "track": "🔂",
+            "queue": "🔁"
+        }
+        
         super().__init__(
-            emoji="🔁",
+            emoji=self.get_next_loop_emoji(kwargs["player"]),
             label="buttonLoop",
             **kwargs
         )
+    
+    def get_next_loop_emoji(self, player) -> str:
+        current_repeat_mode = player.queue.repeat.lower()
+        if current_repeat_mode not in self.btn_emojis:
+            raise ValueError(f"Invalid repeat mode: {current_repeat_mode}")
+        
+        return self.btn_emojis[current_repeat_mode]
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
             return await self.send(interaction, 'missingPerms_mode', ephemeral=True)
 
-        mode = await self.player.set_repeat()
+        mode = await self.player.set_repeat(requester=interaction.user)
+        self.emoji = self.get_next_loop_emoji(self.player)
+        
+        await interaction.response.edit_message(view=self.view)
         await self.send(interaction, 'repeat', mode.capitalize())
-
+        
 class VolumeUp(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
@@ -364,8 +374,7 @@ class Tracks(discord.ui.Select):
             options.append(discord.SelectOption(label=f"{index}. {track.title[:40]}", description=f"{track.author[:30]} · " + ("Live" if track.is_stream else track.formatted_length), emoji=track.emoji))
 
         super().__init__(
-            placeholder=player.get_msg("playerDropdown"),
-            min_values=1, max_values=1,
+            placeholder=self.player.get_msg("playerDropdown"),
             options=options,
             row=row
         )
@@ -380,7 +389,39 @@ class Tracks(discord.ui.Select):
         if self.player.settings.get("controller_msg", True):
             await func.send(interaction, "skipped", interaction.user)
 
-btnType = {
+class Effects(discord.ui.Select):
+    def __init__(self, player, style, row):
+
+        self.player: voicelink.Player = player
+        
+        options = [discord.SelectOption(label="None", value="None")]
+        for name in voicelink.Filters.get_available_filters():
+            options.append(discord.SelectOption(label=name.capitalize(), value=name))
+
+        super().__init__(
+            placeholder=self.player.get_msg("playerFilter"),
+            options=options,
+            row=row
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        if not self.player.is_privileged(interaction.user):
+            return await func.send(interaction, "missingPerms_function", ephemeral=True)
+        
+        avalibable_filters = voicelink.Filters.get_available_filters()
+        if self.values[0] == "None":
+            await self.player.reset_filter(requester=interaction.user)
+            return await func.send(interaction, "clearEffect")
+        
+        selected_filter = avalibable_filters.get(self.values[0].lower())()
+        if self.player.filters.has_filter(filter_tag=selected_filter.tag):
+            await self.player.remove_filter(filter_tag=selected_filter.tag, requester=interaction.user)
+            await func.send(interaction, "clearEffect")
+        else:
+            await self.player.add_filter(selected_filter, requester=interaction.user)
+            await func.send(interaction, "addEffect", selected_filter.tag)
+
+BUTTONTYPE: Dict[str, ControlButton] = {
     "back": Back,
     "resume": Resume,
     "skip": Skip,
@@ -390,14 +431,15 @@ btnType = {
     "volumeup": VolumeUp,
     "volumedown": VolumeDown,
     "volumemute": VolumeMute,
-    "tracks": Tracks,
     "autoplay": AutoPlay,
     "shuffle": Shuffle,
     "forward": Forward,
-    "rewind": Rewind
+    "rewind": Rewind,
+    "tracks": Tracks,
+    "effects": Effects
 }
 
-btnColor = {
+BUTTONCOLOR: Dict[str, discord.ButtonStyle] = {
     "blue": discord.ButtonStyle.primary,
     "grey": discord.ButtonStyle.secondary,
     "red": discord.ButtonStyle.danger,
@@ -415,8 +457,8 @@ class InteractiveController(discord.ui.View):
                 if isinstance(btn, Dict):
                     color = list(btn.values())[0]
                     btn = list(btn.keys())[0]
-                btnClass = btnType.get(btn.lower())
-                style = btnColor.get(color.lower(), btnColor["grey"])
+                btnClass = BUTTONTYPE.get(btn.lower())
+                style = BUTTONCOLOR.get(color.lower(), BUTTONCOLOR["grey"])
                 if not btnClass or (self.player.queue.is_empty and btn == "tracks"):
                     continue
                 self.add_item(btnClass(player=player, style=style, row=row))

@@ -32,9 +32,11 @@ class Placeholders:
             "track_duration": self.track_duration,
             "track_thumbnail": self.track_thumbnail,
             "track_color": self.track_color,
-            "requester": self.requester,
-            "requester_name": self.requester_name,
-            "requester_avatar": self.requester_avatar,
+            "track_requester_id": self.track_requester_id,
+            "track_requester_name": self.track_requester_name,
+            "track_requester_avatar": self.track_requester_avatar,
+            "track_source_name": self.track_source_name,
+            "track_source_emoji": self.track_source_emoji,
             "queue_length": self.queue_length,
             "volume": self.volume,
             "dj": self.dj,
@@ -70,20 +72,28 @@ class Placeholders:
         return self.player.get_msg("live") if track.is_stream else func.time(track.length)
     
     @ensure_track
-    def requester(self, track: Track) -> str:
-        return track.requester.mention if track.requester else self.bot.user.mention
+    def track_requester_id(self, track: Track) -> str:
+        return str(track.requester.id if track.requester else self.bot.user.id)
     
     @ensure_track
-    def requester_name(self, track: Track) -> str:
+    def track_requester_name(self, track: Track) -> str:
         return track.requester.name if track.requester else self.bot.user.display_name
     
     @ensure_track
-    def requester_avatar(self, track: Track) -> str:
+    def track_requester_avatar(self, track: Track) -> str:
         return track.requester.display_avatar.url if track.requester else self.bot.user.display_avatar.url
     
     @ensure_track
     def track_color(self, track: Track) -> int:
         return int(func.get_source(track.source, "color"), 16)
+    
+    @ensure_track
+    def track_source_name(self, track: Track) -> str:
+        return track.source
+    
+    @ensure_track
+    def track_source_emoji(self, track: Track) -> str:
+        return track.emoji
     
     def track_thumbnail(self) -> str:
         if not self.player or not self.player.current:
