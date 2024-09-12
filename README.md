@@ -22,7 +22,7 @@ Vocard is a highly customizable Discord music bot, designed to deliver a user-fr
 * Premium dashboard (in beta)
 
 ## Screenshot
-![features](https://github.com/user-attachments/assets/5d1dadb3-c706-4906-b1b6-fdee192705d5)
+![features](https://github.com/user-attachments/assets/f34b542d-be37-4170-bb80-c44748d8eb04)
 
 ## Requirements
 * [Python 3.11+](https://www.python.org/downloads/)
