@@ -34,6 +34,7 @@ class Placeholders:
             "track_color": self.track_color,
             "track_requester_id": self.track_requester_id,
             "track_requester_name": self.track_requester_name,
+            "track_requester_metion": self.track_requester_mention,
             "track_requester_avatar": self.track_requester_avatar,
             "track_source_name": self.track_source_name,
             "track_source_emoji": self.track_source_emoji,
@@ -78,6 +79,10 @@ class Placeholders:
     @ensure_track
     def track_requester_name(self, track: Track) -> str:
         return track.requester.name if track.requester else self.bot.user.display_name
+    
+    @ensure_track
+    def track_requester_mention(self, track: Track) -> str:
+        return f"<@{track.requester.id if track.requester else self.bot.user.id}>"
     
     @ensure_track
     def track_requester_avatar(self, track: Track) -> str:
