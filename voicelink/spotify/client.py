@@ -91,7 +91,7 @@ class Client:
         data = await self.get_request(request_url)
         return [ Track(track) for track in data['tracks']['items'] ]
 
-    async def similar_track(self, seed_tracks: str, *, limit: int = 5) -> List[Track]:
+    async def similar_track(self, seed_tracks: str, *, limit: int = 10) -> List[Track]:
         request_url = SUGGESTION_URL.format(limit=limit, seed_tracks=seed_tracks)
         data = await self.get_request(request_url)
         return [ Track(track) for track in data['tracks'] ]

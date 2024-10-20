@@ -515,7 +515,7 @@ class Node:
             )
             for track in tracks ]
 
-    async def get_recommendations(self, track: Track, limit: int = None) -> List[Optional[Track]]:
+    async def get_recommendations(self, track: Track, limit: int = 20) -> List[Optional[Track]]:
         if track.spotify:
             if not self.spotify_client:
                 return []
