@@ -92,7 +92,7 @@ class Basic(commands.Cog):
         return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
     async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
-        if voicelink.pool.URL_REGEX.match(current): return []
+        if voicelink.pool.URL_REGEX.match(current): return [app_commands.Choice(name=current, value=current)]
 
         history: dict[str, str] = {}
         for track_id in reversed(await get_user(interaction.user.id, "history")):
@@ -107,9 +107,9 @@ class Basic(commands.Cog):
         if node and node.spotify_client:
             try:
                 tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
-                return history_tracks[:5] + [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
+                return [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
             except voicelink.TrackLoadError:
-                return history_tracks
+                return []
             
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
