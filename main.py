@@ -164,7 +164,7 @@ if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
 
 # Setup the bot object
 intents = discord.Intents.default()
-intents.message_content = True if func.settings.bot_prefix else False
+intents.message_content = False if func.settings.bot_prefix is None else True
 intents.members = func.settings.ipc_client.get("enable", False)
 intents.voice_states = True
 
