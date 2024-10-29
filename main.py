@@ -144,7 +144,7 @@ async def get_prefix(bot: commands.Bot, message: discord.Message) -> str:
     prefix = settings.get("prefix", func.settings.bot_prefix)
 
     # Allow owner to use the bot without a prefix
-    if await bot.is_owner(message.author) and not message.content.startswith(prefix):
+    if not message.content.startswith(prefix) and (await bot.is_owner(message.author) or message.author.id in func.settings.bot_access_user):
         return ""
 
     return prefix
