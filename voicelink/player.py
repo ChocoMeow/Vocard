@@ -514,7 +514,7 @@ class Player(VoiceProtocol):
 
         if track.spotify:
             if not track.original:
-                search_results = await self._node.get_tracks(f"ytmsearch:{track.author} - {track.title}", requester=track.requester)
+                search_results = await self._node.get_tracks(f"ytsearch:{track.author} - {track.title}", requester=track.requester)
                 if not search_results:
                     raise TrackLoadError("Can't find a playable source!")
                 track.original = search_results[0]

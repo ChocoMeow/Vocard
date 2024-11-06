@@ -34,7 +34,7 @@ class Placeholders:
             "track_color": self.track_color,
             "track_requester_id": self.track_requester_id,
             "track_requester_name": self.track_requester_name,
-            "track_requester_metion": self.track_requester_mention,
+            "track_requester_mention": self.track_requester_mention,
             "track_requester_avatar": self.track_requester_avatar,
             "track_source_name": self.track_source_name,
             "track_source_emoji": self.track_source_emoji,
