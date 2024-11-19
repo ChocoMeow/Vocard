@@ -178,8 +178,8 @@ async def skipTo(player: Player, member: Member, data: Dict) -> None:
     if index > 1:
         player.queue.skipto(index)
 
-    if player.queue._repeat.mode == LoopType.track:
-        await player.set_repeat(LoopType.off.name)
+    if player.queue._repeat.mode == LoopType.TRACK:
+        await player.set_repeat(LoopType.OFF)
     await player.stop()
 
 async def backTo(player: Player, member: Member, data: Dict) -> None:

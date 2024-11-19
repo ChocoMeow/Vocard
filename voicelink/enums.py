@@ -26,35 +26,42 @@ from enum import Enum, auto
 class LoopType(Enum):
     """The enum for the different loop types for Voicelink
 
-        LoopType.off: 1
-        LoopType.track: 2
-        LoopType.queue: 3
+        LoopType.OFF: 1
+        LoopType.TRACK: 2
+        LoopType.QUEUE: 3
 
     """
     
-    off = auto()
-    track = auto()
-    queue = auto()
+    OFF = auto()
+    TRACK = auto()
+    QUEUE = auto()
     
 class SearchType(Enum):
     """The enum for the different search types for Voicelink.
        This feature is exclusively for the Spotify search feature of Voicelink.
        If you are not using this feature, this class is not necessary.
 
-       SearchType.ytsearch searches using regular Youtube,
+       SearchType.YOUTUBE searches using regular Youtube,
        which is best for all scenarios.
 
-       SearchType.ytmsearch searches using YouTube Music,
+       SearchType.YOUTUBE_MUSIC searches using YouTube Music,
        which is best for getting audio-only results.
+       
+       SearchType.SPOTIFY searches using Spotify,
+       which is an alternative to YouTube or YouTube Music.
 
-       SearchType.scsearch searches using SoundCloud,
+       SearchType.SOUNDCLOUD searches using SoundCloud,
+       which is an alternative to YouTube or YouTube Music.
+
+       SearchType.APPLE_MUSIC searches using Apple Music,
        which is an alternative to YouTube or YouTube Music.
     """
     
-    ytsearch = "ytsearch"
-    ytmsearch = "ytmsearch"
-    scsearch = "scsearch"
-    amsearch = "amsearch"
+    YOUTUBE = "ytsearch"
+    YOUTUBE_MUSIC = "ytmsearch"
+    SPOTIFY = "spsearch"
+    SOUNDCLOUD = "scsearch"
+    APPLE_MUSIC = "amsearch"
 
     def __str__(self) -> str:
         return self.value
@@ -62,10 +69,10 @@ class SearchType(Enum):
 class RequestMethod(Enum):
     """The enum for the different request methods in Voicelink
     """
-    get = "get"
-    patch = "patch"
-    delete = "delete"
-    post = "post"
+    GET = "get"
+    PATCH = "patch"
+    DELETE = "delete"
+    POST = "post"
 
     def __str__(self) -> str:
         return self.value
@@ -86,9 +93,9 @@ class NodeAlgorithm(Enum):
     """
 
     # We don't have to define anything special for these, since these just serve as flags
-    by_ping = auto()
-    by_region = auto()
-    by_players = auto()
+    BY_PING = auto()
+    BY_REGION = auto()
+    BY_PLAYERS = auto()
 
     def __str__(self) -> str:
         return self.value

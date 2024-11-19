@@ -271,7 +271,7 @@ class Node:
             if resp.status >= 300:
                 raise NodeException(f"Getting errors from Lavalink REST api")
             
-            if method == RequestMethod.delete:
+            if method == RequestMethod.DELETE:
                 return await resp.json(content_type=None)
 
             return await resp.json()
@@ -286,7 +286,7 @@ class Node:
 
             self._task = self._bot.loop.create_task(self._listen())
             self._available = True
-            self._info = NodeInfo(await self.send(RequestMethod.get, query="info"))
+            self._info = NodeInfo(await self.send(RequestMethod.GET, query="info"))
             
             self._logger.info(f"Node [{self._identifier}] is connected!")
         
@@ -369,7 +369,7 @@ class Node:
         query: str,
         *,
         requester: Member,
-        search_type: SearchType = SearchType.ytsearch
+        search_type: SearchType = SearchType.YOUTUBE
     ) -> Union[List[Track], Playlist]:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
@@ -380,8 +380,12 @@ class Node:
            Context object on any track you search.
         """
 
-        if not URL_REGEX.match(query) and not re.match(r"(?:ytm?|sc)search:.", query):
-            query = f"{search_type}:{query}"
+        if not URL_REGEX.match(query):
+            if search_type == SearchType.SPOTIFY:
+                return await self.spotifySearch(query=query, requester=requester)
+            
+            else:
+                query = f"{search_type}:{query}"
 
         if SPOTIFY_URL_REGEX.match(query):
             try:
@@ -509,7 +513,7 @@ class Node:
             Track(
                 track_id=None,
                 requester=requester,
-                search_type=SearchType.ytsearch,
+                search_type=SearchType.YOUTUBE,
                 spotify_track=track,
                 info=track.to_dict()
             )
@@ -525,7 +529,7 @@ class Node:
             tracks = [
                 Track(
                     track_id=None,
-                    search_type=SearchType.ytsearch,
+                    search_type=SearchType.YOUTUBE,
                     spotify_track=track,
                     info=track.to_dict(),
                     requester=self.bot.user

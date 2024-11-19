@@ -289,7 +289,7 @@ class Player(VoiceProtocol):
             "sessionId": state['sessionId'],
         }
         
-        await self.send(method=RequestMethod.patch, data={"voice": data})
+        await self.send(method=RequestMethod.PATCH, data={"voice": data})
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) dispatched voice update to {state['event']['endpoint']} with data {data}")
 
     async def on_voice_server_update(self, data: dict):
@@ -450,7 +450,7 @@ class Player(VoiceProtocol):
         query: str,
         *,
         requester: Member,
-        search_type: SearchType = SearchType.ytsearch
+        search_type: SearchType = SearchType.YOUTUBE
     ) -> Union[List[Track], Playlist]:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
@@ -474,7 +474,7 @@ class Player(VoiceProtocol):
     async def stop(self):
         """Stops the currently playing track."""
         self._current = None
-        await self.send(method=RequestMethod.patch, data={'encodedTrack': None})
+        await self.send(method=RequestMethod.PATCH, data={'encodedTrack': None})
 
     async def disconnect(self, *, force: bool = False):
         """Disconnects the player from voice."""
@@ -498,7 +498,7 @@ class Player(VoiceProtocol):
             assert self.channel is None and not self.is_connected
         
         self._node._players.pop(self.guild.id)
-        await self.send(method=RequestMethod.delete)
+        await self.send(method=RequestMethod.DELETE)
     
     async def play(
         self,
@@ -514,7 +514,7 @@ class Player(VoiceProtocol):
 
         if track.spotify:
             if not track.original:
-                search_results = await self._node.get_tracks(f"ytsearch:{track.author} - {track.title}", requester=track.requester)
+                search_results = await self._node.get_tracks(f"{track.author} - {track.title}", requester=track.requester)
                 if not search_results:
                     raise TrackLoadError("Can't find a playable source!")
                 track.original = search_results[0]
@@ -527,7 +527,7 @@ class Player(VoiceProtocol):
         if end or track.end_time:
             data["endTime"] = str(end if end else track.end_time)
 
-        await self.send(method=RequestMethod.patch, query=f"noReplace={ignore_if_playing}", data=data)
+        await self.send(method=RequestMethod.PATCH, query=f"noReplace={ignore_if_playing}", data=data)
 
         self._current = track
 
@@ -601,7 +601,7 @@ class Player(VoiceProtocol):
         if position < 0 or position > self._current.original.length:
             raise TrackInvalidPosition("Seek position must be between 0 and the track length")
 
-        await self.send(method=RequestMethod.patch, data={"position": position})
+        await self.send(method=RequestMethod.PATCH, data={"position": position})
         if self.is_ipc_connected:
             await self.send_ws({"op": "updatePosition", "position": position}, requester)
         
@@ -613,7 +613,7 @@ class Player(VoiceProtocol):
 
         self._paused = pause
         self.pause_votes.clear() if pause else self.resume_votes.clear()
-        await self.send(method=RequestMethod.patch, data={"paused": pause})
+        await self.send(method=RequestMethod.PATCH, data={"paused": pause})
 
         if self.is_ipc_connected:
             await self.send_ws({"op": "updatePause", "pause": pause}, requester)
@@ -623,7 +623,7 @@ class Player(VoiceProtocol):
 
     async def set_volume(self, volume: int, requester: Member = None) -> int:
         """Sets the volume of the player as an integer. Lavalink accepts values from 0 to 500."""
-        await self.send(method=RequestMethod.patch, data={"volume": volume})
+        await self.send(method=RequestMethod.PATCH, data={"volume": volume})
         self._volume = volume
 
         if self.is_ipc_connected:
@@ -668,24 +668,19 @@ class Player(VoiceProtocol):
 
         return moved_track
     
-    async def set_repeat(self, mode: str = None, requester: Member = None) -> str:
+    async def set_repeat(self, mode: LoopType = None, requester: Member = None) -> LoopType:
         if not mode:
-            mode = self.queue._repeat.next().name
-            
-        is_found = False
-        for type in LoopType:
-            if type.name.lower() == mode.lower():
-                self.queue._repeat.set_mode(type)
-                is_found = True
-                break
-
-        if not is_found:
+            mode = self.queue._repeat.next()
+        
+        if not isinstance(mode, LoopType):
             raise VoicelinkException("Invalid repeat mode.")
         
+        self.queue._repeat.set_mode(mode)
+        
         if self.is_ipc_connected:
-            await self.send_ws({"op": "repeatTrack", "repeatMode": mode}, requester)
+            await self.send_ws({"op": "repeatTrack", "repeatMode": mode.name.lower()}, requester)
 
-        self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been update the repeat mode to {mode}.")
+        self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been update the repeat mode to {mode.name.lower()}.")
         return mode
     
     async def add_filter(self, filter: Filter, requester: Member = None, fast_apply: bool = False) -> Filters:
@@ -695,7 +690,7 @@ class Player(VoiceProtocol):
             raise FilterTagAlreadyInUse(self.get_msg("FilterTagAlreadyInUse"))
         
         payload = self._filters.get_all_payloads()
-        await self.send(method=RequestMethod.patch, data={"filters": payload})
+        await self.send(method=RequestMethod.PATCH, data={"filters": payload})
         if fast_apply:
             await self.seek(self.position)
         
@@ -725,7 +720,7 @@ class Player(VoiceProtocol):
     async def remove_filter(self, filter_tag: str, requester: Member = None, fast_apply: bool = False) -> Filters:
         self._filters.remove_filter(filter_tag=filter_tag)
         payload = self._filters.get_all_payloads()
-        await self.send(method=RequestMethod.patch, data={"filters": payload})
+        await self.send(method=RequestMethod.PATCH, data={"filters": payload})
         if fast_apply:
             await self.seek(self.position)
         
@@ -744,7 +739,7 @@ class Player(VoiceProtocol):
             raise FilterInvalidArgument("You must have filters applied first in order to use this method.")
         
         self._filters.reset_filters()
-        await self.send(method=RequestMethod.patch, data={"filters": {}})
+        await self.send(method=RequestMethod.PATCH, data={"filters": {}})
         if fast_apply:
             await self.seek(self.position)
 

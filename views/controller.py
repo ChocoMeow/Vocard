@@ -82,8 +82,8 @@ class Back(ControlButton):
 
         await self.send(interaction, "backed", interaction.user)
 
-        if self.player.queue._repeat.mode == voicelink.LoopType.track:
-            await self.player.set_repeat(voicelink.LoopType.off.name)
+        if self.player.queue._repeat.mode == voicelink.LoopType.TRACK:
+            await self.player.set_repeat(voicelink.LoopType.OFF)
         
 class Resume(ControlButton):
     def __init__(self, **kwargs):
@@ -140,8 +140,8 @@ class Skip(ControlButton):
 
         await self.send(interaction, "skipped", interaction.user)
 
-        if self.player.queue._repeat.mode == voicelink.LoopType.track:
-            await self.player.set_repeat(voicelink.LoopType.off.name)
+        if self.player.queue._repeat.mode == voicelink.LoopType.TRACK:
+            await self.player.set_repeat(voicelink.LoopType.OFF)
         await self.player.stop()
 
 class Stop(ControlButton):
@@ -222,7 +222,7 @@ class Loop(ControlButton):
         self.emoji = self.get_next_loop_emoji(self.player)
         
         await interaction.response.edit_message(view=self.view)
-        await self.send(interaction, 'repeat', mode.capitalize())
+        await self.send(interaction, 'repeat', mode.name.capitalize())
         
 class VolumeUp(ControlButton):
     def __init__(self, **kwargs):

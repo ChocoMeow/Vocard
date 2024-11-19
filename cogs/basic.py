@@ -40,16 +40,10 @@ from function import (
     logger
 )
 
+from voicelink import SearchType, LoopType
 from addons import lyricsPlatform
 from views import SearchView, ListView, LinkView, LyricsView, HelpView
 from validators import url
-
-searchPlatform = {
-    "youtube": "ytsearch",
-    "youtubemusic": "ytmsearch",
-    "soundcloud": "scsearch",
-    "apple": "amsearch",
-}
 
 async def nowplay(ctx: commands.Context, player: voicelink.Player):
     track = player.current
@@ -94,22 +88,22 @@ class Basic(commands.Cog):
     async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
         if voicelink.pool.URL_REGEX.match(current): return [app_commands.Choice(name=current, value=current)]
 
+        if current:
+            node = voicelink.NodePool.get_node()
+            if node and node.spotify_client:
+                try:
+                    tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
+                    return [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
+                except voicelink.TrackLoadError:
+                    return []
+        
         history: dict[str, str] = {}
         for track_id in reversed(await get_user(interaction.user.id, "history")):
             track_dict = voicelink.decode(track_id)
             history[track_dict["identifier"]] = track_dict
 
         history_tracks = [app_commands.Choice(name=truncate_string(f"🕒 {track['author']} - {track['title']}", 100), value=track['uri']) for track in history.values() if len(track['uri']) <= 100][:25]
-        if not current:
-            return history_tracks
-
-        node = voicelink.NodePool.get_node()
-        if node and node.spotify_client:
-            try:
-                tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
-                return [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
-            except voicelink.TrackLoadError:
-                return []
+        return history_tracks
             
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
@@ -209,14 +203,11 @@ class Basic(commands.Cog):
         platform="Select the platform you want to search."
     )
     @app_commands.choices(platform=[
-        app_commands.Choice(name="Youtube", value="Youtube"),
-        app_commands.Choice(name="Youtube Music", value="YoutubeMusic"),
-        app_commands.Choice(name="Spotify", value="Spotify"),
-        app_commands.Choice(name="SoundCloud", value="SoundCloud"),
-        app_commands.Choice(name="Apple Music", value="Apple")
+        app_commands.Choice(name=search_type.name.replace("_", " ").title(), value=search_type.name)
+        for search_type in SearchType
     ])
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def search(self, ctx: commands.Context, *, query: str, platform: str = "Youtube"):
+    async def search(self, ctx: commands.Context, *, query: str, platform: str = SearchType.YOUTUBE.name):
         "Loads your input and added it to the queue."
         player: voicelink.Player = ctx.guild.voice_client
         if not player:
@@ -227,14 +218,8 @@ class Basic(commands.Cog):
 
         if url(query):
             return await send(ctx, "noLinkSupport", ephemeral=True)
-
-        platform = platform.lower()
-        if platform != 'spotify':
-            query_platform = searchPlatform.get(platform, 'ytsearch') + f":{query}"
-            tracks = await player.get_tracks(query=query_platform, requester=ctx.author)
-        else:
-            tracks = await player.node.spotifySearch(query=query, requester=ctx.author)
-
+        
+        tracks = await player.get_tracks(query=query, requester=ctx.author, search_type=SearchType[platform] if platform in SearchType.__members__ else SearchType.YOUTUBE)
         if not tracks:
             return await send(ctx, "noTrackFound")
 
@@ -332,8 +317,8 @@ class Basic(commands.Cog):
             await ctx.send(e)
 
         finally:
-            if player.queue._repeat.mode == voicelink.LoopType.track:
-                await player.set_repeat(voicelink.LoopType.off.name)
+            if player.queue._repeat.mode == voicelink.LoopType.TRACK:
+                await player.set_repeat(voicelink.LoopType.OFF)
                 
             await player.stop() if player.is_playing else await player.do_next()
 
@@ -410,8 +395,8 @@ class Basic(commands.Cog):
             player.queue.skipto(index)
 
         await send(ctx, "skipped", ctx.author)
-        if player.queue._repeat.mode == voicelink.LoopType.track:
-            await player.set_repeat(voicelink.LoopType.off.name)
+        if player.queue._repeat.mode == voicelink.LoopType.TRACK:
+            await player.set_repeat(voicelink.LoopType.OFF)
             
         await player.stop()
 
@@ -443,8 +428,8 @@ class Basic(commands.Cog):
             await player.stop()
 
         await send(ctx, "backed", ctx.author)
-        if player.queue._repeat.mode == voicelink.LoopType.track:
-            await player.set_repeat(voicelink.LoopType.off.name)
+        if player.queue._repeat.mode == voicelink.LoopType.TRACK:
+            await player.set_repeat(voicelink.LoopType.OFF)
 
     @commands.hybrid_command(name="seek", aliases=get_aliases("seek"))
     @app_commands.describe(position="Input position. Exmaple: 1:20.")
@@ -613,9 +598,8 @@ class Basic(commands.Cog):
     @commands.hybrid_command(name="loop", aliases=get_aliases("loop"))
     @app_commands.describe(mode="Choose a looping mode.")
     @app_commands.choices(mode=[
-        app_commands.Choice(name='Off', value='off'),
-        app_commands.Choice(name='Track', value='track'),
-        app_commands.Choice(name='Queue', value='queue')
+        app_commands.Choice(name=loop_type.name.title(), value=loop_type.name)
+        for loop_type in LoopType
     ])
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def loop(self, ctx: commands.Context, mode: str):
@@ -627,7 +611,7 @@ class Basic(commands.Cog):
         if not player.is_privileged(ctx.author):
             return await send(ctx, "missingPerms_mode", ephemeral=True)
 
-        await player.set_repeat(mode, ctx.author)
+        await player.set_repeat(LoopType[mode] if mode in LoopType.__members__ else LoopType.OFF, ctx.author)
         await send(ctx, "repeat", mode.capitalize())
 
     @commands.hybrid_command(name="clear", aliases=get_aliases("clear"))
