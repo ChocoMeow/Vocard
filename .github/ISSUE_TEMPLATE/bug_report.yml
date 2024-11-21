@@ -1,0 +1,52 @@
+name: Bug Report
+description: Report broken or incorrect behaviour
+labels: unconfirmed bug
+body:
+    - type: markdown
+      attributes:
+          value: >
+              Thank you for submitting a bug report! For real-time support, please join our [Discord community](https://discord.gg/wRCgB7vBQv).
+              This form is specifically for reporting bugs, and we appreciate your understanding!
+
+              **Note:** This form is for bugs only!
+    - type: input
+      attributes:
+          label: Summary
+          description: A simple summary of your bug report
+      validations:
+          required: true
+    - type: textarea
+      attributes:
+          label: Reproduction Steps
+          description: What you did to make it happen.
+      validations:
+          required: true
+    - type: textarea
+      attributes:
+          label: System Information
+          description: >
+              Run `python -m discord -v` and paste this information below. This command requires v1.1.0 or higher of the library.
+              If this errors out, please provide basic information about your system, such as your operating system and Python version.
+      validations:
+          required: true
+    - type: textarea
+      attributes:
+          label: Error Logs
+          description: Paste the loggings from your console. Include only relevant errors or warnings.
+      validations:
+          required: true
+    - type: checkboxes
+      attributes:
+          label: Checklist
+          description: Let's ensure you've done your due diligence when reporting this issue!
+          options:
+              - label: I have searched the open issues for duplicates.
+                required: true
+              - label: I have included the entire traceback, if possible.
+                required: true
+              - label: I have removed my token from display, if visible.
+                required: true
+    - type: textarea
+      attributes:
+          label: Additional Context
+          description: If there is anything else to say, please do so here.
