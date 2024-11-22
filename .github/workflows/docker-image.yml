@@ -23,5 +23,6 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Push the Docker image
-      run: docker tag vocard:latest ghcr.io/${{ github.repository }}/vocard:latest
-    - run: docker push ghcr.io/${{ github.repository }}/vocard:latest
+      run: |
+        docker tag vocard:latest ghcr.io/chocomeow/vocard:latest  # Ensure lowercase
+        docker push ghcr.io/chocomeow/vocard:latest  # Ensure lowercase
