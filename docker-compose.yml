@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
     lavalink:
         image: ghcr.io/lavalink-devs/lavalink:latest
@@ -9,53 +7,65 @@ services:
             - _JAVA_OPTIONS=-Xmx1G
             - SERVER_PORT=2333
             - LAVALINK_SERVER_PASSWORD=youshallnotpass
+        ## Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
+        ## Read more about binding volumes: https://docs.docker.com/storage/bind-mounts/
         volumes:
-            ## Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
-            ## Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
-            ## Read more: https://docs.docker.com/storage/bind-mounts/ 
-            - ./application.yml:/opt/Lavalink/application.yml
+            - type: bind
+              source: ./application.yml
+              target: /opt/Lavalink/application.yml
         networks:
-            - local
+            - vocard
         expose:
             - "2333"
 
-    # # You can selfhost MongoDB. Just uncomment lines starting with single "#" below.
+    ## You can selfhost MongoDB. Just uncomment lines starting with single "#" below.
     # mongo:
     #     image: mongo:latest
     #     container_name: mongo
     #     restart: unless-stopped
     #     volumes:
-    #         # Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
-    #         # Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
-    #         # Read more: https://docs.docker.com/storage/bind-mounts/ 
-    #         - ./data/mongo/db:/data/db
-    #         - ./data/mongo/conf:/data/configdb
+    #         - type: bind
+    #           source: ./data/mongo/db
+    #           target: /data/db
+    #         - type: bind
+    #           source: ./data/mongo/conf
+    #           target: /data/configdb
     #     environment:
     #         - MONGO_INITDB_ROOT_USERNAME=admin
     #         - MONGO_INITDB_ROOT_PASSWORD=admin
     #     expose:
     #         - "27017"
     #     networks:
-    #         - local
+    #         - vocard
     #     command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
 
     vocard:
         container_name: vocard
+                 
+        ## Pull Docker image from GitHub
+        image: ghcr.io/chocomeow/vocard:v2.6.8
+
+        ## Uncomment to build image from Dockerfile
+        #build:
+            #dockerfile: ./Dockerfile
+
+        ## Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
+        ## Read more about binding volumes: https://docs.docker.com/storage/bind-mounts/
         volumes:
-            ## Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
-            ## Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
-            ## Read more: https://docs.docker.com/storage/bind-mounts/ 
-            - ./settings.json:/app/settings.json
-        build:
-            dockerfile: ./Dockerfile
+            - type: bind
+              source: ./settings.json
+              target: /app/settings.json
         depends_on:
             lavalink:
                 condition: service_started
             # mongo:
             #     condition: service_started
         networks:
-            - local
+            - vocard
+        ## Uncomment if web dashboard is going to be used. <your_available_server_port>:5000 
+        #ports:
+        #    - 5000:5000
 
 networks:
-    local:
-        name: local
+    vocard:
+        name: vocard
