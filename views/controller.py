@@ -45,11 +45,11 @@ class ControlButton(discord.ui.Button):
         self.disable_button_text: bool = func.settings.controller.get("disableButtonText", False)
         super().__init__(label=self.player.get_msg(label) if label and not self.disable_button_text else None, **kwargs)
 
-    async def send(self, interaction: discord.Interaction, key:str, *params, ephemeral: bool = False) -> None:
+    async def send(self, interaction: discord.Interaction, key: str, *params, ephemeral: bool = False) -> None:
         stay = self.player.settings.get("controller_msg", True)
         return await func.send(
             interaction, key, *params,
-            delete_after=None if ephemeral or stay is True else 10,
+            delete_after=None if ephemeral or stay else 10,
             ephemeral=ephemeral
         )
 

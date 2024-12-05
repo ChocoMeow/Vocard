@@ -186,5 +186,5 @@
     "invalidEndTime": "Tiempo de finalización inválido! El tiempo debe estar entre `00:00` y `{0}`.",
     "invalidTimeOrder": "El tiempo final no puede ser menor o igual que el tiempo de inicio.",
 
-    "SetStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos."
+    "setStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos."
 }

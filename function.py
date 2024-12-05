@@ -143,30 +143,55 @@ def format_bytes(bytes: int, unit: bool = False):
     else:
         return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
     
-async def get_lang(guild_id:int, *keys) -> Union[list[str], str]:
+async def get_lang(guild_id:int, *keys) -> Optional[Union[list[str], str]]:
     settings = await get_settings(guild_id)
     lang = settings.get("lang", "EN")
     if lang in LANGS and not LANGS[lang]:
         LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
 
     if len(keys) == 1:
-        return LANGS.get(lang, {}).get(keys[0], "Language pack not found!")
-    return [LANGS.get(lang, {}).get(key, "Language pack not found!") for key in keys]
+        return LANGS.get(lang, {}).get(keys[0])
+    return [LANGS.get(lang, {}).get(key) for key in keys]
 
-async def send(ctx: Union[commands.Context, discord.Interaction], key: str, *params, delete_after: float = None, ephemeral: bool = False) -> Optional[discord.Message]:
-    text = await get_lang(ctx.guild.id, key)
-    text = text.format(*params)
+async def send(
+    ctx: Union[commands.Context, discord.Interaction],
+    content: Union[str, discord.Embed] = None,
+    *params,
+    view: discord.ui.View = None,
+    delete_after: float = None,
+    ephemeral: bool = False
+) -> Optional[discord.Message]:
+    if content is None:
+        content = "No content provided."
 
-    if isinstance(ctx, commands.Context):
-        send_func = ctx.send
+    # Determine the text to send
+    if isinstance(content, discord.Embed):
+        embed = content
+        text = None
     else:
-        if not ctx.response.is_done():
-            send_func = ctx.response.send_message
-            
+        text = await get_lang(ctx.guild.id, content)
+        if text:
+            text = text.format(*params)
         else:
-            return await ctx.followup.send(text, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+            text = content.format(*params)
+        embed = None
         
-    return await send_func(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+    # Determine the sending function
+    send_func = (
+        ctx.send if isinstance(ctx, commands.Context) else 
+        ctx.response.send_message if not ctx.response.is_done() else 
+        ctx.followup.send
+    )
+
+    # Check settings for delete_after duration
+    settings = await get_settings(ctx.guild.id)
+    if settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
+        delete_after = 10
+
+    # Send the message or embed
+    if view:
+        return await send_func(text, embed=embed, view=view, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+    return await send_func(text, embed=embed, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
 
 async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, data: dict) -> bool:
     for mode, action in data.items():

@@ -67,7 +67,7 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
     icon = ":red_circle:" if track.is_stream else (":pause_button:" if player.is_paused else ":arrow_forward:")
     embed.add_field(name="\u2800", value=f"{icon} {pbar} **[{ctime(player.position)}/{track.formatted_length}]**", inline=False)
 
-    return await ctx.send(embed=embed, view=LinkView(texts[2].format(track.source), track.emoji, track.uri))
+    return await send(ctx, embed, view=LinkView(texts[2].format(track.source), track.emoji, track.uri))
 
 class Basic(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -148,9 +148,16 @@ class Basic(commands.Cog):
             else:
                 position = await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end))
                 texts = await get_lang(ctx.guild.id, "live", "trackLoad_pos", "trackLoad")
-                await ctx.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
-        except voicelink.QueueFull as e:
-            await ctx.send(e)
+
+                stream_content = f"`{texts[0]}`" if tracks[0].is_stream else ""
+                additional_content = texts[1] if position >= 1 and player.is_playing else texts[2]
+
+                await send(
+                    ctx,
+                    stream_content + additional_content,
+                    tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length,
+                    position if position >= 1 and player.is_playing else None
+                )
         finally:
             if not player.is_playing:
                 await player.do_next()
@@ -189,10 +196,16 @@ class Basic(commands.Cog):
             else:
                 position = await player.add_track(tracks[0])
                 texts = await get_lang(interaction.guild.id, "live", "trackLoad_pos", "trackLoad")
-                await interaction.followup.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
-        except voicelink.QueueFull as e:
-            await interaction.followup.send(e)
 
+                stream_content = f"`{texts[0]}`" if tracks[0].is_stream else ""
+                additional_content = texts[1] if position >= 1 and player.is_playing else texts[2]
+
+                await send(
+                    interaction,
+                    stream_content + additional_content,
+                    tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length,
+                    position if position >= 1 and player.is_playing else None
+                )
         finally:
             if not player.is_playing:
                 await player.do_next()
@@ -227,7 +240,7 @@ class Basic(commands.Cog):
         query_track = "\n".join(f"`{index}.` `[{track.formatted_length}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
         embed = discord.Embed(title=texts[0].format(query), description=texts[1].format(get_source(platform, "emoji"), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
         view = SearchView(tracks=tracks[0:10], texts=[texts[5], texts[6]])
-        view.response = await ctx.send(embed=embed, view=view, ephemeral=True)
+        view.response = await send(ctx, embed, view=view, ephemeral=True)
 
         await view.wait()
         if view.values is not None:
@@ -236,7 +249,7 @@ class Basic(commands.Cog):
                 track = tracks[int(value.split(". ")[0]) - 1]
                 position = await player.add_track(track)
                 msg += (f"`{texts[2]}`" if track.is_stream else "") + (texts[3].format(track.title, track.uri, track.author, track.formatted_length, position) if position >= 1 else texts[4].format(track.title, track.uri, track.author, track.formatted_length))
-            await ctx.send(msg, allowed_mentions=False)
+            await send(ctx, msg)
 
             if not player.is_playing:
                 await player.do_next()
@@ -272,11 +285,16 @@ class Basic(commands.Cog):
             else:
                 position = await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end), at_front=True)
                 texts = await get_lang(ctx.guild.id, "live", "trackLoad_pos", "trackLoad")
-                await ctx.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + (texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length, position) if position >= 1 and player.is_playing else texts[2].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length)), allowed_mentions=False)
-        
-        except voicelink.QueueFull as e:
-            await ctx.send(e)
 
+                stream_content = f"`{texts[0]}`" if tracks[0].is_stream else ""
+                additional_content = texts[1] if position >= 1 and player.is_playing else texts[2]
+
+                await send(
+                    ctx,
+                    stream_content + additional_content,
+                    tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length,
+                    position if position >= 1 and player.is_playing else None
+                )
         finally:
             if not player.is_playing:
                 await player.do_next()
@@ -311,11 +329,14 @@ class Basic(commands.Cog):
             else:
                 texts = await get_lang(ctx.guild.id, "live", "trackLoad")
                 await player.add_track(tracks[0], start_time=format_time(start), end_time=format_time(end), at_front=True)
-                await ctx.send((f"`{texts[0]}`" if tracks[0].is_stream else "") + texts[1].format(tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length), allowed_mentions=False)
 
-        except voicelink.QueueFull as e:
-            await ctx.send(e)
+                stream_content = f"`{texts[0]}`" if tracks[0].is_stream else ""
 
+                await send(
+                    ctx,
+                    stream_content + texts[1],
+                    tracks[0].title, tracks[0].uri, tracks[0].author, tracks[0].formatted_length,
+                )
         finally:
             if player.queue._repeat.mode == voicelink.LoopType.TRACK:
                 await player.set_repeat(voicelink.LoopType.OFF)
@@ -471,7 +492,7 @@ class Basic(commands.Cog):
         if player.queue.is_empty:
             return await nowplay(ctx, player)
         view = ListView(player=player, author=ctx.author)
-        view.response = await ctx.send(embed=await view.build_embed(), view=view)
+        view.response = await send(ctx, await view.build_embed(), view=view)
 
     @queue.command(name="export", aliases=get_aliases("export"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -532,10 +553,6 @@ class Basic(commands.Cog):
 
             index = await player.add_track(tracks)
             await send(ctx, "playlistLoad", attachment.filename, index)
-                
-        except voicelink.QueueFull as e:
-            return await ctx.send(e, ephemeral=True)
-
         except Exception as e:
             logger.error("error", exc_info=e)
             raise e
@@ -559,7 +576,7 @@ class Basic(commands.Cog):
             return await nowplay(ctx, player)
 
         view = ListView(player=player, author=ctx.author, is_queue=False)
-        view.response = await ctx.send(embed=await view.build_embed(), view=view)
+        view.response = await send(ctx, await view.build_embed(), view=view)
 
     @commands.hybrid_command(name="leave", aliases=get_aliases("leave"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -785,7 +802,7 @@ class Basic(commands.Cog):
             return await send(ctx, "lyricsNotFound", ephemeral=True)
 
         view = LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
-        view.response = await ctx.send(embed=view.build_embed(), view=view)
+        view.response = await send(ctx, view.build_embed(), view=view)
 
     @commands.hybrid_command(name="swapdj", aliases=get_aliases("swapdj"))
     @app_commands.describe(member="Choose a member to transfer the dj role.")
@@ -841,7 +858,7 @@ class Basic(commands.Cog):
             category = "News"
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(category)
-        view.response = await ctx.send(embed=embed, view=view)
+        view.response = await send(ctx, embed, view=view)
 
     @commands.hybrid_command(name="ping", aliases=get_aliases("ping"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -866,7 +883,7 @@ class Basic(commands.Cog):
                     inline=False
             )
 
-        await ctx.send(embed=embed)
+        await send(ctx, embed)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Basic(bot))

@@ -4,6 +4,7 @@ import os
 import aiohttp
 import update
 import logging
+import voicelink
 import function as func
 
 from discord.ext import commands
@@ -41,6 +42,20 @@ class Vocard(commands.Bot):
                 return await message.channel.send("I don't have a bot prefix set.")
             await message.channel.send(f"My prefix is `{prefix}`")
 
+        settings = await func.get_settings(message.guild.id)
+        if settings and (request_channel := settings.get("music_request_channel")):
+            if message.channel.id == request_channel.get("text_channel_id"):
+                try:
+                    ctx = await self.get_context(message)
+                    cmd = self.get_command("play")
+                    await cmd(ctx, query=message.content)
+
+                except Exception as e:
+                    await func.send(ctx, str(e), ephemeral=True)
+                
+                finally:
+                    return await message.delete()
+            
         await self.process_commands(message)
 
     async def connect_db(self) -> None:

@@ -58,7 +58,7 @@ class Settings(commands.Cog, name="settings"):
     async def settings(self, ctx: commands.Context):
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(self.qualified_name)
-        view.response = await ctx.send(embed=embed, view=view)
+        view.response = await send(ctx, embed, view=view)
     
     @settings.command(name="prefix", aliases=get_aliases("prefix"))
     @commands.has_permissions(manage_guild=True)
@@ -170,7 +170,7 @@ class Settings(commands.Cog, name="settings"):
             ),
             inline=False
         )
-        await ctx.send(embed=embed)
+        await send(ctx, embed)
 
     @settings.command(name="volume", aliases=get_aliases("volume"))
     @app_commands.describe(value="Input a integer.")
@@ -226,7 +226,7 @@ class Settings(commands.Cog, name="settings"):
         controller_settings = settings.get("default_controller", func.settings.controller)
 
         view = EmbedBuilderView(ctx, controller_settings.get("embeds").copy())
-        view.response = await ctx.send(embed=view.build_embed(), view=view)
+        view.response = await send(ctx, view.build_embed(), view=view)
 
     @settings.command(name="controllermsg", aliases=get_aliases("controllermsg"))
     @commands.has_permissions(manage_guild=True)
@@ -243,9 +243,38 @@ class Settings(commands.Cog, name="settings"):
     @commands.has_permissions(manage_guild=True)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def stageannounce(self, ctx: commands.Context, template: str = None):
-        """Customize the channel topic template"""
+        "Customize the channel topic template"
         await update_settings(ctx.guild.id, {"$set": {'stage_announce_template': template}})
-        await send(ctx, "SetStageAnnounceTemplate")
+        await send(ctx, "setStageAnnounceTemplate")
+
+    @settings.command(name="setupchannel", aliases=get_aliases("setupchannel"))
+    @app_commands.describe(
+        channel="Provide a request channel. If not, a text channel will be generated."
+    )
+    @commands.has_permissions(manage_guild=True)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def setupchannel(self, ctx: commands.Context, channel: discord.TextChannel = None) -> None:
+        "Sets up a dedicated channel for song requests in your server."
+        if not channel:
+            try:
+                overwrites = {
+                    ctx.guild.me: discord.PermissionOverwrite(
+                        read_messages=True,
+                        manage_messages=True
+                    )
+                }
+                channel = await ctx.guild.create_text_channel("vocard-song-requests", overwrites=overwrites)
+            except:
+                return await send(ctx, "noCreatePermission")
+
+        channel_perms = channel.permissions_for(ctx.me)
+        if not channel_perms.text() and not channel_perms.manage_messages:
+            return await send(ctx, "noCreatePermission")
+
+        await update_settings(ctx.guild.id, {"$set": {'music_request_channel': {
+            "text_channel_id": channel.id
+        }}})
+        await send(ctx, "createSongRequestChannel", channel.mention)
 
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):
@@ -268,7 +297,7 @@ class Settings(commands.Cog, name="settings"):
             value=f"```• VERSION: {func.settings.version}\n" \
                   f"• LATENCY: {self.bot.latency:.2f}ms\n" \
                   f"• GUILDS:  {len(self.bot.guilds)}\n" \
-                  f"• USERS:   {sum([guild.member_count for guild in self.bot.guilds])}\n" \
+                  f"• USERS:   {sum([guild.member_count or 0 for guild in self.bot.guilds])}\n" \
                   f"• PLAYERS: {len(self.bot.voice_clients)}```",
             inline=False
         )
