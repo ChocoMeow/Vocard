@@ -38,6 +38,7 @@ from discord import (
     Message,
     PartialMessage,
     Interaction,
+    errors
 )
 
 from discord.ext import commands
@@ -423,7 +424,10 @@ class Player(VoiceProtocol):
                     channel = self.bot.get_channel(request_channel_data.get("text_channel_id"))
                     if channel:
                         self.controller = channel.get_partial_message(request_channel_data.get("controller_msg_id"))
-                        await self.controller.edit(embed=embed, view=view)
+                        try:
+                            await self.controller.edit(embed=embed, view=view)
+                        except errors.NotFound:
+                            self.controller = None
                 
                 # Send a new controller message if none exists
                 if not self.controller:
@@ -813,7 +817,7 @@ class Player(VoiceProtocol):
         self._node._players[self.guild.id] = self
 
         await self._dispatch_voice_update(self._voice_state)
-        
+
         if self.current:
             await self.play(self.current, start=self.position)
             self._last_update = time.time() * 1000
