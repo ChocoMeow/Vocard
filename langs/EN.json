@@ -11,6 +11,7 @@
     "noPlaySource": "Can't found any playable sources!",
     "noPlayer": "No player has found on this server.",
     "notVote": "This command requires your vote! Type `/vote` for more info.",
+    "missingIntents": "Sorry, this command cannot be executed because the bot is missing the required request intent: `({0})`.",
     "languageNotFound": "No language pack found! please select an existing language pack.",
     "changedLanguage": "Successfully changed to `{0}` language pack.",
     "setPrefix": "Done! My prefix in your server is now `{0}`. Try running `{1}ping` to test it out.",

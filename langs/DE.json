@@ -10,6 +10,7 @@
     "noPlaySource": "Kann keine abspielbaren Quellen finden!",
     "noPlayer": "Auf diesem Server wurde kein Spieler gefunden.",
     "notVote": "Dieser Befehl erfordert Ihre Stimme! Geben Sie `/vote` ein, um weitere Informationen zu erhalten.",
+    "missingIntents": "Es tut mir leid, dieser Befehl kann nicht ausgeführt werden, da dem Bot die erforderliche Anforderungsabsicht fehlt: `({0})`.",
     "languageNotFound": "Kein Sprachpaket gefunden. Bitte wählen Sie ein vorhandenes Sprachpaket aus.",
     "changedLanguage": "Erfolgreich auf das Sprachpaket `{0}` geändert.",
     "setPrefix": "Erledigt! Mein Präfix auf Ihrem Server ist jetzt `{0}`. Versuchen Sie, `{1}ping` auszuführen, um es zu testen.",

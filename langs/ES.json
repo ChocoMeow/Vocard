@@ -10,6 +10,7 @@
     "noPlaySource": "¡No se puede encontrar ninguna fuente reproducible!",
     "noPlayer": "No se ha encontrado ningún reproductor en este servidor.",
     "notVote": "¡Este comando requiere su voto! Escriba `/vote` para obtener más información.",
+    "missingIntents": "Lo siento, este comando no se puede ejecutar porque el bot carece de la intención de solicitud requerida: `({0})`.",
     "languageNotFound": "¡No se encontró paquete de idioma! por favor seleccione un paquete de idioma existente.",
     "changedLanguage": "Cambiado con éxito al paquete de idioma `{0}`.",
     "setPrefix": "¡Listo! Mi prefijo en tu servidor ahora es `{0}`. Intenta ejecutar `{1}ping` para probarlo.",

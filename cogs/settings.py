@@ -65,6 +65,9 @@ class Settings(commands.Cog, name="settings"):
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def prefix(self, ctx: commands.Context, prefix: str):
         "Change the default prefix for message commands."
+        if not self.bot.intents.message_content:
+            return await send(ctx, "missingIntents", "MESSAGE_CONTENT", ephemeral=True)
+        
         await update_settings(ctx.guild.id, {"$set": {"prefix": prefix}})
         await send(ctx, "setPrefix", prefix, prefix)
 
@@ -255,6 +258,9 @@ class Settings(commands.Cog, name="settings"):
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def setupchannel(self, ctx: commands.Context, channel: discord.TextChannel = None) -> None:
         "Sets up a dedicated channel for song requests in your server."
+        if not self.bot.intents.message_content:
+            return await send(ctx, "missingIntents", "MESSAGE_CONTENT", ephemeral=True)
+        
         if not channel:
             try:
                 overwrites = {
