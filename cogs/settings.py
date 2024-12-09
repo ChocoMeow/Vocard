@@ -270,9 +270,14 @@ class Settings(commands.Cog, name="settings"):
         channel_perms = channel.permissions_for(ctx.me)
         if not channel_perms.text() and not channel_perms.manage_messages:
             return await send(ctx, "noCreatePermission")
+        
+        settings = await func.get_settings(ctx.guild.id)
+        controller = settings.get("default_controller", func.settings.controller).get("embeds", {}).get("inactive", {})        
+        message = await channel.send(embed=voicelink.build_embed(controller, voicelink.Placeholders(self.bot)))
 
         await update_settings(ctx.guild.id, {"$set": {'music_request_channel': {
-            "text_channel_id": channel.id
+            "text_channel_id": channel.id,
+            "controller_msg_id": message.id,
         }}})
         await send(ctx, "createSongRequestChannel", channel.mention)
 
