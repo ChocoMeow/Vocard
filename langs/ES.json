@@ -7,6 +7,7 @@
     "noChannel": "No hay canal de voz al que conectarse. Por favor, proporcione uno o únase a uno.",
     "alreadyConnected": "Ya conectado a un canal de voz.",
     "noPermission": "¡Lo siento! No tengo permisos para unirme o hablar en su canal de voz.",
+    "noCreatePermission": "¡Lo siento! No tengo permisos para crear un canal de solicitud de canciones.",
     "noPlaySource": "¡No se puede encontrar ninguna fuente reproducible!",
     "noPlayer": "No se ha encontrado ningún reproductor en este servidor.",
     "notVote": "¡Este comando requiere su voto! Escriba `/vote` para obtener más información.",

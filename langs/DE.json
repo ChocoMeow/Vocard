@@ -7,6 +7,7 @@
     "noChannel": "Kein Sprachkanal zum Verbinden gefunden. Bitte stellen Sie entweder einen zur Verfügung oder schließen Sie sich einem an.",
     "alreadyConnected": "Bereits mit einem Sprachkanal verbunden.",
     "noPermission": "Es tut uns leid! Ich bin nicht berechtigt, Ihrem Sprachkanal beizutreten oder darin zu sprechen.",
+    "noCreatePermission": "Entschuldigung! Ich habe keine Berechtigung, einen Songanforderungskanal zu erstellen.",
     "noPlaySource": "Kann keine abspielbaren Quellen finden!",
     "noPlayer": "Auf diesem Server wurde kein Spieler gefunden.",
     "notVote": "Dieser Befehl erfordert Ihre Stimme! Geben Sie `/vote` ein, um weitere Informationen zu erhalten.",

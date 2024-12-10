@@ -7,6 +7,7 @@
     "noChannel": "沒有語音頻道可供連接。請提供一個語音頻道或加入一個語音頻道。",
     "alreadyConnected": "已經連接到語音頻道。",
     "noPermission": "抱歉！我沒有權限加入或在您的語音頻道中發言。",
+    "noCreatePermission": "抱歉！我沒有權限建立歌曲請求頻道。",
     "noPlaySource": "找不到任何可播放的來源！",
     "noPlayer": "在此伺服器上找不到播放器。",
     "notVote": "此命令需要您的投票！輸入 `/vote` 以獲取更多資訊。",
