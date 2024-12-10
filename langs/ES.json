@@ -7,9 +7,11 @@
     "noChannel": "No hay canal de voz al que conectarse. Por favor, proporcione uno o únase a uno.",
     "alreadyConnected": "Ya conectado a un canal de voz.",
     "noPermission": "¡Lo siento! No tengo permisos para unirme o hablar en su canal de voz.",
+    "noCreatePermission": "¡Lo siento! No tengo permisos para crear un canal de solicitud de canciones.",
     "noPlaySource": "¡No se puede encontrar ninguna fuente reproducible!",
     "noPlayer": "No se ha encontrado ningún reproductor en este servidor.",
     "notVote": "¡Este comando requiere su voto! Escriba `/vote` para obtener más información.",
+    "missingIntents": "Lo siento, este comando no se puede ejecutar porque el bot carece de la intención de solicitud requerida: `({0})`.",
     "languageNotFound": "¡No se encontró paquete de idioma! por favor seleccione un paquete de idioma existente.",
     "changedLanguage": "Cambiado con éxito al paquete de idioma `{0}`.",
     "setPrefix": "¡Listo! Mi prefijo en tu servidor ahora es `{0}`. Intenta ejecutar `{1}ping` para probarlo.",
@@ -186,5 +188,5 @@
     "invalidEndTime": "Tiempo de finalización inválido! El tiempo debe estar entre `00:00` y `{0}`.",
     "invalidTimeOrder": "El tiempo final no puede ser menor o igual que el tiempo de inicio.",
 
-    "SetStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos."
+    "setStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos."
 }

@@ -107,7 +107,7 @@ class Playlists(commands.Cog, name="playlist"):
     async def playlist(self, ctx: commands.Context):
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(self.qualified_name)
-        view.response = await ctx.send(embed=embed, view=view)
+        view.response = send(ctx, embed, view=view)
 
     @playlist.command(name="play", aliases=get_aliases("play"))
     @app_commands.describe(
@@ -212,7 +212,7 @@ class Playlists(commands.Cog, name="playlist"):
         embed.set_footer(text=text[2])
 
         view = PlaylistView(embed, results, ctx.author)
-        view.response = await ctx.send(embed=embed, view=view, ephemeral=True)
+        view.response = await send(ctx, embed, view=view, ephemeral=True)
 
     @playlist.command(name="create", aliases=get_aliases("create"))
     @app_commands.describe(
@@ -344,7 +344,7 @@ class Playlists(commands.Cog, name="playlist"):
 
         inbox = user['inbox'].copy()
         view = InboxView(ctx.author, user['inbox'])
-        view.response = await ctx.send(embed=view.build_embed(), view=view, ephemeral=True)
+        view.response = await send(ctx, view.build_embed(), view=view, ephemeral=True)
         await view.wait()
 
         if inbox == user['inbox']:
