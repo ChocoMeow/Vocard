@@ -89,6 +89,9 @@ class Vocard(commands.Bot):
         # Connecting to MongoDB
         await self.connect_db()
 
+        # Set translator
+        await self.tree.set_translator(Translator())
+        
         # Loading all the module in `cogs` folder
         for module in os.listdir(func.ROOT_DIR + '/cogs'):
             if module.endswith('.py'):
@@ -106,11 +109,8 @@ class Vocard(commands.Bot):
                 func.logger.error(f"Cannot connected to dashboard! - Reason: {e}")
 
         if not func.settings.version or func.settings.version != update.__version__:
-            func.update_json("settings.json", new_data={"version": update.__version__})
-
-            await self.tree.set_translator(Translator())
             await self.tree.sync()
-
+            func.update_json("settings.json", new_data={"version": update.__version__})
             for locale_key, values in func.MISSING_TRANSLATOR.items():
                 func.logger.warning(f"Missing translation for '{", ".join(values)}' in '{locale_key}'")
 
