@@ -4,7 +4,6 @@ import os
 import aiohttp
 import update
 import logging
-import voicelink
 import function as func
 
 from discord.ext import commands
@@ -22,8 +21,18 @@ class Translator(discord.app_commands.Translator):
         func.logger.info("Unload Translator")
 
     async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
-        if str(locale) in func.LOCAL_LANGS:
-            return func.LOCAL_LANGS[str(locale)].get(string.message, None)
+        locale_key = str(locale)
+        
+        if locale_key in func.LOCAL_LANGS:
+            translated_text = func.LOCAL_LANGS[locale_key].get(string.message)
+
+            if translated_text is None:
+                missing_translations = func.MISSING_TRANSLATOR.setdefault(locale_key, [])
+                if string.message not in missing_translations:
+                    missing_translations.append(string.message)
+            
+            return translated_text
+        
         return None
 
 class Vocard(commands.Bot):
@@ -102,6 +111,9 @@ class Vocard(commands.Bot):
             await self.tree.set_translator(Translator())
             await self.tree.sync()
 
+            for locale_key, values in func.MISSING_TRANSLATOR.items():
+                func.logger.warning(f"Missing translation for '{", ".join(values)}' in '{locale_key}'")
+
     async def on_ready(self):
         func.logger.info("------------------")
         func.logger.info(f"Logging As {self.user}")
@@ -113,6 +125,7 @@ class Vocard(commands.Bot):
 
         func.settings.client_id = self.user.id
         func.LOCAL_LANGS.clear()
+        func.MISSING_TRANSLATOR.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
         error = getattr(exception, 'original', exception)

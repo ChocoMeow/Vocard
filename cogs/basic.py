@@ -670,7 +670,7 @@ class Basic(commands.Cog):
         await send(ctx, "removed", len(removed_tracks.keys()))
 
     @commands.hybrid_command(name="forward", aliases=get_aliases("forward"))
-    @app_commands.describe(position="Input a amount that you to forward to. Exmaple: 1:20")
+    @app_commands.describe(position="Input an amount that you to forward to. Exmaple: 1:20")
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def forward(self, ctx: commands.Context, position: str = "10"):
         "Forwards by a certain amount of time in the current track. The default is 10 seconds."
@@ -691,7 +691,7 @@ class Basic(commands.Cog):
         await send(ctx, "forward", ctime(player.position + num))
 
     @commands.hybrid_command(name="rewind", aliases=get_aliases("rewind"))
-    @app_commands.describe(position="Input a amount that you to rewind to. Exmaple: 1:20")
+    @app_commands.describe(position="Input an amount that you to rewind to. Exmaple: 1:20")
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def rewind(self, ctx: commands.Context, position: str = "10"):
         "Rewind by a certain amount of time in the current track. The default is 10 seconds."

@@ -34,6 +34,8 @@ LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languag
 SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
 USERS_BUFFER: dict[str, dict] = {}
 
+MISSING_TRANSLATOR: dict[str, list[str]] = {}
+
 USER_BASE: dict[str, Any] = {
     'playlist': {
         '200': {
