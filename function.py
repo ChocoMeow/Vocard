@@ -108,7 +108,7 @@ def format_time(number:str) -> int:
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
 def get_source(source: str, type: str) -> str:
-    source_settings: dict = settings.sources_settings.get(source.lower(), {})
+    source_settings: dict = settings.sources_settings.get(source.lower(), settings.sources_settings.get("others"))
     return source_settings.get(type, ("🔗" if type == "emoji" else settings.embed_color))
 
 def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
