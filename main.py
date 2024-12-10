@@ -42,23 +42,31 @@ class Vocard(commands.Bot):
         self.ipc: IPCClient
 
     async def on_message(self, message: discord.Message, /) -> None:
+        # Ignore messages from bots or DMs
         if message.author.bot or not message.guild:
             return False
 
+        # Check if the bot is directly mentioned
         if self.user.id in message.raw_mentions and not message.mention_everyone:
             prefix = await self.command_prefix(self, message)
             if not prefix:
                 return await message.channel.send("I don't have a bot prefix set.")
             await message.channel.send(f"My prefix is `{prefix}`")
 
+        # Fetch guild settings and check if the mesage is in the music request channel
         settings = await func.get_settings(message.guild.id)
         if settings and (request_channel := settings.get("music_request_channel")):
             if message.channel.id == request_channel.get("text_channel_id"):
+                ctx = await self.get_context(message)
                 try:
-                    ctx = await self.get_context(message)
                     cmd = self.get_command("play")
-                    await cmd(ctx, query=message.content)
+                    if message.content:
+                        await cmd(ctx, query=message.content)
 
+                    elif message.attachments:
+                        for attachment in message.attachments:
+                            await cmd(ctx, query=attachment.url)
+                    
                 except Exception as e:
                     await func.send(ctx, str(e), ephemeral=True)
                 
