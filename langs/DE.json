@@ -7,9 +7,11 @@
     "noChannel": "Kein Sprachkanal zum Verbinden gefunden. Bitte stellen Sie entweder einen zur Verfügung oder schließen Sie sich einem an.",
     "alreadyConnected": "Bereits mit einem Sprachkanal verbunden.",
     "noPermission": "Es tut uns leid! Ich bin nicht berechtigt, Ihrem Sprachkanal beizutreten oder darin zu sprechen.",
+    "noCreatePermission": "Entschuldigung! Ich habe keine Berechtigung, einen Songanforderungskanal zu erstellen.",
     "noPlaySource": "Kann keine abspielbaren Quellen finden!",
     "noPlayer": "Auf diesem Server wurde kein Spieler gefunden.",
     "notVote": "Dieser Befehl erfordert Ihre Stimme! Geben Sie `/vote` ein, um weitere Informationen zu erhalten.",
+    "missingIntents": "Es tut mir leid, dieser Befehl kann nicht ausgeführt werden, da dem Bot die erforderliche Anforderungsabsicht fehlt: `({0})`.",
     "languageNotFound": "Kein Sprachpaket gefunden. Bitte wählen Sie ein vorhandenes Sprachpaket aus.",
     "changedLanguage": "Erfolgreich auf das Sprachpaket `{0}` geändert.",
     "setPrefix": "Erledigt! Mein Präfix auf Ihrem Server ist jetzt `{0}`. Versuchen Sie, `{1}ping` auszuführen, um es zu testen.",
@@ -186,5 +188,5 @@
     "invalidEndTime": "Ungültiger Endzeit! Die Zeit muss innerhalb von `00:00` und `{0}` liegen.",
     "invalidTimeOrder": "Der Endzeit darf nicht kleiner oder gleich dem Startzeit sein.",
 
-    "SetStageAnnounceTemplate": "Fertig! Ab sofort wird der Sprachstatus wie der, in dem Sie sich gerade befinden, gemäß Ihrer Vorlage benannt. Sie sollten in wenigen Sekunden eine Aktualisierung sehen."
+    "setStageAnnounceTemplate": "Fertig! Ab sofort wird der Sprachstatus wie der, in dem Sie sich gerade befinden, gemäß Ihrer Vorlage benannt. Sie sollten in wenigen Sekunden eine Aktualisierung sehen."
 }
