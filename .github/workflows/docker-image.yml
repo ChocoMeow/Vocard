@@ -5,10 +5,12 @@ on:
     branches: [ "main" ]
     paths-ignore:
         - '**.md'
+
+permissions:
+  packages: write
+
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -23,5 +25,5 @@ jobs:
 
     - name: Push the Docker image
       run: |
-        docker tag vocard:latest ghcr.io/chocomeow/vocard:latest
-        docker push ghcr.io/chocomeow/vocard:latest
+        docker tag vocard:latest ghcr.io/chocomeow/vocard:latest  # Ensure lowercase
+        docker push ghcr.io/chocomeow/vocard:latest  # Ensure lowercase
