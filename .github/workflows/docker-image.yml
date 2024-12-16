@@ -2,11 +2,9 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main" ]
     paths-ignore:
         - '**.md'
-  pull_request:
-    branches: [ "**" ]
 
 permissions:
   packages: write
