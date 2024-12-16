@@ -7,9 +7,11 @@
     "noChannel": "No voice channel to connect. Please either provide one or join one.",
     "alreadyConnected": "Already connected to a voice channel.",
     "noPermission": "Sorry! i don't have permissions to join or speak in your voice channel.",
+    "noCreatePermission": "Sorry! i don't have permissions to create a song requesting channel.",
     "noPlaySource": "Can't found any playable sources!",
     "noPlayer": "No player has found on this server.",
     "notVote": "This command requires your vote! Type `/vote` for more info.",
+    "missingIntents": "Sorry, this command cannot be executed because the bot is missing the required request intent: `({0})`.",
     "languageNotFound": "No language pack found! please select an existing language pack.",
     "changedLanguage": "Successfully changed to `{0}` language pack.",
     "setPrefix": "Done! My prefix in your server is now `{0}`. Try running `{1}ping` to test it out.",
@@ -186,5 +188,6 @@
     "invalidEndTime": "Invalid end time, it must be between `00:00` and `{0}`",
     "invalidTimeOrder": "End time cannot be less than or equal to start time",
 
-    "SetStageAnnounceTemplate": "Done! From now on, voice status like the one you're in now will be named according to your template. You should see it update in a few seconds."
+    "setStageAnnounceTemplate": "Done! From now on, voice status like the one you're in now will be named according to your template. You should see it update in a few seconds.",
+    "createSongRequestChannel": "A song request channel ({0}) has been created! You can start requesting any song by name or URL in that channel, without needing to use the bot prefix."
 }
