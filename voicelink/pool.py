@@ -144,9 +144,6 @@ class Node:
     @property
     def spotify_client(self) -> Optional[spotify.Client]:
         if not self._spotify_client:
-            if not self._spotify_client_id or not self._spotify_client_secret:
-                return None
-            
             self._spotify_client = spotify.Client(
                 self._spotify_client_id, self._spotify_client_secret
             )
@@ -389,13 +386,6 @@ class Node:
 
         if SPOTIFY_URL_REGEX.match(query):
             try:
-                if not self.spotify_client:
-                    raise InvalidSpotifyClientAuthorization(
-                    "You did not provide proper Spotify client authorization credentials. "
-                    "If you would like to use the Spotify searching feature, "
-                    "please obtain Spotify API credentials here: https://developer.spotify.com/"
-                )
-
                 spotify_results = await self.spotify_client.search(query=query)
             except Exception as _:
                 raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")

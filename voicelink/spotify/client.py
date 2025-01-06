@@ -26,12 +26,19 @@ import time
 import aiohttp
 
 from base64 import b64encode
-from typing import List, Union, Dict, Any
+from typing import (
+    List,
+    Dict,
+    Union,
+    Optional
+)
+
 from .objects import Track, Album, Artist, Playlist, Category
 from .exceptions import InvalidSpotifyURL, SpotifyRequestException 
 
 BASE_URL = "https://api.spotify.com/v1/"
 GRANT_URL = "https://accounts.spotify.com/api/token"
+ANONYMOUS_GRANT_URL = "https://open.spotify.com/get_access_token"
 REQUEST_URL = BASE_URL + "{type}s/{id}"
 SEARCH_URL = BASE_URL + "search?q={query}&type={type}&limit={limit}"
 SUGGESTION_URL = BASE_URL + "recommendations?limit={limit}&seed_tracks={seed_tracks}"
@@ -46,32 +53,40 @@ class Client:
     """
 
     def __init__(self, client_id: str, client_secret: str) -> None:
-        self._client_id: str = client_id
-        self._client_secret: str = client_secret
+        self._client_id: Optional[str] = client_id
+        self._client_secret: Optional[str] = client_secret
 
         self.session: aiohttp.ClientSession = aiohttp.ClientSession()
 
         self._bearer_token: str = None
         self._expiry: int = 0
-        self._auth_token: str = b64encode(f"{self._client_id}:{self._client_secret}".encode())
+        self._auth_token: bytes = b64encode(f"{self._client_id}:{self._client_secret}".encode())
         self._grant_headers: Dict[str, str] = {"Authorization": f"Basic {self._auth_token.decode()}"}
         self._bearer_headers: Dict[str, str] = None
 
         self._categories: List[Category] = []
 
     async def _fetch_bearer_token(self) -> None:
-        _data = {"grant_type": "client_credentials"}
+        if self._client_id and self._client_secret:
+            url, data = GRANT_URL, {"grant_type": "client_credentials"}
+        else:
+            url, data = ANONYMOUS_GRANT_URL, None
 
-        async with self.session.post(GRANT_URL, data=_data, headers=self._grant_headers) as resp:
+        async with self.session.post(url, data=data, headers=self._grant_headers) if data else self.session.get(url) as resp:
             if resp.status != 200:
                 raise SpotifyRequestException(
                     f"Error fetching bearer token: {resp.status} {resp.reason}"
                 )
 
-            data: Dict = await resp.json()
+            response_data: Dict = await resp.json()
 
-        self._bearer_token = data["access_token"]
-        self._expiry = time.time() + (int(data["expires_in"]) - 10)
+        if self._client_id and self._client_secret:
+            self._bearer_token = response_data["access_token"]
+            self._expiry = time.time() + int(response_data["expires_in"]) - 10
+        else:
+            self._bearer_token = response_data["accessToken"]
+            self._expiry = response_data["accessTokenExpirationTimestampMs"] / 1000
+
         self._bearer_headers = {"Authorization": f"Bearer {self._bearer_token}"}
 
     async def get_request(self, url: str) -> Dict:
@@ -109,7 +124,6 @@ class Client:
             request_url += "/top-tracks?market=US"
 
         data = await self.get_request(request_url)
-
         if spotify_type == "track":
             return Track(data)
         elif spotify_type == "album":
@@ -121,7 +135,6 @@ class Client:
                 Track(track["track"])
                 for track in data["tracks"]["items"] if track["track"] is not None
             ]
-
             if not tracks:
                 raise SpotifyRequestException("This playlist is empty and therefore cannot be queued.")
                 
