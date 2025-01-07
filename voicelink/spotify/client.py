@@ -67,6 +67,7 @@ class Client:
         self._categories: List[Category] = []
 
     async def _fetch_bearer_token(self) -> None:
+        """Fetches and stores a bearer token for API authentication."""
         if self._client_id and self._client_secret:
             url, data = GRANT_URL, {"grant_type": "client_credentials"}
         else:
@@ -90,6 +91,7 @@ class Client:
         self._bearer_headers = {"Authorization": f"Bearer {self._bearer_token}"}
 
     async def get_request(self, url: str) -> Dict:
+        """Performs a GET request to the specified URL with authorization headers."""
         if not self._bearer_token or time.time() >= self._expiry:
             await self._fetch_bearer_token()
 
@@ -102,68 +104,72 @@ class Client:
             return await resp.json()
 
     async def track_search(self, query: str, track: str = "track", limit: int = 10) -> List[Track]:
+        """Searches for tracks based on the provided query and returns a list of Track objects."""
         request_url = SEARCH_URL.format(query=query, type=track, limit=limit)
         data = await self.get_request(request_url)
         return [ Track(track) for track in data['tracks']['items'] ]
 
     async def similar_track(self, seed_tracks: str, *, limit: int = 10) -> List[Track]:
+        """Retrieves tracks similar to the provided seed tracks and returns them as Track objects."""
         request_url = SUGGESTION_URL.format(limit=limit, seed_tracks=seed_tracks)
         data = await self.get_request(request_url)
         return [ Track(track) for track in data['tracks'] ]
             
     async def search(self, *, query: str) -> Union[Track, Album, Playlist]:
+        """Searches for an item (track, album, artist, or playlist) by query and returns the corresponding object."""
         result = SPOTIFY_URL_REGEX.match(query)
-        spotify_type = result.group("type")
-        spotify_id = result.group("id")
-
         if not result:
             raise InvalidSpotifyURL("The Spotify link provided is not valid.")
 
+        spotify_type = result.group("type")
+        spotify_id = result.group("id")
         request_url = REQUEST_URL.format(type=spotify_type, id=spotify_id)
+
         if isArtist := (spotify_type == "artist"):
             request_url += "/top-tracks?market=US"
 
         data = await self.get_request(request_url)
+
         if spotify_type == "track":
             return Track(data)
         elif spotify_type == "album":
             return Album(data)
         elif isArtist:
             return Artist(data)
-        else:
-            tracks = [
+        
+        tracks = [
+            Track(track["track"])
+            for track in data["tracks"]["items"] if track.get("track") is not None
+        ]
+
+        if not tracks:
+            raise SpotifyRequestException("This playlist is empty and therefore cannot be queued.")
+
+        next_page_url = data["tracks"].get("next")
+
+        while next_page_url:
+            next_data = await self.get_request(next_page_url)
+            tracks.extend([
                 Track(track["track"])
-                for track in data["tracks"]["items"] if track["track"] is not None
-            ]
-            if not tracks:
-                raise SpotifyRequestException("This playlist is empty and therefore cannot be queued.")
-                
-            next_page_url = data["tracks"]["next"]
+                for track in next_data.get("items", []) if track.get("track") is not None
+            ])
+            next_page_url = next_data.get("next")
 
-            while next_page_url is not None:
-                async with self.session.get(next_page_url, headers=self._bearer_headers) as resp:
-                    if resp.status != 200:
-                        raise SpotifyRequestException(
-                            f"Error while fetching results: {resp.status} {resp.reason}"
-                        )
-
-                    next_data: Dict = await resp.json()
-
-                tracks += [
-                    Track(track["track"])
-                    for track in next_data["items"] if track["track"] is not None
-                ]
-                next_page_url = next_data["next"]
-
-            return Playlist(data, tracks)
+        return Playlist(data, tracks)
     
     async def get_categories(self) -> List[Category]:
+        """Fetches and returns available music categories from the Spotify API."""
         if not self._categories:
             request_url = f"{BASE_URL}browse/categories"
-            data = await self.get_request(request_url)
-            self._categories = [Category(item) for item in data.get("items", [])]
+            
+            while request_url:
+                data = await self.get_request(request_url)
+                items = data.get("categories", {}).get("items", [])
+                self._categories.extend(Category(item) for item in items)
+                request_url = data.get("categories", {}).get("next")
 
         return self._categories
     
     async def close(self) -> None:
+        """Closes the HTTP session used for making API requests."""
         await self.session.close()

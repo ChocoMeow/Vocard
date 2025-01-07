@@ -824,9 +824,6 @@ class Player(VoiceProtocol):
 
             if self.is_paused:
                 await self.set_pause(True)
-
-        if self.volume != 100:
-            await self.set_volume(self.volume)
     
     async def get_recommendations(self, *, track: Optional[Track] = None) -> bool:
         """Get recommendations from Youtube or Spotify."""
