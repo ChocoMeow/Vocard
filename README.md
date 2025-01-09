@@ -1,6 +1,9 @@
 # Vocard Bot
 Vocard یک ربات موسیقی دیسکورد است که قابلیت تنظیمات گسترده‌ای دارد و تجربه کاربری ساده‌ای را ارائه می‌دهد. این ربات از پلتفرم‌های استریم مختلف از جمله یوتیوب، ساندکلود، اسپاتیفای، توییچ و دیگر پلتفرم‌ها پشتیبانی می‌کند.
 
+
+<center><img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=Discord-Welcome-Bot&fontSize=80&fontAlignY=35&animation=twinkling&fontColor=gradient" /></center>
+
 ## ویژگی‌ها
 * بارگذاری سریع آهنگ‌ها
 * پشتیبانی از دستورات اسلش و دستورات متنی
