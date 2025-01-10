@@ -186,5 +186,5 @@
     "invalidEndTime": "Ungültige Endzeit! Die Zeit muss innerhalb von `00:00` und `{0}` liegen.",
     "invalidTimeOrder": "Die Endzeit darf nicht kleiner oder gleich dem Startzeit sein.",
 
-    "SetStageAnnounceTemplate": "Fertig! Ab sofort wird der Sprachstatus wie der, in dem Du Dich gerade befindest, gemäß Deiner Vorlage benannt. Du solltest in wenigen Sekunden eine Aktualisierung sehen.",
+    "SetStageAnnounceTemplate": "Fertig! Ab sofort wird der Sprachstatus wie der, in dem Du Dich gerade befindest, gemäß Deiner Vorlage benannt. Du solltest in wenigen Sekunden eine Aktualisierung sehen."
 }
