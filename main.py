@@ -21,8 +21,18 @@ class Translator(discord.app_commands.Translator):
         func.logger.info("Unload Translator")
 
     async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
-        if str(locale) in func.LOCAL_LANGS:
-            return func.LOCAL_LANGS[str(locale)].get(string.message, None)
+        locale_key = str(locale)
+        
+        if locale_key in func.LOCAL_LANGS:
+            translated_text = func.LOCAL_LANGS[locale_key].get(string.message)
+
+            if translated_text is None:
+                missing_translations = func.MISSING_TRANSLATOR.setdefault(locale_key, [])
+                if string.message not in missing_translations:
+                    missing_translations.append(string.message)
+            
+            return translated_text
+        
         return None
 
 class Vocard(commands.Bot):
@@ -32,15 +42,37 @@ class Vocard(commands.Bot):
         self.ipc: IPCClient
 
     async def on_message(self, message: discord.Message, /) -> None:
+        # Ignore messages from bots or DMs
         if message.author.bot or not message.guild:
             return False
 
+        # Check if the bot is directly mentioned
         if self.user.id in message.raw_mentions and not message.mention_everyone:
             prefix = await self.command_prefix(self, message)
             if not prefix:
                 return await message.channel.send("I don't have a bot prefix set.")
             await message.channel.send(f"My prefix is `{prefix}`")
 
+        # Fetch guild settings and check if the mesage is in the music request channel
+        settings = await func.get_settings(message.guild.id)
+        if settings and (request_channel := settings.get("music_request_channel")):
+            if message.channel.id == request_channel.get("text_channel_id"):
+                ctx = await self.get_context(message)
+                try:
+                    cmd = self.get_command("play")
+                    if message.content:
+                        await cmd(ctx, query=message.content)
+
+                    elif message.attachments:
+                        for attachment in message.attachments:
+                            await cmd(ctx, query=attachment.url)
+                    
+                except Exception as e:
+                    await func.send(ctx, str(e), ephemeral=True)
+                
+                finally:
+                    return await message.delete()
+            
         await self.process_commands(message)
 
     async def connect_db(self) -> None:
@@ -65,6 +97,9 @@ class Vocard(commands.Bot):
         # Connecting to MongoDB
         await self.connect_db()
 
+        # Set translator
+        await self.tree.set_translator(Translator())
+        
         # Loading all the module in `cogs` folder
         for module in os.listdir(func.ROOT_DIR + '/cogs'):
             if module.endswith('.py'):
@@ -82,10 +117,10 @@ class Vocard(commands.Bot):
                 func.logger.error(f"Cannot connected to dashboard! - Reason: {e}")
 
         if not func.settings.version or func.settings.version != update.__version__:
-            func.update_json("settings.json", new_data={"version": update.__version__})
-
-            await self.tree.set_translator(Translator())
             await self.tree.sync()
+            func.update_json("settings.json", new_data={"version": update.__version__})
+            for locale_key, values in func.MISSING_TRANSLATOR.items():
+                func.logger.warning(f"Missing translation for '{", ".join(values)}' in '{locale_key}'")
 
     async def on_ready(self):
         func.logger.info("------------------")
@@ -98,6 +133,7 @@ class Vocard(commands.Bot):
 
         func.settings.client_id = self.user.id
         func.LOCAL_LANGS.clear()
+        func.MISSING_TRANSLATOR.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
         error = getattr(exception, 'original', exception)
@@ -139,9 +175,15 @@ class CommandCheck(discord.app_commands.CommandTree):
 
         return True
 
-async def get_prefix(bot, message: discord.Message):
+async def get_prefix(bot: commands.Bot, message: discord.Message) -> str:
     settings = await func.get_settings(message.guild.id)
-    return settings.get("prefix", func.settings.bot_prefix)
+    prefix = settings.get("prefix", func.settings.bot_prefix)
+
+    # Allow owner to use the bot without a prefix
+    if prefix and not message.content.startswith(prefix) and (await bot.is_owner(message.author) or message.author.id in func.settings.bot_access_user):
+        return ""
+
+    return prefix
 
 # Loading settings and logger
 func.settings = Settings(func.open_json("settings.json"))
@@ -164,7 +206,7 @@ if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
 
 # Setup the bot object
 intents = discord.Intents.default()
-intents.message_content = True if func.settings.bot_prefix else False
+intents.message_content = False if func.settings.bot_prefix is None else True
 intents.members = func.settings.ipc_client.get("enable", False)
 intents.voice_states = True
 

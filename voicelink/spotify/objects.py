@@ -129,7 +129,7 @@ class Category:
         self.href: str = data.get("href")
         self.id: str = data.get("id")
         self.name: str = data.get("name")
-        self.icon: str = data.get("icon", [])[0].get("url")
+        self.icon: str = data.get("icons", [{}])[0].get("url")
     
     def __repr__(self) -> str:
         return (f"<Voicelink.spotify.Category name={self.name} id={self.id}")

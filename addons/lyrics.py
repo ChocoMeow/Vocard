@@ -49,6 +49,7 @@ Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.6 (KHTM
 Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.5 (KHTML, like Gecko) Chrome/ Safari/530.5'''
 
 LYRIST_ENDPOINT = "https://lyrist.vercel.app/api/"
+LRCLIB_ENDPOINT = "https://lrclib.net/api/"
 
 class LyricsPlatform(ABC):
     @abstractmethod
@@ -196,8 +197,26 @@ class Lyrist(LyricsPlatform):
         except:
             return None
 
+class Lrclib(LyricsPlatform):
+    async def get(self, url, params: dict = None) -> list[dict]:
+        try:
+            async with aiohttp.ClientSession() as session:
+                resp = await session.get(url=url, headers={'User-Agent': random.choice(userAgents)}, params=params)
+                if resp.status != 200:
+                    return None
+                return await resp.json()
+        except:
+            return []
+        
+    async def get_lyrics(self, title, artist):
+        params = {"q": f"{title} - {artist}"}
+        result = await self.get(LRCLIB_ENDPOINT + "search", params)
+        if result:
+            return {"default": result[0].get("plainLyrics", "")}
+    
 lyricsPlatform: dict[str, LyricsPlatform] = {
     "a_zlyrics": A_ZLyrics,
     "genius": Genius,
-    "lyrist": Lyrist
+    "lyrist": Lyrist,
+    "lrclib": Lrclib
 }

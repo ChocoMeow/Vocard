@@ -24,7 +24,7 @@ SOFTWARE.
 __version__ = "1.4"
 __author__ = 'Vocard Development, Choco'
 __license__ = "MIT"
-__copyright__ = "Copyright 2023 (c) Vocard Development, Choco"
+__copyright__ = "Copyright 2023 - present (c) Vocard Development, Choco"
 
 from .enums import SearchType, LoopType
 from .events import *

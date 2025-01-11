@@ -72,7 +72,7 @@ class Track:
         track_id: str = None,
         info: dict,
         requester: Member,
-        search_type: SearchType = SearchType.ytsearch,
+        search_type: SearchType = SearchType.YOUTUBE,
         spotify_track = None,
     ):
         self._track_id: Optional[str] = track_id
@@ -88,7 +88,7 @@ class Track:
             self.artist_id: Optional[list] = info.get("artist_id")
 
         self.original: Optional[Track] = None if self.spotify else self
-        self._search_type: SearchType = SearchType.ytsearch if self.spotify else search_type
+        self._search_type: SearchType = SearchType.YOUTUBE if self.spotify else search_type
         self.spotify_track: Track = spotify_track
 
         self.thumbnail: str = info.get("artworkUrl")

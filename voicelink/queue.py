@@ -25,7 +25,7 @@ from .exceptions import QueueFull, OutofList
 from .objects import Track
 from .enums import LoopType
 
-from typing import Optional, Tuple, List, Callable, Dict
+from typing import Optional, Tuple, Callable, Dict, List
 from itertools import cycle
 from discord import Member
 
@@ -65,16 +65,16 @@ class Queue:
     def get(self) -> Optional[Track]:
         track = None
         try:
-            track = self._queue[self._position - 1 if self._repeat.mode == LoopType.track else self._position]
-            if self._repeat.mode != LoopType.track:
+            track = self._queue[self._position - 1 if self._repeat.mode == LoopType.TRACK else self._position]
+            if self._repeat.mode != LoopType.TRACK:
                 self._position += 1
         except:
-            if self._repeat.mode == LoopType.queue:
+            if self._repeat.mode == LoopType.QUEUE:
                 try:
                     track = self._queue[self._repeat_position]
                     self._position = self._repeat_position + 1
                 except IndexError:
-                    self._repeat.set_mode(LoopType.off)
+                    self._repeat.set_mode(LoopType.OFF)
 
         return track
 

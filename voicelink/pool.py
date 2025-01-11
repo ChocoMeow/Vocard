@@ -144,9 +144,6 @@ class Node:
     @property
     def spotify_client(self) -> Optional[spotify.Client]:
         if not self._spotify_client:
-            if not self._spotify_client_id or not self._spotify_client_secret:
-                return None
-            
             self._spotify_client = spotify.Client(
                 self._spotify_client_id, self._spotify_client_secret
             )
@@ -271,7 +268,7 @@ class Node:
             if resp.status >= 300:
                 raise NodeException(f"Getting errors from Lavalink REST api")
             
-            if method == RequestMethod.delete:
+            if method == RequestMethod.DELETE:
                 return await resp.json(content_type=None)
 
             return await resp.json()
@@ -286,7 +283,7 @@ class Node:
 
             self._task = self._bot.loop.create_task(self._listen())
             self._available = True
-            self._info = NodeInfo(await self.send(RequestMethod.get, query="info"))
+            self._info = NodeInfo(await self.send(RequestMethod.GET, query="info"))
             
             self._logger.info(f"Node [{self._identifier}] is connected!")
         
@@ -369,7 +366,7 @@ class Node:
         query: str,
         *,
         requester: Member,
-        search_type: SearchType = SearchType.ytsearch
+        search_type: SearchType = SearchType.YOUTUBE
     ) -> Union[List[Track], Playlist]:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
@@ -380,18 +377,15 @@ class Node:
            Context object on any track you search.
         """
 
-        if not URL_REGEX.match(query) and not re.match(r"(?:ytm?|sc)search:.", query):
-            query = f"{search_type}:{query}"
+        if not URL_REGEX.match(query):
+            if search_type == SearchType.SPOTIFY:
+                return await self.spotifySearch(query=query, requester=requester)
+            
+            else:
+                query = f"{search_type}:{query}"
 
         if SPOTIFY_URL_REGEX.match(query):
             try:
-                if not self.spotify_client:
-                    raise InvalidSpotifyClientAuthorization(
-                    "You did not provide proper Spotify client authorization credentials. "
-                    "If you would like to use the Spotify searching feature, "
-                    "please obtain Spotify API credentials here: https://developer.spotify.com/"
-                )
-
                 spotify_results = await self.spotify_client.search(query=query)
             except Exception as _:
                 raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
@@ -509,7 +503,7 @@ class Node:
             Track(
                 track_id=None,
                 requester=requester,
-                search_type=SearchType.ytsearch,
+                search_type=SearchType.YOUTUBE,
                 spotify_track=track,
                 info=track.to_dict()
             )
@@ -525,7 +519,7 @@ class Node:
             tracks = [
                 Track(
                     track_id=None,
-                    search_type=SearchType.ytsearch,
+                    search_type=SearchType.YOUTUBE,
                     spotify_track=track,
                     info=track.to_dict(),
                     requester=self.bot.user
@@ -572,12 +566,12 @@ class NodePool:
          This option is preferred if you want to choose the best node
          from a multi-node setup using either the node's latency
          or the node's voice region.
-         Use NodeAlgorithm.by_ping if you want to get the best node
+         Use NodeAlgorithm.BY_PING if you want to get the best node
          based on the node's latency.
          Use NodeAlgorithm.by_region if you want to get the best node
          based on the node's voice region. This method will only work
          if you set a voice region when you create a node.
-         Use NodeAlgorithm.by_players if you want to get the best node
+         Use NodeAlgorithm.BY_PLAYERS if you want to get the best node
          based on how players it has. This method will return a node with
          the least amount of players
         """
@@ -586,11 +580,11 @@ class NodePool:
         if not available_nodes:
             raise NoNodesAvailable("There are no nodes available.")
 
-        if algorithm == NodeAlgorithm.by_ping:
+        if algorithm == NodeAlgorithm.BY_PING:
             tested_nodes = {node: node.latency for node in available_nodes}
             return min(tested_nodes, key=tested_nodes.get)
 
-        elif algorithm == NodeAlgorithm.by_players:
+        elif algorithm == NodeAlgorithm.BY_PLAYERS:
             tested_nodes = {node: len(node.players.keys()) for node in available_nodes}
             return min(tested_nodes, key=tested_nodes.get)
 

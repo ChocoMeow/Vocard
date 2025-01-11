@@ -82,6 +82,10 @@
         "tiktok": {
             "emoji": "<:tiktok:996007689798811698>",
             "color": "0x74ECE9"
+        },
+        "others": {
+            "emoji": "🌎",
+            "color": "0xb3b3b3"
         }
     },
     "default_controller": {
