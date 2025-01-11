@@ -33,7 +33,7 @@
     "settingsPermValue": "```{0} Administrator\n{1} Guild verwalten\n{2} Kanal verwalten\n{3} Manage_Messages```",
     "pingTitle1": "Bot-Info:",
     "pingTitle2": "Player Info:",
-    "pingfield1": "```Shard-ID: {0}/{1}\nShard-Latenz: {2:.3f} s {3}\nRegion: {4}```",
+    "pingfield1": "```Shard-ID: {0}/{1}\nShard-Latenz: {2:.3f}s {3}\nRegion: {4}```",
     "pingfield2": "```Node: {0} - {1:.3f}s\nPlayer: {2}\nSprachregion: {3}```",
     "addEffect": "Wende den Effekt `{0}` Filter an.",
     "clearEffect": "Die Soundeffekte wurden gelöscht!",
@@ -188,5 +188,6 @@
     "invalidEndTime": "Ungültige Endzeit! Die Zeit muss innerhalb von `00:00` und `{0}` liegen.",
     "invalidTimeOrder": "Die Endzeit darf nicht kleiner oder gleich dem Startzeit sein.",
 
-    "SetStageAnnounceTemplate": "Fertig! Ab sofort wird der Sprachstatus wie der, in dem Du Dich gerade befindest, gemäß Deiner Vorlage benannt. Du solltest in wenigen Sekunden eine Aktualisierung sehen."
+    "setStageAnnounceTemplate": "Fertig! Ab sofort wird der Sprachstatus wie der, in dem Du Dich gerade befindest, gemäß Deiner Vorlage benannt. Du solltest in wenigen Sekunden eine Aktualisierung sehen.",
+    "createSongRequestChannel": "Der Song Request Channel ({0}) wurde erstellt! Du kannst jeden Song nach Namen oder URL in diesem Kanal anfordern, ohne den Bot-Präfix verwenden zu müssen."
 }
