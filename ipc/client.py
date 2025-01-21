@@ -65,9 +65,42 @@ class IPCClient:
 
     async def send(self, data: dict):
         if self.is_connected:
-            self._logger.debug(f"Send Message: {data}")
-            await self._websocket.send_json(data)
+            try:
+                await self._websocket.send_json(data)
+                self._logger.debug(f"Send Message: {data}")
+            except ConnectionResetError as _:
+                await self.disconnect()
+                await self.connect()
+                await self._websocket.send_json(data)
+                self._logger.debug(f"Send Message: {data}")
 
+    async def send(self, data: dict):
+        # Check if the websocket is still open
+        if self.is_connected:
+            try:
+                await self._websocket.send_json(data)
+                self._logger.debug(f"Sent Message: {data}")
+            except ConnectionResetError:
+                self._logger.warning("Connection lost, attempting to reconnect.")
+                await self._handle_reconnect(data)
+            except Exception as e:
+                self._logger.error(f"Failed to send message: {e}")
+        else:
+            self._logger.warning("WebSocket is not connected or already closed.")
+
+    async def _handle_reconnect(self, data: dict):
+        await self.disconnect()
+        await self.connect()
+        await asyncio.sleep(1)  # Optional delay before retrying
+        if self.is_connected:
+            try:
+                await self._websocket.send_json(data)
+                self._logger.debug(f"Sent Message on reconnect: {data}")
+            except Exception as e:
+                self._logger.error(f"Failed to send message on reconnect: {e}")
+        else:
+            self._logger.error("Reconnection failed, not connected.")
+                    
     async def connect(self):    
         try:
             if not self._session:
@@ -107,4 +140,4 @@ class IPCClient:
     
     @property
     def is_connected(self) -> bool:
-        return self._is_connected
+        return self._is_connected and self._websocket and not self._websocket.closed
