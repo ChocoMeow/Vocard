@@ -72,7 +72,7 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
         ))
 
     if ctx.bot.ipc.is_connected:
-        await player.send_ws({"op": "createPlayer", "member_ids": [str(member.id) for member in channel.members]})
+        await player.send_ws({"op": "createPlayer", "memberIds": [str(member.id) for member in channel.members]})
 
     return player
 
@@ -299,9 +299,9 @@ class Player(VoiceProtocol):
         if self.is_ipc_connected:
             await self.send_ws({
                 "op": "playerUpdate",
-                "last_update": self._last_update,
-                "is_connected": self._is_connected,
-                "last_position": self._last_position
+                "lastUpdate": self._last_update,
+                "isConnected": self._is_connected,
+                "lastPosition": self._last_position
             })
 
     async def _dispatch_voice_update(self, voice_data: Dict[str, Any] = None):
@@ -405,9 +405,9 @@ class Player(VoiceProtocol):
         if self.is_ipc_connected:
             await self.send_ws({
                 "op": "trackUpdate", 
-                "current_queue_position": self.queue._position if track else self.queue._position + 1,
-                "track_id": track.track_id if track else None,
-                "is_paused": self._paused
+                "currentQueuePosition": self.queue._position if track else self.queue._position + 1,
+                "trackId": track.track_id if track else None,
+                "isPaused": self._paused
             })
 
     async def invoke_controller(self):
@@ -639,7 +639,7 @@ class Player(VoiceProtocol):
             await self.send_ws({
                 "op": "removeTrack",
                 "indexes": list(removed_tracks.keys()),
-                "first_track_id": list(removed_tracks.values())[0].track_id
+                "firstTrackId": list(removed_tracks.values())[0].track_id
             }, requester=requester)
 
         return removed_tracks
@@ -692,8 +692,8 @@ class Player(VoiceProtocol):
         if self.is_ipc_connected:
             await self.send_ws({
                 "op": "shuffleTrack",
-                "tracks": [{"track_id": track.track_id, "requester_id": str(track.requester.id)} for track in replacement],
-                "queue_type": queue_type
+                "tracks": [{"trackId": track.track_id, "requesterId": str(track.requester.id)} for track in replacement],
+                "queueType": queue_type
             }, requester)
         
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been shuffled the queue.")
@@ -767,7 +767,7 @@ class Player(VoiceProtocol):
         if self.is_ipc_connected:
             await self.send_ws({
                 "op": "clearQueue",
-                "queue_type": queue_type
+                "queueType": queue_type
             }, requester)
 
     async def remove_filter(self, filter_tag: str, requester: Member = None, fast_apply: bool = False) -> Filters:
@@ -863,7 +863,7 @@ class Player(VoiceProtocol):
 
     async def send_ws(self, payload, requester: Member = None):
         """Sends a WebSocket payload to the bot's IPC (Inter-Process Communication) system."""
-        payload['guild_id'] = str(self.guild.id)
+        payload['guildId'] = str(self.guild.id)
         if requester:
-            payload['requester_id'] = str(requester.id)
+            payload['requesterId'] = str(requester.id)
         await self.bot.ipc.send(payload)

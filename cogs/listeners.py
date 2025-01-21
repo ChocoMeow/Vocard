@@ -102,13 +102,13 @@ class Listeners(commands.Cog):
             await self.bot.ipc.send({
                 "op": "updateGuild",
                 "user": {
-                    "user_id": str(member.id),
-                    "avatar_url": member.display_avatar.url,
+                    "userId": str(member.id),
+                    "avatarUrl": member.display_avatar.url,
                     "name": member.name,
                 },
-                "channel_name": member.voice.channel.name if is_joined else "",
-                "guild_id": str(member.guild.id),
-                "is_joined": is_joined
+                "channelName": member.voice.channel.name if is_joined else "",
+                "guildId": str(member.guild.id),
+                "isJoined": is_joined
             })
 
 async def setup(bot: commands.Bot) -> None:
