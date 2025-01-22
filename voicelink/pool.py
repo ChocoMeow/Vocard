@@ -210,28 +210,43 @@ class Node:
                 await player.on_voice_state_update(data["d"])
             except KeyError:
                 return
-
+            
     async def _listen(self) -> None:
-        backoff = ExponentialBackoff(base=7)    
+        backoff = ExponentialBackoff(base=7)
 
         while True:
             try:
                 msg = await self._websocket.receive()
-            except:
-                break
-            if msg.type == aiohttp.WSMsgType.CLOSED:
-                self._available = False
 
-                retry = backoff.delay()
-                self._logger.info(f"Trying to reconnect node [{self._identifier}] with {round(retry)}s")
-                await asyncio.sleep(retry)
-                if not self.is_connected:
-                    try:
-                        await self.connect()
-                    except:
-                        pass
-            else:
+                if msg.type == aiohttp.WSMsgType.CLOSED:
+                    self._available = False
+                    self._logger.warning(f"WebSocket closed for node [{self._identifier}]")
+                    break
+
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    self._logger.error(f"WebSocket error for node [{self._identifier}]")
+                    break
+                
                 self._bot.loop.create_task(self._handle_payload(msg.json()))
+
+            except aiohttp.ClientConnectionError as e:
+                self._logger.error(f"Connection error: {e}")
+                self._available = False
+                break
+            
+            except Exception as e:
+                self._logger.exception(f"Unexpected error: {e}")
+                self._available = False
+                break
+
+        while not self._available:
+            retry = backoff.delay()
+            self._logger.info(f"Trying to reconnect node [{self._identifier}] in {round(retry)}s")
+            await asyncio.sleep(retry)
+            try:
+                await self.connect()
+            except Exception as e:
+                self._logger.error(f"Reconnection failed: {e}")
 
     async def _handle_payload(self, data: dict) -> None:
         op = data.get("op", None)
@@ -323,6 +338,7 @@ class Node:
     async def reconnect(self) -> None:
         await asyncio.sleep(10)
         for player in self.players.copy().values():
+            await asyncio.sleep(3)
             try:
                 if player._voice_state:
                     await player._dispatch_voice_update(player._voice_state)
