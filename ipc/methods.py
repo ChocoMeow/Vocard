@@ -559,22 +559,22 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
 
     elif _type == "updateInbox":
         user = await func.get_user(user_id)
-        is_accpet = data.get("accept", False)
+        is_accept = data.get("accept", False)
 
-        if is_accpet and len(list(user.get("playlist").keys())) >= max_p:
+        if is_accept and len(list(user.get("playlist").keys())) >= max_p:
             return error_msg(f"You cannot create more than '{max_p}' playlists!", user_id=user_id, level = "error")
 
         info = data.get("referId", "").split("-")
         sender_id, refer_id = info[0], info[1]
         inbox = user.get("inbox")
 
-        payload = {"op": "updatePlaylist", "status": "updateInbox", "userId": str(user_id), "accpet": is_accpet, "senderId": sender_id, "referId": refer_id}
+        payload = {"op": "updatePlaylist", "status": "updateInbox", "userId": str(user_id), "accept": is_accept, "senderId": sender_id, "referId": refer_id}
         for index, mail in enumerate(inbox.copy()):
             if not (str(mail.get("sender")) == sender_id and mail.get("referId") == refer_id):
                 continue
             
             del inbox[index]
-            if is_accpet:
+            if is_accept:
                 share_playlists = await func.get_user(mail["sender"], "playlist")
                 if refer_id not in share_playlists:
                     return error_msg("The shared playlist couldn’t be found. It’s possible that the user has already deleted it.", user_id=user_id)

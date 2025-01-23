@@ -198,11 +198,11 @@ if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
     file_handler.namer = lambda name: name.replace(".log", "") + ".log"
     file_handler.setFormatter(logging.Formatter('{asctime} [{levelname:<8}] {name}: {message}', '%Y-%m-%d %H:%M:%S', style='{'))
 
-    for log_name, log_level in LOG_SETTINGS.get("level", {}).items():
-        _logger = logging.getLogger(log_name)
-        _logger.setLevel(log_level)
-        
-    logging.getLogger().addHandler(file_handler)
+for log_name, log_level in LOG_SETTINGS.get("level", {}).items():
+    _logger = logging.getLogger(log_name)
+    _logger.setLevel(log_level)
+    
+logging.getLogger().addHandler(file_handler)
 
 # Setup the bot object
 intents = discord.Intents.default()
