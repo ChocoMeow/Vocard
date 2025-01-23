@@ -56,7 +56,7 @@ class ControlButton(discord.ui.Button):
 class Back(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏮️",
+            emoji="<:back:1331965837459849297>",
             label="buttonBack",
             disabled=False if kwargs["player"].queue.history() or not kwargs["player"].current else True,
             **kwargs
@@ -88,7 +88,7 @@ class Back(ControlButton):
 class Resume(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏸️",
+            emoji="<:pause:1331965658493358090>",
             label="buttonPause",
             disabled=kwargs["player"].current is None,
             **kwargs
@@ -98,7 +98,7 @@ class Resume(ControlButton):
         is_paused = not self.player.is_paused
         vote_type = "pause" if is_paused else "resume"
         votes = getattr(self.player, f"{vote_type}_votes")
-        emoji = "▶️" if is_paused else "⏸️"
+        emoji = "<:resume:1331965667389341696>" if is_paused else "<:pause:1331965658493358090>"
         button = "buttonResume" if is_paused else "buttonPause"
 
         if not self.player.is_privileged(interaction.user):
@@ -118,7 +118,7 @@ class Resume(ControlButton):
 class Skip(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏭️",
+            emoji="<:skip:1331965747211145338>",
             label="buttonSkip",
             **kwargs
         )
@@ -147,7 +147,7 @@ class Skip(ControlButton):
 class Stop(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏹️",
+            emoji="<:stop:1331965677552009267>",
             label="buttonLeave",
             **kwargs
         )
@@ -169,7 +169,7 @@ class Stop(ControlButton):
 class Add(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="❤️",
+            emoji="<:heartpink:1331965920142168074>",
             disabled=kwargs["player"].current is None,
             **kwargs
         )
@@ -196,9 +196,9 @@ class Add(ControlButton):
 class Loop(ControlButton):
     def __init__(self, **kwargs):
         self.btn_emojis: dict[str, str] = {
-            "off": "🔁",
-            "track": "🔂",
-            "queue": "🔁"
+            "off": "<:loop:1331965700163637268>",
+            "track": "<:loop:1331965700163637268>",
+            "queue": "<:loop:1331965700163637268>"
         }
         
         super().__init__(
@@ -227,7 +227,7 @@ class Loop(ControlButton):
 class VolumeUp(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔊",
+            emoji="<:highvolume:1331965859933196379>",
             label="buttonVolumeUp",
             **kwargs
         )
@@ -244,7 +244,7 @@ class VolumeUp(ControlButton):
 class VolumeDown(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔉",
+            emoji="<:lowvolume:1331965882334838845>",
             label="buttonVolumeDown",
             **kwargs
         )
@@ -261,7 +261,7 @@ class VolumeDown(ControlButton):
 class VolumeMute(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔇" if kwargs["player"].volume else "🔈",
+            emoji="<:mute:1331965891591667852>" if kwargs["player"].volume else "🔈",
             label="buttonVolumeMute" if kwargs["player"].volume else "buttonVolumeUnmute",
             **kwargs
         )
@@ -282,7 +282,7 @@ class VolumeMute(ControlButton):
 class AutoPlay(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="💡",
+            emoji="<:autoplay:1331966891480191058>",
             label="buttonAutoPlay",
             **kwargs
         )
@@ -301,7 +301,7 @@ class AutoPlay(ControlButton):
 class Shuffle(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="🔀",
+            emoji="<:shuffle:1331965900227612682>",
             label="buttonShuffle",
             **kwargs
         )
@@ -323,7 +323,7 @@ class Shuffle(ControlButton):
 class Forward(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏩",
+            emoji="<:fastforward:1331965647504277524>",
             label="buttonForward",
             disabled=kwargs["player"].current is None,
             **kwargs
@@ -344,7 +344,7 @@ class Forward(ControlButton):
 class Rewind(ControlButton):
     def __init__(self, **kwargs):
         super().__init__(
-            emoji="⏪",
+            emoji="<:rewind:1331965848516034580>",
             label="buttonRewind",
             disabled=kwargs["player"].current is None,
             **kwargs

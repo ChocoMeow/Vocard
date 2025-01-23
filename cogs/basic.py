@@ -852,7 +852,7 @@ class Basic(commands.Cog):
     @app_commands.autocomplete(category=help_autocomplete)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def help(self, ctx: commands.Context, category: str = "News") -> None:
-        "Lists all the commands in Vocard."
+        "Lists all the commands."
         if category not in self.bot.cogs:
             category = "News"
         view = HelpView(self.bot, ctx.author)

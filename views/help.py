@@ -34,11 +34,11 @@ class HelpDropdown(discord.ui.Select):
             placeholder="Select Category!",
             min_values=1, max_values=1,
             options=[
-                discord.SelectOption(emoji="🆕", label="News", description="View new updates of Vocard."),
-                discord.SelectOption(emoji="🕹️", label="Tutorial", description="How to use Vocard."),
+                discord.SelectOption(emoji="<:March7thThumbsUp:1103668414758780979>", label="Main Page", description="The main page of help command."),
+                discord.SelectOption(emoji="<a:March7thAniThumbsUp:1130036150124417104>", label="Tutorial", description="How to play music!"),
             ] + [
                 discord.SelectOption(emoji=emoji, label=f"{category} Commands", description=f"This is {category.lower()} Category.")
-                for category, emoji in zip(categorys, ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"])
+                for category, emoji in zip(categorys, ["<:1_:1130243485480525905>", "<:2_:1130243518137372722>", "<:3_:1130243561535840356>", "<:4_:1130243603185279037>", "<:5_:1130243702770647192>", "<:6_:1130243647087058974>", "<:7_:1130243737759522857>"])
             ],
             custom_id="select"
         )
@@ -56,10 +56,9 @@ class HelpView(discord.ui.View):
         self.response: discord.Message = None
         self.categorys: list[str] = [ name.capitalize() for name, cog in bot.cogs.items() if len([c for c in cog.walk_commands()]) ]
 
-        self.add_item(discord.ui.Button(label='Website', emoji='🌎', url='https://vocard.xyz'))
-        self.add_item(discord.ui.Button(label='Document', emoji=':support:915152950471581696', url='https://docs.vocard.xyz'))
-        self.add_item(discord.ui.Button(label='Github', emoji=':github:1098265017268322406', url='https://github.com/ChocoMeow/Vocard'))
-        self.add_item(discord.ui.Button(label='Donate', emoji=':patreon:913397909024800878', url='https://www.patreon.com/Vocard'))
+        self.add_item(discord.ui.Button(label='Modmail Us!', emoji='<:Critter7th:1272886381395316797>', url='https://discord.com/channels/1094973844210581537/1094980390957101136/1273578324127383562'))
+        self.add_item(discord.ui.Button(label='Join a music channnel!', emoji='<:March7thHeart:1115617412377755690>', url='https://discord.com/channels/1094973844210581537/1114577310851534888'))
+        self.add_item(discord.ui.Button(label='Checkout Vocard', emoji='<:6969:1330398223805841438>', url='https://vocard.xyz'))
         self.add_item(HelpDropdown(self.categorys))
     
     async def on_error(self, error, item, interaction) -> None:
@@ -80,25 +79,19 @@ class HelpView(discord.ui.View):
     def build_embed(self, category: str) -> discord.Embed:
         category = category.lower()
         if category == "news":
-            embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=func.settings.embed_color)
-            embed.add_field(
-                name=f"Available Categories: [{2 + len(self.categorys)}]",
-                value="```py\n👉 News\n2. Tutorial\n{}```".format("".join(f"{i}. {c}\n" for i, c in enumerate(self.categorys, start=3))),
-                inline=True
-            )
+            embed = discord.Embed(title="March 7th Mains ✧ Music Bot - Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=func.settings.embed_color)
 
-            update = "Vocard is a simple music bot. It leads to a comfortable experience which is user-friendly, It supports YouTube, Soundcloud, Spotify, Twitch and more!"
-            embed.add_field(name="📰 Information:", value=update, inline=True)
-            embed.add_field(name="Get Started", value="```Join a voice channel and /play {Song/URL} a song. (Names, Youtube Video Links or Playlist links or Spotify links are supported on Vocard)```", inline=False)
-            
+            update = "> A music bot made based on @vocard! Feel free to use the categories to navigate through the commands. If you have any questions, feel free to modmail us!"
+            embed.add_field(name="― <:5_:1120660684087246928> How to get started?", value="> Join a voice channel and /play {Song/URL} a song. (Names, Youtube Video Links or Playlist links or Spotify links are supported on Vocard)", inline=False)
+            embed.set_image(url="https://cdn.discordapp.com/attachments/1286005393155424316/1331836413221670912/Copy_of_Copy_of_March_7th4.png?ex=679310d1&is=6791bf51&hm=04f811495729772841b6e047efe963f60711f2f61cb23b7117ddc9545b85f197&")
             return embed
 
         embed = discord.Embed(title=f"Category: {category.capitalize()}", color=func.settings.embed_color)
-        embed.add_field(name=f"Categories: [{2 + len(self.categorys)}]", value="```py\n" + "\n".join(("👉 " if c == category.capitalize() else f"{i}. ") + c for i, c in enumerate(['News', 'Tutorial'] + self.categorys, start=1)) + "```", inline=True)
-
+       
         if category == 'tutorial':
-            embed.description = "How can use Vocard? Some simple commands you should know now after watching this video."
-            embed.set_image(url="https://cdn.discordapp.com/attachments/674788144931012638/917656288899514388/final_61aef3aa7836890135c6010c_669380.gif")
+            embed.description = "― <:5_:1120660684087246928> How to use the music bot?\n\n > Simply run `/play` while being in the https://discord.com/channels/1094973844210581537/1114577310851534888 channel!"
+            embed.set_image(url="https://cdn.discordapp.com/attachments/1049762290183975026/1262796668546318346/3RTpoHX.png?ex=67930c4b&is=6791bacb&hm=654baeb847381eb0e9a276ab125761901db083f3e3b535701ab9e9261558b289&")
+
         else:
             cog = [c for _, c in self.bot.cogs.items() if _.lower() == category][0]
 
@@ -108,5 +101,6 @@ class HelpView(discord.ui.View):
                 name=f"{category} Commands: [{len(commands)}]",
                 value="```{}```".format("".join(f"/{command.qualified_name}\n" for command in commands if not command.qualified_name == cog.qualified_name))
             )
+            embed.set_image(url="https://cdn.discordapp.com/attachments/1049762290183975026/1262796668546318346/3RTpoHX.png?ex=67930c4b&is=6791bacb&hm=654baeb847381eb0e9a276ab125761901db083f3e3b535701ab9e9261558b289&")
 
         return embed
