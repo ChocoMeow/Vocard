@@ -38,7 +38,8 @@ from discord import (
     Message,
     PartialMessage,
     Interaction,
-    errors
+    errors,
+    ChannelType
 )
 
 from discord.ext import commands
@@ -851,7 +852,8 @@ class Player(VoiceProtocol):
             rv = {key: func() if callable(func) else func for key, func in self._ph.variables.items()}
             status = None if remove_status else self._ph.replace(text=template, variables=rv)
             # if self.channel.status != status:
-            await self.channel.edit(status=status)
+            if self.channel.type == ChannelType.voice:
+                await self.channel.edit(status=status)
 
         except Exception as e:
             self._logger.error(
