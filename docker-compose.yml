@@ -48,6 +48,7 @@ services:
             - ./settings.json:/app/settings.json
         build:
             dockerfile: ./Dockerfile
+        command: bash -c "sleep 3; python -u main.py"
         depends_on:
             lavalink:
                 condition: service_started
