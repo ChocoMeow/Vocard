@@ -44,8 +44,9 @@ name: vocard
 services:
     lavalink:
         container_name: lavalink
-        image: ghcr.io/lavalink-devs/lavalink:latest
-        
+        #image: ghcr.io/lavalink-devs/lavalink:latest
+        build:
+            dockerfile: ./Dockerfile-lavalink
         restart: unless-stopped
         environment:
             - _JAVA_OPTIONS=-Xmx1G
@@ -59,11 +60,10 @@ services:
         expose:
             - "2333"
         healthcheck:
-            test: 'curl -H "Authorization: youshallnotpass" -s http://localhost:2333/version'
+            test: nc -z -v localhost 2333
             interval: 10s
-            timeout: 10s
-            retries: 5
-            start_period: 10s
+            timeout: 5s
+            retries: 3
 
     #mongo:
     #    container_name: mongo
