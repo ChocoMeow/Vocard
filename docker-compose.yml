@@ -1,61 +1,98 @@
-version: "3.8"
+# ------------------------------------------------------------------------------------------------------------ #
+
+# READ THIS BEFORE INSTALL!
+
+# This is a docker-compose file for running Vocard with Lavalink and MongoDB(optional).
+# You can selfhost MongoDB. Just uncomment lines starting with single "#" below in the compose file.
+# In order to run this, you need to have Docker and Docker Compose installed.
+# You can install Docker from https://docs.docker.com/get-docker/ 
+# and Docker Compose from https://docs.docker.com/compose/install/
+
+# Step 1: Start the installation by creating the future config directory for Vocard.
+# example - `root@docker:~# mkdir -p /opt/vocard/config`
+
+# Use `cd` to navigate to the config directory.
+# example - `root@docker:~# cd /opt/vocard/config`
+
+# Step 3: Choose installation method: Build the image from the Dockerfile or pull it from GitHub(recommended).
+# If you chose to pull from Docker Hub, comment the "build" lines and uncomment the "image" line.
+# If you chose to build the image from the Dockerfile, do the following:
+# uncomment this
+#       build:
+#           dockerfile: ./Dockerfile
+# and comment this
+#       image: ghcr.io/choco/vocard:latest
+# example - `root@docker:/opt/vocard/config# wget https://github.com/ChocoMeow/Vocard/archive/refs/heads/main.zip`
+
+# Step 4: Configure application.yml and settings.json in the config directory.
+# In order to avoid silly syntax errors it is recommended to use external code editor such as VS Code or Notepad++.
+# Then you can upload files to host using tools such as WinSCP or
+# using `nano` to create and edit the files directly using hosts terminal.
+# NOTE that some terminals DO NOT let you paste, so you can either use WinSCP or SSH app like Putty.
+
+
+# example - `root@docker:/opt/vocard/config# nano application.yml`
+# example - `root@docker:/opt/vocard/config# nano settings.json`
+# To exit nano, press `Ctrl + S`, then `Ctrl + X` to save changes.
+
+
+# Step 5: If the values are set correctly, you can start the installation by running the following command
+# example - `root@docker:/opt/vocard/config# docker-compose up -d`   (could be `docker compose` on some systems)
+
+# ------------------------------------------ THANK YOU FOR READING! ------------------------------------------ #
 
 services:
     lavalink:
-        image: ghcr.io/lavalink-devs/lavalink:latest
         container_name: lavalink
+        image: ghcr.io/lavalink-devs/lavalink:latest
+        
         restart: unless-stopped
         environment:
             - _JAVA_OPTIONS=-Xmx1G
             - SERVER_PORT=2333
-            - LAVALINK_SERVER_PASSWORD=youshallnotpass
+            - LAVALINK_SERVER_PASSWORD=youshallnotpass # Change password if needed (don't forget to change it in settings.json too)
         volumes:
-            ## Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
-            ## Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
-            ## Read more: https://docs.docker.com/storage/bind-mounts/ 
-            - ./application.yml:/opt/Lavalink/application.yml
+            - ./application.yml:/opt/Lavalink/application.yml   # Mount the application.yml file to the container. Use relative path to the file (relative to docker-compose.yml).
         networks:
-            - local
+            - vocard
         expose:
             - "2333"
 
-    # # You can selfhost MongoDB. Just uncomment lines starting with single "#" below.
-    # mongo:
-    #     image: mongo:latest
-    #     container_name: mongo
-    #     restart: unless-stopped
-    #     volumes:
-    #         # Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
-    #         # Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
-    #         # Read more: https://docs.docker.com/storage/bind-mounts/ 
-    #         - ./data/mongo/db:/data/db
-    #         - ./data/mongo/conf:/data/configdb
-    #     environment:
-    #         - MONGO_INITDB_ROOT_USERNAME=admin
-    #         - MONGO_INITDB_ROOT_PASSWORD=admin
-    #     expose:
-    #         - "27017"
-    #     networks:
-    #         - local
-    #     command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
+    #mongo:
+    #    container_name: mongo
+    #    image: mongo:latest
+    #    
+    #    restart: unless-stopped
+    #    volumes:
+    #        # Mount the data folders to the container. Use relative path to the folder (relative to docker-compose.yml).
+    #        - ./data/mongo/db:/data/db
+    #        - ./data/mongo/conf:/data/configdb
+    #    environment:
+    #        - MONGO_INITDB_ROOT_USERNAME=admin
+    #        - MONGO_INITDB_ROOT_PASSWORD=admin
+    #    expose:
+    #        - "27017"
+    #    networks:
+    #        - vocard
+    #    command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
 
     vocard:
         container_name: vocard
-        volumes:
-            ## Use "./" if you want to create a mount from your current directory (where docker-compose.yml is located)
-            ## Having access to files INSIDE the container is complicated. Mount function is used to have access to certain container files or folders.
-            ## Read more: https://docs.docker.com/storage/bind-mounts/ 
-            - ./settings.json:/app/settings.json
+        restart: unless-stopped
+        # If you want to build the image from the Dockerfile, uncomment the "build" lines and comment the "image" line.
+        # image: ghcr.io/choco/vocard:latest
         build:
             dockerfile: ./Dockerfile
+        volumes:
+            - ./settings.json:/app/settings.json    # Mount the settings.json file to the container. Use relative path to the file (relative to docker-compose.yml).
+        networks:
+            - vocard
         depends_on:
             lavalink:
                 condition: service_started
             # mongo:
             #     condition: service_started
-        networks:
-            - local
 
 networks:
-    local:
-        name: local
+    vocard:
+        name: vocard
