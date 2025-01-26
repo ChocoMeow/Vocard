@@ -40,7 +40,7 @@
 # example - `root@docker:/opt/vocard/config# docker-compose up -d`   (could be `docker compose` on some systems)
 
 # ------------------------------------------ THANK YOU FOR READING! ------------------------------------------ #
-
+name: vocard
 services:
     lavalink:
         container_name: lavalink
@@ -50,13 +50,20 @@ services:
         environment:
             - _JAVA_OPTIONS=-Xmx1G
             - SERVER_PORT=2333
-            - LAVALINK_SERVER_PASSWORD=youshallnotpass # Change password if needed (don't forget to change it in settings.json too)
+            # there is no point in changing the password here, since the container is available only in docker network
+            - LAVALINK_SERVER_PASSWORD=youshallnotpass # Change password if needed (don't forget to change it in healthcheck below and settings.json)
         volumes:
-            - ./application.yml:/opt/Lavalink/application.yml   # Mount the application.yml file to the container. Use relative path to the file (relative to docker-compose.yml).
+            - ./application.yml:/opt/Lavalink/application.yml
         networks:
             - vocard
         expose:
             - "2333"
+        healthcheck:
+            test: 'curl -H "Authorization: youshallnotpass" -s http://localhost:2333/version'
+            interval: 10s
+            timeout: 10s
+            retries: 5
+            start_period: 10s
 
     #mongo:
     #    container_name: mongo
@@ -64,7 +71,6 @@ services:
     #    
     #    restart: unless-stopped
     #    volumes:
-    #        # Mount the data folders to the container. Use relative path to the folder (relative to docker-compose.yml).
     #        - ./data/mongo/db:/data/db
     #        - ./data/mongo/conf:/data/configdb
     #    environment:
@@ -84,12 +90,12 @@ services:
         build:
             dockerfile: ./Dockerfile
         volumes:
-            - ./settings.json:/app/settings.json    # Mount the settings.json file to the container. Use relative path to the file (relative to docker-compose.yml).
+            - ./settings.json:/app/settings.json
         networks:
             - vocard
         depends_on:
             lavalink:
-                condition: service_started
+                condition: service_healthy
             # mongo:
             #     condition: service_started
 
