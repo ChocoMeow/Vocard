@@ -5,7 +5,7 @@
 # This is a docker-compose file for running Vocard with Lavalink and MongoDB(optional).
 # You can selfhost MongoDB. Just uncomment lines starting with single "#" below in the compose file.
 # In order to run this, you need to have Docker and Docker Compose installed.
-# You can install Docker from https://docs.docker.com/get-docker/ 
+# You can install Docker from https://docs.docker.com/get-docker/
 # and Docker Compose from https://docs.docker.com/compose/install/
 
 # Step 1: Start the installation by creating the future config directory for Vocard.
@@ -30,11 +30,9 @@
 # using `nano` to create and edit the files directly using hosts terminal.
 # NOTE that some terminals DO NOT let you paste, so you can either use WinSCP or SSH app like Putty.
 
-
 # example - `root@docker:/opt/vocard/config# nano application.yml`
 # example - `root@docker:/opt/vocard/config# nano settings.json`
 # To exit nano, press `Ctrl + S`, then `Ctrl + X` to save changes.
-
 
 # Step 5: If the values are set correctly, you can start the installation by running the following command
 # example - `root@docker:/opt/vocard/config# docker-compose up -d`   (could be `docker compose` on some systems)
@@ -46,7 +44,7 @@ services:
         container_name: lavalink
         #image: ghcr.io/lavalink-devs/lavalink:latest
         build:
-            dockerfile: ./Dockerfile-lavalink
+            dockerfile: ./lavalink/Dockerfile-lavalink
         restart: unless-stopped
         environment:
             - _JAVA_OPTIONS=-Xmx1G
@@ -54,7 +52,7 @@ services:
             # there is no point in changing the password here, since the container is available only in docker network
             - LAVALINK_SERVER_PASSWORD=youshallnotpass # Change password if needed (don't forget to change it in healthcheck below and settings.json)
         volumes:
-            - ./application.yml:/opt/Lavalink/application.yml
+            - ./lavalink/application.yml:/opt/Lavalink/application.yml
         networks:
             - vocard
         expose:
@@ -68,7 +66,7 @@ services:
     #mongo:
     #    container_name: mongo
     #    image: mongo:latest
-    #    
+    #
     #    restart: unless-stopped
     #    volumes:
     #        - ./data/mongo/db:/data/db
