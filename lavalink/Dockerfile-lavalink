@@ -1,15 +1,14 @@
-FROM eclipse-temurin:22-jre-alpine
+FROM eclipse-temurin:23-jre-noble
 
-# Install wget to download Lavalink.jar
-RUN apk add --no-cache wget
+RUN apt-get update && \
+    apt-get install -y netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
 
-# Run as non-root user
-RUN addgroup -g 322 lavalink && \
-    adduser -D -u 322 -G lavalink lavalink
+RUN groupadd -g 322 lavalink && \
+    useradd -u 322 -g lavalink -m -d /opt/Lavalink lavalink
 
 WORKDIR /opt/Lavalink
 
-# Download Lavalink.jar
 RUN wget -O Lavalink.jar https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar
 
 RUN chown -R lavalink:lavalink /opt/Lavalink
