@@ -1,16 +1,33 @@
-FROM python:3.12-slim
+# Stage 1: Build
+FROM python:3.12-slim-bookworm as builder
 
-# Install build dependencies
-RUN apt-get update -y && apt-get install -y gcc python3-dev
+# Install build dependencies (gcc, Python headers, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    python3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory to /app
+# Set the working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Copy only the requirements file to take advantage of Docker's caching
+COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Run main.py when the container launches
+# Stage 2: Runtime
+FROM python:3.12-slim-bookworm
+
+# Set the working directory
+WORKDIR /app
+
+# Copy installed Python packages from the builder stage
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+
+# Copy the application code
+COPY . .
+
+# Run the application
 CMD ["python", "-u", "main.py"]
