@@ -143,7 +143,7 @@ class Vocard(commands.Bot):
             await self.tree.sync()
             func.update_json("settings.json", new_data={"version": update.__version__})
             for locale_key, values in func.MISSING_TRANSLATOR.items():
-                func.logger.warning(f"Missing translation for '{", ".join(values)}' in '{locale_key}'")
+                func.logger.warning(f'Missing translation for "{", ".join(values)}" in "{locale_key}"')
 
     async def on_ready(self):
         func.logger.info("------------------")
