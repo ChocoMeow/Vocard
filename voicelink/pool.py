@@ -52,6 +52,7 @@ from .exceptions import (
 from .objects import Playlist, Track
 from .utils import ExponentialBackoff, NodeStats, NodeInfo, Ping
 from .enums import RequestMethod
+from .ratelimit import YTRatelimit, YTToken, STRATEGY
 
 if TYPE_CHECKING:
     from .player import Player
@@ -86,6 +87,7 @@ class Node:
         port: int,
         password: str,
         identifier: str,
+        yt_ratelimit: dict,
         secure: bool = False,
         heartbeat: int = 30,
         session: Optional[aiohttp.ClientSession] = None,
@@ -103,7 +105,7 @@ class Node:
         self._heartbeat: int = heartbeat
         self._secure: bool = secure
         self._logger: Optional[logging.Logger] = logger
-       
+
         self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}/" + NODE_VERSION + "/websocket"
         self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
 
@@ -129,6 +131,8 @@ class Node:
         self._spotify_client_secret: Optional[str] = spotify_client_secret
         self._spotify_client: Optional[spotify.Client] = None
         
+        self.yt_ratelimit: YTRatelimit = STRATEGY.get(yt_ratelimit.get("strategy"))(self, yt_ratelimit)
+
         self._bot.add_listener(self._update_handler, "on_socket_response")
 
     def __repr__(self):
@@ -287,11 +291,15 @@ class Node:
                 return await resp.json(content_type=None)
 
             return await resp.json()
-        
+
     async def connect(self) -> Node:
         """Initiates a connection with a Lavalink node and adds it to the node pool."""
 
         try:
+            if self._available:
+                self._logger.info(f"Node [{self._identifier}] already connected.")
+                return
+            
             self._websocket = await self._session.ws_connect(
                 self._websocket_uri, headers=self._headers, heartbeat=self._heartbeat
             )
@@ -364,18 +372,8 @@ class Node:
         Context object on the track it builds.
         """
 
-        async with self._session.get(
-            f"{self._rest_uri}/" + NODE_VERSION + "/decodetrack?",
-            headers={"Authorization": self._password},
-            params={"track": identifier}
-        ) as resp:
-            if not resp.status == 200:
-                raise TrackLoadError(
-                    f"Failed to build track. Check if the identifier is correct and try again."
-                )
-
-            data: dict = await resp.json()
-            return Track(track_id=identifier, info=data, requester=requester)
+        data = await self.send(RequestMethod.GET, f"decodetrack?encodedTrack={identifier}")
+        return Track(track_id=identifier, info=data, requester=requester)
 
     async def get_tracks(
         self,
@@ -436,11 +434,7 @@ class Node:
             )
 
         elif DISCORD_MP3_URL_REGEX.match(query):
-            async with self._session.get(
-                url=f"{self._rest_uri}/" + NODE_VERSION + f"/loadtracks?identifier={quote(query)}",
-                headers={"Authorization": self._password}
-            ) as response:
-                data: dict = await response.json()
+            data = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
 
             try:
                 track: dict = data["data"]
@@ -455,11 +449,7 @@ class Node:
                 )
             ]
         else:
-            async with self._session.get(
-                url=f"{self._rest_uri}/" + NODE_VERSION + f"/loadtracks?identifier={quote(query)}",
-                headers={"Authorization": self._password}
-            ) as response:
-                data = await response.json()
+            data = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
 
         load_type = data.get("loadType")
 
@@ -556,7 +546,21 @@ class Node:
             tracks = tracks.tracks
 
         return tracks[:limit] if limit else tracks
+    
+    async def update_refresh_yt_access_token(self, token: YTToken) -> dict:
+        if not self._available:
+            raise NodeNotAvailable(f"The node '{self._identifier}' is unavailable.")
         
+        uri: str = f"{self._rest_uri}/youtube"
+        async with self._session.request(
+            method="POST",
+            url=uri,
+            headers={"Authorization": self._password},
+            json={"refreshToken": token.token}
+        ) as resp:
+            if resp.status >= 300:
+                raise NodeException(f"Getting errors from Lavalink REST api")
+
 class NodePool:
     """The base class for the node pool.
        This holds all the nodes that are to be used by the bot.
@@ -632,6 +636,7 @@ class NodePool:
         port: str,
         password: str,
         identifier: str,
+        yt_ratelimit: dict,
         secure: bool = False,
         heartbeat: int = 30,
         spotify_client_id: Optional[str] = None,
@@ -651,8 +656,8 @@ class NodePool:
             
         node = Node(
             pool=cls, bot=bot, host=host, port=port, password=password,
-            identifier=identifier, secure=secure, heartbeat=heartbeat, spotify_client_id=spotify_client_id, 
-            session=session, spotify_client_secret=spotify_client_secret,
+            yt_ratelimit=yt_ratelimit, identifier=identifier, secure=secure, heartbeat=heartbeat,
+            session=session, spotify_client_id=spotify_client_id, spotify_client_secret=spotify_client_secret,
             resume_key=resume_key, logger=logger
         )
 

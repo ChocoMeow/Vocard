@@ -45,7 +45,7 @@ from discord import (
 from discord.ext import commands
 from . import events
 from .enums import SearchType, LoopType, RequestMethod
-from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent
+from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent, TrackExceptionEvent
 from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, TrackLoadError, FilterTagAlreadyInUse, DuplicateTrack
 from .filters import Filter, Filters
 from .objects import Track, Playlist
@@ -350,6 +350,9 @@ class Player(VoiceProtocol):
 
         if isinstance(event, TrackEndEvent) and event.reason != "replaced":
             self._current = None
+        
+        if isinstance(event, TrackExceptionEvent) and event.exception["message"] == "This content isn’t available.":
+            await self._node.yt_ratelimit.flag_active_token()
 
         event.dispatch(self._bot)
 
@@ -572,8 +575,9 @@ class Player(VoiceProtocol):
 
         if end or track.end_time:
             data["endTime"] = str(end if end else track.end_time)
-
+        
         await self.send(method=RequestMethod.PATCH, query=f"noReplace={ignore_if_playing}", data=data)
+        await self.node.yt_ratelimit.handle_request()
 
         self._current = track
 

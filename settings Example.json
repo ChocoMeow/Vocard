@@ -12,7 +12,15 @@
             "port": 2333,
             "password": "youshallnotpass",
             "secure": false,
-            "identifier": "DEFAULT"
+            "identifier": "DEFAULT",
+            "yt_ratelimit": {
+                "tokens": [],
+                "config": {
+                    "retry_time": 10800,
+                    "max_requests": 30
+                },
+                "strategy": "LoadBalance"
+            }
         }   
     },
     "prefix": "?",
