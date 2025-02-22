@@ -70,7 +70,7 @@ class YTRatelimit(ABC):
         If a new token is found, update it via the node and return it.
         """
         for token in self.tokens:
-            if not token.is_flagged or token.allow_retry:
+            if token != self.active_token and (not token.is_flagged or token.allow_retry):
                 try:
                     await self.node.update_refresh_yt_access_token(token)
                     self.active_token = token
