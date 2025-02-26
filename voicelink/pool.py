@@ -87,9 +87,9 @@ class Node:
         port: int,
         password: str,
         identifier: str,
-        yt_ratelimit: dict,
         secure: bool = False,
         heartbeat: int = 30,
+        yt_ratelimit: dict = None,
         session: Optional[aiohttp.ClientSession] = None,
         spotify_client_id: Optional[str] = None,
         spotify_client_secret: Optional[str] = None,
@@ -131,7 +131,7 @@ class Node:
         self._spotify_client_secret: Optional[str] = spotify_client_secret
         self._spotify_client: Optional[spotify.Client] = None
         
-        self.yt_ratelimit: YTRatelimit = STRATEGY.get(yt_ratelimit.get("strategy"))(self, yt_ratelimit)
+        self.yt_ratelimit: Optional[YTRatelimit] = STRATEGY.get(yt_ratelimit.get("strategy"))(self, yt_ratelimit) if yt_ratelimit else None
 
         self._bot.add_listener(self._update_handler, "on_socket_response")
 
@@ -636,9 +636,9 @@ class NodePool:
         port: str,
         password: str,
         identifier: str,
-        yt_ratelimit: dict,
         secure: bool = False,
         heartbeat: int = 30,
+        yt_ratelimit: dict = None,
         spotify_client_id: Optional[str] = None,
         spotify_client_secret: Optional[str] = None,
         session: Optional[aiohttp.ClientSession] = None,
@@ -656,7 +656,7 @@ class NodePool:
             
         node = Node(
             pool=cls, bot=bot, host=host, port=port, password=password,
-            yt_ratelimit=yt_ratelimit, identifier=identifier, secure=secure, heartbeat=heartbeat,
+            identifier=identifier, secure=secure, heartbeat=heartbeat, yt_ratelimit=yt_ratelimit,
             session=session, spotify_client_id=spotify_client_id, spotify_client_secret=spotify_client_secret,
             resume_key=resume_key, logger=logger
         )
