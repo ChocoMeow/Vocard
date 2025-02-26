@@ -43,9 +43,10 @@ from discord import (
 )
 
 from discord.ext import commands
+
 from . import events
 from .enums import SearchType, LoopType, RequestMethod
-from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent
+from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent, TrackExceptionEvent
 from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, TrackLoadError, FilterTagAlreadyInUse, DuplicateTrack
 from .filters import Filter, Filters
 from .objects import Track, Playlist
@@ -350,6 +351,10 @@ class Player(VoiceProtocol):
 
         if isinstance(event, TrackEndEvent) and event.reason != "replaced":
             self._current = None
+        
+        if isinstance(event, TrackExceptionEvent) and event.exception["message"] == "This content isn’t available.":
+            if self._node.yt_ratelimit:
+                await self._node.yt_ratelimit.flag_active_token()
 
         event.dispatch(self._bot)
 
@@ -435,16 +440,14 @@ class Player(VoiceProtocol):
                     self.controller = await self.context.channel.send(embed=embed, view=view)
 
             elif not await self.is_position_fresh():
-                try:
-                    await self.controller.delete()
-                except Exception as e:
-                    self._logger.warning(
-                        f"Failed to delete outdated controller in {self.guild.name}({self.guild.id}): {e}"
-                    )
+                await self.controller.delete()
                 self.controller = await self.context.channel.send(embed=embed, view=view)
 
             else:
                 await self.controller.edit(embed=embed, view=view)
+        
+        except errors.Forbidden:
+            self._logger.warning(f"Missing permission to update the music controller on {self.guild.name}({self.guild.id})")
 
         except Exception as e:
             self._logger.error(f"Something went wrong while sending music controller to {self.guild.name}({self.guild.id})", exc_info=e)
@@ -572,8 +575,10 @@ class Player(VoiceProtocol):
 
         if end or track.end_time:
             data["endTime"] = str(end if end else track.end_time)
-
+        
         await self.send(method=RequestMethod.PATCH, query=f"noReplace={ignore_if_playing}", data=data)
+        if self._node.yt_ratelimit:
+            await self._node.yt_ratelimit.handle_request()
 
         self._current = track
 
