@@ -65,6 +65,21 @@ class SearchType(Enum):
 
     def __str__(self) -> str:
         return self.value
+    
+    @classmethod
+    def match(cls, value: str):
+        """find an enum based on a search string."""
+        normalized_value = value.lower().replace("_", "").replace(" ", "")
+
+        for member in cls:
+            normalized_name = member.name.lower().replace("_", "")
+            if member.value == value or normalized_name == normalized_value:
+                return member
+        return None
+
+    @property
+    def display_name(self) -> str:
+        return self.name.replace("_", " ").title()
 
 class RequestMethod(Enum):
     """The enum for the different request methods in Voicelink

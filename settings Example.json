@@ -55,7 +55,7 @@
             "emoji": "<:youtube:826661982760992778>",
             "color": "0xFF0000"
         },
-        "youtube music": {
+        "youtubemusic": {
             "emoji": "<:youtube:826661982760992778>",
             "color": "0xFF0000"
         },
@@ -79,7 +79,7 @@
             "emoji": "<:vimeo:864694001919721473>",
             "color": "0x1ABCEA"
         },
-        "apple": {
+        "applemusic": {
             "emoji": "<:applemusic:994844332374884413>",
             "color": "0xE298C4"
         },
@@ -92,7 +92,7 @@
             "color": "0x74ECE9"
         },
         "others": {
-            "emoji": "🌎",
+            "emoji": "🔗",
             "color": "0xb3b3b3"
         }
     },

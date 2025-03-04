@@ -67,7 +67,7 @@ async def nowplay(ctx: commands.Context, player: voicelink.Player):
     icon = ":red_circle:" if track.is_stream else (":pause_button:" if player.is_paused else ":arrow_forward:")
     embed.add_field(name="\u2800", value=f"{icon} {pbar} **[{ctime(player.position)}/{track.formatted_length}]**", inline=False)
 
-    return await send(ctx, embed, view=LinkView(texts[2].format(track.source), track.emoji, track.uri))
+    return await send(ctx, embed, view=LinkView(texts[2].format(track.source.title()), track.emoji, track.uri))
 
 class Basic(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -86,7 +86,7 @@ class Basic(commands.Cog):
         return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
     async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
-        if voicelink.pool.URL_REGEX.match(current): return [app_commands.Choice(name=current, value=current)]
+        if voicelink.pool.URL_REGEX.match(current): return []
 
         if current:
             node = voicelink.NodePool.get_node()
@@ -216,7 +216,7 @@ class Basic(commands.Cog):
         platform="Select the platform you want to search."
     )
     @app_commands.choices(platform=[
-        app_commands.Choice(name=search_type.name.replace("_", " ").title(), value=search_type.name)
+        app_commands.Choice(name=search_type.display_name, value=search_type.name)
         for search_type in SearchType
     ])
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -232,13 +232,14 @@ class Basic(commands.Cog):
         if url(query):
             return await send(ctx, "noLinkSupport", ephemeral=True)
         
-        tracks = await player.get_tracks(query=query, requester=ctx.author, search_type=SearchType[platform] if platform in SearchType.__members__ else SearchType.YOUTUBE)
+        search_type: SearchType = SearchType.match(platform) or SearchType.YOUTUBE
+        tracks = await player.get_tracks(query=query, requester=ctx.author, search_type=search_type)
         if not tracks:
             return await send(ctx, "noTrackFound")
 
         texts = await get_lang(ctx.guild.id, "searchTitle", "searchDesc", "live", "trackLoad_pos", "trackLoad", "searchWait", "searchSuccess")
         query_track = "\n".join(f"`{index}.` `[{track.formatted_length}]` **{track.title[:35]}**" for index, track in enumerate(tracks[0:10], start=1))
-        embed = discord.Embed(title=texts[0].format(query), description=texts[1].format(get_source(platform, "emoji"), platform, len(tracks[0:10]), query_track), color=settings.embed_color)
+        embed = discord.Embed(title=texts[0].format(query), description=texts[1].format(get_source(search_type.display_name, "emoji"), search_type.display_name, len(tracks[0:10]), query_track), color=settings.embed_color)
         view = SearchView(tracks=tracks[0:10], texts=[texts[5], texts[6]])
         view.response = await send(ctx, embed, view=view, ephemeral=True)
 
