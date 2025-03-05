@@ -232,7 +232,7 @@ class Lrclib(LyricsPlatform):
             return []
         
     async def get_lyrics(self, title, artist):
-        params = {"q": f"{title} - {artist}"}
+        params = {"q": title}
         result = await self.get(LRCLIB_ENDPOINT + "search", params)
         if result:
             return {"default": result[0].get("plainLyrics", "")}
