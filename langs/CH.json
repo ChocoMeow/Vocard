@@ -116,6 +116,7 @@
     "buttonShuffle": "隨機播放",
     "buttonForward": "前進",
     "buttonRewind": "後退",
+    "buttonLyrics": "歌詞",
 
     "nowplayingDesc": "**現在播放:**\n```{0}```",
     "nowplayingField": "接下來播放:",

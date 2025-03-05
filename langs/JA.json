@@ -116,6 +116,7 @@
     "buttonShuffle": "シャッフル",
     "buttonForward": "進む",
     "buttonRewind": "戻る",
+    "buttonLyrics": "歌詞",
 
     "nowplayingDesc": "**現在再生中：**\n```{0}```",
     "nowplayingField": "次に再生する曲：",

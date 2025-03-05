@@ -116,6 +116,7 @@
     "buttonShuffle": "Перемішати",
     "buttonForward": "Вперед",
     "buttonRewind": "Назад",
+    "buttonLyrics": "Тексти пісень",
 
     "nowplayingDesc": "**Зараз грає:**\n```{0}```",
     "nowplayingField": "Наступне:",

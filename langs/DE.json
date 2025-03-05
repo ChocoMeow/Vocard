@@ -116,6 +116,7 @@
     "buttonShuffle": "Zufall",
     "buttonForward": "Vorspulen",
     "buttonRewind": "Zurückspulen",
+    "buttonLyrics": "Liedtexte",
 
     "nowplayingDesc": "**Jetzt wird abgespielt:**\n```{0}```",
     "nowplayingField": "Als nächstes:",

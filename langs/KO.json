@@ -116,6 +116,7 @@
     "buttonShuffle": "셔플",
     "buttonForward": "앞으로",
     "buttonRewind": "뒤로",
+    "buttonLyrics": "가사",
 
     "nowplayingDesc": "**현재 재생중인 곡:**\n```{0}```",
     "nowplayingField": "다음 곡:",

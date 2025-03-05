@@ -22,13 +22,14 @@ SOFTWARE.
 """
 
 import discord
+import re
 import voicelink
+import addons
+import views
 import function as func
 
 from discord.ext import commands
 from typing import Dict
-
-from . import ButtonOnCooldown
 
 def key(interaction: discord.Interaction):
     return interaction.user
@@ -45,10 +46,11 @@ class ControlButton(discord.ui.Button):
         self.disable_button_text: bool = func.settings.controller.get("disableButtonText", False)
         super().__init__(label=self.player.get_msg(label) if label and not self.disable_button_text else None, **kwargs)
 
-    async def send(self, interaction: discord.Interaction, key: str, *params, ephemeral: bool = False) -> None:
+    async def send(self, interaction: discord.Interaction, key: str, *params, view: discord.ui.View = None, ephemeral: bool = False) -> None:
         stay = self.player.settings.get("controller_msg", True)
         return await func.send(
             interaction, key, *params,
+            view=view,
             delete_after=None if ephemeral or stay else 10,
             ephemeral=ephemeral
         )
@@ -362,6 +364,29 @@ class Rewind(ControlButton):
         await self.player.seek(position)
         await self.send(interaction, 'rewind', func.time(position))
 
+class Lyrics(ControlButton):
+    def __init__(self, **kwargs):
+        super().__init__(
+            emoji="📜",
+            label="buttonLyrics",
+            disabled=kwargs["player"].current is None,
+            **kwargs
+        )
+        
+    async def callback(self, interaction: discord.Interaction):
+        if not self.player or not self.player.is_playing:
+            return await self.send(interaction, "noTrackPlaying", ephemeral=True)
+        
+        title = self.player.current.title
+        artist = self.player.current.author
+        
+        song: dict[str, str] = await addons.lyricsPlatform.get(func.settings.lyrics_platform)().get_lyrics(title, artist)
+        if not song:
+            return await self.send(interaction, "lyricsNotFound", ephemeral=True)
+
+        view = views.LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=interaction.user)
+        view.response = await self.send(interaction, view.build_embed(), view=view, ephemeral=True)
+
 class Tracks(discord.ui.Select):
     def __init__(self, player, style, row):
 
@@ -435,6 +460,7 @@ BUTTONTYPE: Dict[str, ControlButton] = {
     "shuffle": Shuffle,
     "forward": Forward,
     "rewind": Rewind,
+    "lyrics": Lyrics,
     "tracks": Tracks,
     "effects": Effects
 }
@@ -476,14 +502,14 @@ class InteractiveController(discord.ui.View):
         if self.player.channel and self.player.is_user_join(interaction.user):
             retry_after = self.cooldown.update_rate_limit(interaction)
             if retry_after:
-                raise ButtonOnCooldown(retry_after)
+                raise views.ButtonOnCooldown(retry_after)
             return True
         else:
             await func.send(interaction, "notInChannel", interaction.user.mention, self.player.channel.mention, ephemeral=True)
             return False
 
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
-        if isinstance(error, ButtonOnCooldown):
+        if isinstance(error, views.ButtonOnCooldown):
             sec = int(error.retry_after)
             await interaction.response.send_message(f"You're on cooldown for {sec} second{'' if sec == 1 else 's'}!", ephemeral=True)
         

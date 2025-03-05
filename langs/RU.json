@@ -116,7 +116,8 @@
     "buttonShuffle": "Перемешать",
     "buttonForward": "+10сек",
     "buttonRewind": "Назад",
-    
+    "buttonLyrics": "Тексты песен",
+
     "nowplayingDesc": "**Сейчас играет:**\n```{0}```",
     "nowplayingField": "Следующее:",
     "nowplayingLink": "Слушать на {0}",

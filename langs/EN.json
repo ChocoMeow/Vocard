@@ -116,6 +116,7 @@
     "buttonShuffle": "Shuffle",
     "buttonForward": "Forward",
     "buttonRewind": "Rewind",
+    "buttonLyrics": "Lyrics",
 
     "nowplayingDesc": "**Now Playing:**\n```{0}```",
     "nowplayingField": "Up Next:",
