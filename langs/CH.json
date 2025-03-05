@@ -189,5 +189,6 @@
     "invalidEndTime": "無效的結束時間! 時間必須在 `00:00` 和 `{0}` 之間。",
     "invalidTimeOrder": "結束時間不能小於或等於開始時間。",
 
-    "setStageAnnounceTemplate": "完成！從現在開始，像您現在的語音狀態將根據您的模板命名。您應該在幾秒鐘內看到它更新。"
+    "setStageAnnounceTemplate": "完成！從現在開始，像您現在的語音狀態將根據您的模板命名。您應該在幾秒鐘內看到它更新。",
+    "createSongRequestChannel": "一個歌曲請求頻道 ({0}) 已建立！您可以在該頻道中透過歌曲名稱或 URL 開始要求任何歌曲，而無需使用機器人前綴。"
 }

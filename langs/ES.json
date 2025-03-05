@@ -189,5 +189,6 @@
     "invalidEndTime": "Tiempo de finalización inválido! El tiempo debe estar entre `00:00` y `{0}`.",
     "invalidTimeOrder": "El tiempo final no puede ser menor o igual que el tiempo de inicio.",
 
-    "setStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos."
+    "setStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos.",
+    "createSongRequestChannel": "¡Se ha creado un canal de solicitudes de canciones ({0})! Puedes empezar a solicitar cualquier canción por nombre o URL en ese canal, sin necesidad de usar el prefijo del bot."
 }
