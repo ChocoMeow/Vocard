@@ -59,7 +59,7 @@
     "noPlaylistAcc": "{0} didn't create a playlist account.",
     "overPlaylistCreation": "You cannot create more than `{0}` playlists!",
     "playlistExists": "Playlist [`{0}`] already exists.",
-    "playlistNotInvaildUrl": "Please enter a valid link or public spotify or youtube playlist link.",
+    "playlistNotInvalidUrl": "Please enter a valid link or public spotify or youtube playlist link.",
     "playlistCreated": "You have created `{0}` playlist. Type /playlist view for more info.",
     "playlistRenamed": "You have renamed `{0}` to `{1}`.",
     "playlistLimitTrack": "You have reached the limit! You can only add `{0}` songs to your playlist.",

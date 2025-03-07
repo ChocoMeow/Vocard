@@ -59,7 +59,7 @@
     "noPlaylistAcc": "{0}さんはプレイリストアカウントを作成していません。",
     "overPlaylistCreation": " {0}個以上のプレイリストを作成することはできません！",
     "playlistExists": "プレイリスト[{0}]はすでに存在します。",
-    "playlistNotInvaildUrl": "有効なリンクまたは公開SpotifyまたはYouTubeプレイリストリンクを入力してください。",
+    "playlistNotInvalidUrl": "有効なリンクまたは公開SpotifyまたはYouTubeプレイリストリンクを入力してください。",
     "playlistCreated": "{0}プレイリストを作成しました。詳細については、/playlist viewを入力してください。",
     "playlistRenamed": "{0}を{1}に名前を変更しました。",
     "playlistLimitTrack": "この制限に達しました！プレイリストには{0}曲しか追加できません。",

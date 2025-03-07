@@ -96,7 +96,7 @@ class Track:
             self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/maxresdefault.jpg"
         
         self.emoji: str = get_source(self.source, "emoji")
-        self.length: float = 3000 if self.source == "soundcloud" and "/preview/" in self.identifier else info.get("length")
+        self.length: float = info.get("length")
         
         self.requester: Member = requester
         self.is_stream: bool = info.get("isStream", False)
@@ -117,13 +117,6 @@ class Track:
     def __repr__(self) -> str:
         return f"<Voicelink.track title={self.title!r} uri=<{self.uri!r}> length={self.length}>"
 
-    def toDict(self) -> dict:
-        return {
-            "track_id": self.track_id,
-            "info": self.info,
-            "thumbnail": self.thumbnail
-        }
-
     @property
     def track_id(self) -> str:
         if not self._track_id:
@@ -134,6 +127,14 @@ class Track:
     @property
     def formatted_length(self) -> str:
         return ctime(self.length)
+    
+    @property
+    def data(self) -> dict:
+        return {
+            "track_id": self.track_id,
+            "info": self.info,
+            "thumbnail": self.thumbnail
+        }
     
 class Playlist:
     """The base playlist object.

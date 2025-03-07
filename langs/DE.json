@@ -59,7 +59,7 @@
     "noPlaylistAcc": "{0} hat noch kein Playlist-Konto erstellt.",
     "overPlaylistCreation": "Du kannst nicht mehr als `{0}` Wiedergabelisten erstellen!",
     "playlistExists": "Die Playlist [`{0}`] existiert bereits.",
-    "playlistNotInvaildUrl": "Bitte gebe einen gültigen Link oder öffentlichen Spotify/YouTube-Playlist-Link ein.",
+    "playlistNotInvalidUrl": "Bitte gebe einen gültigen Link oder öffentlichen Spotify/YouTube-Playlist-Link ein.",
     "playlistCreated": "Du hast die Wiedergabeliste `{0}` erstellt. Gebe /playlist view ein, um weitere Informationen zu erhalten.",
     "playlistRenamed": "Du hast `{0}` zu `{1}` umbenannt.",
     "playlistLimitTrack": "Du hast die Grenze erreicht! Du kannst deiner Playlist nur noch `{0}` Songs hinzufügen.",

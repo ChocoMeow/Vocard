@@ -59,7 +59,7 @@
     "noPlaylistAcc": "{0} 沒有建立播放清單帳戶。",
     "overPlaylistCreation": "你不能建立超過 `{0}` 個播放清單！",
     "playlistExists": "播放清單 [`{0}`] 已存在。",
-    "playlistNotInvaildUrl": "請輸入有效的連結或公開的 Spotify 或 YouTube 播放清單連結。",
+    "playlistNotInvalidUrl": "請輸入有效的連結或公開的 Spotify 或 YouTube 播放清單連結。",
     "playlistCreated": "你已建立 `{0}` 播放清單。輸入 /playlist view 檢視更多資訊。",
     "playlistRenamed": "你已將 `{0}` 更名為 `{1}`。",
     "playlistLimitTrack": "你已達到限制！你只能將 `{0}` 首歌曲添加至你的播放清單中。",

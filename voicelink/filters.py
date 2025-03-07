@@ -287,7 +287,7 @@ class Vibrato(Filter):
         self._init_with_scope({
             "frequency": [0, 14],
             "depth": [0, 1]
-        }, tag=tag, frequenc=frequency, depth=depth)
+        }, tag=tag, frequency=frequency, depth=depth)
         
     def __repr__(self):
         return f"<Voicelink.VibratoFilter tag={self.tag} payload={self.payload}"

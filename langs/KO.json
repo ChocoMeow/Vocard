@@ -59,7 +59,7 @@
     "noPlaylistAcc": "{0}님은 재생 목록 계정을 만들지 않았습니다.",
     "overPlaylistCreation": "더 이상 {0}개 이상의 재생 목록을 만들 수 없습니다!",
     "playlistExists": "재생 목록 [{0}]이(가) 이미 있습니다.",
-    "playlistNotInvaildUrl": "유효한 링크 또는 공개 Spotify 또는 YouTube 재생 목록 링크를 입력하세요.",
+    "playlistNotInvalidUrl": "유효한 링크 또는 공개 Spotify 또는 YouTube 재생 목록 링크를 입력하세요.",
     "playlistCreated": "{0} 재생 목록을 만들었습니다. 자세한 내용은 /playlist view를 입력하세요.",
     "playlistRenamed": "{0}을(를) {1}(으)로 이름을 바꿨습니다.",
     "playlistLimitTrack": "죄송합니다! 재생 목록에 추가할 수 있는 노래는 {0}곡까지입니다.",

@@ -32,7 +32,7 @@ import function as func
 from typing import Optional
 from discord.ext import commands
 
-class ExceuteModal(discord.ui.Modal):
+class ExecuteModal(discord.ui.Modal):
     def __init__(self, code: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.code: str = code
@@ -139,7 +139,7 @@ class CogsDropdown(discord.ui.Select):
         except Exception as e:
             return await interaction.response.send_message(f"Unable to reload `{selected}`! Reason: {e}", ephemeral=True)
 
-        await interaction.response.send_message(f"Reloaded `{selected}` sucessfully!", ephemeral=True)
+        await interaction.response.send_message(f"Reloaded `{selected}` successfully!", ephemeral=True)
 
 class NodesDropdown(discord.ui.Select):
     def __init__(self, bot: commands.Bot):
@@ -177,7 +177,7 @@ class NodesDropdown(discord.ui.Select):
         await interaction.response.defer()
         await self.view.message.edit(embed=self.view.build_embed(), view=self.view)
         
-class ExceutePanel(discord.ui.View):
+class ExecutePanel(discord.ui.View):
     def __init__(self, bot, *, timeout = 180):
         self.bot: commands.Bot = bot
 
@@ -208,7 +208,7 @@ class ExceutePanel(discord.ui.View):
             await self.message.edit(view=self)
 
     async def execute(self, interaction: discord.Interaction):
-        modal = ExceuteModal(self.code, title="Enter Your Code")
+        modal = ExecuteModal(self.code, title="Enter Your Code")
         await interaction.response.send_modal(modal)
         await modal.wait()
 
@@ -362,7 +362,7 @@ class CogsView(discord.ui.View):
 class DebugView(discord.ui.View):
     def __init__(self, bot, *, timeout: float | None = 180):
         self.bot: commands.Bot = bot
-        self.panel: ExceutePanel = ExceutePanel(bot)
+        self.panel: ExecutePanel = ExecutePanel(bot)
 
         super().__init__(timeout=timeout)
 

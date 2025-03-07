@@ -27,7 +27,7 @@ from discord.ext import commands
 import function as func
 
 class HelpDropdown(discord.ui.Select):
-    def __init__(self, categorys:list):
+    def __init__(self, categories:list):
         self.view: HelpView
 
         super().__init__(
@@ -38,7 +38,7 @@ class HelpDropdown(discord.ui.Select):
                 discord.SelectOption(emoji="🕹️", label="Tutorial", description="How to use Vocard."),
             ] + [
                 discord.SelectOption(emoji=emoji, label=f"{category} Commands", description=f"This is {category.lower()} Category.")
-                for category, emoji in zip(categorys, ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"])
+                for category, emoji in zip(categories, ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"])
             ],
             custom_id="select"
         )
@@ -54,13 +54,13 @@ class HelpView(discord.ui.View):
         self.author: discord.Member = author
         self.bot: commands.Bot = bot
         self.response: discord.Message = None
-        self.categorys: list[str] = [ name.capitalize() for name, cog in bot.cogs.items() if len([c for c in cog.walk_commands()]) ]
+        self.categories: list[str] = [ name.capitalize() for name, cog in bot.cogs.items() if len([c for c in cog.walk_commands()]) ]
 
         self.add_item(discord.ui.Button(label='Website', emoji='🌎', url='https://vocard.xyz'))
         self.add_item(discord.ui.Button(label='Document', emoji=':support:915152950471581696', url='https://docs.vocard.xyz'))
         self.add_item(discord.ui.Button(label='Github', emoji=':github:1098265017268322406', url='https://github.com/ChocoMeow/Vocard'))
         self.add_item(discord.ui.Button(label='Donate', emoji=':patreon:913397909024800878', url='https://www.patreon.com/Vocard'))
-        self.add_item(HelpDropdown(self.categorys))
+        self.add_item(HelpDropdown(self.categories))
     
     async def on_error(self, error, item, interaction) -> None:
         return
@@ -82,8 +82,8 @@ class HelpView(discord.ui.View):
         if category == "news":
             embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=func.settings.embed_color)
             embed.add_field(
-                name=f"Available Categories: [{2 + len(self.categorys)}]",
-                value="```py\n👉 News\n2. Tutorial\n{}```".format("".join(f"{i}. {c}\n" for i, c in enumerate(self.categorys, start=3))),
+                name=f"Available Categories: [{2 + len(self.categories)}]",
+                value="```py\n👉 News\n2. Tutorial\n{}```".format("".join(f"{i}. {c}\n" for i, c in enumerate(self.categories, start=3))),
                 inline=True
             )
 
@@ -94,7 +94,7 @@ class HelpView(discord.ui.View):
             return embed
 
         embed = discord.Embed(title=f"Category: {category.capitalize()}", color=func.settings.embed_color)
-        embed.add_field(name=f"Categories: [{2 + len(self.categorys)}]", value="```py\n" + "\n".join(("👉 " if c == category.capitalize() else f"{i}. ") + c for i, c in enumerate(['News', 'Tutorial'] + self.categorys, start=1)) + "```", inline=True)
+        embed.add_field(name=f"Categories: [{2 + len(self.categories)}]", value="```py\n" + "\n".join(("👉 " if c == category.capitalize() else f"{i}. ") + c for i, c in enumerate(['News', 'Tutorial'] + self.categories, start=1)) + "```", inline=True)
 
         if category == 'tutorial':
             embed.description = "How can use Vocard? Some simple commands you should know now after watching this video."
