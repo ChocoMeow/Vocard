@@ -27,13 +27,13 @@ import os
 import aiohttp
 import update
 import logging
+import voicelink
 import function as func
 
 from discord.ext import commands
 from ipc import IPCClient
 from motor.motor_asyncio import AsyncIOMotorClient
 from logging.handlers import TimedRotatingFileHandler
-from voicelink import VoicelinkException
 from addons import Settings
 
 class Translator(discord.app_commands.Translator):
@@ -181,7 +181,7 @@ class Vocard(commands.Bot):
             embed.set_footer(icon_url=ctx.me.display_avatar.url, text=f"More Help: {func.settings.invite_link}")
             return await ctx.reply(embed=embed)
 
-        elif not issubclass(error.__class__, VoicelinkException):
+        elif not issubclass(error.__class__, voicelink.VoicelinkException):
             error = await func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
             func.logger.error(f"An unexpected error occurred in the {ctx.command.name} command on the {ctx.guild.name}({ctx.guild.id}).", exc_info=exception)
             

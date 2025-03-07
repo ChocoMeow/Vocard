@@ -225,6 +225,27 @@ class Player(VoiceProtocol):
         return round(self._ping / 1000, 2)
     
     @property
+    def autoplay(self) -> bool:
+        return self.settings.get("autoplay", False)
+    
+    @property
+    def data(self) -> dict:
+        return {
+            "guild_id": self._guild.id,
+            "channel_id": self.channel.id,
+            "queue": {
+                "tracks": [track.data for track in self.queue._queue],
+                "position": self.queue._position,
+                "repeat_mode": self.queue._repeat.current.name,
+                "repeat_position": self.queue._repeat_position
+            },
+            "dj": self.dj.id,
+            "is_paused": self.is_paused,
+            "position": self.position,
+            "autoplay": self.autoplay
+        }
+    
+    @property
     def is_ipc_connected(self) -> bool:
         """Indicates whether the Inter-Process Communication (IPC) connection is active."""
         return self._ipc._is_connected and self._ipc_connection
@@ -388,7 +409,7 @@ class Player(VoiceProtocol):
         track = self.queue.get()
 
         if not track:
-            if self.settings.get("autoplay", False) and await self.get_recommendations():
+            if self.autoplay and await self.get_recommendations():
                 return await self.do_next()
         else:
             try:
@@ -403,9 +424,7 @@ class Player(VoiceProtocol):
                     "$push": {"history": {"$each": [track.track_id], "$slice": -25}}
                 }))
 
-        if self.settings.get('controller', True):
-            await self.invoke_controller()
-
+        await self.invoke_controller()
         await self.update_voice_status()
 
         if self.is_ipc_connected:
@@ -418,6 +437,9 @@ class Player(VoiceProtocol):
 
     async def invoke_controller(self):
         """Sends or updates the music controller message in the designated channel."""
+        if not self.settings.get('controller', True):
+            return
+        
         if self._updating or not self.channel:
             return
         
