@@ -70,8 +70,9 @@ class Listeners(commands.Cog):
                 channel = self.bot.get_channel(channel_id)
                 if not channel:
                     continue
-
-                
+                elif not any(False if member.bot or member.voice.self_deaf else True for member in channel.members):
+                    continue
+                    
                 dj_member = channel.guild.get_member(data.get("dj"))
                 if not dj_member:
                     continue
