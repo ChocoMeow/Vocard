@@ -132,8 +132,7 @@ class Track:
     def data(self) -> dict:
         return {
             "track_id": self.track_id,
-            "info": self.info,
-            "thumbnail": self.thumbnail
+            "requester_id": self.requester.id
         }
     
 class Playlist:

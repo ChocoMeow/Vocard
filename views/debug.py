@@ -23,6 +23,7 @@ SOFTWARE.
 
 import discord
 import io
+import os
 import contextlib
 import textwrap
 import traceback
@@ -132,7 +133,7 @@ class CogsDropdown(discord.ui.Select):
         selected = self.values[0].lower()
         try:
             if selected == "all":
-                for name in self.bot.cogs.keys():
+                for name in self.bot.cogs.copy().keys():
                     await self.bot.reload_extension(f"cogs.{name.lower()}")
             else:
                 await self.bot.reload_extension(f"cogs.{selected}")
@@ -385,3 +386,30 @@ class DebugView(discord.ui.View):
         view = NodesPanel(self.bot)
         await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
         view.message = await interaction.original_response()
+    
+    @discord.ui.button(label="Stop-Bot", emoji="🔴")
+    async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for name in self.bot.cogs.copy().keys():
+            try:
+                await self.bot.unload_extension(name)
+            except:
+                pass
+
+        player_data = []
+        for identifier, node in voicelink.NodePool._nodes.items():
+            for guild_id, player in node._players.copy().items():
+                if not player.guild.me.voice or not player.current:
+                    continue
+
+                player_data.append(player.data)
+                try:
+                    await player.teardown()
+                except:
+                    pass
+
+        session_file_path = os.path.join(func.ROOT_DIR, func.LAST_SESSION_FILE_NAME)
+        if os.path.exists(session_file_path):
+            os.remove(session_file_path)    
+
+        func.update_json(func.LAST_SESSION_FILE_NAME, player_data)
+        await interaction.client.close()

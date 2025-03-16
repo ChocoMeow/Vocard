@@ -73,6 +73,14 @@ USER_BASE: dict[str, Any] = {
 }
 
 ALLOWED_MENTIONS = discord.AllowedMentions().none()
+LAST_SESSION_FILE_NAME = "last-session.json"
+
+#-------------- Vocard Classes --------------
+class TempCtx():
+    def __init__(self, author: discord.Member, channel: discord.VoiceChannel) -> None:
+        self.author: discord.Member = author
+        self.channel: discord.VoiceChannel = channel
+        self.guild: discord.Guild = channel.guild
 
 #-------------- Vocard Functions --------------
 def open_json(path: str) -> dict:
@@ -85,9 +93,9 @@ def open_json(path: str) -> dict:
 def update_json(path: str, new_data: dict) -> None:
     data = open_json(path)
     if not data:
-        return
-    
-    data.update(new_data)
+        data = new_data
+    else:
+        data.update(new_data)
 
     with open(os.path.join(ROOT_DIR, path), "w") as json_file:
         json.dump(data, json_file, indent=4)

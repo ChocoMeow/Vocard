@@ -22,12 +22,6 @@ SCOPES = {
     "stage_announce_template": str
 }
 
-class TempCtx():
-    def __init__(self, author: Member, channel: VoiceChannel) -> None:
-        self.author = author
-        self.channel = channel
-        self.guild = channel.guild
-
 class SystemMethod:
     def __init__(self, function: callable, *, credit: int = 1):
         self.function: callable = function
@@ -44,9 +38,9 @@ def require_permission(only_admin: bool = False):
     def decorator(func) -> callable:
         async def wrapper(player: Player, member: Member, dict: Dict) -> Optional[Dict]:
             if only_admin and not member.guild_permissions.manage_guild:
-                return error_msg("Only the admins may use this funciton!", user_id=member.id)
+                return error_msg("Only the admins may use this function!", user_id=member.id)
             if not player.is_privileged(member):
-                return error_msg("Only the DJ or admins may use this funciton!", user_id=member.id)
+                return error_msg("Only the DJ or admins may use this function!", user_id=member.id)
             return await func(player, member, dict)
         return wrapper
     return decorator
@@ -67,7 +61,7 @@ async def connect_channel(member: Member, bot: commands.Bot) -> Player:
     channel = member.voice.channel
     try:
         settings = await func.get_settings(channel.guild.id)
-        player: Player = await channel.connect(cls=Player(bot, channel, TempCtx(member, channel), settings))
+        player: Player = await channel.connect(cls=Player(bot, channel, func.TempCtx(member, channel), settings))
         await player.send_ws({"op": "createPlayer", "memberIds": [str(member.id) for member in channel.members]})
         return player
     except:
@@ -438,13 +432,13 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                     "userId": str(user_id)
                 }
 
-        assgined_playlist_id = _assign_playlist_id(list(playlist.keys()))
+        assigned_playlist_id = _assign_playlist_id(list(playlist.keys()))
         data = {'uri': playlist_url, 'perms': {'read': []}, 'name': name, 'type': 'link'} if playlist_url else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-        await func.update_user(user_id, {"$set": {f"playlist.{assgined_playlist_id}": data}})
+        await func.update_user(user_id, {"$set": {f"playlist.{assigned_playlist_id}": data}})
         return {
             "op": "updatePlaylist",
             "status": "created",
-            "playlistId": assgined_playlist_id,
+            "playlistId": assigned_playlist_id,
             "msg": f"You have created '{name}' playlist.",
             "userId": str(user_id),
             "data": data
@@ -579,7 +573,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 if refer_id not in share_playlists:
                     return error_msg("The shared playlist couldn’t be found. It’s possible that the user has already deleted it.", user_id=user_id)
                 
-                assgined_playlist_id = _assign_playlist_id(list(user.get("playlist", []).keys()))
+                assigned_playlist_id = _assign_playlist_id(list(user.get("playlist", []).keys()))
                 playlist_name = f"Share{time.strftime('%M%S', time.gmtime(int(mail['time'])))}"
                 share_playlist = share_playlists.get(refer_id)
                 share_playlist.update({
@@ -588,7 +582,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 })
                 await func.update_user(mail['sender'], {"$push": {f"playlist.{mail['referId']}.perms.read": user_id}})
                 await func.update_user(user_id, {"$set": {
-                    f'playlist.{assgined_playlist_id}': {
+                    f'playlist.{assigned_playlist_id}': {
                         'user': mail['sender'], 'referId': mail['referId'],
                         'name': playlist_name,
                         'type': 'share'
@@ -597,7 +591,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 }})
 
                 payload.update({
-                    "playlistId": assgined_playlist_id,
+                    "playlistId": assigned_playlist_id,
                     "msg": f"You have created '{playlist_name}' playlist.",
                     "data": share_playlist,
                 })
