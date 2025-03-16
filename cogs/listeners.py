@@ -41,7 +41,6 @@ class Listeners(commands.Cog):
         
     async def start_nodes(self) -> None:
         """Connect and intiate nodes."""
-        await self.bot.wait_until_ready()
         for n in func.settings.nodes.values():
             try:
                 await self.voicelink.create_node(
