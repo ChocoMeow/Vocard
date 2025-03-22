@@ -50,8 +50,6 @@ class Track:
         "author",
         "uri",
         "source",
-        "artist_id",
-        "original",
         "_search_type",
         "thumbnail",
         "emoji",
