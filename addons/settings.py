@@ -32,8 +32,6 @@ class Settings:
     def __init__(self, settings: Dict) -> None:
         self.token: str = settings.get("token")
         self.client_id: int = int(settings.get("client_id", 0))
-        self.spotify_client_id: str = settings.get("spotify_client_id")
-        self.spotify_client_secret: str = settings.get("spotify_client_secret")
         self.genius_token: str = settings.get("genius_token")
         self.mongodb_url: str = settings.get("mongodb_url")
         self.mongodb_name: str = settings.get("mongodb_name")

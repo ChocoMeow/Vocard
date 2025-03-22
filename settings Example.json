@@ -1,8 +1,6 @@
 {
     "token": "YOUR_BOT_TOKEN",
     "client_id": "YOUR_BOT_CLIENT_ID",
-    "spotify_client_id": "YOUR_SPOTIFY_CLIENT_ID",
-    "spotify_client_secret": "YOUR_SPOTIFY_CLIENT_SECRET",
     "genius_token": "YOUR_GENIUS_TOKEN",
     "mongodb_url": "YOUR_MONGODB_URL",
     "mongodb_name": "YOUR_MONGODB_DB_NAME",

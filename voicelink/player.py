@@ -524,10 +524,6 @@ class Player(VoiceProtocol):
     ) -> Union[List[Track], Playlist]:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
-        If you passed in Spotify API credentials when you created the node,
-        you can also pass in a Spotify URL of a playlist, album or track and it will be parsed
-        accordingly.
-
         You can also pass in a discord.py Context object to get a
         Context object on any track you search.
         """
@@ -579,19 +575,12 @@ class Player(VoiceProtocol):
         end: int = 0,
         ignore_if_playing: bool = False
     ) -> Track:
-        """Plays a track. If a Spotify track is passed in, it will be handled accordingly."""
+        """Plays a track."""
         if not self._node:
             return track
 
-        if track.spotify:
-            if not track.original:
-                search_results = await self._node.get_tracks(f"{track.author} - {track.title}", requester=track.requester)
-                if not search_results:
-                    raise TrackLoadError("Can't find a playable source!")
-                track.original = search_results[0]
-
         data = {
-            "encodedTrack": track.original.track_id if track.original else track.track_id,
+            "encodedTrack": track.track_id,
             "position": str(start if start else track.position)
         }
 

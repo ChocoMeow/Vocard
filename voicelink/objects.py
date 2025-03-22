@@ -33,7 +33,6 @@ from function import (
     time as ctime
 )
 
-from .spotify import Playlist as spPlaylist
 from .formatter import encode
 
 YOUTUBE_REGEX = re.compile(r'(https?://)?(www\.)?youtube\.(com|nl)/watch\?v=([-\w]+)')
@@ -51,11 +50,9 @@ class Track:
         "author",
         "uri",
         "source",
-        "spotify",
         "artist_id",
         "original",
         "_search_type",
-        "spotify_track",
         "thumbnail",
         "emoji",
         "length",
@@ -73,7 +70,6 @@ class Track:
         info: dict,
         requester: Member,
         search_type: SearchType = SearchType.YOUTUBE,
-        spotify_track = None,
     ):
         self._track_id: Optional[str] = track_id
         self.info: dict = info
@@ -83,13 +79,7 @@ class Track:
         self.author: str = info.get("author", "Unknown")
         self.uri: str = info.get("uri", "https://discord.com/application-directory/605618911471468554")
         self.source: str = info.get("sourceName", extract(self.uri).domain)
-        self.spotify: bool = self.source == "spotify"
-        if self.spotify:
-            self.artist_id: Optional[list] = info.get("artist_id")
-
-        self.original: Optional[Track] = None if self.spotify else self
-        self._search_type: SearchType = SearchType.YOUTUBE if self.spotify else search_type
-        self.spotify_track: Track = spotify_track
+        self._search_type: SearchType = search_type
 
         self.thumbnail: str = info.get("artworkUrl")
         if not self.thumbnail and YOUTUBE_REGEX.match(self.uri):
@@ -143,12 +133,9 @@ class Playlist:
 
     __slots__ = (
         "playlist_info",
-        "tracks_raw",
-        "spotify",
         "name",
-        "spotify_playlist",
-        "_thumbnail",
-        "_uri",
+        "thumbnail",
+        "uri",
         "tracks"
     )
 
@@ -158,45 +145,22 @@ class Playlist:
         playlist_info: dict,
         tracks: list,
         requester: Member = None,
-        spotify: bool = False,
-        spotify_playlist: Optional[spPlaylist] = None
     ):
         self.playlist_info: dict = playlist_info
-        self.tracks_raw: list[Track] = tracks
-        self.spotify: bool = spotify
         self.name: str = playlist_info.get("name")
-        self.spotify_playlist: Optional[spPlaylist] = spotify_playlist
-
-        self._thumbnail: str = None
-        self._uri: str = None
+        self.thumbnail: str = None
+        self.uri: str = None
         
-        if self.spotify:
-            self.tracks = tracks
-            self._thumbnail = self.spotify_playlist.image
-            self._uri = self.spotify_playlist.uri
-        else:
-            self.tracks = [
-                Track(track_id=track["encoded"], info=track["info"], requester=requester)
-                for track in self.tracks_raw
-            ]
-            self._thumbnail = None
-            self._uri = None
+        self.tracks = [
+            Track(track_id=track["encoded"], info=track["info"], requester=requester)
+            for track in tracks
+        ]
 
     def __str__(self) -> str:
         return self.name
 
     def __repr__(self) -> str:
         return f"<Voicelink.playlist name={self.name!r} track_count={len(self.tracks)}>"
-
-    @property
-    def uri(self) -> Optional[str]:
-        """Spotify album/playlist URI, or None if not a Spotify object."""
-        return self._uri
-
-    @property
-    def thumbnail(self) -> Optional[str]:
-        """Spotify album/playlist thumbnail, or None if not a Spotify object."""
-        return self._thumbnail
 
     @property
     def track_count(self) -> int:

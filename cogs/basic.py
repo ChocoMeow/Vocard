@@ -90,9 +90,9 @@ class Basic(commands.Cog):
 
         if current:
             node = voicelink.NodePool.get_node()
-            if node and node.spotify_client:
+            if node:
                 try:
-                    tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
+                    tracks: list[voicelink.Track] = await node.get_tracks(current, requester=interaction.user, search_type=SearchType.SPOTIFY)
                     return [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
                 except voicelink.TrackLoadError:
                     return []
