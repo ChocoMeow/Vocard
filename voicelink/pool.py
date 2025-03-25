@@ -31,7 +31,7 @@ import logging
 
 from discord import Client, Member
 from discord.ext.commands import Bot
-from typing import Dict, Optional, TYPE_CHECKING, Union, List
+from typing import Dict, Optional, Union, List, Any, TYPE_CHECKING
 from urllib.parse import quote
 
 from . import (
@@ -54,11 +54,6 @@ from .ratelimit import YTRatelimit, YTToken, STRATEGY
 
 if TYPE_CHECKING:
     from .player import Player
-
-DISCORD_MP3_URL_REGEX = re.compile(
-    r"https?://cdn.discordapp.com/attachments/(?P<channel_id>[0-9]+)/"
-    r"(?P<message_id>[0-9]+)/(?P<file>[a-zA-Z0-9_.]+)+"
-)
 
 URL_REGEX = re.compile(
     r"https?://(?:www\.)?.+"
@@ -360,74 +355,37 @@ class Node:
         requester: Member,
         search_type: SearchType = SearchType.YOUTUBE
     ) -> Union[List[Track], Playlist]:
-        """Fetches tracks from the node's REST api to parse into Lavalink.
+        """
+        Fetches tracks from the node's REST api to parse into Lavalink.
 
-           You can also pass in a discord.py Context object to get a
-           Context object on any track you search.
+        You can also pass in a discord.py Context object to get a
+        Context object on any track you search.
         """
 
-        if not URL_REGEX.match(query):
-            if ':' not in query:
-                query = f"{search_type}:{query}"
+        if not URL_REGEX.match(query) and ':' not in query:
+            query = f"{search_type}:{query}"
 
-        if DISCORD_MP3_URL_REGEX.match(query):
-            data = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
-
-            try:
-                track: dict = data["data"]
-            except:
-                raise TrackLoadError("Not able to find the provided track.")
-
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-            ]
-        else:
-            data = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
-
-        load_type = data.get("loadType")
+        response: dict[str, Any] = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
+        data = response.get("data")
+        load_type = response.get("loadType")
 
         if not load_type:
             raise TrackLoadError("There was an error while trying to load this track.")
-
-        elif load_type == "error":
-            exception = data["data"]
-            raise TrackLoadError(f"{exception['message']} [{exception['severity']}]")
-
+        
         elif load_type == "empty":
             return None
 
+        elif load_type == "error":
+            raise TrackLoadError(f"{data['message']} [{data['severity']}]")
+
         elif load_type in ("playlist", "recommendations"):
-            data = data.get("data")
-            
-            return Playlist(
-                playlist_info=data["info"],
-                tracks=data["tracks"],
-                requester=requester
-            )
+            return Playlist(playlist_info=data["info"], tracks=data["tracks"], requester=requester)
 
         elif load_type == "search":
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-                for track in data["data"]
-            ]
+            return [Track(track_id=track["encoded"], info=track["info"], requester=requester) for track in data]
 
         elif load_type == "track":
-            track = data["data"]
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-            ]
+            return [Track(track_id=data["encoded"], info=data["info"], requester=requester)]
 
     async def get_recommendations(self, track: Track, limit: int = 20) -> List[Optional[Track]]:
         if track.source == "youtube":
