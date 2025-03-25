@@ -44,9 +44,7 @@ class Listeners(commands.Cog):
         for n in func.settings.nodes.values():
             try:
                 await self.voicelink.create_node(
-                    bot=self.bot, 
-                    spotify_client_id=func.settings.spotify_client_id, 
-                    spotify_client_secret=func.settings.spotify_client_secret,
+                    bot=self.bot,
                     logger=func.logger,
                     **n
                 )

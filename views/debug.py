@@ -105,8 +105,6 @@ class AddNodeModal(discord.ui.Modal):
         try:
             await voicelink.NodePool.create_node(
                 bot=interaction.client,
-                spotify_client_id=func.settings.spotify_client_id, 
-                spotify_client_secret=func.settings.spotify_client_secret,
                 logger=func.logger,
                 **config
             )

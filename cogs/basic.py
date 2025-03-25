@@ -86,24 +86,18 @@ class Basic(commands.Cog):
         return [app_commands.Choice(name=c.capitalize(), value=c) for c in self.bot.cogs if c not in ["Nodes", "Task"] and current in c]
 
     async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
-        if voicelink.pool.URL_REGEX.match(current): return []
+        if voicelink.pool.URL_REGEX.match(current):
+            return []
 
         if current:
             node = voicelink.NodePool.get_node()
-            if node and node.spotify_client:
-                try:
-                    tracks: list[voicelink.Track] = await node.spotifySearch(current, requester=interaction.user)
-                    return [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
-                except voicelink.TrackLoadError:
-                    return []
+            if not node:
+                return []
+            tracks: list[voicelink.Track] = await node.get_tracks(current, requester=interaction.user, search_type=SearchType.SPOTIFY)
+            return [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks] if tracks else []
         
-        history: dict[str, str] = {}
-        for track_id in reversed(await get_user(interaction.user.id, "history")):
-            track_dict = voicelink.decode(track_id)
-            history[track_dict["identifier"]] = track_dict
-
-        history_tracks = [app_commands.Choice(name=truncate_string(f"🕒 {track['author']} - {track['title']}", 100), value=track['uri']) for track in history.values() if len(track['uri']) <= 100][:25]
-        return history_tracks
+        history = {track["identifier"]: track for track_id in reversed(await get_user(interaction.user.id, "history")) if (track := voicelink.decode(track_id))["uri"]}
+        return [app_commands.Choice(name=truncate_string(f"🕒 {track['author']} - {track['title']}", 100), value=track['uri']) for track in history.values() if len(track['uri']) <= 100][:25]
             
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")

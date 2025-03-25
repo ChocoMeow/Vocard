@@ -151,21 +151,19 @@ class Player(VoiceProtocol):
     @property
     def position(self) -> float:
         """Property which returns the player's position in a track in milliseconds"""
-        current = self._current.original
-
         if not self.is_playing or not self._current:
             return 0
 
         if self.is_paused:
-            return min(self._last_position, current.length)
+            return min(self._last_position, self._current.length)
 
         difference = (time.time() * 1000) - self._last_update
         position = self._last_position + difference
 
-        if position > current.length:
+        if position > self._current.length:
             return 0
 
-        return min(position, current.length)
+        return min(position, self._current.length)
 
     @property
     def is_playing(self) -> bool:
@@ -524,10 +522,6 @@ class Player(VoiceProtocol):
     ) -> Union[List[Track], Playlist]:
         """Fetches tracks from the node's REST api to parse into Lavalink.
 
-        If you passed in Spotify API credentials when you created the node,
-        you can also pass in a Spotify URL of a playlist, album or track and it will be parsed
-        accordingly.
-
         You can also pass in a discord.py Context object to get a
         Context object on any track you search.
         """
@@ -579,19 +573,12 @@ class Player(VoiceProtocol):
         end: int = 0,
         ignore_if_playing: bool = False
     ) -> Track:
-        """Plays a track. If a Spotify track is passed in, it will be handled accordingly."""
+        """Plays a track."""
         if not self._node:
             return track
 
-        if track.spotify:
-            if not track.original:
-                search_results = await self._node.get_tracks(f"{track.author} - {track.title}", requester=track.requester)
-                if not search_results:
-                    raise TrackLoadError("Can't find a playable source!")
-                track.original = search_results[0]
-
         data = {
-            "encodedTrack": track.original.track_id if track.original else track.track_id,
+            "encodedTrack": track.track_id,
             "position": str(start if start else track.position)
         }
 
@@ -674,7 +661,7 @@ class Player(VoiceProtocol):
     
     async def seek(self, position: float, requester: Member = None) -> float:
         """Seeks to a position in the currently playing track milliseconds"""
-        if position < 0 or position > self._current.original.length:
+        if position < 0 or position > self._current.length:
             raise TrackInvalidPosition("Seek position must be between 0 and the track length")
 
         await self.send(method=RequestMethod.PATCH, data={"position": position})

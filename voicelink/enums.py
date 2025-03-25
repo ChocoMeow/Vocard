@@ -38,8 +38,6 @@ class LoopType(Enum):
     
 class SearchType(Enum):
     """The enum for the different search types for Voicelink.
-       This feature is exclusively for the Spotify search feature of Voicelink.
-       If you are not using this feature, this class is not necessary.
 
        SearchType.YOUTUBE searches using regular Youtube,
        which is best for all scenarios.

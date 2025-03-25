@@ -697,49 +697,6 @@ async def updateSettings(bot: commands.Bot, data: Dict) -> None:
 
     await func.update_settings(guild.id, {"$set": data})
 
-async def getFeaturedPlaylists(bot: commands.Bot, data: Dict) -> Dict:
-    locale = data.get("locale", "sv_SE")
-    limit = data.get("limit", 20)
-    offset = data.get("offset", 0)
-
-    request_url = f"https://api.spotify.com/v1/browse/featured-playlists?locale={locale}&limit={max(1, min(limit, 50))}&offset={max(0, offset)}"
-
-    node = NodePool.get_node()
-    result = await node.spotify_client.get_request(request_url)
-    
-    return {
-        "op": "getFeaturedPlaylists",
-        "userId": data.get("userId"),
-        "callback": data.get("callback"),
-        "playlists": [
-            {
-                "id": item.get("id"),
-                "title": item.get("name"),
-                "description": item.get("description"),
-                "imageUrl": item.get("images", [{}])[0].get("url"),
-                "href": item.get("external_urls", {}).get("spotify")
-            }
-            for item in result.get("playlists", {}).get("items", [])
-        ]
-    }
-
-async def getCategoryPlaylists(bot: commands.Bot, data: Dict) -> Dict:
-    node = NodePool.get_node()
-    
-    return {
-        "op": "getCategoryPlaylists",
-        "userId": data.get("userId"),
-        "callback": data.get("callback"),
-        "playlists": [
-            {
-                "id": category.id,
-                "title": category.name,
-                "imageUrl": category.icon,
-            }
-            for category in await node.spotify_client.get_categories()
-        ]
-    }
-
 METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "initBot": SystemMethod(initBot, credit=0),
     "initUser": SystemMethod(initUser, credit=2),
@@ -766,9 +723,7 @@ METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "updatePosition": PlayerMethod(updatePosition),
     "toggleAutoplay": PlayerMethod(toggleAutoplay),
     "updateFilter": PlayerMethod(updateFilter),
-    "searchAndPlay": PlayerMethod(searchAndPlay, credit=5, auto_connect=True),
-    "getFeaturedPlaylists": SystemMethod(getFeaturedPlaylists, credit=5),
-    "getCategoryPlaylists": SystemMethod(getCategoryPlaylists, credit=2)
+    "searchAndPlay": PlayerMethod(searchAndPlay, credit=5, auto_connect=True)
 }
 
 async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:

@@ -31,17 +31,15 @@ import logging
 
 from discord import Client, Member
 from discord.ext.commands import Bot
-from typing import Dict, Optional, TYPE_CHECKING, Union, List
+from typing import Dict, Optional, Union, List, Any, TYPE_CHECKING
 from urllib.parse import quote
 
 from . import (
-    __version__, 
-    spotify,
+    __version__
 )
 
 from .enums import SearchType, NodeAlgorithm
 from .exceptions import (
-    InvalidSpotifyClientAuthorization,
     NodeConnectionFailure,
     NodeCreationError,
     NodeException,
@@ -57,15 +55,6 @@ from .ratelimit import YTRatelimit, YTToken, STRATEGY
 if TYPE_CHECKING:
     from .player import Player
 
-SPOTIFY_URL_REGEX = re.compile(
-    r"https?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)"
-)
-
-DISCORD_MP3_URL_REGEX = re.compile(
-    r"https?://cdn.discordapp.com/attachments/(?P<channel_id>[0-9]+)/"
-    r"(?P<message_id>[0-9]+)/(?P<file>[a-zA-Z0-9_.]+)+"
-)
-
 URL_REGEX = re.compile(
     r"https?://(?:www\.)?.+"
 )
@@ -74,8 +63,7 @@ NODE_VERSION = "v4"
 
 class Node:
     """The base class for a node. 
-       This node object represents a Lavalink node. 
-       To enable Spotify searching, pass in a proper Spotify Client ID and Spotify Client Secret
+       This node object represents a Lavalink node.
     """
 
     def __init__(
@@ -91,8 +79,6 @@ class Node:
         heartbeat: int = 30,
         yt_ratelimit: dict = None,
         session: Optional[aiohttp.ClientSession] = None,
-        spotify_client_id: Optional[str] = None,
-        spotify_client_secret: Optional[str] = None,
         resume_key: Optional[str] = None,
         logger: Optional[logging.Logger] = None
     ):
@@ -127,10 +113,6 @@ class Node:
         self._players: Dict[int, Player] = {}
         self._info: Optional[NodeInfo] = None
         
-        self._spotify_client_id: Optional[str] = spotify_client_id
-        self._spotify_client_secret: Optional[str] = spotify_client_secret
-        self._spotify_client: Optional[spotify.Client] = None
-        
         self.yt_ratelimit: Optional[YTRatelimit] = STRATEGY.get(yt_ratelimit.get("strategy"))(self, yt_ratelimit) if yt_ratelimit else None
 
         self._bot.add_listener(self._update_handler, "on_socket_response")
@@ -144,15 +126,6 @@ class Node:
     def get_player(self, guild_id: int) -> Optional[Player]:
         """Takes a guild ID as a parameter. Returns a voicelink Player object."""
         return self._players.get(guild_id, None)
-    
-    @property
-    def spotify_client(self) -> Optional[spotify.Client]:
-        if not self._spotify_client:
-            self._spotify_client = spotify.Client(
-                self._spotify_client_id, self._spotify_client_secret
-            )
-
-        return self._spotify_client
     
     @property
     def is_connected(self) -> bool:
@@ -382,166 +355,49 @@ class Node:
         requester: Member,
         search_type: SearchType = SearchType.YOUTUBE
     ) -> Union[List[Track], Playlist]:
-        """Fetches tracks from the node's REST api to parse into Lavalink.
+        """
+        Fetches tracks from the node's REST api to parse into Lavalink.
 
-           If you passed in Spotify API credentials, you can also pass in a
-           Spotify URL of a playlist, album or track and it will be parsed accordingly.
-
-           You can also pass in a discord.py Context object to get a
-           Context object on any track you search.
+        You can also pass in a discord.py Context object to get a
+        Context object on any track you search.
         """
 
-        if not URL_REGEX.match(query):
-            if search_type == SearchType.SPOTIFY:
-                return await self.spotifySearch(query=query, requester=requester)
-            
-            else:
-                query = f"{search_type}:{query}"
+        if not URL_REGEX.match(query) and ':' not in query:
+            query = f"{search_type}:{query}"
 
-        if SPOTIFY_URL_REGEX.match(query):
-            try:
-                spotify_results = await self.spotify_client.search(query=query)
-            except Exception as _:
-                raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
-                
-            if isinstance(spotify_results, spotify.Track):
-                return [
-                    Track(
-                        track_id=None,
-                        info=spotify_results.to_dict(),
-                        requester=requester,
-                        search_type=search_type,
-                        spotify_track=spotify_results,
-                    )
-                ]
-
-            tracks = [
-                Track(
-                    track_id=None,
-                    info=track.to_dict(),
-                    requester=requester,
-                    search_type=search_type,
-                    spotify_track=track,
-                ) for track in spotify_results.tracks if track.uri
-            ]
-
-            return Playlist(
-                playlist_info={"name": spotify_results.name, "selectedTrack": 0},
-                tracks=tracks,
-                requester=requester,
-                spotify=True,
-                spotify_playlist=spotify_results
-            )
-
-        elif DISCORD_MP3_URL_REGEX.match(query):
-            data = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
-
-            try:
-                track: dict = data["data"]
-            except:
-                raise TrackLoadError("Not able to find the provided track.")
-
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-            ]
-        else:
-            data = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
-
-        load_type = data.get("loadType")
+        response: dict[str, Any] = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
+        data = response.get("data")
+        load_type = response.get("loadType")
 
         if not load_type:
             raise TrackLoadError("There was an error while trying to load this track.")
-
-        elif load_type == "error":
-            exception = data["data"]
-            raise TrackLoadError(f"{exception['message']} [{exception['severity']}]")
-
+        
         elif load_type == "empty":
             return None
 
-        elif load_type == "playlist":
-            data = data.get("data")
-            
-            return Playlist(
-                playlist_info=data["info"],
-                tracks=data["tracks"],
-                requester=requester
-            )
+        elif load_type == "error":
+            raise TrackLoadError(f"{data['message']} [{data['severity']}]")
+
+        elif load_type in ("playlist", "recommendations"):
+            return Playlist(playlist_info=data["info"], tracks=data["tracks"], requester=requester)
 
         elif load_type == "search":
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-                for track in data["data"]
-            ]
+            return [Track(track_id=track["encoded"], info=track["info"], requester=requester) for track in data]
 
         elif load_type == "track":
-            track = data["data"]
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-            ]
-    
-    async def spotifySearch(self, query: str, *, requester: Member) -> Optional[List[Track]]:
-        try:
-            if not self.spotify_client:
-                raise InvalidSpotifyClientAuthorization(
-                "You did not provide proper Spotify client authorization credentials. "
-                "If you would like to use the Spotify searching feature, "
-                "please obtain Spotify API credentials here: https://developer.spotify.com/"
-            )
-                
-            tracks = await self._spotify_client.track_search(query=query)
-        except Exception as _:
-            raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
-            
-        return [ 
-            Track(
-                track_id=None,
-                requester=requester,
-                search_type=SearchType.YOUTUBE,
-                spotify_track=track,
-                info=track.to_dict()
-            )
-            for track in tracks ]
+            return [Track(track_id=data["encoded"], info=data["info"], requester=requester)]
 
     async def get_recommendations(self, track: Track, limit: int = 20) -> List[Optional[Track]]:
-        if track.spotify:
-            if not self.spotify_client:
-                return []
-            
-            spotify_tracks = await self.spotify_client.similar_track(seed_tracks=track.identifier, limit=limit)
-            
-            tracks = [
-                Track(
-                    track_id=None,
-                    search_type=SearchType.YOUTUBE,
-                    spotify_track=track,
-                    info=track.to_dict(),
-                    requester=self.bot.user
-                )
-                for track in spotify_tracks
-            ]
+        if track.source == "youtube":
+            query = f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}"
 
-        else:
-            if track.source != 'youtube':
-                return []
+        elif track.source == "spotify":
+            query = f"sprec:seed_tracks={track.identifier}"
 
-            tracks = await self.get_tracks(
-                f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}", 
-                requester=self.bot.user
-            )
-
+        if not query:
+            return []
+        
+        tracks = await self.get_tracks(query=query, requester=self.bot.user)
         if isinstance(tracks, Playlist):
             tracks = tracks.tracks
 
@@ -639,14 +495,11 @@ class NodePool:
         secure: bool = False,
         heartbeat: int = 30,
         yt_ratelimit: dict = None,
-        spotify_client_id: Optional[str] = None,
-        spotify_client_secret: Optional[str] = None,
         session: Optional[aiohttp.ClientSession] = None,
         resume_key: Optional[str] = None,
         logger: Optional[logging.Logger] = None
     ) -> Node:
         """Creates a Node object to be then added into the node pool.
-           For Spotify searching capabilites, pass in valid Spotify API credentials.
         """
         if identifier in cls._nodes.keys():
             raise NodeCreationError(f"A node with identifier '{identifier}' already exists.")
@@ -657,8 +510,7 @@ class NodePool:
         node = Node(
             pool=cls, bot=bot, host=host, port=port, password=password,
             identifier=identifier, secure=secure, heartbeat=heartbeat, yt_ratelimit=yt_ratelimit,
-            session=session, spotify_client_id=spotify_client_id, spotify_client_secret=spotify_client_secret,
-            resume_key=resume_key, logger=logger
+            session=session, resume_key=resume_key, logger=logger
         )
 
         await node.connect()
