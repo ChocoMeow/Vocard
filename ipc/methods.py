@@ -6,7 +6,7 @@ from typing import List, Dict, Union, Optional
 from discord import User, Member, VoiceChannel
 from discord.ext import commands
 from voicelink import Player, Track, Playlist, NodePool, decode, LoopType, Filters
-from addons import lyricsPlatform
+from addons import LYRICS_PLATFORMS
 
 RATELIMIT_COUNTER: Dict[int, Dict[str, float]] = {}
 SCOPES = {
@@ -653,21 +653,21 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
 
 async def getLyrics(bot: commands.Bot, data: Dict) -> Dict:
     title, artist, platform = data.get("title", ""), data.get("artist", ""), data.get("platform", "")
-    if not platform or platform not in lyricsPlatform:
+    if not platform or platform not in LYRICS_PLATFORMS:
         platform = func.settings.lyrics_platform
     
-    song: dict[str, str] = await lyricsPlatform.get(platform)().get_lyrics(title, artist)
-    payload = {
-        "op": "getLyrics",
-        "userId": data.get("userId"),
-        "title": title,
-        "artist": artist,
-        "platform": platform,
-        "lyrics": {_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()} if song else {},
-        "callback": data.get("callback")
-    }
-
-    return payload
+    lyrics_platform = LYRICS_PLATFORMS.get(platform)
+    if lyrics_platform:
+        lyrics: dict[str, str] = await lyrics_platform().get_lyrics(title, artist)
+        return {
+            "op": "getLyrics",
+            "userId": data.get("userId"),
+            "title": title,
+            "artist": artist,
+            "platform": platform,
+            "lyrics": {_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()} if lyrics else {},
+            "callback": data.get("callback")
+        }
 
 async def updateSettings(bot: commands.Bot, data: Dict) -> None:
     user_id = int(data.get("userId"))

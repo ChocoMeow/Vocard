@@ -41,7 +41,7 @@ from function import (
 )
 
 from voicelink import SearchType, LoopType
-from addons import lyricsPlatform
+from addons import LYRICS_PLATFORMS
 from views import SearchView, ListView, LinkView, LyricsView, HelpView
 from validators import url
 
@@ -792,12 +792,14 @@ class Basic(commands.Cog):
             artist = player.current.author
         
         await ctx.defer()
-        song: dict[str, str] = await lyricsPlatform.get(settings.lyrics_platform)().get_lyrics(title, artist)
-        if not song:
-            return await send(ctx, "lyricsNotFound", ephemeral=True)
-
-        view = LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=ctx.author)
-        view.response = await send(ctx, view.build_embed(), view=view)
+        lyrics_platform = LYRICS_PLATFORMS.get(settings.lyrics_platform)
+        if lyrics_platform:
+            lyrics = await lyrics_platform().get_lyrics(title, artist)
+            if not lyrics:
+                return await send(ctx, "lyricsNotFound", ephemeral=True)
+            
+            view = LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()}, author=ctx.author)
+            view.response = await send(ctx, view.build_embed(), view=view)
 
     @commands.hybrid_command(name="swapdj", aliases=get_aliases("swapdj"))
     @app_commands.describe(member="Choose a member to transfer the dj role.")

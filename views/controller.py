@@ -29,7 +29,7 @@ import views
 import function as func
 
 from discord.ext import commands
-from typing import Dict
+from typing import Dict, Type
 
 def key(interaction: discord.Interaction):
     return interaction.user
@@ -380,12 +380,14 @@ class Lyrics(ControlButton):
         title = self.player.current.title
         artist = self.player.current.author
         
-        song: dict[str, str] = await addons.lyricsPlatform.get(func.settings.lyrics_platform)().get_lyrics(title, artist)
-        if not song:
-            return await self.send(interaction, "lyricsNotFound", ephemeral=True)
+        lyrics_platform = addons.LYRICS_PLATFORMS.get(func.settings.lyrics_platform)
+        if lyrics_platform:
+            lyrics = await lyrics_platform().get_lyrics(title, artist)
+            if not lyrics:
+                return await self.send(interaction, "lyricsNotFound", ephemeral=True)
 
-        view = views.LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()}, author=interaction.user)
-        view.response = await self.send(interaction, view.build_embed(), view=view, ephemeral=True)
+            view = views.LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()}, author=interaction.user)
+            view.response = await self.send(interaction, view.build_embed(), view=view, ephemeral=True)
 
 class Tracks(discord.ui.Select):
     def __init__(self, player, style, row):
@@ -446,7 +448,7 @@ class Effects(discord.ui.Select):
             await self.player.add_filter(selected_filter, requester=interaction.user)
             await func.send(interaction, "addEffect", selected_filter.tag)
 
-BUTTONTYPE: Dict[str, ControlButton] = {
+BUTTON_TYPE: Dict[str, Type[ControlButton]] = {
     "back": Back,
     "resume": Resume,
     "skip": Skip,
@@ -465,7 +467,7 @@ BUTTONTYPE: Dict[str, ControlButton] = {
     "effects": Effects
 }
 
-BUTTONCOLOR: Dict[str, discord.ButtonStyle] = {
+BUTTON_COLORS: Dict[str, discord.ButtonStyle] = {
     "blue": discord.ButtonStyle.primary,
     "grey": discord.ButtonStyle.secondary,
     "red": discord.ButtonStyle.danger,
@@ -483,8 +485,8 @@ class InteractiveController(discord.ui.View):
                 if isinstance(btn, Dict):
                     color = list(btn.values())[0]
                     btn = list(btn.keys())[0]
-                btnClass = BUTTONTYPE.get(btn.lower())
-                style = BUTTONCOLOR.get(color.lower(), BUTTONCOLOR["grey"])
+                btnClass = BUTTON_TYPE.get(btn.lower())
+                style = BUTTON_COLORS.get(color.lower(), BUTTON_COLORS["grey"])
                 if not btnClass or (self.player.queue.is_empty and btn == "tracks"):
                     continue
                 self.add_item(btnClass(player=player, style=style, row=row))

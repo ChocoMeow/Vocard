@@ -40,7 +40,7 @@
     "bot_access_user": [],
     "embed_color":"0xb3b3b3",
     "default_max_queue": 1000,
-    "lyrics_platform": "lyrist",
+    "lyrics_platform": "lrclib",
     "ipc_client": {
         "host": "127.0.0.1",
         "port": 8000,

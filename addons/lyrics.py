@@ -28,7 +28,7 @@ from abc import ABC, abstractmethod
 from urllib.parse import quote
 from math import floor
 from importlib import import_module
-from typing import Optional
+from typing import Optional, Type
 
 userAgents = '''Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.1 Safari/537.36
@@ -236,8 +236,8 @@ class Lrclib(LyricsPlatform):
         result = await self.get(LRCLIB_ENDPOINT + "search", params)
         if result:
             return {"default": result[0].get("plainLyrics", "")}
-    
-lyricsPlatform: dict[str, LyricsPlatform] = {
+
+LYRICS_PLATFORMS: dict[str, Type[LyricsPlatform]] = {
     "a_zlyrics": A_ZLyrics,
     "genius": Genius,
     "lyrist": Lyrist,
