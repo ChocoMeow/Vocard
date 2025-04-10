@@ -7,9 +7,11 @@
     "noChannel": "연결할 음성 채널이 없습니다. 하나를 제공하거나 참여하십시오.",
     "alreadyConnected": "이미 음성 채널에 연결되어 있습니다.",
     "noPermission": "죄송합니다! 음성 채널에 참여하거나 말할 권한이 없습니다.",
+    "noCreatePermission": "죄송합니다! 노래 요청 채널을 생성할 권한이 없습니다.",
     "noPlaySource": "재생 가능한 소스를 찾을 수 없습니다!",
     "noPlayer": "이 서버에서 플레이어를 찾을 수 없습니다.",
     "notVote": "이 명령어를 실행하려면 투표해야합니다! 자세한 내용은 `/vote`를 입력하십시오.",
+    "missingIntents": "죄송하지만 이 명령을 실행할 수 없습니다. 봇에 필요한 요청 의도가 없습니다:`({0})`.",
     "languageNotFound": "언어 팩을 찾을 수 없습니다! 기존 언어 팩을 선택하십시오.",
     "changedLanguage": "성공적으로 `{0}` 언어 팩으로 변경되었습니다.",
     "setPrefix": "완료되었습니다! 이 서버에서 내 접두사는 이제 `{0}`입니다. `{1}ping`을 실행하여 테스트해보세요.",
@@ -57,7 +59,7 @@
     "noPlaylistAcc": "{0}님은 재생 목록 계정을 만들지 않았습니다.",
     "overPlaylistCreation": "더 이상 {0}개 이상의 재생 목록을 만들 수 없습니다!",
     "playlistExists": "재생 목록 [{0}]이(가) 이미 있습니다.",
-    "playlistNotInvaildUrl": "유효한 링크 또는 공개 Spotify 또는 YouTube 재생 목록 링크를 입력하세요.",
+    "playlistNotInvalidUrl": "유효한 링크 또는 공개 Spotify 또는 YouTube 재생 목록 링크를 입력하세요.",
     "playlistCreated": "{0} 재생 목록을 만들었습니다. 자세한 내용은 /playlist view를 입력하세요.",
     "playlistRenamed": "{0}을(를) {1}(으)로 이름을 바꿨습니다.",
     "playlistLimitTrack": "죄송합니다! 재생 목록에 추가할 수 있는 노래는 {0}곡까지입니다.",
@@ -114,6 +116,7 @@
     "buttonShuffle": "셔플",
     "buttonForward": "앞으로",
     "buttonRewind": "뒤로",
+    "buttonLyrics": "가사",
 
     "nowplayingDesc": "**현재 재생중인 곡:**\n```{0}```",
     "nowplayingField": "다음 곡:",
@@ -186,5 +189,6 @@
     "invalidEndTime": "효력 없는 종료 시간! 시간은 `00:00` 과 `{0}` 사이에 설정해야 합니다.",
     "invalidTimeOrder": "종료 시간은 시작 시간보다 클수 있어야 합니다.",
 
-    "SetStageAnnounceTemplate": "완료! 이제부터 지금 있는 음성 상태는 귀하의 템플릿에 따라 이름이 지정됩니다. 몇 초 후에 업데이트되는 것을 볼 수 있을 것입니다."
+    "setStageAnnounceTemplate": "완료! 이제부터 지금 있는 음성 상태는 귀하의 템플릿에 따라 이름이 지정됩니다. 몇 초 후에 업데이트되는 것을 볼 수 있을 것입니다.",
+    "createSongRequestChannel": "노래 요청 채널 ({0})이 생성되었습니다! 해당 채널에서 노래 제목이나 URL로 원하는 노래를 요청할 수 있으며, 봇 접두사를 사용할 필요가 없습니다."
 }

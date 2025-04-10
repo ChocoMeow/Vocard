@@ -1,8 +1,6 @@
 {
     "token": "YOUR_BOT_TOKEN",
     "client_id": "YOUR_BOT_CLIENT_ID",
-    "spotify_client_id": "YOUR_SPOTIFY_CLIENT_ID",
-    "spotify_client_secret": "YOUR_SPOTIFY_CLIENT_SECRET",
     "genius_token": "YOUR_GENIUS_TOKEN",
     "mongodb_url": "YOUR_MONGODB_URL",
     "mongodb_name": "YOUR_MONGODB_DB_NAME",
@@ -12,7 +10,15 @@
             "port": 2333,
             "password": "youshallnotpass",
             "secure": false,
-            "identifier": "DEFAULT"
+            "identifier": "DEFAULT",
+            "yt_ratelimit": {
+                "tokens": [],
+                "config": {
+                    "retry_time": 10800,
+                    "max_requests": 30
+                },
+                "strategy": "LoadBalance"
+            }
         }   
     },
     "prefix": "?",
@@ -34,7 +40,7 @@
     "bot_access_user": [],
     "embed_color":"0xb3b3b3",
     "default_max_queue": 1000,
-    "lyrics_platform": "lyrist",
+    "lyrics_platform": "lrclib",
     "ipc_client": {
         "host": "127.0.0.1",
         "port": 8000,
@@ -47,7 +53,7 @@
             "emoji": "<:youtube:826661982760992778>",
             "color": "0xFF0000"
         },
-        "youtube music": {
+        "youtubemusic": {
             "emoji": "<:youtube:826661982760992778>",
             "color": "0xFF0000"
         },
@@ -71,7 +77,7 @@
             "emoji": "<:vimeo:864694001919721473>",
             "color": "0x1ABCEA"
         },
-        "apple": {
+        "applemusic": {
             "emoji": "<:applemusic:994844332374884413>",
             "color": "0xE298C4"
         },
@@ -82,6 +88,10 @@
         "tiktok": {
             "emoji": "<:tiktok:996007689798811698>",
             "color": "0x74ECE9"
+        },
+        "others": {
+            "emoji": "🔗",
+            "color": "0xb3b3b3"
         }
     },
     "default_controller": {

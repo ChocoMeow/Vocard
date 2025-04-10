@@ -1,3 +1,26 @@
+"""MIT License
+
+Copyright (c) 2023 - present Vocard Development
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import discord, json, os, copy, logging
 
 from discord.ext import commands
@@ -34,6 +57,8 @@ LOCAL_LANGS: dict[str, dict[str, str]] = {} #Stores all the localization languag
 SETTINGS_BUFFER: dict[int, dict[str, Any]] = {} #Cache guild language
 USERS_BUFFER: dict[str, dict] = {}
 
+MISSING_TRANSLATOR: dict[str, list[str]] = {}
+
 USER_BASE: dict[str, Any] = {
     'playlist': {
         '200': {
@@ -48,6 +73,14 @@ USER_BASE: dict[str, Any] = {
 }
 
 ALLOWED_MENTIONS = discord.AllowedMentions().none()
+LAST_SESSION_FILE_NAME = "last-session.json"
+
+#-------------- Vocard Classes --------------
+class TempCtx():
+    def __init__(self, author: discord.Member, channel: discord.VoiceChannel) -> None:
+        self.author: discord.Member = author
+        self.channel: discord.VoiceChannel = channel
+        self.guild: discord.Guild = channel.guild
 
 #-------------- Vocard Functions --------------
 def open_json(path: str) -> dict:
@@ -60,9 +93,9 @@ def open_json(path: str) -> dict:
 def update_json(path: str, new_data: dict) -> None:
     data = open_json(path)
     if not data:
-        return
-    
-    data.update(new_data)
+        data = new_data
+    else:
+        data.update(new_data)
 
     with open(os.path.join(ROOT_DIR, path), "w") as json_file:
         json.dump(data, json_file, indent=4)
@@ -106,8 +139,8 @@ def format_time(number:str) -> int:
     return (int(num.tm_hour) * 3600 + int(num.tm_min) * 60 + int(num.tm_sec)) * 1000
 
 def get_source(source: str, type: str) -> str:
-    source_settings: dict = settings.sources_settings.get(source.lower(), {})
-    return source_settings.get(type, ("🔗" if type == "emoji" else settings.embed_color))
+    source_settings: dict[str, str] = settings.sources_settings.get(source.lower().replace(" ", ""), settings.sources_settings.get("others"))
+    return source_settings.get(type)
 
 def cooldown_check(ctx: commands.Context) -> Optional[commands.Cooldown]:
     if ctx.author.id in settings.bot_access_user:
@@ -143,30 +176,55 @@ def format_bytes(bytes: int, unit: bool = False):
     else:
         return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
     
-async def get_lang(guild_id:int, *keys) -> Union[list[str], str]:
+async def get_lang(guild_id:int, *keys) -> Optional[Union[list[str], str]]:
     settings = await get_settings(guild_id)
     lang = settings.get("lang", "EN")
     if lang in LANGS and not LANGS[lang]:
         LANGS[lang] = open_json(os.path.join("langs", f"{lang}.json"))
 
     if len(keys) == 1:
-        return LANGS.get(lang, {}).get(keys[0], "Language pack not found!")
-    return [LANGS.get(lang, {}).get(key, "Language pack not found!") for key in keys]
+        return LANGS.get(lang, {}).get(keys[0])
+    return [LANGS.get(lang, {}).get(key) for key in keys]
 
-async def send(ctx: Union[commands.Context, discord.Interaction], key: str, *params, delete_after: float = None, ephemeral: bool = False) -> Optional[discord.Message]:
-    text = await get_lang(ctx.guild.id, key)
-    text = text.format(*params)
+async def send(
+    ctx: Union[commands.Context, discord.Interaction],
+    content: Union[str, discord.Embed] = None,
+    *params,
+    view: discord.ui.View = None,
+    delete_after: float = None,
+    ephemeral: bool = False
+) -> Optional[discord.Message]:
+    if content is None:
+        content = "No content provided."
 
-    if isinstance(ctx, commands.Context):
-        send_func = ctx.send
+    # Determine the text to send
+    if isinstance(content, discord.Embed):
+        embed = content
+        text = None
     else:
-        if not ctx.response.is_done():
-            send_func = ctx.response.send_message
-            
+        text = await get_lang(ctx.guild.id, content)
+        if text:
+            text = text.format(*params)
         else:
-            return await ctx.followup.send(text, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+            text = content.format(*params)
+        embed = None
         
-    return await send_func(text, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+    # Determine the sending function
+    send_func = (
+        ctx.send if isinstance(ctx, commands.Context) else 
+        ctx.response.send_message if not ctx.response.is_done() else 
+        ctx.followup.send
+    )
+
+    # Check settings for delete_after duration
+    settings = await get_settings(ctx.guild.id)
+    if settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
+        delete_after = 10
+
+    # Send the message or embed
+    if view:
+        return await send_func(text, embed=embed, view=view, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
+    return await send_func(text, embed=embed, delete_after=delete_after, ephemeral=ephemeral, allowed_mentions=ALLOWED_MENTIONS)
 
 async def update_db(db: AsyncIOMotorCollection, tempStore: dict, filter: dict, data: dict) -> bool:
     for mode, action in data.items():

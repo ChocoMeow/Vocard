@@ -31,17 +31,15 @@ import logging
 
 from discord import Client, Member
 from discord.ext.commands import Bot
-from typing import Dict, Optional, TYPE_CHECKING, Union, List
+from typing import Dict, Optional, Union, List, Any, TYPE_CHECKING
 from urllib.parse import quote
 
 from . import (
-    __version__, 
-    spotify,
+    __version__
 )
 
 from .enums import SearchType, NodeAlgorithm
 from .exceptions import (
-    InvalidSpotifyClientAuthorization,
     NodeConnectionFailure,
     NodeCreationError,
     NodeException,
@@ -52,18 +50,10 @@ from .exceptions import (
 from .objects import Playlist, Track
 from .utils import ExponentialBackoff, NodeStats, NodeInfo, Ping
 from .enums import RequestMethod
+from .ratelimit import YTRatelimit, YTToken, STRATEGY
 
 if TYPE_CHECKING:
     from .player import Player
-
-SPOTIFY_URL_REGEX = re.compile(
-    r"https?://open.spotify.com/(?P<type>album|playlist|track|artist)/(?P<id>[a-zA-Z0-9]+)"
-)
-
-DISCORD_MP3_URL_REGEX = re.compile(
-    r"https?://cdn.discordapp.com/attachments/(?P<channel_id>[0-9]+)/"
-    r"(?P<message_id>[0-9]+)/(?P<file>[a-zA-Z0-9_.]+)+"
-)
 
 URL_REGEX = re.compile(
     r"https?://(?:www\.)?.+"
@@ -73,8 +63,7 @@ NODE_VERSION = "v4"
 
 class Node:
     """The base class for a node. 
-       This node object represents a Lavalink node. 
-       To enable Spotify searching, pass in a proper Spotify Client ID and Spotify Client Secret
+       This node object represents a Lavalink node.
     """
 
     def __init__(
@@ -88,9 +77,8 @@ class Node:
         identifier: str,
         secure: bool = False,
         heartbeat: int = 30,
+        yt_ratelimit: dict = None,
         session: Optional[aiohttp.ClientSession] = None,
-        spotify_client_id: Optional[str] = None,
-        spotify_client_secret: Optional[str] = None,
         resume_key: Optional[str] = None,
         logger: Optional[logging.Logger] = None
     ):
@@ -103,7 +91,7 @@ class Node:
         self._heartbeat: int = heartbeat
         self._secure: bool = secure
         self._logger: Optional[logging.Logger] = logger
-       
+
         self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}/" + NODE_VERSION + "/websocket"
         self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
 
@@ -125,10 +113,8 @@ class Node:
         self._players: Dict[int, Player] = {}
         self._info: Optional[NodeInfo] = None
         
-        self._spotify_client_id: Optional[str] = spotify_client_id
-        self._spotify_client_secret: Optional[str] = spotify_client_secret
-        self._spotify_client: Optional[spotify.Client] = None
-        
+        self.yt_ratelimit: Optional[YTRatelimit] = STRATEGY.get(yt_ratelimit.get("strategy"))(self, yt_ratelimit) if yt_ratelimit else None
+
         self._bot.add_listener(self._update_handler, "on_socket_response")
 
     def __repr__(self):
@@ -140,18 +126,6 @@ class Node:
     def get_player(self, guild_id: int) -> Optional[Player]:
         """Takes a guild ID as a parameter. Returns a voicelink Player object."""
         return self._players.get(guild_id, None)
-    
-    @property
-    def spotify_client(self) -> Optional[spotify.Client]:
-        if not self._spotify_client:
-            if not self._spotify_client_id or not self._spotify_client_secret:
-                return None
-            
-            self._spotify_client = spotify.Client(
-                self._spotify_client_id, self._spotify_client_secret
-            )
-
-        return self._spotify_client
     
     @property
     def is_connected(self) -> bool:
@@ -213,28 +187,43 @@ class Node:
                 await player.on_voice_state_update(data["d"])
             except KeyError:
                 return
-
+            
     async def _listen(self) -> None:
-        backoff = ExponentialBackoff(base=7)    
+        backoff = ExponentialBackoff(base=7)
 
         while True:
             try:
                 msg = await self._websocket.receive()
-            except:
-                break
-            if msg.type == aiohttp.WSMsgType.CLOSED:
-                self._available = False
 
-                retry = backoff.delay()
-                self._logger.info(f"Trying to reconnect node [{self._identifier}] with {round(retry)}s")
-                await asyncio.sleep(retry)
-                if not self.is_connected:
-                    try:
-                        await self.connect()
-                    except:
-                        pass
-            else:
+                if msg.type == aiohttp.WSMsgType.CLOSED:
+                    self._available = False
+                    self._logger.warning(f"WebSocket closed for node [{self._identifier}]")
+                    break
+
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    self._logger.error(f"WebSocket error for node [{self._identifier}]")
+                    break
+                
                 self._bot.loop.create_task(self._handle_payload(msg.json()))
+
+            except aiohttp.ClientConnectionError as e:
+                self._logger.error(f"Connection error: {e}")
+                self._available = False
+                break
+            
+            except Exception as e:
+                self._logger.exception(f"Unexpected error: {e}")
+                self._available = False
+                break
+
+        while not self._available:
+            retry = backoff.delay()
+            self._logger.info(f"Trying to reconnect node [{self._identifier}] in {round(retry)}s")
+            await asyncio.sleep(retry)
+            try:
+                await self.connect()
+            except Exception as e:
+                self._logger.error(f"Reconnection failed: {e}")
 
     async def _handle_payload(self, data: dict) -> None:
         op = data.get("op", None)
@@ -271,22 +260,26 @@ class Node:
             if resp.status >= 300:
                 raise NodeException(f"Getting errors from Lavalink REST api")
             
-            if method == RequestMethod.delete:
+            if method == RequestMethod.DELETE:
                 return await resp.json(content_type=None)
 
             return await resp.json()
-        
+
     async def connect(self) -> Node:
         """Initiates a connection with a Lavalink node and adds it to the node pool."""
 
         try:
+            if self._available:
+                self._logger.info(f"Node [{self._identifier}] already connected.")
+                return
+            
             self._websocket = await self._session.ws_connect(
                 self._websocket_uri, headers=self._headers, heartbeat=self._heartbeat
             )
 
             self._task = self._bot.loop.create_task(self._listen())
             self._available = True
-            self._info = NodeInfo(await self.send(RequestMethod.get, query="info"))
+            self._info = NodeInfo(await self.send(RequestMethod.GET, query="info"))
             
             self._logger.info(f"Node [{self._identifier}] is connected!")
         
@@ -326,6 +319,7 @@ class Node:
     async def reconnect(self) -> None:
         await asyncio.sleep(10)
         for player in self.players.copy().values():
+            await asyncio.sleep(3)
             try:
                 if player._voice_state:
                     await player._dispatch_voice_update(player._voice_state)
@@ -351,202 +345,79 @@ class Node:
         Context object on the track it builds.
         """
 
-        async with self._session.get(
-            f"{self._rest_uri}/" + NODE_VERSION + "/decodetrack?",
-            headers={"Authorization": self._password},
-            params={"track": identifier}
-        ) as resp:
-            if not resp.status == 200:
-                raise TrackLoadError(
-                    f"Failed to build track. Check if the identifier is correct and try again."
-                )
-
-            data: dict = await resp.json()
-            return Track(track_id=identifier, info=data, requester=requester)
+        data = await self.send(RequestMethod.GET, f"decodetrack?encodedTrack={identifier}")
+        return Track(track_id=identifier, info=data, requester=requester)
 
     async def get_tracks(
         self,
         query: str,
         *,
         requester: Member,
-        search_type: SearchType = SearchType.ytsearch
+        search_type: SearchType = SearchType.YOUTUBE
     ) -> Union[List[Track], Playlist]:
-        """Fetches tracks from the node's REST api to parse into Lavalink.
+        """
+        Fetches tracks from the node's REST api to parse into Lavalink.
 
-           If you passed in Spotify API credentials, you can also pass in a
-           Spotify URL of a playlist, album or track and it will be parsed accordingly.
-
-           You can also pass in a discord.py Context object to get a
-           Context object on any track you search.
+        You can also pass in a discord.py Context object to get a
+        Context object on any track you search.
         """
 
-        if not URL_REGEX.match(query) and not re.match(r"(?:ytm?|sc)search:.", query):
+        if not URL_REGEX.match(query) and ':' not in query:
             query = f"{search_type}:{query}"
 
-        if SPOTIFY_URL_REGEX.match(query):
-            try:
-                if not self.spotify_client:
-                    raise InvalidSpotifyClientAuthorization(
-                    "You did not provide proper Spotify client authorization credentials. "
-                    "If you would like to use the Spotify searching feature, "
-                    "please obtain Spotify API credentials here: https://developer.spotify.com/"
-                )
-
-                spotify_results = await self.spotify_client.search(query=query)
-            except Exception as _:
-                raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
-                
-            if isinstance(spotify_results, spotify.Track):
-                return [
-                    Track(
-                        track_id=None,
-                        info=spotify_results.to_dict(),
-                        requester=requester,
-                        search_type=search_type,
-                        spotify_track=spotify_results,
-                    )
-                ]
-
-            tracks = [
-                Track(
-                    track_id=None,
-                    info=track.to_dict(),
-                    requester=requester,
-                    search_type=search_type,
-                    spotify_track=track,
-                ) for track in spotify_results.tracks if track.uri
-            ]
-
-            return Playlist(
-                playlist_info={"name": spotify_results.name, "selectedTrack": 0},
-                tracks=tracks,
-                requester=requester,
-                spotify=True,
-                spotify_playlist=spotify_results
-            )
-
-        elif DISCORD_MP3_URL_REGEX.match(query):
-            async with self._session.get(
-                url=f"{self._rest_uri}/" + NODE_VERSION + f"/loadtracks?identifier={quote(query)}",
-                headers={"Authorization": self._password}
-            ) as response:
-                data: dict = await response.json()
-
-            try:
-                track: dict = data["data"]
-            except:
-                raise TrackLoadError("Not able to find the provided track.")
-
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-            ]
-        else:
-            async with self._session.get(
-                url=f"{self._rest_uri}/" + NODE_VERSION + f"/loadtracks?identifier={quote(query)}",
-                headers={"Authorization": self._password}
-            ) as response:
-                data = await response.json()
-
-        load_type = data.get("loadType")
+        response: dict[str, Any] = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
+        data = response.get("data")
+        load_type = response.get("loadType")
 
         if not load_type:
             raise TrackLoadError("There was an error while trying to load this track.")
-
-        elif load_type == "error":
-            exception = data["data"]
-            raise TrackLoadError(f"{exception['message']} [{exception['severity']}]")
-
+        
         elif load_type == "empty":
             return None
 
-        elif load_type == "playlist":
-            data = data.get("data")
-            
-            return Playlist(
-                playlist_info=data["info"],
-                tracks=data["tracks"],
-                requester=requester
-            )
+        elif load_type == "error":
+            raise TrackLoadError(f"{data['message']} [{data['severity']}]")
+
+        elif load_type in ("playlist", "recommendations"):
+            return Playlist(playlist_info=data["info"], tracks=data["tracks"], requester=requester)
 
         elif load_type == "search":
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-                for track in data["data"]
-            ]
+            return [Track(track_id=track["encoded"], info=track["info"], requester=requester) for track in data]
 
         elif load_type == "track":
-            track = data["data"]
-            return [
-                Track(
-                    track_id=track["encoded"],
-                    info=track["info"],
-                    requester=requester
-                )
-            ]
-    
-    async def spotifySearch(self, query: str, *, requester: Member) -> Optional[List[Track]]:
-        try:
-            if not self.spotify_client:
-                raise InvalidSpotifyClientAuthorization(
-                "You did not provide proper Spotify client authorization credentials. "
-                "If you would like to use the Spotify searching feature, "
-                "please obtain Spotify API credentials here: https://developer.spotify.com/"
-            )
-                
-            tracks = await self._spotify_client.track_search(query=query)
-        except Exception as _:
-            raise TrackLoadError("Not able to find the provided Spotify entity, is it private?")
-            
-        return [ 
-            Track(
-                track_id=None,
-                requester=requester,
-                search_type=SearchType.ytsearch,
-                spotify_track=track,
-                info=track.to_dict()
-            )
-            for track in tracks ]
+            return [Track(track_id=data["encoded"], info=data["info"], requester=requester)]
 
     async def get_recommendations(self, track: Track, limit: int = 20) -> List[Optional[Track]]:
-        if track.spotify:
-            if not self.spotify_client:
-                return []
-            
-            spotify_tracks = await self.spotify_client.similar_track(seed_tracks=track.identifier, limit=limit)
-            
-            tracks = [
-                Track(
-                    track_id=None,
-                    search_type=SearchType.ytsearch,
-                    spotify_track=track,
-                    info=track.to_dict(),
-                    requester=self.bot.user
-                )
-                for track in spotify_tracks
-            ]
+        query = ""
+        if track.source == "youtube":
+            query = f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}"
 
-        else:
-            if track.source != 'youtube':
-                return []
+        elif track.source == "spotify":
+            query = f"sprec:seed_tracks={track.identifier}"
 
-            tracks = await self.get_tracks(
-                f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}", 
-                requester=self.bot.user
-            )
-
+        if not query:
+            return []
+        
+        tracks = await self.get_tracks(query=query, requester=self.bot.user)
         if isinstance(tracks, Playlist):
             tracks = tracks.tracks
 
         return tracks[:limit] if limit else tracks
+    
+    async def update_refresh_yt_access_token(self, token: YTToken) -> dict:
+        if not self._available:
+            raise NodeNotAvailable(f"The node '{self._identifier}' is unavailable.")
         
+        uri: str = f"{self._rest_uri}/youtube"
+        async with self._session.request(
+            method="POST",
+            url=uri,
+            headers={"Authorization": self._password},
+            json={"refreshToken": token.token}
+        ) as resp:
+            if resp.status >= 300:
+                raise NodeException(f"Getting errors from Lavalink REST api")
+
 class NodePool:
     """The base class for the node pool.
        This holds all the nodes that are to be used by the bot.
@@ -572,12 +443,12 @@ class NodePool:
          This option is preferred if you want to choose the best node
          from a multi-node setup using either the node's latency
          or the node's voice region.
-         Use NodeAlgorithm.by_ping if you want to get the best node
+         Use NodeAlgorithm.BY_PING if you want to get the best node
          based on the node's latency.
          Use NodeAlgorithm.by_region if you want to get the best node
          based on the node's voice region. This method will only work
          if you set a voice region when you create a node.
-         Use NodeAlgorithm.by_players if you want to get the best node
+         Use NodeAlgorithm.BY_PLAYERS if you want to get the best node
          based on how players it has. This method will return a node with
          the least amount of players
         """
@@ -586,11 +457,11 @@ class NodePool:
         if not available_nodes:
             raise NoNodesAvailable("There are no nodes available.")
 
-        if algorithm == NodeAlgorithm.by_ping:
+        if algorithm == NodeAlgorithm.BY_PING:
             tested_nodes = {node: node.latency for node in available_nodes}
             return min(tested_nodes, key=tested_nodes.get)
 
-        elif algorithm == NodeAlgorithm.by_players:
+        elif algorithm == NodeAlgorithm.BY_PLAYERS:
             tested_nodes = {node: len(node.players.keys()) for node in available_nodes}
             return min(tested_nodes, key=tested_nodes.get)
 
@@ -624,14 +495,12 @@ class NodePool:
         identifier: str,
         secure: bool = False,
         heartbeat: int = 30,
-        spotify_client_id: Optional[str] = None,
-        spotify_client_secret: Optional[str] = None,
+        yt_ratelimit: dict = None,
         session: Optional[aiohttp.ClientSession] = None,
         resume_key: Optional[str] = None,
         logger: Optional[logging.Logger] = None
     ) -> Node:
         """Creates a Node object to be then added into the node pool.
-           For Spotify searching capabilites, pass in valid Spotify API credentials.
         """
         if identifier in cls._nodes.keys():
             raise NodeCreationError(f"A node with identifier '{identifier}' already exists.")
@@ -641,9 +510,8 @@ class NodePool:
             
         node = Node(
             pool=cls, bot=bot, host=host, port=port, password=password,
-            identifier=identifier, secure=secure, heartbeat=heartbeat, spotify_client_id=spotify_client_id, 
-            session=session, spotify_client_secret=spotify_client_secret,
-            resume_key=resume_key, logger=logger
+            identifier=identifier, secure=secure, heartbeat=heartbeat, yt_ratelimit=yt_ratelimit,
+            session=session, resume_key=resume_key, logger=logger
         )
 
         await node.connect()

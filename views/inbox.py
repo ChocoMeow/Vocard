@@ -44,7 +44,7 @@ class InboxView(discord.ui.View):
     def __init__(self, author: discord.Member, inbox: list[dict[str, Any]]):
         super().__init__(timeout=60)
         self.inbox: list[dict[str, Any]] = inbox
-        self.newplaylist = []
+        self.new_playlist = []
 
         self.author: discord.Member = author
         self.response: discord.Message = None
@@ -88,7 +88,7 @@ class InboxView(discord.ui.View):
         
     @discord.ui.button(label='Accept', style=discord.ButtonStyle.green, custom_id="accept", disabled=True)
     async def accept_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.newplaylist.append(self.current)
+        self.new_playlist.append(self.current)
         self.inbox.remove(self.current)
         self.current = None
         await self.button_change(interaction)

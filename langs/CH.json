@@ -7,9 +7,11 @@
     "noChannel": "沒有語音頻道可供連接。請提供一個語音頻道或加入一個語音頻道。",
     "alreadyConnected": "已經連接到語音頻道。",
     "noPermission": "抱歉！我沒有權限加入或在您的語音頻道中發言。",
+    "noCreatePermission": "抱歉！我沒有權限建立歌曲請求頻道。",
     "noPlaySource": "找不到任何可播放的來源！",
     "noPlayer": "在此伺服器上找不到播放器。",
     "notVote": "此命令需要您的投票！輸入 `/vote` 以獲取更多資訊。",
+    "missingIntents": "抱歉，此命令無法執行，因為機器人缺少所需的請求意圖：`({0})`.",
     "languageNotFound": "找不到語言包！請選擇一個現有的語言包。",
     "changedLanguage": "已成功切換到 `{0}` 語言包。",
     "setPrefix": "完成！我的前綴在您的伺服器中現在是 `{0}`。嘗試運行 `{1}ping` 來測試它。",
@@ -57,7 +59,7 @@
     "noPlaylistAcc": "{0} 沒有建立播放清單帳戶。",
     "overPlaylistCreation": "你不能建立超過 `{0}` 個播放清單！",
     "playlistExists": "播放清單 [`{0}`] 已存在。",
-    "playlistNotInvaildUrl": "請輸入有效的連結或公開的 Spotify 或 YouTube 播放清單連結。",
+    "playlistNotInvalidUrl": "請輸入有效的連結或公開的 Spotify 或 YouTube 播放清單連結。",
     "playlistCreated": "你已建立 `{0}` 播放清單。輸入 /playlist view 檢視更多資訊。",
     "playlistRenamed": "你已將 `{0}` 更名為 `{1}`。",
     "playlistLimitTrack": "你已達到限制！你只能將 `{0}` 首歌曲添加至你的播放清單中。",
@@ -114,6 +116,7 @@
     "buttonShuffle": "隨機播放",
     "buttonForward": "前進",
     "buttonRewind": "後退",
+    "buttonLyrics": "歌詞",
 
     "nowplayingDesc": "**現在播放:**\n```{0}```",
     "nowplayingField": "接下來播放:",
@@ -186,5 +189,6 @@
     "invalidEndTime": "無效的結束時間! 時間必須在 `00:00` 和 `{0}` 之間。",
     "invalidTimeOrder": "結束時間不能小於或等於開始時間。",
 
-    "SetStageAnnounceTemplate": "完成！從現在開始，像您現在的語音狀態將根據您的模板命名。您應該在幾秒鐘內看到它更新。"
+    "setStageAnnounceTemplate": "完成！從現在開始，像您現在的語音狀態將根據您的模板命名。您應該在幾秒鐘內看到它更新。",
+    "createSongRequestChannel": "一個歌曲請求頻道 ({0}) 已建立！您可以在該頻道中透過歌曲名稱或 URL 開始要求任何歌曲，而無需使用機器人前綴。"
 }

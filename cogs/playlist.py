@@ -107,7 +107,7 @@ class Playlists(commands.Cog, name="playlist"):
     async def playlist(self, ctx: commands.Context):
         view = HelpView(self.bot, ctx.author)
         embed = view.build_embed(self.qualified_name)
-        view.response = await ctx.send(embed=embed, view=view)
+        view.response = send(ctx, embed, view=view)
 
     @playlist.command(name="play", aliases=get_aliases("play"))
     @app_commands.describe(
@@ -136,11 +136,11 @@ class Playlists(commands.Cog, name="playlist"):
             if not result['playlist']['tracks']:
                 return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)
 
-            playtrack = []
+            _tracks = []
             for track in result['playlist']['tracks'][:max_t]:
-                playtrack.append(voicelink.Track(track_id=track, info=voicelink.decode(track), requester=ctx.author))
+                _tracks.append(voicelink.Track(track_id=track, info=voicelink.decode(track), requester=ctx.author))
                     
-            tracks = {"name": result['playlist']['name'], "tracks": playtrack}
+            tracks = {"name": result['playlist']['name'], "tracks": _tracks}
 
         if not tracks:
             return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)
@@ -212,7 +212,7 @@ class Playlists(commands.Cog, name="playlist"):
         embed.set_footer(text=text[2])
 
         view = PlaylistView(embed, results, ctx.author)
-        view.response = await ctx.send(embed=embed, view=view, ephemeral=True)
+        view.response = await send(ctx, embed, view=view, ephemeral=True)
 
     @playlist.command(name="create", aliases=get_aliases("create"))
     @app_commands.describe(
@@ -237,7 +237,7 @@ class Playlists(commands.Cog, name="playlist"):
         if link:
             tracks = await voicelink.NodePool.get_node().get_tracks(link, requester=ctx.author)
             if not isinstance(tracks, voicelink.Playlist):
-                return await send(ctx, "playlistNotInvaildUrl", ephemeral=True)
+                return await send(ctx, "playlistNotInvalidUrl", ephemeral=True)
 
         data = {'uri': link, 'perms': {'read': []}, 'name': name, 'type': 'link'} if link else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
         await update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlist_id([data for data in user])}": data}})
@@ -344,14 +344,14 @@ class Playlists(commands.Cog, name="playlist"):
 
         inbox = user['inbox'].copy()
         view = InboxView(ctx.author, user['inbox'])
-        view.response = await ctx.send(embed=view.build_embed(), view=view, ephemeral=True)
+        view.response = await send(ctx, view.build_embed(), view=view, ephemeral=True)
         await view.wait()
 
         if inbox == user['inbox']:
             return
         
         update_data, dId = {}, {dId for dId in user["playlist"]}
-        for data in view.newplaylist[:(max_p - len(user['playlist']))]:
+        for data in view.new_playlist[:(max_p - len(user['playlist']))]:
             addId = assign_playlist_id(dId)
             await update_user(data['sender'], {"$push": {f"playlist.{data['referId']}.perms.read": ctx.author.id}})
             update_data[f'playlist.{addId}'] = {
@@ -449,11 +449,11 @@ class Playlists(commands.Cog, name="playlist"):
             if not result['playlist']['tracks']:
                 return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)
 
-            playtrack = []
+            _tracks = []
             for track in result['playlist']['tracks']:
-                playtrack.append(voicelink.Track(track_id=track, info=voicelink.decode(track), requester=ctx.author))
+                _tracks.append(voicelink.Track(track_id=track, info=voicelink.decode(track), requester=ctx.author))
                     
-            tracks = {"name": result['playlist']['name'], "tracks": playtrack}
+            tracks = {"name": result['playlist']['name'], "tracks": _tracks}
 
         if not tracks:
             return await send(ctx, 'playlistNoTrack', result['playlist']['name'], ephemeral=True)

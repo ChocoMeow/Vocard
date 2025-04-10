@@ -67,44 +67,41 @@ class Task(commands.Cog):
 
     @tasks.loop(minutes=5.0)
     async def player_check(self):
-        if not self.bot.voice_clients:
-            return
-        
-        player: voicelink.Player
-        for player in self.bot.voice_clients:
-            try:
-                if not player.channel or not player.context or not player.guild:
+        for identifier, node in voicelink.NodePool._nodes.items():
+            for guild_id, player in node._players.copy().items():
+                try:
+                    if not player.channel or not player.context or not player.guild:
+                        await player.teardown()
+                        continue
+                except:
                     await player.teardown()
                     continue
-            except:
-                await player.teardown()
-                continue
-            
-            try:
-                members = player.channel.members
-                if (not player.is_playing and player.queue.is_empty) or not any(False if member.bot or member.voice.self_deaf else True for member in members):
-                    if not player.settings.get('24/7', False):
-                        await player.teardown()
-                        continue
+                
+                try:
+                    members = player.channel.members
+                    if (not player.is_playing and player.queue.is_empty) or not any(False if member.bot or member.voice.self_deaf else True for member in members):
+                        if not player.settings.get('24/7', False):
+                            await player.teardown()
+                            continue
+                        else:
+                            if not player.is_paused:
+                                await player.set_pause(True)
                     else:
-                        if not player.is_paused:
-                            await player.set_pause(True)
-                else:
-                    if not player.guild.me:
-                        await player.teardown()
-                        continue
-                    elif not player.guild.me.voice:
-                        await player.connect(timeout=0.0, reconnect=True)
+                        if not player.guild.me:
+                            await player.teardown()
+                            continue
+                        elif not player.guild.me.voice:
+                            await player.connect(timeout=0.0, reconnect=True)
 
-                if player.dj not in members:
-                    for m in members:
-                        if not m.bot:
-                            player.dj = m
-                            break
-                        
-            except Exception as e:
-                func.logger.error("Error occurred while checking the player!", exc_info=e)
-    
+                    if player.dj not in members:
+                        for m in members:
+                            if not m.bot:
+                                player.dj = m
+                                break
+                            
+                except Exception as e:
+                    func.logger.error("Error occurred while checking the player!", exc_info=e)
+
     @tasks.loop(hours=12.0)
     async def cache_cleaner(self):
         func.SETTINGS_BUFFER.clear()

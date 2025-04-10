@@ -74,26 +74,6 @@ class FilterTagInvalid(VoicelinkException):
     """An invalid tag was passed or Voicelink was unable to find a filter tag"""
     pass
 
-class SpotifyAlbumLoadFailed(VoicelinkException):
-    """The voicelink Spotify client was unable to load an album."""
-    pass
-
-
-class SpotifyTrackLoadFailed(VoicelinkException):
-    """The voicelink Spotify client was unable to load a track."""
-    pass
-
-
-class SpotifyPlaylistLoadFailed(VoicelinkException):
-    """The voicelink Spotify client was unable to load a playlist."""
-    pass
-
-
-class InvalidSpotifyClientAuthorization(VoicelinkException):
-    """No Spotify client authorization was provided for track searching."""
-    pass
-
-
 class QueueFull(VoicelinkException):
     pass
 

@@ -7,9 +7,11 @@
     "noChannel": "No hay canal de voz al que conectarse. Por favor, proporcione uno o únase a uno.",
     "alreadyConnected": "Ya conectado a un canal de voz.",
     "noPermission": "¡Lo siento! No tengo permisos para unirme o hablar en su canal de voz.",
+    "noCreatePermission": "¡Lo siento! No tengo permisos para crear un canal de solicitud de canciones.",
     "noPlaySource": "¡No se puede encontrar ninguna fuente reproducible!",
     "noPlayer": "No se ha encontrado ningún reproductor en este servidor.",
     "notVote": "¡Este comando requiere su voto! Escriba `/vote` para obtener más información.",
+    "missingIntents": "Lo siento, este comando no se puede ejecutar porque el bot carece de la intención de solicitud requerida: `({0})`.",
     "languageNotFound": "¡No se encontró paquete de idioma! por favor seleccione un paquete de idioma existente.",
     "changedLanguage": "Cambiado con éxito al paquete de idioma `{0}`.",
     "setPrefix": "¡Listo! Mi prefijo en tu servidor ahora es `{0}`. Intenta ejecutar `{1}ping` para probarlo.",
@@ -57,7 +59,7 @@
     "noPlaylistAcc": "`{0}` no ha creado una cuenta de lista de reproducción.",
     "overPlaylistCreation": "¡No puede crear más de `{0}` listas de reproducción!",
     "playlistExists": "La lista de reproducción [`{0}`] ya existe.",
-    "playlistNotInvaildUrl": "Ingrese un enlace válido o un enlace público de lista de reproducción de Spotify o YouTube.",
+    "playlistNotInvalidUrl": "Ingrese un enlace válido o un enlace público de lista de reproducción de Spotify o YouTube.",
     "playlistCreated": "Ha creado una lista de reproducción llamada `{0}`. Escriba /playlist view para obtener más información.",
     "playlistRenamed": "Ha cambiado el nombre de `{0}` a `{1}`.",
     "playlistLimitTrack": "¡Ha alcanzado el límite! Solo puede agregar `{0}` canciones a su lista de reproducción.",
@@ -114,6 +116,7 @@
     "buttonShuffle": "Aleatorio",
     "buttonForward": "Adelante",
     "buttonRewind": "Atrás",
+    "buttonLyrics": "Letras",
 
     "nowplayingDesc": "**Reproduciendo ahora:**\n```{0}```",
     "nowplayingField": "A continuación:",
@@ -186,5 +189,6 @@
     "invalidEndTime": "Tiempo de finalización inválido! El tiempo debe estar entre `00:00` y `{0}`.",
     "invalidTimeOrder": "El tiempo final no puede ser menor o igual que el tiempo de inicio.",
 
-    "SetStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos."
+    "setStageAnnounceTemplate": "¡Hecho! A partir de ahora, el estado de voz como el que tienes ahora se nombrará según tu plantilla. Deberías verlo actualizarse en unos segundos.",
+    "createSongRequestChannel": "¡Se ha creado un canal de solicitudes de canciones ({0})! Puedes empezar a solicitar cualquier canción por nombre o URL en ese canal, sin necesidad de usar el prefijo del bot."
 }

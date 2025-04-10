@@ -6,7 +6,7 @@ from typing import List, Dict, Union, Optional
 from discord import User, Member, VoiceChannel
 from discord.ext import commands
 from voicelink import Player, Track, Playlist, NodePool, decode, LoopType, Filters
-from addons import lyricsPlatform
+from addons import LYRICS_PLATFORMS
 
 RATELIMIT_COUNTER: Dict[int, Dict[str, float]] = {}
 SCOPES = {
@@ -21,12 +21,6 @@ SCOPES = {
     "default_controller": dict,
     "stage_announce_template": str
 }
-
-class TempCtx():
-    def __init__(self, author: Member, channel: VoiceChannel) -> None:
-        self.author = author
-        self.channel = channel
-        self.guild = channel.guild
 
 class SystemMethod:
     def __init__(self, function: callable, *, credit: int = 1):
@@ -44,9 +38,9 @@ def require_permission(only_admin: bool = False):
     def decorator(func) -> callable:
         async def wrapper(player: Player, member: Member, dict: Dict) -> Optional[Dict]:
             if only_admin and not member.guild_permissions.manage_guild:
-                return error_msg("Only the admins may use this funciton!", user_id=member.id)
+                return error_msg("Only the admins may use this function!", user_id=member.id)
             if not player.is_privileged(member):
-                return error_msg("Only the DJ or admins may use this funciton!", user_id=member.id)
+                return error_msg("Only the DJ or admins may use this function!", user_id=member.id)
             return await func(player, member, dict)
         return wrapper
     return decorator
@@ -54,9 +48,9 @@ def require_permission(only_admin: bool = False):
 def error_msg(msg: str, *, user_id: int = None, guild_id: int = None, level: str = "info") -> Dict:
     payload = {"op": "errorMsg", "level": level, "msg": msg}
     if user_id:
-        payload["user_id"] = str(user_id)
+        payload["userId"] = str(user_id)
     if guild_id:
-        payload["guild_id"] = str(guild_id)
+        payload["guildId"] = str(guild_id)
 
     return payload
 
@@ -67,14 +61,14 @@ async def connect_channel(member: Member, bot: commands.Bot) -> Player:
     channel = member.voice.channel
     try:
         settings = await func.get_settings(channel.guild.id)
-        player: Player = await channel.connect(cls=Player(bot, channel, TempCtx(member, channel), settings))
-        await player.send_ws({"op": "createPlayer", "member_ids": [str(member.id) for member in channel.members]})
+        player: Player = await channel.connect(cls=Player(bot, channel, func.TempCtx(member, channel), settings))
+        await player.send_ws({"op": "createPlayer", "memberIds": [str(member.id) for member in channel.members]})
         return player
     except:
         return
 
 async def initBot(bot: commands.Bot, data: Dict) -> Dict:
-    user_id = int(data.get("user_id"))
+    user_id = int(data.get("userId"))
     user = bot.get_user(user_id)
     if not user:
         user = await bot.fetch_user(user_id)
@@ -82,14 +76,14 @@ async def initBot(bot: commands.Bot, data: Dict) -> Dict:
     if user:
         return {
             "op": "initBot",
-            "user_id": str(user_id),
-            "bot_name": bot.user.display_name,
-            "bot_avatar": bot.user.display_avatar.url,
-            "bot_id": str(bot.user.id)
+            "userId": str(user_id),
+            "botName": bot.user.display_name,
+            "botAvatar": bot.user.display_avatar.url,
+            "botId": str(bot.user.id)
         }
     
 async def initUser(bot: commands.Bot, data: Dict) -> Dict:
-    user_id = int(data.get("user_id"))
+    user_id = int(data.get("userId"))
     data = await func.get_user(user_id)
 
     for mail in data.get("inbox"):
@@ -100,11 +94,11 @@ async def initUser(bot: commands.Bot, data: Dict) -> Dict:
         if not sender:
             data.get("inbox").remove(mail)
 
-        mail["sender"] = {"avatar_url": sender.display_avatar.url, "name": sender.display_name, "id": str(sender.id)}
+        mail["sender"] = {"avatarUrl": sender.display_avatar.url, "name": sender.display_name, "id": str(sender.id)}
 
     return {
         "op": "initUser",
-        "user_id": str(user_id),
+        "userId": str(user_id),
         "data": data
     }
     
@@ -117,29 +111,29 @@ async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
 
     return {
         "op": "initPlayer",
-        "guild_id": str(player.guild.id),
-        "user_id": str(data.get("user_id")),
+        "guildId": str(player.guild.id),
+        "userId": str(data.get("userId")),
         "users": [{
-            "user_id": str(member.id),
-            "avatar_url": member.display_avatar.url,
+            "userId": str(member.id),
+            "avatarUrl": member.display_avatar.url,
             "name": member.name
         } for member in player.channel.members ],
-        "tracks": [ {"track_id": track.track_id, "requester_id": str(track.requester.id)} for track in player.queue._queue ],
-        "repeat_mode": player.queue.repeat.lower(),
-        "channel_name": player.channel.name,
-        "current_queue_position": player.queue._position + (0 if player.is_playing else 1),
-        "current_position": 0 or player.position if player.is_playing else 0,
-        "is_playing": player.is_playing,
-        "is_paused": player.is_paused,
-        "is_dj": player.is_privileged(member, check_user_join=False),
+        "tracks": [ {"trackId": track.track_id, "requesterId": str(track.requester.id)} for track in player.queue._queue ],
+        "repeatMode": player.queue.repeat.lower(),
+        "channelName": player.channel.name,
+        "currentQueuePosition": player.queue._position + (0 if player.is_playing else 1),
+        "currentPosition": 0 or player.position if player.is_playing else 0,
+        "isPlaying": player.is_playing,
+        "isPaused": player.is_paused,
+        "isDj": player.is_privileged(member, check_user_join=False),
         "autoplay": player.settings.get("autoplay", False),
         "volume": player.volume,
         "filters": [{"tag": filter.tag, "scope": filter.scope, "payload": filter.payload} for filter in player.filters.get_filters()],
-        "available_filters": available_filters
+        "availableFilters": available_filters
     }
 
 async def closeConnection(bot: commands.Bot, data: Dict) -> None:
-    guild_id = int(data.get("guild_id"))
+    guild_id = int(data.get("guildId"))
     guild = bot.get_guild(guild_id)
     player: Player = guild.voice_client
     if player:
@@ -150,13 +144,13 @@ async def getRecommendation(bot: commands.Bot, data: Dict) -> None:
     if not node:
         return
     
-    track_data = decode(track_id := data.get("track_id"))
+    track_data = decode(track_id := data.get("trackId"))
     track = Track(track_id=track_id, info=track_data, requester=bot.user)
     tracks: List[Track] = await node.get_recommendations(track, limit=60)
 
     return {
         "op": "getRecommendation",
-        "user_id": str(data.get("user_id")),
+        "userId": str(data.get("userId")),
         "callback": data.get("callback"),
         "tracks": [track.track_id for track in tracks] if tracks else []
     }
@@ -178,8 +172,8 @@ async def skipTo(player: Player, member: Member, data: Dict) -> None:
     if index > 1:
         player.queue.skipto(index)
 
-    if player.queue._repeat.mode == LoopType.track:
-        await player.set_repeat(LoopType.off.name)
+    if player.queue._repeat.mode == LoopType.TRACK:
+        await player.set_repeat(LoopType.OFF)
     await player.stop()
 
 async def backTo(player: Player, member: Member, data: Dict) -> None:
@@ -238,14 +232,18 @@ async def getTracks(bot: commands.Bot, data: Dict) -> Dict:
     query = data.get("query", None)
 
     if query:
-        payload = {"op": "getTracks", "user_id": data.get("user_id"), "callback": data.get("callback")}
+        payload = {"op": "getTracks", "userId": data.get("userId"), "callback": data.get("callback")}
         tracks = await NodePool.get_node().get_tracks(query=query, requester=None)
         if not tracks:
             return payload
 
         payload["tracks"] = [ track.track_id for track in (tracks.tracks if isinstance(tracks, Playlist) else tracks ) ]
         return payload
-    
+
+async def searchAndPlay(player: Player, member: Member, data: Dict) -> None:
+    payload = await getTracks(player.bot, data)
+    await addTracks(player, member, payload)
+
 async def shuffleTrack(player: Player, member: Member, data: Dict) -> None:
     if not player.is_privileged(member):
         if member in player.shuffle_votes:
@@ -268,7 +266,7 @@ async def removeTrack(player: Player, member: Member, data: Dict) -> None:
 
 @require_permission()
 async def clearQueue(player: Player, member: Member, data: Dict) -> None:
-    queue_type = data.get("queue_type", "").lower()
+    queue_type = data.get("queueType", "").lower()
     await player.clear_queue(queue_type, member)
 
 @require_permission(only_admin=True)
@@ -299,7 +297,7 @@ async def updatePause(player: Player, member: Member, data: Dict) -> None:
     await player.set_pause(pause, member)
 
 @require_permission()
-async def updatePosition(player: Player, member: Member, data: Dict) -> None:    
+async def updatePosition(player: Player, member: Member, data: Dict) -> None:
     position = data.get("position");
     await player.seek(position, member);
 
@@ -316,8 +314,8 @@ async def toggleAutoplay(player: Player, member: Member, data: Dict) -> Dict:
     return {
         "op": "toggleAutoplay",
         "status": check,
-        "guild_id": player.guild.id,
-        "requester_id": str(member.id)
+        "guildId": player.guild.id,
+        "requesterId": str(member.id)
     }
 
 @require_permission()
@@ -374,30 +372,33 @@ async def _getPlaylist(user_id: int, playlist_id: str) -> Dict:
     return playlist
 
 async def getPlaylist(bot: commands.Bot, data: Dict) -> Dict:
-    user_id = int(data.get("user_id"))
-    playlist_id = str(data.get("playlist_id"))
+    user_id = int(data.get("userId"))
+    playlist_id = str(data.get("playlistId"))
 
-    payload = {"op": "loadPlaylist", "playlist_id": playlist_id, "user_id": str(user_id)}
+    payload = {"op": "loadPlaylist", "playlistId": playlist_id, "userId": str(user_id)}
     playlist = await _getPlaylist(user_id, playlist_id)
     payload["tracks"] = playlist["tracks"] if playlist else []
     
     return payload
     
 async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
-    user_id = int(data.get("user_id"))
-    playlist_id = str(data.get("playlist_id"))
+    user_id = int(data.get("userId"))
+    playlist_id = str(data.get("playlistId"))
     _type = data.get("type")
+    
+    if not playlist_id and not _type == "createPlaylist":
+        return error_msg("Unable to process this request without a playlist ID.", user_id=user_id, level="error")
     
     rank, max_p, max_t = func.check_roles()
     if _type == "createPlaylist":
-        name, playlist_url = data.get("name"), data.get("playlist_url")
+        name, playlist_url = data.get("playlistName"), data.get("playlistUrl")
         if not name:
             return {
                 "op": "updatePlaylist",
                 "status": "error",
                 "msg": f"You must enter name for this field!",
-                "field": "create-playlist-name",
-                "user_id": str(user_id)
+                "field": "playlistName",
+                "userId": str(user_id)
             }
         
         playlist = await func.get_user(user_id, "playlist")
@@ -406,8 +407,8 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 "op": "updatePlaylist",
                 "status": "error",
                 "msg": f"You cannot create more than '{max_p}' playlists!",
-                "field": "create-playlist-name",
-                "user_id": str(user_id)
+                "field": "playlistName",
+                "userId": str(user_id)
             }
 
         for playlist_data in playlist.values():
@@ -416,8 +417,8 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                     "op": "updatePlaylist",
                     "status": "error",
                     "msg": f"Playlist '{name}' already exists.",
-                    "field": "create-playlist-name",
-                    "user_id": str(user_id)
+                    "field": "playlistName",
+                    "userId": str(user_id)
                 }
         
         if playlist_url:
@@ -427,19 +428,19 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                     "op": "updatePlaylist",
                     "status": "error",
                     "msg": f"Please enter a valid link or public spotify or youtube playlist link.",
-                    "field": "create-playlist-url",
-                    "user_id": str(user_id)
+                    "field": "playlistUrl",
+                    "userId": str(user_id)
                 }
 
-        assgined_playlist_id = _assign_playlist_id(list(playlist.keys()))
+        assigned_playlist_id = _assign_playlist_id(list(playlist.keys()))
         data = {'uri': playlist_url, 'perms': {'read': []}, 'name': name, 'type': 'link'} if playlist_url else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-        await func.update_user(user_id, {"$set": {f"playlist.{assgined_playlist_id}": data}})
+        await func.update_user(user_id, {"$set": {f"playlist.{assigned_playlist_id}": data}})
         return {
             "op": "updatePlaylist",
             "status": "created",
-            "playlist_id": assgined_playlist_id,
+            "playlistId": assigned_playlist_id,
             "msg": f"You have created '{name}' playlist.",
-            "user_id": str(user_id),
+            "userId": str(user_id),
             "data": data
         }
         
@@ -454,9 +455,9 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         return {
             "op": "updatePlaylist",
             "status": "deleted",
-            "playlist_id": playlist_id,
+            "playlistId": playlist_id,
             "msg": f"You have removed playlist '{playlist['name']}'",
-            "user_id": str(user_id)
+            "userId": str(user_id)
         }
     
     elif _type == "renamePlaylist":
@@ -466,8 +467,8 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 "op": "updatePlaylist",
                 "status": "error",
                 "msg": f"You must enter name for this field!",
-                "field": "rename-playlist-name",
-                "user_id": str(user_id)
+                "field": "playlistName",
+                "userId": str(user_id)
             }
         
         playlist = await func.get_user(user_id, "playlist")
@@ -477,8 +478,8 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                     "op": "updatePlaylist",
                     "status": "error",
                     "msg": f"Playlist '{data['name']}' already exists.",
-                    "field": "rename-playlist-name",
-                    "user_id": str(user_id)
+                    "field": "playlistName",
+                    "userId": str(user_id)
                 }
 
         await func.update_user(user_id, {"$set": {f'playlist.{playlist_id}.name': name}})
@@ -486,14 +487,14 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
             "op": "updatePlaylist",
             "status": "renamed",
             "name": name,
-            "playlist_id": playlist_id,
+            "playlistId": playlist_id,
             "msg": f"You have renamed the playlist to '{name}'.",
-            "field": "rename-playlist-name",
-            "user_id": str(user_id)
+            "field": "playlistName",
+            "userId": str(user_id)
         }
     
     elif _type == "addTrack":
-        track_id = data.get("track_id")
+        track_id = data.get("trackId")
         if not track_id:
             return error_msg("No track ID could be located.", user_id=user_id, level='error')
         
@@ -513,18 +514,21 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         return {
             "op": "updatePlaylist",
             "status": "addTrack",
-            "playlist_id": playlist_id,
-            "track_id": track_id,
+            "playlistId": playlist_id,
+            "trackId": track_id,
             "msg": f"Added {decoded_track.title} into '{playlist['name']}' playlist.",
-            "user_id": str(user_id)
+            "userId": str(user_id)
         }
         
     elif _type == "removeTrack":
-        track_id, track_position = data.get("track_id"), data.get("track_position", 0)
+        track_id, track_position = data.get("trackId"), data.get("trackPosition", 0)
         if not track_id:
             return error_msg("No track ID could be located.", user_id=user_id, level='error')
         
         playlist = await _getPlaylist(user_id, playlist_id)
+        if not playlist:
+            return error_msg("Playlist not found!", user_id=user_id, level='error')
+        
         if playlist['type'] in ['share', 'link']:
             return error_msg("You cannot remove songs from a linked playlist through Vocard.", user_id=user_id, level='error')
         
@@ -540,36 +544,36 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         return {
             "op": "updatePlaylist",
             "status": "removeTrack",
-            "playlist_id": playlist_id,
-            "track_position": track_position,
-            "track_id": track_id,
+            "playlistId": playlist_id,
+            "trackPosition": track_position,
+            "trackId": track_id,
             "msg": f"Removed '{decoded_track['title']}' from '{playlist['name']}' playlist.",
-            "user_id": str(user_id)
+            "userId": str(user_id)
         }
 
     elif _type == "updateInbox":
         user = await func.get_user(user_id)
-        is_accpet = data.get("accept", False)
+        is_accept = data.get("accept", False)
 
-        if is_accpet and len(list(user.get("playlist").keys())) >= max_p:
+        if is_accept and len(list(user.get("playlist").keys())) >= max_p:
             return error_msg(f"You cannot create more than '{max_p}' playlists!", user_id=user_id, level = "error")
 
-        info = data.get("refer_id", "").split("-")
+        info = data.get("referId", "").split("-")
         sender_id, refer_id = info[0], info[1]
         inbox = user.get("inbox")
 
-        payload = {"op": "updatePlaylist", "status": "updateInbox", "user_id": str(user_id), "accpet": is_accpet, "sender_id": sender_id, "refer_id": refer_id}
+        payload = {"op": "updatePlaylist", "status": "updateInbox", "userId": str(user_id), "accept": is_accept, "senderId": sender_id, "referId": refer_id}
         for index, mail in enumerate(inbox.copy()):
             if not (str(mail.get("sender")) == sender_id and mail.get("referId") == refer_id):
                 continue
             
             del inbox[index]
-            if is_accpet:
+            if is_accept:
                 share_playlists = await func.get_user(mail["sender"], "playlist")
                 if refer_id not in share_playlists:
                     return error_msg("The shared playlist couldn’t be found. It’s possible that the user has already deleted it.", user_id=user_id)
                 
-                assgined_playlist_id = _assign_playlist_id(list(user.get("playlist", []).keys()))
+                assigned_playlist_id = _assign_playlist_id(list(user.get("playlist", []).keys()))
                 playlist_name = f"Share{time.strftime('%M%S', time.gmtime(int(mail['time'])))}"
                 share_playlist = share_playlists.get(refer_id)
                 share_playlist.update({
@@ -578,7 +582,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 })
                 await func.update_user(mail['sender'], {"$push": {f"playlist.{mail['referId']}.perms.read": user_id}})
                 await func.update_user(user_id, {"$set": {
-                    f'playlist.{assgined_playlist_id}': {
+                    f'playlist.{assigned_playlist_id}': {
                         'user': mail['sender'], 'referId': mail['referId'],
                         'name': playlist_name,
                         'type': 'share'
@@ -587,7 +591,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 }})
 
                 payload.update({
-                    "playlist_id": assgined_playlist_id,
+                    "playlistId": assigned_playlist_id,
                     "msg": f"You have created '{playlist_name}' playlist.",
                     "data": share_playlist,
                 })
@@ -596,14 +600,14 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
             return payload
 
 async def getMutualGuilds(bot: commands.Bot, data: Dict) -> Dict:
-    user_id = int(data.get("user_id"))
+    user_id = int(data.get("userId"))
 
-    payload = {"op": "getMutualGuilds", "mutualGuilds": {}, "inviteGuilds": {}, "user_id": str(user_id)}
+    payload = {"op": "getMutualGuilds", "mutualGuilds": {}, "inviteGuilds": {}, "userId": str(user_id)}
     for guild_id, guild_info in data.get("guilds", {}).items():
         if guild := bot.get_guild(int(guild_id)):
             payload["mutualGuilds"][guild_id] = {
                 **guild_info,
-                "member_count": guild.member_count
+                "memberCount": guild.member_count
             }
         else:
             payload["inviteGuilds"][guild_id] = {**guild_info}
@@ -611,8 +615,8 @@ async def getMutualGuilds(bot: commands.Bot, data: Dict) -> Dict:
     return payload
 
 async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
-    user_id = int(data.get("user_id"))
-    guild_id  = int(data.get("guild_id"))
+    user_id = int(data.get("userId"))
+    guild_id  = int(data.get("guildId"))
 
     guild = bot.get_guild(guild_id)
     if not guild:
@@ -636,7 +640,7 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
         "settings": settings,
         "options": {
             "languages": list(func.LANGS.keys()),
-            "queue_modes": ["Queue", "FairQueue"],
+            "queueModes": ["Queue", "FairQueue"],
             "roles": [role.name for role in guild.roles]
         },
         "guild": {
@@ -644,27 +648,30 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
             "name": guild.name,
             "id": str(guild_id)
         },
-        "user_id": str(user_id)
+        "userId": str(user_id)
     }
 
 async def getLyrics(bot: commands.Bot, data: Dict) -> Dict:
     title, artist, platform = data.get("title", ""), data.get("artist", ""), data.get("platform", "")
-    if not platform or platform not in lyricsPlatform:
+    if not platform or platform not in LYRICS_PLATFORMS:
         platform = func.settings.lyrics_platform
     
-    song: dict[str, str] = await lyricsPlatform.get(platform)().get_lyrics(title, artist)
-    payload = {
-        "op": "getLyrics",
-        "user_id": data.get("user_id"),
-        "lyrics": {_: re.findall(r'.*\n(?:.*\n){,22}', v) for _, v in song.items()} if song else {},
-        "callback": data.get("callback")
-    }
-
-    return payload
+    lyrics_platform = LYRICS_PLATFORMS.get(platform)
+    if lyrics_platform:
+        lyrics: dict[str, str] = await lyrics_platform().get_lyrics(title, artist)
+        return {
+            "op": "getLyrics",
+            "userId": data.get("userId"),
+            "title": title,
+            "artist": artist,
+            "platform": platform,
+            "lyrics": {_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()} if lyrics else {},
+            "callback": data.get("callback")
+        }
 
 async def updateSettings(bot: commands.Bot, data: Dict) -> None:
-    user_id = int(data.get("user_id"))
-    guild_id  = int(data.get("guild_id"))
+    user_id = int(data.get("userId"))
+    guild_id  = int(data.get("guildId"))
 
     guild = bot.get_guild(guild_id)
     if not guild:
@@ -716,12 +723,13 @@ METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "updatePosition": PlayerMethod(updatePosition),
     "toggleAutoplay": PlayerMethod(toggleAutoplay),
     "updateFilter": PlayerMethod(updateFilter),
+    "searchAndPlay": PlayerMethod(searchAndPlay, credit=5, auto_connect=True)
 }
 
 async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
     op: str = data.get("op", "")
     method = METHODS.get(op)
-    if not method or not (user_id := data.get("user_id")):
+    if not method or not (user_id := data.get("userId")):
         return
 
     user_id = int(user_id)
@@ -730,7 +738,7 @@ async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
     
     else:
         if RATELIMIT_COUNTER[user_id]["count"] >= 100:
-            return await ipc_client.send({"op": "rateLimited", "user_id": str(user_id)})
+            return await ipc_client.send({"op": "rateLimited", "userId": str(user_id)})
         RATELIMIT_COUNTER[user_id]["count"] += method.credit
 
     try:
@@ -739,7 +747,7 @@ async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
         
         params = method.params
         if not (type(method) == SystemMethod):
-            if guild_id := data.get("guild_id"):
+            if guild_id := data.get("guildId"):
                 if (guild := bot.get_guild(int(guild_id))):
                     env["guild"] = guild
 
@@ -778,10 +786,12 @@ async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
             await ipc_client.send(resp)
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         payload = {
             "op": "errorMsg",
             "level": "error",
             "msg": str(e),
-            "user_id": str(user_id)
+            "userId": str(user_id)
         }
         await ipc_client.send(payload)

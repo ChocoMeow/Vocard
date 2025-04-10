@@ -23,6 +23,7 @@ SOFTWARE.
 
 import discord
 import io
+import os
 import contextlib
 import textwrap
 import traceback
@@ -32,7 +33,7 @@ import function as func
 from typing import Optional
 from discord.ext import commands
 
-class ExceuteModal(discord.ui.Modal):
+class ExecuteModal(discord.ui.Modal):
     def __init__(self, code: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.code: str = code
@@ -104,8 +105,6 @@ class AddNodeModal(discord.ui.Modal):
         try:
             await voicelink.NodePool.create_node(
                 bot=interaction.client,
-                spotify_client_id=func.settings.spotify_client_id, 
-                spotify_client_secret=func.settings.spotify_client_secret,
                 logger=func.logger,
                 **config
             )
@@ -132,14 +131,14 @@ class CogsDropdown(discord.ui.Select):
         selected = self.values[0].lower()
         try:
             if selected == "all":
-                for name in self.bot.cogs.keys():
+                for name in self.bot.cogs.copy().keys():
                     await self.bot.reload_extension(f"cogs.{name.lower()}")
             else:
                 await self.bot.reload_extension(f"cogs.{selected}")
         except Exception as e:
             return await interaction.response.send_message(f"Unable to reload `{selected}`! Reason: {e}", ephemeral=True)
 
-        await interaction.response.send_message(f"Reloaded `{selected}` sucessfully!", ephemeral=True)
+        await interaction.response.send_message(f"Reloaded `{selected}` successfully!", ephemeral=True)
 
 class NodesDropdown(discord.ui.Select):
     def __init__(self, bot: commands.Bot):
@@ -177,7 +176,7 @@ class NodesDropdown(discord.ui.Select):
         await interaction.response.defer()
         await self.view.message.edit(embed=self.view.build_embed(), view=self.view)
         
-class ExceutePanel(discord.ui.View):
+class ExecutePanel(discord.ui.View):
     def __init__(self, bot, *, timeout = 180):
         self.bot: commands.Bot = bot
 
@@ -208,7 +207,7 @@ class ExceutePanel(discord.ui.View):
             await self.message.edit(view=self)
 
     async def execute(self, interaction: discord.Interaction):
-        modal = ExceuteModal(self.code, title="Enter Your Code")
+        modal = ExecuteModal(self.code, title="Enter Your Code")
         await interaction.response.send_modal(modal)
         await modal.wait()
 
@@ -362,7 +361,7 @@ class CogsView(discord.ui.View):
 class DebugView(discord.ui.View):
     def __init__(self, bot, *, timeout: float | None = 180):
         self.bot: commands.Bot = bot
-        self.panel: ExceutePanel = ExceutePanel(bot)
+        self.panel: ExecutePanel = ExecutePanel(bot)
 
         super().__init__(timeout=timeout)
 
@@ -385,3 +384,30 @@ class DebugView(discord.ui.View):
         view = NodesPanel(self.bot)
         await interaction.response.send_message(embed=view.build_embed(), view=view, ephemeral=True)
         view.message = await interaction.original_response()
+    
+    @discord.ui.button(label="Stop-Bot", emoji="🔴")
+    async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
+        for name in self.bot.cogs.copy().keys():
+            try:
+                await self.bot.unload_extension(name)
+            except:
+                pass
+
+        player_data = []
+        for identifier, node in voicelink.NodePool._nodes.items():
+            for guild_id, player in node._players.copy().items():
+                if not player.guild.me.voice or not player.current:
+                    continue
+
+                player_data.append(player.data)
+                try:
+                    await player.teardown()
+                except:
+                    pass
+
+        session_file_path = os.path.join(func.ROOT_DIR, func.LAST_SESSION_FILE_NAME)
+        if os.path.exists(session_file_path):
+            os.remove(session_file_path)    
+
+        func.update_json(func.LAST_SESSION_FILE_NAME, player_data)
+        await interaction.client.close()

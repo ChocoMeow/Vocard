@@ -21,9 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import voicelink
+import os
 import asyncio
 import discord
+import voicelink
 import function as func
 
 from discord.ext import commands
@@ -36,21 +37,100 @@ class Listeners(commands.Cog):
         self.voicelink = voicelink.NodePool()
 
         bot.loop.create_task(self.start_nodes())
+        bot.loop.create_task(self.restore_last_session_players())
         
     async def start_nodes(self) -> None:
         """Connect and intiate nodes."""
-        await self.bot.wait_until_ready()
         for n in func.settings.nodes.values():
             try:
                 await self.voicelink.create_node(
-                    bot=self.bot, 
-                    spotify_client_id=func.settings.spotify_client_id, 
-                    spotify_client_secret=func.settings.spotify_client_secret,
+                    bot=self.bot,
                     logger=func.logger,
                     **n
                 )
             except Exception as e:
                 func.logger.error(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
+
+    async def restore_last_session_players(self) -> None:
+        """Re-establish connections for players from the last session."""
+        await self.bot.wait_until_ready()
+        players = func.open_json(func.LAST_SESSION_FILE_NAME)
+        if not players:
+            return
+
+        for data in players:
+            try:
+                channel_id = data.get("channel_id")
+                if not channel_id:
+                    continue
+
+                channel = self.bot.get_channel(channel_id)
+                if not channel:
+                    continue
+                elif not any(False if member.bot or member.voice.self_deaf else True for member in channel.members):
+                    continue
+                    
+                dj_member = channel.guild.get_member(data.get("dj"))
+                if not dj_member:
+                    continue
+
+                # Get the guild settings
+                settings = await func.get_settings(channel.guild.id)
+
+                # Connect to the channel and initialize the player.
+                player: voicelink.Player = await channel.connect(
+                    cls=voicelink.Player(self.bot, channel, func.TempCtx(dj_member, channel), settings)
+                )
+
+                # Restore the queue.
+                queue_data = data.get("queue", {})
+                for track_data in queue_data.get("tracks", []):
+                    track_id = track_data.get("track_id")
+                    if not track_id:
+                        continue
+
+                    decoded_track = voicelink.decode(track_id)
+                    requester = channel.guild.get_member(track_data.get("requester_id"))
+                    track = voicelink.Track(track_id=track_id, info=decoded_track, requester=requester)
+                    player.queue._queue.append(track)
+                
+                # Restore queue settings.
+                player.queue._position = queue_data.get("position", 0) - 1
+                repeat_mode = queue_data.get("repeat_mode", "OFF")
+                try:
+                    loop_mode = voicelink.LoopType[repeat_mode]
+                except KeyError:
+                    loop_mode = voicelink.LoopType.OFF
+                player.queue._repeat.set_mode(loop_mode)
+                player.queue._repeat_position = queue_data.get("repeat_position")
+
+                # Restore player settings
+                player.dj = dj_member
+                player.settings['autoplay'] = data.get('autoplay', False)
+
+                # Resume playback or invoke the controller based on the player's state.
+                if not player.is_playing:
+                    await player.do_next()
+
+                    if is_paused := data.get("is_paused"):
+                        await player.set_pause(is_paused, self.bot.user)
+                    
+                    if position := data.get("position"):
+                        await player.seek(int(position), self.bot.user)
+
+                await asyncio.sleep(5)
+
+            except Exception as e:
+                func.logger.error(f"Error encountered while restoring a player for channel ID {channel_id}.", exc_info=e)
+
+        # Delete the last session file if it exists.
+        try:
+            file_path = os.path.join(func.ROOT_DIR, func.LAST_SESSION_FILE_NAME)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+        except Exception as del_error:
+            func.logger.error("Failed to remove session file: %s", file_path, exc_info=del_error)
 
     @commands.Cog.listener()
     async def on_voicelink_track_end(self, player: voicelink.Player, track, _):
@@ -65,7 +145,7 @@ class Listeners(commands.Cog):
     async def on_voicelink_track_exception(self, player: voicelink.Player, track, error: dict):
         try:
             player._track_is_stuck = True
-            await player.context.send(f"{error['message']}! The next song will begin in the next 5 seconds.", delete_after=10)
+            await player.context.send(f"{error['message']} The next song will begin in the next 5 seconds.", delete_after=10)
         except:
             pass
 
@@ -102,13 +182,13 @@ class Listeners(commands.Cog):
             await self.bot.ipc.send({
                 "op": "updateGuild",
                 "user": {
-                    "user_id": str(member.id),
-                    "avatar_url": member.display_avatar.url,
+                    "userId": str(member.id),
+                    "avatarUrl": member.display_avatar.url,
                     "name": member.name,
                 },
-                "channel_name": member.voice.channel.name if is_joined else "",
-                "guild_id": str(member.guild.id),
-                "is_joined": is_joined
+                "channelName": member.voice.channel.name if is_joined else "",
+                "guildId": str(member.guild.id),
+                "isJoined": is_joined
             })
 
 async def setup(bot: commands.Bot) -> None:
