@@ -47,7 +47,7 @@ from discord.ext import commands
 from . import events
 from .enums import SearchType, LoopType, RequestMethod
 from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent, TrackExceptionEvent
-from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, TrackLoadError, FilterTagAlreadyInUse, DuplicateTrack
+from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, FilterTagAlreadyInUse, DuplicateTrack
 from .filters import Filter, Filters
 from .objects import Track, Playlist
 from .pool import Node, NodePool
@@ -72,6 +72,9 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
             ctx.bot if isinstance(ctx, commands.Context) else ctx.client,
             channel, ctx, settings
         ))
+
+    if player.volume != 100:
+        await player.set_volume(player.volume)
 
     if ctx.bot.ipc.is_connected:
         await player.send_ws({"op": "createPlayer", "memberIds": [str(member.id) for member in channel.members]})
@@ -591,9 +594,6 @@ class Player(VoiceProtocol):
 
         self._current = track
 
-        if self.volume != 100:
-            await self.set_volume(self.volume)
-
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) playing {track.title} from uri {track.uri} with a length of {track.length}")
         return self._current
 
@@ -661,6 +661,9 @@ class Player(VoiceProtocol):
     
     async def seek(self, position: float, requester: Member = None) -> float:
         """Seeks to a position in the currently playing track milliseconds"""
+        if not self._current:
+            raise VoicelinkException("Nothing is playing right now")
+        
         if position < 0 or position > self._current.length:
             raise TrackInvalidPosition("Seek position must be between 0 and the track length")
 

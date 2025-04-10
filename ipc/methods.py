@@ -297,7 +297,7 @@ async def updatePause(player: Player, member: Member, data: Dict) -> None:
     await player.set_pause(pause, member)
 
 @require_permission()
-async def updatePosition(player: Player, member: Member, data: Dict) -> None:    
+async def updatePosition(player: Player, member: Member, data: Dict) -> None:
     position = data.get("position");
     await player.seek(position, member);
 

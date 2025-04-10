@@ -388,6 +388,7 @@ class Node:
             return [Track(track_id=data["encoded"], info=data["info"], requester=requester)]
 
     async def get_recommendations(self, track: Track, limit: int = 20) -> List[Optional[Track]]:
+        query = ""
         if track.source == "youtube":
             query = f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}"
 
