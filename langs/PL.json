@@ -14,7 +14,7 @@
     "missingIntents": "Niestety to polecenie nie może zostać wykonane, ponieważ bot nie posiada wymaganej intencji żądania: `({0})`.",
     "languageNotFound": "Nie znaleziono pakietu językowego! wybierz istniejący pakiet językowy.",
     "changedLanguage": "Pomyślnie zmieniono pakiet językowy na: `{0}` .",
-    "setPrefix": "Gotowe! Mój prefix na tym serwerze to teraz `{1}`. Spróbuj uruchomić polecenie `{1}ping`, aby go przetestować.",
+    "setPrefix": "Gotowe! Mój prefix na tym serwerze to teraz `{0}`. Spróbuj uruchomić polecenie `{1}ping`, aby go przetestować.",
     "setDJ": "Ustawiono DJ jako {0}.",
     "setqueue": "Zmienionio tryb kolejki na `{0}`.",
     "247": "Tryb 24/7: `{0}`",
@@ -59,7 +59,7 @@
     "noPlaylistAcc": "{0} nie stworzył konta do przechowywania playlist.",
     "overPlaylistCreation": "Nie możesz stworzyć więcej niż `{0}` playlist!",
     "playlistExists": "Playlista [`{0}`] już istnieje.",
-    "playlistNotInvaildUrl": "Podaj poprawny link do playlisty z Spotify lub Youtube.",
+    "playlistNotInvalidUrl": "Podaj poprawny link do playlisty z Spotify lub Youtube.",
     "playlistCreated": "Stworzyłeś playlistę: `{0}`. Użyj /playlist view by uzyskać więcej informacji.",
     "playlistRenamed": "Zmieniłeś nazwę `{0}` na `{1}`.",
     "playlistLimitTrack": "Osiągnąłeś limit! Możesz dodać maksymalnie `{0}` pozycji do playlisty.",
@@ -127,7 +127,7 @@
     "live": "LIVE",
     "playlistLoad": " 🎶 Dodano playlistę **{0}** z `{1}` pozycjami do kolejki.",
     "trackLoad": "Rozpoczęto odtwarzanie **[{0}](<{1}>)** autorstwa **{2}** (`{3}`).\n",
-    "trackLoad_pos": "Dodano **[{0}](<{1}>)** autorstwa **{3}** (`{3}`) do kolejki na pozycji **{4}**\n",
+    "trackLoad_pos": "Dodano **[{0}](<{1}>)** autorstwa **{2}** (`{3}`) do kolejki na pozycji **{4}**\n",
 
     "searchTitle": "Wyszukiwana fraza: {0}",
     "searchDesc": "➥ Platforma: {0} **{1}**\n➥ Wyniki: **{2}**\n\n{3}",
@@ -189,6 +189,6 @@
     "invalidEndTime": "Niepoprawny czas końca, musi on mieścić się pomiędzy `00:00` a `{0}`",
     "invalidTimeOrder": "Czas zakończenia odtwarzania nie może być mniejszy lub równy czasowi startu",
 
-    "SetStageAnnounceTemplate": "Gotowe! Od tego momentu status kanału w którym znajduje się bot będzie wyglądał tak jak podany szablon. Aktualizacja powinna nastąpić za kilka sekund.",
+    "setStageAnnounceTemplate": "Gotowe! Od tego momentu status kanału w którym znajduje się bot będzie wyglądał tak jak podany szablon. Aktualizacja powinna nastąpić za kilka sekund.",
     "createSongRequestChannel": "Utworzono kanał do obsługi bota - ({0})! Możesz w nim dodawać utwory po nazwie lub adresie URL bez dodawnia prefixu"
 }
