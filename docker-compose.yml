@@ -45,7 +45,7 @@ services:
         # Use build to run Lavalink on the latest JRE 23 version (for better performance)
         build:
             context: ./lavalink
-            dockerfile: ./Dockerfile
+            dockerfile: ./Dockerfile-lavalink
         restart: always
         environment:
             - _JAVA_OPTIONS=-Xmx1G
