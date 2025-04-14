@@ -72,7 +72,7 @@ services:
            - ./data/mongo/db:/data/db
            - ./data/mongo/conf:/data/configdb
        environment:
-           - MONGO_INITDB_ROOT_USERNAME=admin
+           - MONGO_INITDB_ROOT_USERNAME=admin # For your MongoDB URL use "mongodb://admin:admin@vocard-db:27017"
            - MONGO_INITDB_ROOT_PASSWORD=admin
        expose:
            - "27017"
