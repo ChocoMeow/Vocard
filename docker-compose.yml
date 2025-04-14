@@ -46,7 +46,7 @@ services:
         build:
             context: ./lavalink
             dockerfile: ./Dockerfile-lavalink
-        restart: always
+        restart: unless-stopped
         environment:
             - _JAVA_OPTIONS=-Xmx1G
             - SERVER_PORT=2333
@@ -67,7 +67,7 @@ services:
     vocard-db:
        container_name: vocard-db
        image: mongo:8
-       restart: always
+       restart: unless-stopped
        volumes:
            - ./data/mongo/db:/data/db
            - ./data/mongo/conf:/data/configdb
@@ -83,7 +83,7 @@ services:
     # vocard-dashboard: 
     #     container_name: vocard-dashboard
     #     image: ghcr.io/chocomeow/vocard-dashboard:latest
-    #     restart: always
+    #     restart: unless-stopped
     #     # If you want to build the image from the Dockerfile, uncomment the "build" lines and comment the "image" line.
     #     # build:
     #     #     context: ./dashboard
@@ -98,7 +98,7 @@ services:
 
     vocard:
         container_name: vocard
-        restart: always
+        restart: unless-stopped
         # If you want to build the image from the Dockerfile, uncomment the "build" lines and comment the "image" line.
         image: ghcr.io/choco/vocard:latest
         # build:
