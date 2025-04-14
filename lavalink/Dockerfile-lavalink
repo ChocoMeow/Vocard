@@ -1,17 +1,15 @@
-FROM eclipse-temurin:23-jre-noble
-
-RUN apt-get update && \
-    apt-get install -y netcat-openbsd && \
-    rm -rf /var/lib/apt/lists/*
+FROM eclipse-temurin:24-jre-noble
 
 RUN groupadd -g 322 lavalink && \
     useradd -u 322 -g lavalink -m -d /opt/Lavalink lavalink
 
 WORKDIR /opt/Lavalink
 
-RUN wget -O Lavalink.jar https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar
+ADD --chown=lavalink:lavalink https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar .
 
-RUN chown -R lavalink:lavalink /opt/Lavalink
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
 
 USER lavalink
 
