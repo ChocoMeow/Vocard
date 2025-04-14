@@ -79,6 +79,8 @@ services:
        networks:
            - vocard
        command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
+       healthcheck:
+            test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
 
     # vocard-dashboard: 
     #     container_name: vocard-dashboard
@@ -113,7 +115,7 @@ services:
             # vocard-dashboard:
             #     condition: service_started
             vocard-db:
-                condition: service_started
+                condition: service_healthy
 
 networks:
     vocard:
