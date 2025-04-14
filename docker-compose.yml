@@ -62,7 +62,7 @@ services:
             test: nc -z -v localhost 2333
             interval: 10s
             timeout: 5s
-            retries: 3
+            retries: 5
 
     vocard-db:
        container_name: vocard-db
@@ -81,6 +81,11 @@ services:
        command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
        healthcheck:
             test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+            
 
     # vocard-dashboard: 
     #     container_name: vocard-dashboard
