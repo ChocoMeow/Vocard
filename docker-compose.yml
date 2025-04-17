@@ -20,7 +20,7 @@
 #       build:
 #           dockerfile: ./Dockerfile
 # and comment this
-#       image: ghcr.io/choco/vocard:latest
+#       image: ghcr.io/chocomeow/vocard:latest
 # example - `root@docker:/opt/vocard/config# wget https://github.com/ChocoMeow/Vocard/archive/refs/heads/main.zip`
 
 # Step 4: Configure application.yml and settings.json in the config directory.
