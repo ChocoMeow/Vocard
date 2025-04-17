@@ -100,10 +100,10 @@ plugins:
       recommendationsLoadLimit: 10 # Number of tracks
 lavalink:
   plugins:
-    - dependency: "dev.lavalink.youtube:youtube-plugin:1.11.5"
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.12.0"
       snapshot: false
-    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:06b7cab"
-      snapshot: true
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.6.0"
+      snapshot: false
 #    - dependency: "com.github.example:example-plugin:1.0.0" # required, the coordinates of your plugin
 #      repository: "https://maven.example.com/releases" # optional, defaults to the Lavalink releases repository by default
 #      snapshot: false # optional, defaults to false, used to tell Lavalink to use the snapshot repository instead of the release repository
