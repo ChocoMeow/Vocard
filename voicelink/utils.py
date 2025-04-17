@@ -204,4 +204,3 @@ class Ping:
         s_runtime = 1000 * (cost_time)
 
         return s_runtime
-

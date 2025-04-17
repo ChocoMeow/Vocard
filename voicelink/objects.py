@@ -33,7 +33,7 @@ from function import (
     time as ctime
 )
 
-from .formatter import encode
+from .transformer import encode
 
 YOUTUBE_REGEX = re.compile(r'(https?://)?(www\.)?youtube\.(com|nl)/watch\?v=([-\w]+)')
 
@@ -108,7 +108,7 @@ class Track:
     @property
     def track_id(self) -> str:
         if not self._track_id:
-            self._track_id = encode(self)
+            self._track_id = encode(self.info)
         
         return self._track_id
     
