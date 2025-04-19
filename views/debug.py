@@ -396,7 +396,7 @@ class DebugView(discord.ui.View):
         player_data = []
         for identifier, node in voicelink.NodePool._nodes.items():
             for guild_id, player in node._players.copy().items():
-                if not player.guild.me.voice or not player.current:
+                if player.guild.me is None or player.guild.me.voice or not player.current:
                     continue
 
                 player_data.append(player.data)
