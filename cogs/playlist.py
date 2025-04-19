@@ -90,7 +90,7 @@ async def search_playlist(url: str, requester: discord.Member, time_needed: bool
 class Playlists(commands.Cog, name="playlist"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.description = "This is the Vocard playlist system. You can save your favorites and use Vocard to play on any server."
+        self.description = "This is a playlist system. You can save your favorites and use them later."
 
     async def playlist_autocomplete(self, interaction: discord.Interaction, current: str) -> list:
         playlists_raw: dict[str, dict] = await get_user(interaction.user.id, 'playlist')
