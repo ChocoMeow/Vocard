@@ -22,9 +22,9 @@ SOFTWARE.
 """
 
 __version__ = "1.4"
-__author__ = 'Vocard Development, Choco'
+__author__ = 'Vocard Development, ChocoMeow'
 __license__ = "MIT"
-__copyright__ = "Copyright 2023 - present (c) Vocard Development, Choco"
+__copyright__ = "Copyright 2023 - present (c) Vocard Development, ChocoMeow"
 
 from .enums import SearchType, LoopType
 from .events import *
@@ -35,4 +35,4 @@ from .player import Player, connect_channel
 from .pool import *
 from .queue import *
 from .placeholders import Placeholders, build_embed
-from .formatter import encode, decode
+from .transformer import encode, decode

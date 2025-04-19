@@ -2,8 +2,7 @@
 
 # READ THIS BEFORE INSTALL!
 
-# This is a docker-compose file for running Vocard with Lavalink and MongoDB(optional).
-# You can selfhost MongoDB. Just uncomment lines starting with single "#" below in the compose file.
+# This is a docker-compose file for running Vocard with Lavalink and MongoDB.
 # In order to run this, you need to have Docker and Docker Compose installed.
 # You can install Docker from https://docs.docker.com/get-docker/
 # and Docker Compose from https://docs.docker.com/compose/install/
@@ -21,7 +20,7 @@
 #       build:
 #           dockerfile: ./Dockerfile
 # and comment this
-#       image: ghcr.io/choco/vocard:latest
+#       image: ghcr.io/chocomeow/vocard:latest
 # example - `root@docker:/opt/vocard/config# wget https://github.com/ChocoMeow/Vocard/archive/refs/heads/main.zip`
 
 # Step 4: Configure application.yml and settings.json in the config directory.
@@ -42,9 +41,11 @@ name: vocard
 services:
     lavalink:
         container_name: lavalink
-        #image: ghcr.io/lavalink-devs/lavalink:latest
+        # image: ghcr.io/lavalink-devs/lavalink:latest
+        # Use build to run Lavalink on the latest JRE 23 version (for better performance)
         build:
-            dockerfile: ./lavalink/Dockerfile-lavalink
+            context: ./lavalink
+            dockerfile: ./Dockerfile-lavalink
         restart: unless-stopped
         environment:
             - _JAVA_OPTIONS=-Xmx1G
@@ -61,32 +62,54 @@ services:
             test: nc -z -v localhost 2333
             interval: 10s
             timeout: 5s
-            retries: 3
+            retries: 5
 
-    #mongo:
-    #    container_name: mongo
-    #    image: mongo:latest
-    #
-    #    restart: unless-stopped
-    #    volumes:
-    #        - ./data/mongo/db:/data/db
-    #        - ./data/mongo/conf:/data/configdb
-    #    environment:
-    #        - MONGO_INITDB_ROOT_USERNAME=admin
-    #        - MONGO_INITDB_ROOT_PASSWORD=admin
-    #    expose:
-    #        - "27017"
-    #    networks:
-    #        - vocard
-    #    command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
+    vocard-db:
+       container_name: vocard-db
+       image: mongo:8
+       restart: unless-stopped
+       volumes:
+           - ./data/mongo/db:/data/db
+           - ./data/mongo/conf:/data/configdb
+       environment:
+           - MONGO_INITDB_ROOT_USERNAME=admin # For your MongoDB URL use "mongodb://admin:admin@vocard-db:27017"
+           - MONGO_INITDB_ROOT_PASSWORD=admin
+       expose:
+           - "27017"
+       networks:
+           - vocard
+       command: ["mongod", "--oplogSize=1024", "--wiredTigerCacheSizeGB=1", "--auth", "--noscripting"]
+       healthcheck:
+            test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+            
+
+    # vocard-dashboard: 
+    #     container_name: vocard-dashboard
+    #     image: ghcr.io/chocomeow/vocard-dashboard:latest
+    #     restart: unless-stopped
+    #     # If you want to build the image from the Dockerfile, uncomment the "build" lines and comment the "image" line.
+    #     # build:
+    #     #     context: ./dashboard
+    #     #     dockerfile: ./Dockerfile
+    #     volumes:
+    #         - ./dashboard/settings.json:/app/settings.json
+    #     ports:
+    #         - 8000:8000
+    #     networks:
+    #         - vocard
+    #         - web
 
     vocard:
         container_name: vocard
         restart: unless-stopped
         # If you want to build the image from the Dockerfile, uncomment the "build" lines and comment the "image" line.
-        # image: ghcr.io/choco/vocard:latest
-        build:
-            dockerfile: ./Dockerfile
+        image: ghcr.io/chocomeow/vocard:latest
+        # build:
+        #     dockerfile: ./Dockerfile
         volumes:
             - ./settings.json:/app/settings.json
         networks:
@@ -94,8 +117,10 @@ services:
         depends_on:
             lavalink:
                 condition: service_healthy
-            # mongo:
+            # vocard-dashboard:
             #     condition: service_started
+            vocard-db:
+                condition: service_healthy
 
 networks:
     vocard:

@@ -582,11 +582,11 @@ class Player(VoiceProtocol):
 
         data = {
             "encodedTrack": track.track_id,
-            "position": str(start if start else track.position)
+            "position": str(start or 0)
         }
 
         if end or track.end_time:
-            data["endTime"] = str(end if end else track.end_time)
+            data["endTime"] = str(end or track.end_time)
         
         await self.send(method=RequestMethod.PATCH, query=f"noReplace={ignore_if_playing}", data=data)
         if self._node.yt_ratelimit:
