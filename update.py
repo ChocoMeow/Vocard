@@ -23,6 +23,7 @@ SOFTWARE.
 
 import argparse
 import os
+import sys
 import requests
 import zipfile
 import shutil
@@ -33,6 +34,8 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 __version__ = "v2.7.1"
 
 # URLs for update and migration
+PYTHON_CMD_NAME = os.path.basename(sys.executable)
+print(PYTHON_CMD_NAME)
 GITHUB_API_URL = "https://api.github.com/repos/ChocoMeow/Vocard/releases/latest"
 VOCARD_URL = "https://github.com/ChocoMeow/Vocard/archive/"
 MIGRATION_SCRIPT_URL = f"https://raw.githubusercontent.com/ChocoMeow/Vocard-Magration/main/{__version__}.py"
@@ -59,7 +62,7 @@ def check_version(with_msg=False):
         msg = (
             f"{bcolors.OKGREEN}Your bot is up-to-date! - {latest_version}{bcolors.ENDC}" 
             if latest_version == __version__
-            else f"{bcolors.WARNING}Your bot is not up-to-date! The latest version is {latest_version} and you are currently running version {__version__}\nRun `python update.py -l` to update your bot!{bcolors.ENDC}"
+            else f"{bcolors.WARNING}Your bot is not up-to-date! The latest version is {latest_version} and you are currently running version {__version__}\nRun `{PYTHON_CMD_NAME} update.py -l` to update your bot!{bcolors.ENDC}"
         )
         print(msg)
     return latest_version
@@ -118,7 +121,7 @@ def install(response, version):
             for filename in os.listdir(source_dir):
                 shutil.move(os.path.join(source_dir, filename), os.path.join(ROOT_DIR, filename))
             os.rmdir(source_dir)
-        print(f"{bcolors.OKGREEN}Version {version} installed Successfully! Run `python main.py` to start your bot{bcolors.ENDC}")
+        print(f"{bcolors.OKGREEN}Version {version} installed Successfully! Run `{PYTHON_CMD_NAME} main.py` to start your bot{bcolors.ENDC}")
     else:
         print("Update canceled!")
 
@@ -144,7 +147,7 @@ def run_migration():
 
     print("Executing migration script...")
     try:
-        subprocess.run(["python", migration_filename], check=True)
+        subprocess.run([PYTHON_CMD_NAME, migration_filename], check=True)
         print(f"{bcolors.OKGREEN}Migration script executed successfully.{bcolors.ENDC}")
     except subprocess.CalledProcessError as e:
         print(f"{bcolors.FAIL}Migration script execution failed: {e}{bcolors.ENDC}")
@@ -187,7 +190,7 @@ def main():
     elif args.migration:
         run_migration()
     else:
-        print(f"{bcolors.FAIL}No arguments provided. Run `python update.py -h` for help.{bcolors.ENDC}")
+        print(f"{bcolors.FAIL}No arguments provided. Run `{PYTHON_CMD_NAME} update.py -h` for help.{bcolors.ENDC}")
 
 if __name__ == "__main__":
     main()
