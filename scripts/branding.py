@@ -6,11 +6,11 @@ replacements = [
     {"from": "chocomeow/vocard", "to": "nischay876/mecute"},
     {"from": "Vocard", "to": "MeCute"},
     {"from": "vocard.xyz", "to": "mecute.bot.nu"},
-    {"from": "wRCgB7vBQv", "to": "wRCgB7vBRS"},
+    {"from": "wRCgB7vBQv", "to": "NYySajyC3G"},
     {"from": "https://ko-fi.com/chocoo", "to": "https://ko-fi.com/mecute"},
     {"from": "https://www.patreon.com/Vocard", "to": "https://www.patreon.com/mecute"},
-    {"from": "https://www.termsfeed.com/live/4322db80-d6f4-4cd0-9aaf-73080323ff01", "to": "https://mecute.bot.nu/legal/pp"},
-    {"from": "https://www.termsfeed.com/live/4d3977eb-65b6-4ce2-a446-1cd80e619ab0", "to": "https://mecute.bot.nu/legal/tos"}
+    {"from": "https://www.termsfeed.com/live/4322db80-d6f4-4cd0-9aaf-73080323ff01", "to": "https://nischay876.github.io/MeCute-Legal/Privacy_Policy.html"},
+    {"from": "https://www.termsfeed.com/live/4d3977eb-65b6-4ce2-a446-1cd80e619ab0", "to": "https://nischay876.github.io/MeCute-Legal/Terms_of_Service.html"}
 ]
 
 # Directories to ignore during replacements
