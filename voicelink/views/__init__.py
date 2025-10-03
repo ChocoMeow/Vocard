@@ -21,9 +21,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord
+from .embed_builder import EmbedBuilderView
+from .controller import InteractiveController
+from .debug import DebugView
+from .link import LinkView
+from .inbox import InboxView
+from .playlist import PlaylistViewManager
+from .lyrics import LyricsView
+from .queue import QueueView
+from .help import HelpView
+from .search import SearchView
+from discord.ext import commands
 
-class LinkView(discord.ui.View):
-    def __init__(self, label=None, emoji=None, url=None):
-        super().__init__(timeout=60)
-        self.add_item(discord.ui.Button(label=label, emoji=emoji, url=url))

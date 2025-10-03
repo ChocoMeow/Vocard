@@ -29,14 +29,15 @@ import hashlib
 import base64
 import json
 import urllib.parse
-import function as func
 
-from datetime import datetime
-from abc import ABC, abstractmethod
-from urllib.parse import quote
 from math import floor
+from urllib.parse import quote
+from abc import ABC, abstractmethod
 from importlib import import_module
+from datetime import datetime
 from typing import Optional, Type
+
+from .config import Config
 
 userAgents = '''Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
 Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.1 Safari/537.36
@@ -202,7 +203,7 @@ class A_ZLyrics(LyricsPlatform):
 class Genius(LyricsPlatform):
     def __init__(self) -> None:
         self.module = import_module("lyricsgenius")
-        self.genius = self.module.Genius(func.settings.genius_token)
+        self.genius = self.module.Genius(Config().genius_token)
 
     async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
         song = self.genius.search_song(title=title, artist=artist)

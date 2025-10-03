@@ -51,6 +51,7 @@ from .objects import Playlist, Track
 from .utils import ExponentialBackoff, NodeStats, NodeInfo, Ping
 from .enums import RequestMethod
 from .ratelimit import YTRatelimit, YTToken, STRATEGY
+from .config import Config
 
 if TYPE_CHECKING:
     from .player import Player
@@ -353,7 +354,7 @@ class Node:
         query: str,
         *,
         requester: Member,
-        search_type: SearchType = SearchType.YOUTUBE
+        search_type: SearchType = None
     ) -> Union[List[Track], Playlist]:
         """
         Fetches tracks from the node's REST api to parse into Lavalink.
@@ -361,7 +362,9 @@ class Node:
         You can also pass in a discord.py Context object to get a
         Context object on any track you search.
         """
-
+        if not search_type:
+            search_type = Config().search_platform
+            
         if not URL_REGEX.match(query) and ':' not in query:
             query = f"{search_type}:{query}"
 
@@ -509,7 +512,7 @@ class NodePool:
             raise NodeCreationError(f"A node with identifier '{identifier}' already exists.")
         
         if not logger:
-            logger = logging.getLogger("voicelink")
+            logger = logging.getLogger("vocard")
             
         node = Node(
             pool=cls, bot=bot, host=host, port=port, password=password,

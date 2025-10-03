@@ -21,13 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import discord
+
+from itertools import cycle
+from typing import Optional, Tuple, Callable, Dict, List
+
 from .exceptions import QueueFull, OutofList
 from .objects import Track
 from .enums import LoopType
-
-from typing import Optional, Tuple, Callable, Dict, List
-from itertools import cycle
-from discord import Member
 
 class LoopTypeCycle:
     def __init__(self) -> None:
@@ -87,33 +88,33 @@ class Queue:
 
     def put(self, item: Track) -> int:
         if self.count >= self._size:
-            raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
+            raise QueueFull(self.get_msg("queue.errors.queueFull").format(self._size))
 
         self._queue.append(item)
         return self.count
 
     def put_at_front(self, item: Track) -> int:
         if self.count >= self._size:
-            raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
+            raise QueueFull(self.get_msg("queue.errors.queueFull").format(self._size))
 
         self._queue.insert(self._position, item)
         return 1
 
     def put_at_index(self, index: int, item: Track) -> None:
         if self.count >= self._size:
-            raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
+            raise QueueFull(self.get_msg("queue.errors.queueFull").format(self._size))
 
         return self._queue.insert(self._position - 1 + index, item)
 
     def skipto(self, index: int) -> None:
         if not 0 < index <= self.count:
-            raise OutofList(self.get_msg("voicelinkOutofList"))
+            raise OutofList(self.get_msg("queue.errors.outOfList"))
         else:
             self._position += index - 1
 
     def backto(self, index: int) -> None:
         if not self._position - index >= 0:
-            raise OutofList(self.get_msg("voicelinkOutofList"))
+            raise OutofList(self.get_msg("queue.errors.outOfList"))
         else:
             self._position -= index
 
@@ -137,11 +138,11 @@ class Queue:
             self._queue[adjusted_position + track_index1], self._queue[adjusted_position + track_index2] = self._queue[adjusted_position + track_index2], self._queue[adjusted_position + track_index1]
             return self._queue[adjusted_position + track_index1], self._queue[adjusted_position + track_index2]
         except IndexError:
-            raise OutofList(self.get_msg("voicelinkOutofList"))
+            raise OutofList(self.get_msg("queue.errors.outOfList"))
 
     def move(self, target: int, to: int) -> Optional[Track]:
         if not 0 < target <= self.count or not 0 < to:
-            raise OutofList(self.get_msg("voicelinkOutofList"))
+            raise OutofList(self.get_msg("queue.errors.outOfList"))
 
         try:
             item = self._queue[self._position + target - 1]
@@ -149,9 +150,9 @@ class Queue:
             self.put_at_index(to, item)
             return item
         except:
-            raise OutofList(self.get_msg("voicelinkOutofList"))
+            raise OutofList(self.get_msg("queue.errors.outOfList"))
 
-    def remove(self, index: int, index2: int = None, member: Member = None) -> Dict[int, Track]:
+    def remove(self, index: int, index2: int = None, member: discord.Member = None) -> Dict[int, Track]:
         pos = self._position - 1
 
         if index2 is None:
@@ -171,7 +172,7 @@ class Queue:
 
             return removed_tracks
         except:
-            raise OutofList(self.get_msg("voicelinkOutofList"))
+            raise OutofList(self.get_msg("queue.errors.outOfList"))
 
     def history(self, incTrack: bool = False) -> List[Track]:
         if incTrack:
@@ -206,7 +207,7 @@ class FairQueue(Queue):
 
     def put(self, item: Track) -> int:
         if len(self._queue) >= self._size:
-            raise QueueFull(self.get_msg("voicelinkQueueFull").format(self._size))
+            raise QueueFull(self.get_msg("queue.errors.queueFull").format(self._size))
 
         tracks = self.tracks(incTrack=True)
         lastIndex = len(tracks)

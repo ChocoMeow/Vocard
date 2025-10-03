@@ -24,14 +24,17 @@ SOFTWARE.
 import discord
 import io
 import os
+import json
 import contextlib
 import textwrap
 import traceback
 import voicelink
-import function as func
 
 from typing import Optional
 from discord.ext import commands
+
+from ..config import Config
+from ..utils import format_ms, format_bytes
 
 class ExecuteModal(discord.ui.Modal):
     def __init__(self, code: str, *args, **kwargs) -> None:
@@ -103,11 +106,7 @@ class AddNodeModal(discord.ui.Modal):
         
         await interaction.response.defer()
         try:
-            await voicelink.NodePool.create_node(
-                bot=interaction.client,
-                logger=func.logger,
-                **config
-            )
+            await voicelink.NodePool.create_node(bot=interaction.client, **config)
             await interaction.followup.send(f"Node {self.children[4].value} is connected!", ephemeral=True)
             await self.view.message.edit(embed=self.view.build_embed(), view=self.view)
             
@@ -278,7 +277,7 @@ class NodesPanel(discord.ui.View):
         
     def build_embed(self) -> discord.Embed:
         self.update_btn_status()
-        embed = discord.Embed(title="📡 Nodes Panel", color=func.settings.embed_color)
+        embed = discord.Embed(title="📡 Nodes Panel", color=Config().embed_color)
         
         if not voicelink.NodePool._nodes:
             embed.description = "```There are no nodes are connected!```"
@@ -295,9 +294,9 @@ class NodesPanel(discord.ui.View):
                         value=f"```• ADDRESS: {node._host}:{node._port}\n" \
                             f"• PLAYERS: {len(node._players)}\n" \
                             f"• CPU:     {node.stats.cpu_process_load:.1f}%\n" \
-                            f"• RAM:     {func.format_bytes(node.stats.free)}/{func.format_bytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
+                            f"• RAM:     {format_bytes(node.stats.free)}/{format_bytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
                             f"• LATENCY: {node.latency:.2f}ms\n" \
-                            f"• UPTIME:  {func.time(node.stats.uptime)}```"
+                            f"• UPTIME:  {format_ms(node.stats.uptime)}```"
                     )
                 else:
                     embed.add_field(
@@ -405,9 +404,9 @@ class DebugView(discord.ui.View):
                 except:
                     pass
 
-        session_file_path = os.path.join(func.ROOT_DIR, func.LAST_SESSION_FILE_NAME)
-        if os.path.exists(session_file_path):
-            os.remove(session_file_path)    
+        if os.path.exists(Config.LAST_SESSION_FILE_DIR):
+            os.remove(Config.LAST_SESSION_FILE_DIR)    
 
-        func.update_json(func.LAST_SESSION_FILE_NAME, player_data)
+        with open(Config.LAST_SESSION_FILE_DIR, "w", encoding="utf8") as f:
+            json.dump(player_data, f, ensure_ascii=False, indent=4)
         await interaction.client.close()

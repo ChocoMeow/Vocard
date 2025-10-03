@@ -21,10 +21,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, time
-import function as func
+import discord
+import time
 
 from typing import Any
+
+from ..config import Config
 
 class Select_message(discord.ui.Select):
     def __init__(self, inbox):
@@ -59,7 +61,7 @@ class InboxView(discord.ui.View):
         embed=discord.Embed(
             title=f"📭 All {self.author.display_name}'s Inbox",
             description=f'Max Messages: {len(self.inbox)}/10' + '```%0s %2s %20s\n' % ("   ", "ID:", "Title:") + '\n'.join('%0s %2s. %35s'% ('✉️' if mail['type'] == 'invite' else '📢', index, mail['title'][:35] + "...") for index, mail in enumerate(self.inbox, start=1)) + '```',
-            color=func.settings.embed_color
+            color=Config().embed_color
         )
 
         if self.current:

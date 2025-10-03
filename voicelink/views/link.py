@@ -21,19 +21,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from discord.ext import commands
+import discord
 
-class ButtonOnCooldown(commands.CommandError):
-    def __init__(self, retry_after: float) -> None:
-        self.retry_after = retry_after
-        
-from .controller import InteractiveController
-from .search import SearchView
-from .help import HelpView
-from .list import ListView
-from .lyrics import LyricsView
-from .playlist import PlaylistView
-from .inbox import InboxView
-from .link import LinkView
-from .debug import DebugView
-from .embedBuilder import EmbedBuilderView
+class LinkView(discord.ui.View):
+    def __init__(self, label=None, emoji=None, url=None):
+        super().__init__(timeout=60)
+        self.add_item(discord.ui.Button(label=label, emoji=emoji, url=url))

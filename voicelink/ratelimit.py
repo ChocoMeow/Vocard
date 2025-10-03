@@ -22,8 +22,9 @@ SOFTWARE.
 """
 
 import time
+
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, TYPE_CHECKING, Any
+from typing import List, Optional, Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .pool import Node

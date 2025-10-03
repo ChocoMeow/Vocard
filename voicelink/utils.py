@@ -24,19 +24,25 @@ SOFTWARE.
 import random
 import time
 import socket
-from timeit import default_timer as timer
+import discord
+
 from itertools import zip_longest
-
 from typing import Dict, Optional
+from timeit import default_timer as timer
+from discord.ext import commands
+from typing import Union
 
-__all__ = [
-    "ExponentialBackoff",
-    "NodeStats",
-    "NodeInfoVersion",
-    "NodeInfo",
-    "Plugin",
-    "Ping"
-]
+from .mongodb import MongoDBHandler
+from .language import LangHandler
+
+# __all__ = [
+#     "ExponentialBackoff",
+#     "NodeStats",
+#     "NodeInfoVersion",
+#     "NodeInfo",
+#     "Plugin",
+#     "Ping"
+# ]
 
 class ExponentialBackoff:
     """
@@ -204,3 +210,199 @@ class Ping:
         s_runtime = 1000 * (cost_time)
 
         return s_runtime
+
+class TempCtx():
+    def __init__(self, author: discord.Member, channel: discord.VoiceChannel) -> None:
+        self.author: discord.Member = author
+        self.channel: discord.VoiceChannel = channel
+        self.guild: discord.Guild = channel.guild
+
+def format_to_ms(time_str: str) -> int:
+    """
+    Converts a time string in one of the formats ('HH:MM:SS', 'MM:SS', 'SS') to milliseconds.
+    
+    Args:
+        time_str (str): The input time string.
+    
+    Returns:
+        int: Time in milliseconds, or 0 if parsing fails.
+    """
+    formats = ['%H:%M:%S', '%M:%S', '%S']
+    
+    for fmt in formats:
+        try:
+            parsed = time.strptime(time_str, fmt)
+            total_seconds = parsed.tm_hour * 3600 + parsed.tm_min * 60 + parsed.tm_sec
+            return total_seconds * 1000
+        except ValueError:
+            continue
+    
+    return 0
+
+def format_ms(milliseconds: Union[float, int]) -> str:
+    """
+    Converts milliseconds to a formatted time string.
+    
+    Args:
+        milliseconds (int): The time in milliseconds.
+        
+    Returns:
+        str: The formatted time string.
+        
+    Examples:
+        65000 -> "01:05"
+        3723000 -> "1:02:03"
+        90061000 -> "1 days, 01:01:01"
+    """
+    if isinstance(milliseconds, float):
+        milliseconds = int(milliseconds)
+        
+    seconds = (milliseconds // 1000) % 60
+    minutes = (milliseconds // 60_000) % 60
+    hours = (milliseconds // 3_600_000) % 24
+    days = milliseconds // 86_400_000
+
+    if days:
+        return f"{days} days, {hours:02}:{minutes:02}:{seconds:02}"
+    if hours:
+        return f"{hours}:{minutes:02}:{seconds:02}"
+    return f"{minutes:02}:{seconds:02}"
+
+def format_bytes(bytes: int, unit: bool = False):
+    """
+    Converts bytes to a human-readable string in MB or GB.
+    Args:
+        bytes (int): The number of bytes.
+        unit (bool): If True, appends the unit (MB or GB) to the result.
+        
+    Returns:
+        str: The formatted string.
+    """
+    if bytes <= 1_000_000_000:
+        return f"{bytes / (1024 ** 2):.1f}" + ("MB" if unit else "")
+    
+    else:
+        return f"{bytes / (1024 ** 3):.1f}" + ("GB" if unit else "")
+
+def truncate_string(text: str, length: int = 40) -> str:
+    """
+    Truncates a string to a specified maximum length, appending '...' if the string exceeds that length.
+
+    Args:
+        text (str): The input string to truncate.
+        length (int, optional): The maximum allowed length of the output string, including the ellipsis. Defaults to 40.
+
+    Returns:
+        str: The truncated string with '...' appended if it was longer than the specified length.
+    """
+    return text[:length - 3] + "..." if len(text) > length else text
+
+async def dispatch_message(
+    ctx: Union[commands.Context, discord.Interaction, TempCtx],
+    content: Union[str, discord.Embed] = None,
+    *params,
+    view: discord.ui.View = None,
+    file: discord.File = None,
+    delete_after: float = None,
+    ephemeral: bool = False,
+    requires_fetch: bool = False
+) -> Optional[discord.Message]:
+    """
+    Dispatches a message or embed to the appropriate Discord context.
+
+    Args:
+        ctx: The command or interaction context.
+        content: The message content or embed to send.
+        *params: Parameters to format the content string.
+        view: Optional UI view.
+        file: Optional file to attach.
+        delete_after: Optional auto-delete duration.
+        ephemeral: Whether the message should be ephemeral.
+        requires_fetch: Whether to fetch the message after sending.
+
+    Returns:
+        The sent message object, or None.
+    """
+    if content is None:
+        content = "No content provided."
+
+    # Determine the text to send
+    embed = content if isinstance(content, discord.Embed) else None
+    text = None if embed else content.format(*params)
+        
+    # Determine the sending function
+    send_func = (
+        ctx.send if isinstance(ctx, commands.Context) else
+        ctx.channel.send if isinstance(ctx, TempCtx) else
+        ctx.followup.send if ctx.response.is_done() else
+        ctx.response.send_message
+    )
+
+    # Check settings for delete_after duration
+    settings = await MongoDBHandler.get_settings(ctx.guild.id)
+    send_kwargs = {
+        "content": text,
+        "embed": embed,
+        "allowed_mentions": discord.AllowedMentions().none(),
+        "silent": settings.get("silent_msg", False),
+    }
+    
+    if file:
+        send_kwargs["file"] = file
+    
+    if view:
+        send_kwargs["view"] = view
+        
+    if "delete_after" in send_func.__code__.co_varnames:
+        if not delete_after and settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
+            delete_after = 10
+        send_kwargs["delete_after"] = delete_after
+    
+    if "ephemeral" in send_func.__code__.co_varnames:
+        send_kwargs["ephemeral"] = ephemeral
+
+    # Send the message or embed
+    message = await send_func(**send_kwargs)
+
+    if isinstance(message, discord.InteractionCallbackResponse):
+        message = message.resource
+    
+    if requires_fetch and isinstance(message, (discord.WebhookMessage, discord.InteractionMessage)):
+        message = await message.fetch()
+
+    return message
+
+async def send_localized_message(
+    ctx: Union[commands.Context, discord.Interaction, TempCtx],
+    content_key: str,
+    *params,
+    language: str = None,
+    **kwargs
+) -> Optional[discord.Message]:
+    """
+    Sends a localized message using a language key and optional formatting parameters.
+
+    Args:
+        ctx (Union[commands.Context, discord.Interaction]): The Discord context or interaction.
+        content_key (str): The key used to retrieve the localized message.
+        language (str, optional): Language code to override guild default. Must exist in LangHandler.get_all_languages().
+        *params: Optional parameters to format the localized message.
+        **kwargs: Additional keyword arguments passed to dispatch_message (e.g., view, file, delete_after, ephemeral, requires_fetch).
+
+    Returns:
+        Optional[discord.Message]: The sent message object, or None if sending failed.
+    """
+    if language and language in LangHandler.get_all_languages():
+        localized_text = LangHandler._get_lang(language, content_key)
+    else:
+        localized_text = await LangHandler.get_lang(ctx.guild.id, content_key)
+    
+    if localized_text:
+        try:
+            formatted_text = localized_text.format(*params)
+        except (IndexError, KeyError):
+            formatted_text = localized_text
+    else:
+        formatted_text = "Translation not found."
+
+    return await dispatch_message(ctx, content=formatted_text, **kwargs)

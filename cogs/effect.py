@@ -25,24 +25,24 @@ import discord
 import voicelink
 
 from function import (
-    send,
-    get_lang,
     get_aliases,
     cooldown_check
 )
 from discord import app_commands
 from discord.ext import commands
+from voicelink import LangHandler
+from voicelink.utils import send_localized_message
 
 
 async def check_access(ctx: commands.Context):
     player: voicelink.Player = ctx.guild.voice_client
     if not player:
-        text = await get_lang(ctx.guild.id, "noPlayer")
+        text = await LangHandler.get_lang(ctx.guild.id, "player.errors.noPlayer")
         raise voicelink.exceptions.VoicelinkException(text)
 
     if ctx.author not in player.channel.members:
         if not ctx.author.guild_permissions.manage_guild:
-            text = await get_lang(ctx.guild.id, "notInChannel")
+            text = await LangHandler.get_lang(ctx.guild.id, "voice.connection.notInChannel")
             raise voicelink.exceptions.VoicelinkException(text.format(ctx.author.mention, player.channel.mention))
 
     return player
@@ -72,7 +72,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Timescale(tag="speed", speed=value)
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="karaoke", aliases=get_aliases("karaoke"))
     @app_commands.describe(
@@ -91,7 +91,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Karaoke(tag="karaoke", level=level, mono_level=monolevel, filter_band=filterband, filter_width=filterwidth)
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="tremolo", aliases=get_aliases("tremolo"))
     @app_commands.describe(
@@ -108,7 +108,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Tremolo(tag="tremolo", frequency=frequency, depth=depth)
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="vibrato", aliases=get_aliases("vibrato"))
     @app_commands.describe(
@@ -125,7 +125,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Vibrato(tag="vibrato", frequency=frequency, depth=depth)
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="rotation", aliases=get_aliases("rotation"))
     @app_commands.describe(hertz="The hertz of the rotation. Default is `0.2`")
@@ -139,7 +139,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Rotation(tag="rotation", rotation_hertz=hertz)
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="distortion", aliases=get_aliases("distortion"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -152,7 +152,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Distortion(tag="distortion", sin_offset=0.0, sin_scale=1.0, cos_offset=0.0, cos_scale=1.0, tan_offset=0.0, tan_scale=1.0, offset=0.0, scale=1.0)
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="lowpass", aliases=get_aliases("lowpass"))
     @app_commands.describe(smoothing="The level of the lowPass. Default is `20.0`")
@@ -166,7 +166,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.LowPass(tag="lowpass", smoothing=smoothing)
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="channelmix", aliases=get_aliases("channelmix"))
     @app_commands.describe(
@@ -185,7 +185,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.ChannelMix(tag="channelmix", left_to_left=left_to_left, right_to_right=right_to_right, left_to_right=left_to_right, right_to_left=right_to_left)
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="nightcore", aliases=get_aliases("nightcore"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -195,7 +195,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Timescale.nightcore()
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="8d", aliases=get_aliases("8d"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -205,7 +205,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Rotation.nightD()
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="vaporwave", aliases=get_aliases("vaporwave"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -215,7 +215,7 @@ class Effect(commands.Cog):
 
         effect = voicelink.Timescale.vaporwave()
         await player.add_filter(effect, ctx.author)
-        await send(ctx, "addEffect", effect.tag)
+        await send_localized_message(ctx, "effects.added", effect.tag)
 
     @commands.hybrid_command(name="cleareffect", aliases=get_aliases("cleareffect"))
     @app_commands.describe(effect="Remove a specific sound effects.")
@@ -230,7 +230,7 @@ class Effect(commands.Cog):
         else:
             await player.reset_filter()
             
-        await send(ctx, "clearEffect")
+        await send_localized_message(ctx, "effects.cleared")
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Effect(bot))

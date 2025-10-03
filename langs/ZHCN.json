@@ -1,172 +1,262 @@
 {
-    "unknownException": "⚠️ 执行命令时出错！请稍后再试，或加入我们的 Discord 服务器获取支持。",
-    "enabled": "已启用",
-    "disabled": "已禁用",
-    "nodeReconnect": "请在节点重连后再试！",
-    "noChannel": "未检测到语音频道，请提供一个或加入语音频道。",
-    "alreadyConnected": "已连接到语音频道。",
-    "noPermission": "抱歉！我没有权限加入或在您的语音频道中发言。",
-    "noCreatePermission": "抱歉！我没有权限创建点歌频道。",
-    "noPlaySource": "找不到可播放的资源！",
-    "noPlayer": "该服务器上没有找到播放器。",
-    "notVote": "该命令需要您先投票！输入 `/vote` 了解更多。",
-    "missingIntents": "抱歉，无法执行此命令，因为缺少所需的请求 intent：`({0})`。",
-    "languageNotFound": "未找到语言包！请选择一个已有的语言包。",
-    "changedLanguage": "已成功切换为 `{0}` 语言包。",
-    "setPrefix": "完成！我在您服务器的前缀现在是 `{0}`。尝试运行 `{1}ping` 测试一下吧。",
-    "setDJ": "已将 DJ 设置为 {0}。",
-    "setQueue": "已将队列模式设置为 `{0}`。",
-    "247": "24/7 模式现已 `{0}`。",
-    "bypassVote": "您拥有 `{0}` 投票系统。",
-    "setVolume": "已将音量设置为 `{0}`%",
-    "toggleController": "您现在已 `{0}` 音乐控制器。",
-    "toggleDuplicateTrack": "您已 `{0}` 重复曲目预防功能。",
-    "toggleControllerMsg": "您现在已 `{0}` 来自音乐控制器的消息。",
-    "toggleSilentMsg": "您已 {0} 静默消息。",
-    "settingsMenu": "服务器设置 | {0}",
-    "settingsTitle": "❤️ 基本信息:",
-    "settingsValue": "```前缀: {0}\n语言: {1}\n音乐控制器: {2}\nDJ 角色: @{3}\n投票跳过: {4}\n24/7: {5}\n默认音量: {6}%\n播放时长: {7}```",
-    "settingsTitle2": "🔗 队列信息:",
-    "settingsValue2": "```队列模式: {0}\n最大歌曲数: {1}\n重复曲目: {2}```",
-    "settingsTitle3": "🎤 语音状态信息:",
-    "settingsPermTitle": "✨ 权限:",
-    "settingsPermValue": "```{0} 管理员\n{1} 管理服务器\n{2} 管理频道\n{3} 管理消息```",
-    "pingTitle1": "机器人信息:",
-    "pingTitle2": "播放器信息:",
-    "pingField1": "```分片 ID: {0}/{1}\n分片延迟: {2:.3f}s {3}\n区域: {4}```",
-    "pingField2": "```节点: {0} - {1:.3f}s\n播放器数: {2}\n语音区域: {3}```",
-    "addEffect": "已应用 `{0}` 音效。",
-    "clearEffect": "音效已清除！",
-    "filterTagAlreadyInUse": "该音效已在使用中！请使用 /cleareffect <标签> 移除。",
-    "playlistViewTitle": "📜 {0} 的所有播放列表",
-    "playlistViewHeaders": "ID:,时长:,名称:,曲目数:",
-    "playlistFooter": "输入 /playlist play [播放列表] 将其添加到队列中。",
-    "playlistNotFound": "未找到播放列表 [`{0}`]。输入 /playlist view 查看所有播放列表。",
-    "playlistNotAccess": "抱歉！您无权访问此播放列表！",
-    "playlistNoTrack": "抱歉！播放列表 [`{0}`] 中没有曲目。",
-    "playlistNotAllow": "该命令不支持已关联或共享的播放列表。",
-    "playlistPlay": "已将播放列表 [`{0}`] 的 `{1}` 首歌添加到队列中。",
-    "playlistOverText": "抱歉！播放列表名称不能超过 10 个字符。",
-    "playlistSameName": "抱歉！请为播放列表选择一个新名字。",
-    "playlistDeleteError": "不允许删除默认播放列表。",
-    "playlistRemove": "您已删除播放列表 [`{0}`]。",
-    "playlistSendErrorPlayer": "抱歉！您不能给自己发送邀请。",
-    "playlistSendErrorBot": "抱歉！您不能给机器人发送邀请。",
-    "playlistBelongs": "抱歉！此播放列表属于 <@{0}>。",
-    "playlistShare": "抱歉！此播放列表已与 {0} 共享。",
-    "playlistSent": "抱歉！您之前已经给该用户发送过邀请。",
-    "noPlaylistAcc": "{0} 还没有创建播放列表账号。",
-    "overPlaylistCreation": "您最多只能创建 `{0}` 个播放列表！",
-    "playlistExists": "播放列表 [`{0}`] 已存在。",
-    "playlistNotInvalidUrl": "请输入有效的公共 Spotify 或 YouTube 播放列表链接。",
-    "playlistCreated": "您已创建 `{0}` 播放列表。输入 /playlist view 查看详情。",
-    "playlistRenamed": "您已将 `{0}` 重命名为 `{1}`。",
-    "playlistLimitTrack": "已达到上限！每个播放列表最多只能添加 `{0}` 首歌。",
-    "playlistPlaylistLink": "不允许使用播放列表链接。",
-    "playlistStream": "不允许将流媒体视频添加到播放列表。",
-    "playlistPositionNotFound": "在播放列表 [`{1}`] 中找不到位置 `{0}`！",
-    "playlistRemoved": "👋 已从 {1} 的播放列表 [`{2}`] 中移除 **{0}**。",
-    "playlistClear": "您已成功清空播放列表 [`{0}`]。",
-    "playlistView": "播放列表查看器",
-    "playlistViewDesc": "```名称 | ID: {0} | {1}\n总曲目: {2}\n拥有者: {3}\n类型: {4}\n```",
-    "playlistViewPermsValue": "📖 读取: ✓    ✍🏽 写入: {0}    🗑️ 删除: {1}",
-    "playlistViewPermsValue2": "📖 读取: {0}",
-    "playlistViewTrack": "曲目列表",
-    "playlistViewPage": "第 {0}/{1} 页 | 总时长: {2}",
-    "inboxFull": "抱歉！{0} 的收件箱已满。",
-    "inboxNoMsg": "您的收件箱中没有消息。",
-    "invitationSent": "邀请已发送给 {0}。",
-    "notInChannel": "{0}，您必须在 {1} 才能使用语音命令。如果您已在频道，请重新加入！",
-    "noTrackPlaying": "当前没有正在播放的歌曲",
-    "noTrackFound": "未找到对应的歌曲，请提供有效链接。",
-    "noLinkSupport": "搜索命令不支持链接！",
-    "voted": "您已投票！",
-    "missingPosPerm": "只有 DJ 或管理员才能更改位置。",
-    "missingModePerm": "只有 DJ 或管理员才能切换循环模式。",
-    "missingQueuePerm": "只有 DJ 或管理员才能从队列中移除曲目。",
-    "missingAutoPlayPerm": "只有 DJ 或管理员才能启用或禁用自动播放！",
-    "missingFunctionPerm": "只有 DJ 或管理员才能使用此功能。",
-    "timeFormatError": "时间格式错误。示例: 2:42 或 12:39:31",
-    "lyricsNotFound": "未找到歌词。输入 /lyrics <歌曲名> <作者> 查找歌词。",
-    "missingTrackInfo": "部分曲目信息缺失。",
-    "noVoiceChannel": "未找到语音频道！",
-    "playlistAddError": "不允许将流媒体视频添加到播放列表！",
-    "playlistAddError2": "添加曲目到播放列表时出现问题！",
-    "playlistLimited": "已达到上限！您最多只能在播放列表中添加 {0} 首歌。",
-    "playlistRepeated": "该曲目已在播放列表中！",
-    "playlistAdded": "❤️ 已将 **{0}** 添加到 {1} 的播放列表 [`{2}`]！",
-    "playerDropdown": "选择要跳转的歌曲 ...",
-    "playerFilter": "选择要应用的音效 ...",
-    "buttonBack": "上一首",
-    "buttonPause": "暂停",
-    "buttonResume": "继续",
-    "buttonSkip": "跳过",
-    "buttonLeave": "退出",
-    "buttonLoop": "循环",
-    "buttonVolumeUp": "音量+",
-    "buttonVolumeDown": "音量-",
-    "buttonVolumeMute": "静音",
-    "buttonVolumeUnmute": "取消静音",
-    "buttonAutoPlay": "自动播放",
-    "buttonShuffle": "随机播放",
-    "buttonForward": "快进",
-    "buttonRewind": "快退",
-    "buttonLyrics": "歌词",
-    "nowplayingDesc": "**正在播放:**\n```{0}```",
-    "nowplayingField": "即将播放:",
-    "nowplayingLink": "在 {0} 收听",
-    "connect": "已连接到 {0}",
-    "live": "直播",
-    "playlistLoad": " 🎶 已将播放列表 **{0}** 的 `{1}` 首歌添加到队列中。",
-    "trackLoad": "已添加 **[{0}](<{1}>)** - **{2}** (`{3}`) 并开始播放。\n",
-    "trackLoad_pos": "已添加 **[{0}](<{1}>)** - **{2}** (`{3}`) 到队列位置 **{4}**\n",
-    "searchTitle": "搜索关键词: {0}",
-    "searchDesc": "➥ 平台: {0} **{1}**\n➥ 结果数: **{2}**\n\n{3}",
-    "searchWait": "请选择要添加到队列的歌曲。",
-    "searchTimeout": "搜索超时，请稍后重试。",
-    "searchSuccess": "歌曲已添加到队列。",
-    "queueTitle": "即将播放队列:",
-    "historyTitle": "播放历史:",
-    "viewTitle": "音乐队列",
-    "viewDesc": "**正在播放: [点我]({0}) ⮯**\n{1}",
-    "viewFooter": "第 {0}/{1} 页 | 总时长: {2}",
-    "pauseError": "播放器已暂停。",
-    "pauseVote": "{0} 投票暂停了歌曲。[{1}/{2}]",
-    "paused": "`{0}` 已暂停播放器。",
-    "resumeError": "播放器未暂停。",
-    "resumeVote": "{0} 投票继续播放。[{1}/{2}]",
-    "resumed": "`{0}` 已继续播放。",
-    "shuffleError": "请在队列中添加更多歌曲后再随机播放。",
-    "shuffleVote": "{0} 投票随机播放队列。[{1}/{2}]",
-    "shuffled": "队列已随机排序。",
-    "skipError": "没有歌曲可跳过。",
-    "skipVote": "{0} 投票跳过歌曲。[{1}/{2}]",
-    "skipped": "`{0}` 已跳过歌曲。",
-    "backVote": "{0} 投票播放上一首歌。[{1}/{2}]",
-    "backed": "`{0}` 已切换到上一首歌曲。",
-    "leaveVote": "{0} 投票停止播放。[{1}/{2}]",
-    "left": "`{0}` 已停止播放器。",
-    "seek": "已将播放器定位到 **{0}**",
-    "repeat": "循环模式已设置为 `{0}`",
-    "cleared": "已清空 `{0}` 中的所有曲目",
-    "removed": "已从队列中移除 `{0}` 首歌。",
-    "forward": "已快进到 **{0}**",
-    "rewind": "已快退到 **{0}**",
-    "replay": "正在重播当前歌曲。",
-    "swapped": "`{0}` 和 `{1}` 已交换位置",
-    "moved": "已将 `{0}` 移动到 `{1}`",
-    "autoplay": "自动播放模式现已 **{0}**",
-    "notdj": "您不是 DJ。当前 DJ 是 {0}。",
-    "djToMe": "您不能将 DJ 身份转移给自己或机器人。",
-    "djNotInChannel": "`{0}` 不在语音频道中。",
-    "djswap": "您已将 DJ 身份转移给 `{0}`。",
-    "voicelinkQueueFull": "抱歉，队列已达到最大 `{0}` 首歌！",
-    "voicelinkOutofList": "请输入有效的曲目序号！",
-    "voicelinkDuplicateTrack": "抱歉，该曲目已在队列中。",
-    "decodeError": "解码文件时出错！",
-    "invalidStartTime": "无效的开始时间，必须在 `00:00` 和 `{0}` 之间",
-    "invalidEndTime": "无效的结束时间，必须在 `00:00` 和 `{0}` 之间",
-    "invalidTimeOrder": "结束时间不能小于或等于开始时间",
-    "setStageAnnounceTemplate": "完成！从现在起，您所在的语音状态将按照模板命名。几秒后即可看到更新。",
-    "createSongRequestChannel": "已创建点歌频道 ({0})！您可以在该频道输入歌曲名称或链接来点歌，无需使用机器人前缀。"
+    "common": {
+        "errors": {
+            "unknown": "⚠️ 执行命令时出错！请稍后再试，或加入我们的 Discord 服务器获取支持。",
+            "missingIntents": "抱歉，无法执行此命令，因为缺少所需的请求 intent：`({0})`。"
+        },
+        "status": {
+            "enabled": "已启用",
+            "disabled": "已禁用",
+            "live": "直播"
+        }
+    },
+    "player": {
+        "errors": {
+            "nodeReconnect": "请在节点重连后再试！",
+            "noPlaySource": "找不到可播放的资源！",
+            "noPlayer": "该服务器上没有找到播放器。",
+            "noTrackPlaying": "当前没有正在播放的歌曲",
+            "noTrackFound": "未找到对应的歌曲，请提供有效链接。"
+        },
+        "dropdown": {
+            "trackSelect": "选择要跳转的歌曲 ...",
+            "filterSelect": "选择要应用的音效 ..."
+        },
+        "buttons": {
+            "back": "上一首",
+            "pause": "暂停",
+            "resume": "继续",
+            "skip": "下一首",
+            "leave": "退出",
+            "loop": "循环",
+            "volumeUp": "音量+",
+            "volumeDown": "音量-",
+            "volumeMute": "静音",
+            "volumeUnmute": "取消静音",
+            "autoPlay": "自动播放",
+            "shuffle": "随机播放",
+            "forward": "快进",
+            "rewind": "快退",
+            "lyrics": "歌词"
+        },
+        "playback": {
+            "nowplayingDesc": "**正在播放:**\n```{0}```",
+            "nowplayingField": "即将播放:",
+            "nowplayingLink": "在 {0} 收听",
+            "playlistLoad": " 🎶 已将播放列表 **{0}** 的 `{1}` 首歌添加到队列中。",
+            "trackLoad": "已添加 **[{0}](<{1}>)** - **{2}** (`{3}`) 并开始播放。\n",
+            "trackLoadPos": "已添加 **[{0}](<{1}>)** - **{2}** (`{3}`) 到队列位置 **{4}**\n"
+        },
+        "controls": {
+            "pause": {
+                "error": "播放器已暂停。",
+                "vote": "{0} 投票暂停了歌曲。[{1}/{2}]",
+                "success": "`{0}` 已暂停播放器。"
+            },
+            "resume": {
+                "error": "播放器未暂停。",
+                "vote": "{0} 投票继续播放。[{1}/{2}]",
+                "success": "`{0}` 已继续播放。"
+            },
+            "shuffle": {
+                "error": "请在队列中添加更多歌曲后再随机播放。",
+                "vote": "{0} 投票随机播放队列。[{1}/{2}]",
+                "success": "队列已随机排序。"
+            },
+            "skip": {
+                "error": "没有歌曲可跳过。",
+                "vote": "{0} 投票跳过歌曲。[{1}/{2}]",
+                "success": "`{0}` 已跳过歌曲。"
+            },
+            "back": {
+                "vote": "{0} 投票播放上一首歌。[{1}/{2}]",
+                "success": "`{0}` 已切换到上一首歌曲。"
+            },
+            "leave": {
+                "vote": "{0} 投票停止播放。[{1}/{2}]",
+                "success": "`{0}` 已停止播放器。"
+            },
+            "seek": "已将播放器定位到 **{0}**",
+            "repeat": "循环模式已设置为 `{0}`",
+            "forward": "已快进到 **{0}**",
+            "rewind": "已快退到 **{0}**",
+            "replay": "正在重播当前歌曲。",
+            "autoplay": "自动播放模式现已 **{0}**"
+        }
+    },
+    "voice": {
+        "connection": {
+            "noChannel": "未检测到语音频道，请提供一个或加入语音频道。",
+            "alreadyConnected": "已连接到语音频道。",
+            "noPermission": "抱歉！我没有权限加入或在您的语音频道中发言。",
+            "notInChannel": "{0}，您必须在 {1} 才能使用语音命令。如果您已在频道，请重新加入！",
+            "connect": "已连接到 {0}"
+        },
+        "stageChannel": {
+            "setAnnounceTemplate": "完成！从现在起，您所在的语音状态将按照模板命名。几秒后即可看到更新。"
+        }
+    },
+    "permissions": {
+        "noCreatePermission": "抱歉！我没有权限创建点歌频道。",
+        "missingPosition": "只有 DJ 或管理员才能更改位置。",
+        "missingMode": "只有 DJ 或管理员才能切换循环模式。",
+        "missingQueue": "只有 DJ 或管理员才能从队列中移除曲目。",
+        "missingAutoPlay": "只有 DJ 或管理员才能启用或禁用自动播放！",
+        "missingFunction": "只有 DJ 或管理员才能使用此功能。",
+        "notDj": "您不是 DJ。当前 DJ 是 {0}。",
+        "djToSelf": "您不能将 DJ 身份转移给自己或机器人。",
+        "djNotInChannel": "`{0}` 不在语音频道中。",
+        "djSwapped": "您已将 DJ 身份转移给 `{0}`。"
+    },
+    "settings": {
+        "actions": {
+            "languageNotFound": "未找到语言包！请选择一个已有的语言包。",
+            "languageChanged": "已成功切换为 `{0}` 语言包。",
+            "prefixSet": "完成！我在您服务器的前缀现在是 `{0}`。尝试运行 `{1}ping` 测试一下吧。",
+            "djSet": "已将 DJ 设置为 {0}。",
+            "queueModeSet": "已将队列模式设置为 `{0}`。",
+            "mode247": "24/7 模式现已 `{0}`。",
+            "bypassVote": "您拥有 `{0}` 投票系统。",
+            "volumeSet": "已将音量设置为 `{0}`%",
+            "controllerToggled": "您现在已 `{0}` 音乐控制器。",
+            "duplicateTrackToggled": "您已 `{0}` 重复曲目预防功能。",
+            "controllerMsgToggled": "您现在已 `{0}` 来自音乐控制器的消息。",
+            "silentMsgToggled": "您已 {0} 静默消息。"
+        },
+        "menu": "服务器设置 | {0}",
+        "basic": {
+            "title": "❤️ 基本信息:",
+            "value": "```前缀: {0}\n语言: {1}\n音乐控制器: {2}\nDJ 角色: @{3}\n投票跳过: {4}\n24/7: {5}\n默认音量: {6}%\n播放时长: {7}```"
+        },
+        "queue": {
+            "title": "🔗 队列信息:",
+            "value": "```队列模式: {0}\n最大歌曲数: {1}\n重复曲目: {2}```"
+        },
+        "voice": {
+            "title": "🎤 语音状态信息:"
+        },
+        "permissions": {
+            "title": "✨ 权限:",
+            "value": "```{0} 管理员\n{1} 管理服务器\n{2} 管理频道\n{3} 管理消息```"
+        }
+    },
+    "ping": {
+        "title1": "机器人信息:",
+        "title2": "播放器信息:",
+        "field1": "```分片 ID: {0}/{1}\n分片延迟: {2:.3f}s {3}\n区域: {4}```",
+        "field2": "```节点: {0} - {1:.3f}s\n播放器数: {2}\n语音区域: {3}```"
+    },
+    "effects": {
+        "added": "已应用 `{0}` 音效。",
+        "cleared": "音效已清除！",
+        "tagInUse": "该音效已在使用中！请使用 /cleareffect <标签> 移除。"
+    },
+    "playlist": {
+        "view": {
+            "title": "{0} 的所有播放列表",
+            "headers": "ID:,时长:,名称:,曲目数:",
+            "footer": "输入 /playlist play [播放列表] 将其添加到队列中。",
+            "detailTitle": "播放列表查看器",
+            "detailDesc": "```名称 | ID: {0} | {1}\n总曲目: {2}\n拥有者: {3}\n类型: {4}\n```",
+            "permsValue": "📖 读取: ✓    ✍🏽 写入: {0}    🗑️ 删除: {1}",
+            "permsValue2": "📖 读取: {0}",
+            "trackList": "曲目列表",
+            "footer2": "总持续时间：{0}",
+            "playlistSelect": "选择要查看的播放列表 ..."
+        },
+        "errors": {
+            "notFound": "未找到播放列表 [`{0}`]。输入 /playlist view 查看所有播放列表。",
+            "noAccess": "抱歉！您无权访问此播放列表！",
+            "noTrack": "抱歉！播放列表 [`{0}`] 中没有曲目。",
+            "notAllowed": "该命令不支持已关联或共享的播放列表。",
+            "nameOverLimit": "抱歉！播放列表名称不能超过 10 个字符。",
+            "sameName": "抱歉！请为播放列表选择一个新名字。",
+            "deleteDefault": "不允许删除默认播放列表。",
+            "limitReached": "您最多只能创建 `{0}` 个播放列表！",
+            "exists": "播放列表 [`{0}`] 已存在。",
+            "invalidUrl": "请输入有效的公共 Spotify 或 YouTube 播放列表链接。",
+            "trackLimitReached": "已达到上限！每个播放列表最多只能添加 `{0}` 首歌。",
+            "playlistLinkNotAllowed": "不允许使用播放列表链接。",
+            "streamNotAllowed": "不允许将流媒体视频添加到播放列表。",
+            "positionNotFound": "在播放列表 [`{1}`] 中找不到位置 `{0}`！",
+            "streaming": "不允许将流媒体视频添加到播放列表！",
+            "track": "添加曲目到播放列表时出现问题！",
+            "trackLimited": "已达到上限！您最多只能在播放列表中添加 {0} 首歌。",
+            "trackRepeated": "该曲目已在播放列表中！"
+        },
+        "actions": {
+            "play": "已将播放列表 [`{0}`] 的 `{1}` 首歌添加到队列中。",
+            "removed": "您已删除播放列表 [`{0}`]。",
+            "created": "您已创建 `{0}` 播放列表。输入 /playlist view 查看详情。",
+            "renamed": "您已将 `{0}` 重命名为 `{1}`。",
+            "trackRemoved": "👋 已从 {1} 的播放列表 [`{2}`] 中移除 **{0}**。",
+            "cleared": "您已成功清空播放列表 [`{0}`]。",
+            "trackAdded": "❤️ 已将 **{0}** 添加到 {1} 的播放列表 [`{2}`]！"
+        },
+        "sharing": {
+            "sendErrorPlayer": "抱歉！您不能给自己发送邀请。",
+            "sendErrorBot": "抱歉！您不能给机器人发送邀请。",
+            "belongs": "抱歉！此播放列表属于 <@{0}>。",
+            "alreadyShared": "抱歉！此播放列表已与 {0} 共享。",
+            "alreadySent": "抱歉！您之前已经给该用户发送过邀请。",
+            "noAccount": "{0} 还没有创建播放列表账号。",
+            "invitationSent": "邀请已发送给 {0}。"
+        },
+        "inbox": {
+            "full": "抱歉！{0} 的收件箱已满。",
+            "noMessages": "您的收件箱中没有消息。"
+        }
+    },
+    "search": {
+        "noLinkSupport": "搜索命令不支持链接！",
+        "title": "搜索关键词: {0}",
+        "desc": "➥ 平台: {0} **{1}**\n➥ 结果数: **{2}**\n\n{3}",
+        "wait": "请选择要添加到队列的歌曲。",
+        "success": "歌曲已添加到队列。"
+    },
+    "voting": {
+        "voted": "您已投票！"
+    },
+    "time": {
+        "formatError": "时间格式错误。示例: 2:42 或 12:39:31",
+        "invalidStartTime": "无效的开始时间，必须在 `00:00` 和 `{0}` 之间",
+        "invalidEndTime": "无效的结束时间，必须在 `00:00` 和 `{0}` 之间"
+    },
+    "lyrics": {
+        "notFound": "未找到歌词。输入 /lyrics <歌曲名> <作者> 查找歌词。"
+    },
+    "queue": {
+        "management": {
+            "title": "即将播放队列:",
+            "cleared": "已清空 `{0}` 中的所有曲目",
+            "removed": "已从队列中移除 `{0}` 首歌。",
+            "swapped": "`{0}` 和 `{1}` 已交换位置",
+            "moved": "已将 `{0}` 移动到 `{1}`"
+        },
+        "view": {
+            "historyTitle": "播放历史:",
+            "title": "音乐队列",
+            "desc": "**正在播放: [点我]({0}) ⮯**\n{1}"
+        },
+        "errors": {
+            "queueFull": "抱歉，队列已达到最大 `{0}` 首歌！",
+            "outOfList": "请输入有效的曲目序号！",
+            "duplicateTrack": "抱歉，该曲目已在队列中。"
+        }
+    },
+    "songRequest": {
+        "channelCreated": "已创建点歌频道 ({0})！您可以在该频道输入歌曲名称或链接来点歌，无需使用机器人前缀。"
+    },
+    "pagination": {
+        "prev": "上一页",
+        "next": "下一页",
+        "play": "播放",
+        "share": "分享",
+        "export": "导出",
+        "delete": "删除",
+        "page": {
+            "title": "输入页码",
+            "field": "页码"
+        }
+    }
 }

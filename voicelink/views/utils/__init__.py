@@ -21,22 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__version__ = "1.5"
-__author__ = 'Vocard Development, ChocoMeow'
-__license__ = "MIT"
-__copyright__ = "Copyright 2023 - present (c) Vocard Development, ChocoMeow"
-
-from .config import Config
-from .enums import SearchType, LoopType
-from .events import *
-from .exceptions import *
-from .filters import *
-from .objects import *
-from .pool import *
-from .queue import *
-from .player import Player, connect_channel
-from .placeholders import PlayerPlaceholder, BotPlaceholder
-from .mongodb import MongoDBHandler
-from .language import LangHandler
-from .lyrics import LYRICS_PLATFORMS
-from .ipc import IPCClient
+from .pagination import Pagination
+from .modal import BaseModal
+from .dynamic_view_manager import DynamicViewManager

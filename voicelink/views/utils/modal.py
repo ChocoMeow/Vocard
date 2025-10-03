@@ -21,22 +21,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-__version__ = "1.5"
-__author__ = 'Vocard Development, ChocoMeow'
-__license__ = "MIT"
-__copyright__ = "Copyright 2023 - present (c) Vocard Development, ChocoMeow"
+import discord
 
-from .config import Config
-from .enums import SearchType, LoopType
-from .events import *
-from .exceptions import *
-from .filters import *
-from .objects import *
-from .pool import *
-from .queue import *
-from .player import Player, connect_channel
-from .placeholders import PlayerPlaceholder, BotPlaceholder
-from .mongodb import MongoDBHandler
-from .language import LangHandler
-from .lyrics import LYRICS_PLATFORMS
-from .ipc import IPCClient
+
+class BaseModal(discord.ui.Modal):
+    def __init__(self, title: str, items: list[discord.ui.Item], timeout: float = None, custom_id: str = None) -> None:
+        super().__init__(title=title, timeout=timeout, custom_id=custom_id)
+        self._add_items(items)
+        self.values: dict[str, str] = {}
+
+    def _add_items(self, items: list[discord.ui.Item]) -> None:
+        """Add items to the modal."""
+        for item in items:
+            self.add_item(item)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        """Handle the modal submission."""
+        await interaction.response.defer()
+
+        for item in self.walk_children():
+            if isinstance(item, discord.ui.TextInput):
+                self.values[item.custom_id] = item.value

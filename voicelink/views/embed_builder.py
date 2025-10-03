@@ -21,11 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import discord, copy
-import function as func
+import discord
+import copy
 
 from typing import List
 from discord.ext import commands
+
+from ..mongodb import MongoDBHandler
+from ..placeholders import PlayerPlaceholder
 
 class Modal(discord.ui.Modal):
     def __init__(self, items: List[discord.ui.Item], *args, **kwargs) -> None:
@@ -51,28 +54,27 @@ class Dropdown(discord.ui.Select):
         super().__init__(placeholder='Select a embed to edit...', min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        self.view.embedType = self.values[0].lower()
-        if self.view.embedType not in self.view.data:
-            self.view.data[self.view.embedType] = {}
+        self.view.embed_type = self.values[0].lower()
+        if self.view.embed_type not in self.view.data:
+            self.view.data[self.view.embed_type] = {}
 
         await interaction.response.edit_message(embed=self.view.build_embed())
 
 class EmbedBuilderView(discord.ui.View):
-    def __init__(self, context: commands.Context, data: dict) -> None:
-        from voicelink import Placeholders, build_embed
-
+    def __init__(self, context: commands.Context, placeholder: PlayerPlaceholder, data: dict) -> None:
         super().__init__(timeout=300)
         self.add_item(Dropdown())
 
         self.author: discord.Member = context.author
+        self.ph: PlayerPlaceholder = placeholder
         self.response: discord.Message = None
 
         self.original_data: dict = copy.deepcopy(data)
         self.data: dict = copy.deepcopy(data)
-        self.embedType: str = "active"
-
-        self.ph: Placeholders = Placeholders(context.bot)
-        self.build_embed = lambda: build_embed(self.data.get(self.embedType, {}), self.ph)
+        self.embed_type: str = "active"
+    
+    def build_embed(self) -> discord.Embed:
+        return PlayerPlaceholder.build_embed(self.data.get(self.embed_type, {}), self.ph)
     
     async def on_timeout(self):
         for child in self.children:
@@ -87,7 +89,7 @@ class EmbedBuilderView(discord.ui.View):
 
     @discord.ui.button(label="Edit Content", style=discord.ButtonStyle.blurple)
     async def edit_content(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.data.get(self.embedType, {})
+        data = self.data.get(self.embed_type, {})
         items = [
             discord.ui.TextInput(
                 label="Title",
@@ -144,7 +146,7 @@ class EmbedBuilderView(discord.ui.View):
 
     @discord.ui.button(label="Edit Author",)
     async def edit_author(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.data.get(self.embedType, {})
+        data = self.data.get(self.embed_type, {})
         items = [
             discord.ui.TextInput(
                 label="Name",
@@ -192,7 +194,7 @@ class EmbedBuilderView(discord.ui.View):
     
     @discord.ui.button(label="Edit Image")
     async def edit_image(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.data.get(self.embedType, {})
+        data = self.data.get(self.embed_type, {})
         items = [
             discord.ui.TextInput(
                 label="Thumbnail",
@@ -225,7 +227,7 @@ class EmbedBuilderView(discord.ui.View):
     
     @discord.ui.button(label="Edit Footer")
     async def edit_footer(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.data.get(self.embedType, {})
+        data = self.data.get(self.embed_type, {})
         items = [
             discord.ui.TextInput(
                 label="Text",
@@ -260,7 +262,7 @@ class EmbedBuilderView(discord.ui.View):
     
     @discord.ui.button(label="Add Field", style=discord.ButtonStyle.green, row=1)
     async def add_field(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.data.get(self.embedType)
+        data = self.data.get(self.embed_type)
         items = [
             discord.ui.TextInput(
                 label="Name",
@@ -310,7 +312,7 @@ class EmbedBuilderView(discord.ui.View):
             )
         ]
 
-        data = self.data.get(self.embedType)
+        data = self.data.get(self.embed_type)
         if "fields" not in data:
             data["fields"] = []
 
@@ -330,7 +332,7 @@ class EmbedBuilderView(discord.ui.View):
 
     @discord.ui.button(label="Apply", style=discord.ButtonStyle.green, row=1)
     async def apply(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await func.update_settings(
+        await MongoDBHandler.update_settings(
             interaction.guild_id,
             {"$set": {"default_controller.embeds": self.data}},
         )

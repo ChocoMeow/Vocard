@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import time, re
-import function as func
 
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union, Optional, TYPE_CHECKING
 
-from discord import User, Member, VoiceChannel
+from discord import User, Member
 from discord.ext import commands
-from voicelink import Player, Track, Playlist, NodePool, decode, LoopType, Filters
-from addons import LYRICS_PLATFORMS
+from voicelink import Player, Track, Playlist, NodePool, LoopType, Filters, Config, MongoDBHandler, LangHandler, LYRICS_PLATFORMS
+from voicelink.utils import TempCtx
 
+if TYPE_CHECKING:
+    from .client import IPCClient
+    
 RATELIMIT_COUNTER: Dict[int, Dict[str, float]] = {}
 SCOPES = {
     "prefix": str,
@@ -62,8 +66,8 @@ async def connect_channel(member: Member, bot: commands.Bot) -> Player:
 
     channel = member.voice.channel
     try:
-        settings = await func.get_settings(channel.guild.id)
-        player: Player = await channel.connect(cls=Player(bot, channel, func.TempCtx(member, channel), settings))
+        settings = await MongoDBHandler.get_settings(channel.guild.id)
+        player: Player = await channel.connect(cls=Player(bot, channel, TempCtx(member, channel), settings))
         await player.send_ws({"op": "createPlayer", "memberIds": [str(member.id) for member in channel.members]})
         return player
     except:
@@ -86,7 +90,7 @@ async def initBot(bot: commands.Bot, data: Dict) -> Dict:
     
 async def initUser(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("userId"))
-    data = await func.get_user(user_id)
+    data = await MongoDBHandler.get_user(user_id)
 
     for mail in data.get("inbox"):
         sender = bot.get_user(mail.get("sender"))
@@ -146,7 +150,7 @@ async def getRecommendation(bot: commands.Bot, data: Dict) -> None:
     if not node:
         return
     
-    track_data = decode(track_id := data.get("trackId"))
+    track_data = Track.decode(track_id := data.get("trackId"))
     track = Track(track_id=track_id, info=track_data, requester=bot.user)
     tracks: List[Track] = await node.get_recommendations(track, limit=60)
 
@@ -163,12 +167,12 @@ async def skipTo(player: Player, member: Member, data: Dict) -> None:
             pass
 
         elif member in player.skip_votes:
-            return error_msg(player.get_msg('voted'), user_id=member.id)
+            return error_msg(player.get_msg('voting.voted'), user_id=member.id)
         
         else:
             player.skip_votes.add(member)
             if len(player.skip_votes) < (required := player.required()):
-                return error_msg(player.get_msg('skipVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
+                return error_msg(player.get_msg('player.controls.skip.vote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
 
     index = data.get("index", 1)
     if index > 1:
@@ -184,12 +188,12 @@ async def backTo(player: Player, member: Member, data: Dict) -> None:
             pass
 
         elif member in player.skip_votes:
-            return error_msg(player.get_msg('voted'), user_id=member.id)
+            return error_msg(player.get_msg('voting.voted'), user_id=member.id)
         
         else:
             player.skip_votes.add(member)
             if len(player.skip_votes) < (required := player.required()):
-                return error_msg(player.get_msg('backVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
+                return error_msg(player.get_msg('player.controls.back.vote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
     
     index = data.get("index", 1)
     if not player.is_playing:
@@ -212,7 +216,7 @@ async def addTracks(player: Player, member: Member, data: Dict) -> None:
     _type = data.get("type", "addToQueue")
     tracks = [Track(
         track_id=track_id, 
-        info=decode(track_id),
+        info=Track.decode(track_id),
         requester=member
     ) for track_id in data.get("tracks", [])]
 
@@ -249,11 +253,11 @@ async def searchAndPlay(player: Player, member: Member, data: Dict) -> None:
 async def shuffleTrack(player: Player, member: Member, data: Dict) -> None:
     if not player.is_privileged(member):
         if member in player.shuffle_votes:
-            return error_msg(player.get_msg('voted'), user_id=member.id) 
+            return error_msg(player.get_msg('voting.voted'), user_id=member.id) 
 
         player.shuffle_votes.add(member)
         if len(player.shuffle_votes) < (required := player.required()):
-            return error_msg(player.get_msg('shuffleVote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
+            return error_msg(player.get_msg('player.controls.shuffle.vote').format(member, len(player.skip_votes), required), guild_id=player.guild.id)
     
     await player.shuffle(data.get("type", "queue"), member)
 
@@ -274,7 +278,7 @@ async def clearQueue(player: Player, member: Member, data: Dict) -> None:
 @require_permission(only_admin=True)
 async def updateVolume(player: Player, member: Member, data: Dict) -> None:
     volume = data.get("volume", 100)
-    await func.update_settings(player.guild.id, {"$set": {"volume": volume}})
+    await MongoDBHandler.update_settings(player.guild.id, {"$set": {"volume": volume}})
     await player.set_volume(volume=volume, requester=member)
 
 async def updatePause(player: Player, member: Member, data: Dict) -> None:
@@ -282,19 +286,19 @@ async def updatePause(player: Player, member: Member, data: Dict) -> None:
     if not player.is_privileged(member):
         if pause:
             if member in player.pause_votes:
-                return error_msg(player.get_msg('voted'), user_id=member.id)
+                return error_msg(player.get_msg('voting.voted'), user_id=member.id)
 
             player.pause_votes.add(member)
             if len(player.pause_votes) < (required := player.required()):
-                return error_msg(player.get_msg('pauseVote').format(member, len(player.pause_votes), required), guild_id=player.guild.id)
+                return error_msg(player.get_msg('player.controls.pause.vote').format(member, len(player.pause_votes), required), guild_id=player.guild.id)
 
         else:
             if member in player.resume_votes:
-                return error_msg(player.get_msg('voted'), user_id=member.id)
+                return error_msg(player.get_msg('voting.voted'), user_id=member.id)
             
             player.resume_votes.add(member)
             if len(player.resume_votes) < (required := player.required()):
-                return error_msg(player.get_msg('resumeVote').format(member, len(player.resume_votes), required), guild_id=player.guild.id)
+                return error_msg(player.get_msg('player.controls.resume.vote').format(member, len(player.resume_votes), required), guild_id=player.guild.id)
 
     await player.set_pause(pause, member)
 
@@ -305,7 +309,7 @@ async def updatePosition(player: Player, member: Member, data: Dict) -> None:
 
 async def toggleAutoplay(player: Player, member: Member, data: Dict) -> Dict:
     if not player.is_privileged(member):
-        return error_msg(player.get_msg('missingAutoPlayPerm'))
+        return error_msg(player.get_msg('permissions.missingAutoPlay'))
 
     check = data.get("status", False)
     player.settings['autoplay'] = check
@@ -358,13 +362,13 @@ def _assign_playlist_id(existed: list) -> str:
             return str(i)
         
 async def _getPlaylist(user_id: int, playlist_id: str) -> Dict:
-    playlists = await func.get_user(user_id, "playlist")
+    playlists = await MongoDBHandler.get_user(user_id, d_type="playlist")
     playlist = playlists.get(playlist_id)
     if not playlist:
         return
     
     if playlist["type"] == "share":
-        target_user = await func.get_user(playlist["user"], "playlist")
+        target_user = await MongoDBHandler.get_user(playlist["user"], d_type="playlist")
         target_playlist = target_user.get(playlist["referId"])
         if target_playlist and user_id in target_playlist.get("perms", {}).get("read", []):
             playlist["tracks"] = await _loadPlaylist(target_playlist)
@@ -391,7 +395,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
     if not playlist_id and not _type == "createPlaylist":
         return error_msg("Unable to process this request without a playlist ID.", user_id=user_id, level="error")
     
-    rank, max_p, max_t = func.check_roles()
+    max_p, max_t, _ = Config().get_playlist_config()
     if _type == "createPlaylist":
         name, playlist_url = data.get("playlistName"), data.get("playlistUrl")
         if not name:
@@ -403,7 +407,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 "userId": str(user_id)
             }
         
-        playlist = await func.get_user(user_id, "playlist")
+        playlist = await MongoDBHandler.get_user(user_id, d_type="playlist")
         if len(list(playlist.keys())) >= max_p:
             return {
                 "op": "updatePlaylist",
@@ -436,7 +440,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
 
         assigned_playlist_id = _assign_playlist_id(list(playlist.keys()))
         data = {'uri': playlist_url, 'perms': {'read': []}, 'name': name, 'type': 'link'} if playlist_url else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
-        await func.update_user(user_id, {"$set": {f"playlist.{assigned_playlist_id}": data}})
+        await MongoDBHandler.update_user(user_id, {"$set": {f"playlist.{assigned_playlist_id}": data}})
         return {
             "op": "updatePlaylist",
             "status": "created",
@@ -450,9 +454,9 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         playlist = await _getPlaylist(user_id, playlist_id)
         if playlist:
             if playlist['type'] == 'share':
-                await func.update_user(playlist['user'], {"$pull": {f"playlist.{playlist['referId']}.perms.read": user_id}})
+                await MongoDBHandler.update_user(playlist['user'], {"$pull": {f"playlist.{playlist['referId']}.perms.read": user_id}})
 
-            await func.update_user(user_id, {"$unset": {f"playlist.{playlist_id}": 1}})
+            await MongoDBHandler.update_user(user_id, {"$unset": {f"playlist.{playlist_id}": 1}})
 
         return {
             "op": "updatePlaylist",
@@ -473,7 +477,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 "userId": str(user_id)
             }
         
-        playlist = await func.get_user(user_id, "playlist")
+        playlist = await MongoDBHandler.get_user(user_id, d_type="playlist")
         for data in playlist.values():
             if data['name'].lower() == name.lower():
                 return {
@@ -484,7 +488,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                     "userId": str(user_id)
                 }
 
-        await func.update_user(user_id, {"$set": {f'playlist.{playlist_id}.name': name}})
+        await MongoDBHandler.update_user(user_id, {"$set": {f'playlist.{playlist_id}.name': name}})
         return {
             "op": "updatePlaylist",
             "status": "renamed",
@@ -504,15 +508,15 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         if playlist['type'] in ['share', 'link']:
             return error_msg("You cannot add songs to a linked playlist through Vocard.", user_id=user_id, level='error')
         
-        rank, max_p, max_t = func.check_roles()
+        max_p, max_t, _ = Config().get_playlist_config()
         if len(playlist['tracks']) >= max_t:
             return error_msg(f"You have reached the limit! You can only add {max_t} songs to your playlist.", user_id=user_id)
 
-        decoded_track = Track(track_id=track_id, info=decode(track_id), requester=None)
+        decoded_track = Track(track_id=track_id, info=Track.decode(track_id), requester=None)
         if decoded_track.is_stream:
             return error_msg("You are not allowed to add streaming videos to your playlist.", user_id=user_id)
         
-        await func.update_user(user_id, {"$push": {f'playlist.{playlist_id}.tracks': track_id}})
+        await MongoDBHandler.update_user(user_id, {"$push": {f'playlist.{playlist_id}.tracks': track_id}})
         return {
             "op": "updatePlaylist",
             "status": "addTrack",
@@ -540,9 +544,9 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         if playlist['tracks'][track_position] != track_id:
             return error_msg("Something wrong while removing the track from your playlist.", user_id=user_id, level='error')
         
-        await func.update_user(user_id, {"$pull": {f'playlist.{playlist_id}.tracks': playlist['tracks'][track_position]}})
+        await MongoDBHandler.update_user(user_id, {"$pull": {f'playlist.{playlist_id}.tracks': playlist['tracks'][track_position]}})
         
-        decoded_track = decode(playlist['tracks'][track_position])
+        decoded_track = Track.decode(playlist['tracks'][track_position])
         return {
             "op": "updatePlaylist",
             "status": "removeTrack",
@@ -554,7 +558,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         }
 
     elif _type == "updateInbox":
-        user = await func.get_user(user_id)
+        user = await MongoDBHandler.get_user(user_id)
         is_accept = data.get("accept", False)
 
         if is_accept and len(list(user.get("playlist").keys())) >= max_p:
@@ -571,7 +575,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
             
             del inbox[index]
             if is_accept:
-                share_playlists = await func.get_user(mail["sender"], "playlist")
+                share_playlists = await MongoDBHandler.get_user(mail["sender"], d_type="playlist")
                 if refer_id not in share_playlists:
                     return error_msg("The shared playlist couldn’t be found. It’s possible that the user has already deleted it.", user_id=user_id)
                 
@@ -582,8 +586,8 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                     "name": playlist_name,
                     "type": "share"
                 })
-                await func.update_user(mail['sender'], {"$push": {f"playlist.{mail['referId']}.perms.read": user_id}})
-                await func.update_user(user_id, {"$set": {
+                await MongoDBHandler.update_user(mail['sender'], {"$push": {f"playlist.{mail['referId']}.perms.read": user_id}})
+                await MongoDBHandler.update_user(user_id, {"$set": {
                     f'playlist.{assigned_playlist_id}': {
                         'user': mail['sender'], 'referId': mail['referId'],
                         'name': playlist_name,
@@ -598,7 +602,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                     "data": share_playlist,
                 })
 
-            await func.update_user(user_id, {"$set": {"inbox": inbox}})
+            await MongoDBHandler.update_user(user_id, {"$set": {"inbox": inbox}})
             return payload
 
 async def getMutualGuilds(bot: commands.Bot, data: Dict) -> Dict:
@@ -631,7 +635,7 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
     if not member.guild_permissions.manage_guild:
         return error_msg("You don't have permission to access the settings.", user_id=user_id, level='error')
     
-    settings = await func.get_settings(guild_id)
+    settings = await MongoDBHandler.get_settings(guild_id)
     if "dj" in settings:
         role = guild.get_role(settings["dj"])
         if role:
@@ -641,7 +645,7 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
         "op": "getSettings",
         "settings": settings,
         "options": {
-            "languages": list(func.LANGS.keys()),
+            "languages": list(LangHandler.get_all_languages()),
             "queueModes": ["Queue", "FairQueue"],
             "roles": [role.name for role in guild.roles]
         },
@@ -656,7 +660,7 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
 async def getLyrics(bot: commands.Bot, data: Dict) -> Dict:
     title, artist, platform = data.get("title", ""), data.get("artist", ""), data.get("platform", "")
     if not platform or platform not in LYRICS_PLATFORMS:
-        platform = func.settings.lyrics_platform
+        platform = Config().lyrics_platform
     
     lyrics_platform = LYRICS_PLATFORMS.get(platform)
     if lyrics_platform:
@@ -697,7 +701,7 @@ async def updateSettings(bot: commands.Bot, data: Dict) -> None:
         if key not in SCOPES or not isinstance(value, SCOPES[key]):
             del data[key]
 
-    await func.update_settings(guild.id, {"$set": data})
+    await MongoDBHandler.update_settings(guild.id, {"$set": data})
 
 METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "initBot": SystemMethod(initBot, credit=0),
@@ -728,7 +732,7 @@ METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "searchAndPlay": PlayerMethod(searchAndPlay, credit=5, auto_connect=True)
 }
 
-async def process_methods(ipc_client, bot: commands.Bot, data: Dict) -> None:
+async def process_methods(ipc_client: IPCClient, bot: commands.Bot, data: Dict) -> None:
     op: str = data.get("op", "")
     method = METHODS.get(op)
     if not method or not (user_id := data.get("userId")):

@@ -37,22 +37,43 @@ class LoopType(Enum):
     QUEUE = auto()
     
 class SearchType(Enum):
-    """The enum for the different search types for Voicelink.
+    """Enum representing different search types for Voicelink.
 
-       SearchType.YOUTUBE searches using regular Youtube,
-       which is best for all scenarios.
+    Each search type corresponds to a specific platform that can be used 
+    for retrieving audio or video content. The options available are:
 
-       SearchType.YOUTUBE_MUSIC searches using YouTube Music,
-       which is best for getting audio-only results.
-       
-       SearchType.SPOTIFY searches using Spotify,
-       which is an alternative to YouTube or YouTube Music.
-
-       SearchType.SOUNDCLOUD searches using SoundCloud,
-       which is an alternative to YouTube or YouTube Music.
-
-       SearchType.APPLE_MUSIC searches using Apple Music,
-       which is an alternative to YouTube or YouTube Music.
+    - SearchType.YOUTUBE: 
+      Searches using regular YouTube, ideal for all scenarios.
+    
+    - SearchType.YOUTUBE_MUSIC: 
+      Searches using YouTube Music, best for obtaining audio-only results.
+    
+    - SearchType.SPOTIFY: 
+      Searches using Spotify, a viable alternative to YouTube and YouTube Music.
+    
+    - SearchType.SOUNDCLOUD: 
+      Searches using SoundCloud, another alternative to YouTube and YouTube Music.
+    
+    - SearchType.APPLE_MUSIC: 
+      Searches using Apple Music, offering a different option for audio content.
+    
+    - SearchType.DEEZER: 
+      Searches using Deezer, providing another music streaming alternative.
+    
+    - SearchType.YANDEX_MUSIC: 
+      Searches using Yandex Music, catering to users in the Yandex ecosystem.
+    
+    - SearchType.VK_MUSIC: 
+      Searches using VK Music, popular in certain regions for music streaming.
+    
+    - SearchType.TIDAL: 
+      Searches using Tidal, known for high-fidelity music streaming.
+    
+    - SearchType.QOBUZ: 
+      Searches using Qobuz, recognized for high-resolution audio.
+    
+    - SearchType.JIOSAAVN: 
+      Searches using JioSaavn, a popular platform in India for music streaming.
     """
     
     YOUTUBE = "ytsearch"
@@ -60,6 +81,12 @@ class SearchType(Enum):
     SPOTIFY = "spsearch"
     SOUNDCLOUD = "scsearch"
     APPLE_MUSIC = "amsearch"
+    DEEZER = "dzsearch"
+    YANDEX_MUSIC = "ymsearch"
+    VK_MUSIC = "vksearch"
+    TIDAL = "tdsearch"
+    QOBUZ = "qbsearch"
+    JIOSAAVN = "jssearch"
 
     def __str__(self) -> str:
         return self.value

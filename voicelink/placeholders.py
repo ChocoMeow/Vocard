@@ -24,27 +24,30 @@ SOFTWARE.
 from __future__ import annotations
 
 import re
-import function as func
+import discord
 
-from discord import Embed, Client
+from discord.ext import commands
+from typing import TYPE_CHECKING, List, Callable
 
-from typing import TYPE_CHECKING
+from .config import Config
+from .utils import format_ms
 
 if TYPE_CHECKING:
     from .player import Player
     from .objects import Track
-
-def ensure_track(func) -> callable:
-    def wrapper(self: Placeholders, *args, **kwargs):
+    from .pool import NodePool
+    
+def ensure_track(func) -> Callable:
+    def wrapper(self: PlayerPlaceholder, *args, **kwargs):
         current = self.get_current()
         if not current:
             return "None"
         return func(self, current, *args, **kwargs)
     return wrapper
 
-class Placeholders:
-    def __init__(self, bot: Client, player: Player = None) -> None:
-        self.bot: Client = bot
+class PlayerPlaceholder:
+    def __init__(self, bot: commands.Bot, player: Player = None) -> None:
+        self.bot: commands.Bot = bot
         self.player: Player = player
 
         self.variables = {
@@ -67,7 +70,7 @@ class Placeholders:
             "loop_mode": self.loop_mode,
             "default_embed_color": self.default_embed_color,
             "bot_icon": self.bot_icon,
-            "server_invite_link": func.settings.invite_link,
+            "server_invite_link": Config().invite_link,
             "invite_link": f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=2184260928&scope=bot%20applications.commands"
         }
 
@@ -97,7 +100,7 @@ class Placeholders:
 
     @ensure_track
     def track_duration(self, track: Track) -> str:
-        return self.player.get_msg("live") if track.is_stream else func.time(track.length)
+        return self.player.get_msg("common.status.live") if track.is_stream else format_ms(track.length)
     
     @ensure_track
     def track_requester_id(self, track: Track) -> str:
@@ -117,7 +120,7 @@ class Placeholders:
     
     @ensure_track
     def track_color(self, track: Track) -> int:
-        return int(func.get_source(track.source, "color"), 16)
+        return int(Config().get_source_config(track.source, "color"), 16)
     
     @ensure_track
     def track_source_name(self, track: Track) -> str:
@@ -152,7 +155,7 @@ class Placeholders:
         return self.player.queue.repeat if self.player else "Off"
 
     def default_embed_color(self) -> int:
-        return func.settings.embed_color
+        return Config().embed_color
 
     def bot_icon(self) -> str:
         return self.bot.user.display_avatar.url if self.player else "https://i.imgur.com/dIFBwU7.png"
@@ -197,41 +200,78 @@ class Placeholders:
         text = re.sub(r'@@(.*?)@@', lambda x: str(variables.get(x.group(1), '')), text)
         return text
     
-def build_embed(embed_form: dict[str, dict], placeholder: Placeholders) -> Embed:
-    embed = Embed()
-    try:
-        rv = {key: func() if callable(func) else func for key, func in placeholder.variables.items()}
-        if author := embed_form.get("author"):
-            embed.set_author(
-                name = placeholder.replace(author.get("name"), rv),
-                url = placeholder.replace(author.get("url"), rv),
-                icon_url = placeholder.replace(author.get("icon_url"), rv)
-            )
-        
-        if title := embed_form.get("title"):
-            embed.title = placeholder.replace(title.get("name"), rv)
-            embed.url = placeholder.replace(title.get("url"), rv)
+    @classmethod
+    def build_embed(cls, embed_form: dict[str, dict], placeholder: PlayerPlaceholder) -> discord.Embed:
+        embed = discord.Embed()
+        try:
+            rv = {key: func() if callable(func) else func for key, func in placeholder.variables.items()}
+            if author := embed_form.get("author"):
+                embed.set_author(
+                    name = placeholder.replace(author.get("name"), rv),
+                    url = placeholder.replace(author.get("url"), rv),
+                    icon_url = placeholder.replace(author.get("icon_url"), rv)
+                )
+            
+            if title := embed_form.get("title"):
+                embed.title = placeholder.replace(title.get("name"), rv)
+                embed.url = placeholder.replace(title.get("url"), rv)
 
-        if fields := embed_form.get("fields", []):
-            for f in fields:
-                embed.add_field(name=placeholder.replace(f.get("name"), rv), value=placeholder.replace(f.get("value", ""), rv), inline=f.get("inline", False))
+            if fields := embed_form.get("fields", []):
+                for f in fields:
+                    embed.add_field(name=placeholder.replace(f.get("name"), rv), value=placeholder.replace(f.get("value", ""), rv), inline=f.get("inline", False))
 
-        if footer := embed_form.get("footer"):
-            embed.set_footer(
-                text = placeholder.replace(footer.get("text"), rv),
-                icon_url = placeholder.replace(footer.get("icon_url"), rv)
-            ) 
+            if footer := embed_form.get("footer"):
+                embed.set_footer(
+                    text = placeholder.replace(footer.get("text"), rv),
+                    icon_url = placeholder.replace(footer.get("icon_url"), rv)
+                ) 
 
-        if thumbnail := embed_form.get("thumbnail"):
-            embed.set_thumbnail(url = placeholder.replace(thumbnail, rv))
-        
-        if image := embed_form.get("image"):
-            embed.set_image(url = placeholder.replace(image, rv))
+            if thumbnail := embed_form.get("thumbnail"):
+                embed.set_thumbnail(url = placeholder.replace(thumbnail, rv))
+            
+            if image := embed_form.get("image"):
+                embed.set_image(url = placeholder.replace(image, rv))
 
-        embed.description = placeholder.replace(embed_form.get("description"), rv)
-        embed.color = int(placeholder.replace(embed_form.get("color"), rv))
+            embed.description = placeholder.replace(embed_form.get("description"), rv)
+            embed.color = int(placeholder.replace(embed_form.get("color"), rv))
 
-    except:
-        pass
+        except:
+            pass
 
-    return embed
+        return embed
+
+class BotPlaceholder:
+    def __init__(self, bot: commands.Bot) -> None:
+        self.bot = bot
+        self.variables = {
+            "guilds": self.guilds_count,
+            "users": self.users_count,
+            "players": self.players_count,
+            "nodes": self.nodes_count
+        }
+    
+    def guilds_count(self) -> int:
+        return len(self.bot.guilds)
+    
+    def users_count(self) -> int:
+        return len(self.bot.users)
+    
+    def players_count(self) -> int:
+        count = 0
+        for node in NodePool._nodes.values():
+            count += len(node._players)
+
+        return count
+    
+    def nodes_count(self):
+        return len(NodePool._nodes)
+    
+    def replace(self, msg: str) -> str:
+        keys: List[str] = re.findall(r'@@(.*?)@@', msg)
+
+        for key in keys:
+            value = self.variables.get(key.lower(), None)
+            if value:
+                msg = msg.replace(f"@@{key}@@", str(value()))
+
+        return msg

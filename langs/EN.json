@@ -1,172 +1,262 @@
 {
-    "unknownException": "⚠️ Something wrong while running the command! Please try again later or join our discord server for further support.",
-    "enabled": "enabled",
-    "disabled": "disabled",
-    "nodeReconnect": "Please try again! After the node reconnects.",
-    "noChannel": "No voice channel to connect. Please either provide one or join one.",
-    "alreadyConnected": "Already connected to a voice channel.",
-    "noPermission": "Sorry! i don't have permissions to join or speak in your voice channel.",
-    "noCreatePermission": "Sorry! i don't have permissions to create a song requesting channel.",
-    "noPlaySource": "Can't find any playable sources!",
-    "noPlayer": "No player has been found on this server.",
-    "notVote": "This command requires your vote! Type `/vote` for more info.",
-    "missingIntents": "Sorry, this command cannot be executed because the bot is missing the required request intent: `({0})`.",
-    "languageNotFound": "No language pack found! please select an existing language pack.",
-    "changedLanguage": "Successfully changed to `{0}` language pack.",
-    "setPrefix": "Done! My prefix in your server is now `{0}`. Try running `{1}ping` to test it out.",
-    "setDJ": "Set the dj to {0}.",
-    "setQueue": "Set queue mode to `{0}`.",
-    "247": "24/7 mode is now `{0}`.",
-    "bypassVote": "You have `{0}` voting system.",
-    "setVolume": "Set the volume to `{0}`%",
-    "toggleController": "You now have `{0}` the music controller.",
-    "toggleDuplicateTrack": "You have now `{0}` duplicate track prevention.",
-    "toggleControllerMsg": "You now have `{0}` messages from the music controller.",
-    "toggleSilentMsg": "You have {0} silent messaging.",
-    "settingsMenu": "Server Settings | {0}",
-    "settingsTitle": "❤️ Basic Info:",
-    "settingsValue": "```Prefix: {0}\nLanguage: {1}\nMusic Controller: {2}\nDJ Role: @{3}\nVote Bypass: {4}\n24/7: {5}\nDefault Volume: {6}%\nPlay Time: {7}```",
-    "settingsTitle2": "🔗 Queue info:",
-    "settingsValue2": "```Queue Mode: {0}\nMax Song: {1}\nDuplicate Track: {2}```",
-    "settingsTitle3": "🎤 Voice Status Info:",
-    "settingsPermTitle": "✨ Permissions:",
-    "settingsPermValue": "```{0} Administrator\n{1} Manage_Guild\n{2} Manage_Channel\n{3} Manage_Messages```",
-    "pingTitle1": "Bot Info:",
-    "pingTitle2": "Player Info:",
-    "pingField1": "```Shard ID: {0}/{1}\nShard Latency: {2:.3f}s {3}\nRegion: {4}```",
-    "pingField2": "```Node: {0} - {1:.3f}s\nPlayers: {2}\nVoice Region: {3}```",
-    "addEffect": "Applied the `{0}` effect.",
-    "clearEffect": "The sound effects have been cleared!",
-    "filterTagAlreadyInUse": "This sound effect is already in use! Please use /cleareffect <Tag> to remove it.",
-    "playlistViewTitle": "📜 All of {0}'s Playlists",
-    "playlistViewHeaders": "ID:,Time:,Name:,Tracks:",
-    "playlistFooter": "Type /playlist play [playlist] to add a playlist the into the queue.",
-    "playlistNotFound": "Playlist [`{0}`] not found. Type /playlist view to view all your playlist.",
-    "playlistNotAccess": "Sorry! You are not allowed to access this playlist!",
-    "playlistNoTrack": "Sorry! There are no tracks in the playlist [`{0}`].",
-    "playlistNotAllow": "This command is not allowed on linked and shared playlists.",
-    "playlistPlay": "Added the playlist [`{0}`] with `{1}` songs to the queue.",
-    "playlistOverText": "Sorry! The name of the playlist cannot exceed 10 characters.",
-    "playlistSameName": "Sorry! Please select a new name for the playlist.",
-    "playlistDeleteError": "You are not allowed to delete the default playlist.",
-    "playlistRemove": "You have removed playlist [`{0}`].",
-    "playlistSendErrorPlayer": "Sorry! You are not able to send an invitation to yourself.",
-    "playlistSendErrorBot": "Sorry! You are not able to send an invitation to a bot.",
-    "playlistBelongs": "Sorry! This playlist belongs to <@{0}>.",
-    "playlistShare": "Sorry! This playlist has been shared with {0}.",
-    "playlistSent": "Sorry! You have already sent an invitation to that user before.",
-    "noPlaylistAcc": "{0} didn't create a playlist account.",
-    "overPlaylistCreation": "You cannot create more than `{0}` playlists!",
-    "playlistExists": "Playlist [`{0}`] already exists.",
-    "playlistNotInvalidUrl": "Please enter a valid public spotify or youtube playlist link.",
-    "playlistCreated": "You have created `{0}` playlist. Type /playlist view for more info.",
-    "playlistRenamed": "You have renamed `{0}` to `{1}`.",
-    "playlistLimitTrack": "You have reached the limit! You can only add `{0}` songs to your playlist.",
-    "playlistPlaylistLink": "You are not allowed to use playlist links.",
-    "playlistStream": "You are not allowed to add streaming videos to your playlist.",
-    "playlistPositionNotFound": "Can't find position `{0}` from your playlist [`{1}`]!",
-    "playlistRemoved": "👋 Removed **{0}** from {1}'s playlist [`{2}`].",
-    "playlistClear": "You have successfully clear your playlist [`{0}`].",
-    "playlistView": "Playlist Viewer",
-    "playlistViewDesc": "```Name | ID: {0} | {1}\nTotal Tracks: {2}\nOwner: {3}\nType: {4}\n```",
-    "playlistViewPermsValue": "📖 Read: ✓    ✍🏽 Write: {0}    🗑️ Remove: {1}",
-    "playlistViewPermsValue2": "📖 Read: {0}",
-    "playlistViewTrack": "Tracks",
-    "playlistViewPage": "Page: {0}/{1} | Total Duration: {2}",
-    "inboxFull": "Sorry! {0}'s inbox is full.",
-    "inboxNoMsg": "There are no messages in your inbox.",
-    "invitationSent": "Invitation sent to {0}.",
-    "notInChannel": "{0}, you must be in {1} to use voice commands. Please rejoin if you are in voice!",
-    "noTrackPlaying": "There are no songs playing right now",
-    "noTrackFound": "No songs were found with that query! Please provide a valid url.",
-    "noLinkSupport": "Search command does not support links!",
-    "voted": "You have voted!",
-    "missingPosPerm": "Only the DJ or admins may change the position.",
-    "missingModePerm": "Only the DJ or admins may switch loop mode.",
-    "missingQueuePerm": "Only the DJ or admins may remove track from the queue.",
-    "missingAutoPlayPerm": "Only the DJ or admins can enable or disable autoplay mode!",
-    "missingFunctionPerm": "Only DJ or Admin can use this function.",
-    "timeFormatError": "Incorrect time format. Example: 2:42 or 12:39:31",
-    "lyricsNotFound": "Lyrics not found. Type /lyrics <Song Name> <Author> to find the lyrics.",
-    "missingTrackInfo": "Some track details are missing.",
-    "noVoiceChannel": "Voice Channel Not Found!",
-    "playlistAddError": "You are not allowed to add streaming videos to your playlist!",
-    "playlistAddError2": "There was a problem adding tracks to the playlist!",
-    "playlistLimited": "You have reached the limit! You can only add {0} songs to your playlist.",
-    "playlistRepeated": "This track is already in your playlist!",
-    "playlistAdded": "❤️ Added **{0}** into {1}'s playlist [`{2}`]!",
-    "playerDropdown": "Select a song to skip to ...",
-    "playerFilter": "Select a filter to apply ...",
-    "buttonBack": "Back",
-    "buttonPause": "Pause",
-    "buttonResume": "Resume",
-    "buttonSkip": "Skip",
-    "buttonLeave": "Leave",
-    "buttonLoop": "Loop",
-    "buttonVolumeUp": "Volume Up",
-    "buttonVolumeDown": "Volume Down",
-    "buttonVolumeMute": "Mute",
-    "buttonVolumeUnmute": "Unmute",
-    "buttonAutoPlay": "Autoplay",
-    "buttonShuffle": "Shuffle",
-    "buttonForward": "Forward",
-    "buttonRewind": "Rewind",
-    "buttonLyrics": "Lyrics",
-    "nowplayingDesc": "**Now Playing:**\n```{0}```",
-    "nowplayingField": "Up Next:",
-    "nowplayingLink": "Listen on {0}",
-    "connect": "Connected to {0}",
-    "live": "LIVE",
-    "playlistLoad": " 🎶 Added the playlist **{0}** with `{1}` songs to the queue.",
-    "trackLoad": "Added **[{0}](<{1}>)** by **{2}** (`{3}`) to begin playing.\n",
-    "trackLoad_pos": "Added **[{0}](<{1}>)** by **{2}** (`{3}`) to the queue at position **{4}**\n",
-    "searchTitle": "Search Query: {0}",
-    "searchDesc": "➥ Platform: {0} **{1}**\n➥ Results: **{2}**\n\n{3}",
-    "searchWait": "Select the song you want to add to the queue.",
-    "searchTimeout": "Search timed out. Please try again later.",
-    "searchSuccess": "Song added to the queue.",
-    "queueTitle": "Upcoming Queue:",
-    "historyTitle": "History Queue:",
-    "viewTitle": "Music Queue",
-    "viewDesc": "**Now Playing: [Click Me]({0}) ⮯**\n{1}",
-    "viewFooter": "Page: {0}/{1} | Total Duration: {2}",
-    "pauseError": "The player is already paused.",
-    "pauseVote": "{0} has voted to pause the song. [{1}/{2}]",
-    "paused": "`{0}` has paused the player.",
-    "resumeError": "The player is not paused.",
-    "resumeVote": "{0} has voted to resume the song. [{1}/{2}]",
-    "resumed": "`{0}` has resumed the player.",
-    "shuffleError": "Add more songs to the queue before shuffling.",
-    "shuffleVote": "{0} has voted to shuffle the queue. [{1}/{2}]",
-    "shuffled": "The queue is shuffled.",
-    "skipError": "There are no songs too skip to.",
-    "skipVote": "{0} has voted to skip the song. [{1}/{2}]",
-    "skipped": "`{0}` has skipped the song.",
-    "backVote": "{0} has voted to skip to the previous song. [{1}/{2}]",
-    "backed": "`{0}` has skipping to previous song.",
-    "leaveVote": "{0} has voted to stop the player. [{1}/{2}]",
-    "left": "`{0}` has stopped the player.",
-    "seek": "Set the player to **{0}**",
-    "repeat": "The repeat mode has been set to `{0}`",
-    "cleared": "Cleared all tracks in the `{0}`",
-    "removed": "`{0}` tracks were removed from the queue.",
-    "forward": "Forward the player to **{0}**",
-    "rewind": "Rewound the player to **{0}**",
-    "replay": "Replaying the current song.",
-    "swapped": "`{0}` and `{1}` have been swapped",
-    "moved": "Moved `{0}` to `{1}`",
-    "autoplay": "Autoplay mode is now **{0}**",
-    "notdj": "You are not DJ. The current DJ is {0}.",
-    "djToMe": "You cannot transfer role of DJ to yourself or a bot.",
-    "djNotInChannel": "`{0}` is not in the voice channel.",
-    "djswap": "You have transferred the role of dj to `{0}`.",
-    "voicelinkQueueFull": "Sorry, you have reached the maximum of `{0}` tracks in the queue!",
-    "voicelinkOutofList": "Please provide a valid track index!",
-    "voicelinkDuplicateTrack": "Sorry, this track is already in the queue.",
-    "decodeError": "Something went wrong while decoding the file!",
-    "invalidStartTime": "Invalid start time, it must be between `00:00` and `{0}`",
-    "invalidEndTime": "Invalid end time, it must be between `00:00` and `{0}`",
-    "invalidTimeOrder": "End time cannot be less than or equal to start time",
-    "setStageAnnounceTemplate": "Done! From now on, voice status like the one you're in now will be named according to your template. You should see it update in a few seconds.",
-    "createSongRequestChannel": "A song request channel ({0}) has been created! You can start requesting any song by name or URL in that channel, without needing to use the bot prefix."
+    "common": {
+        "errors": {
+            "unknown": "⚠️ Something wrong while running the command! Please try again later or join our discord server for further support.",
+            "missingIntents": "Sorry, this command cannot be executed because the bot is missing the required request intent: `({0})`."
+        },
+        "status": {
+            "enabled": "enabled",
+            "disabled": "disabled",
+            "live": "LIVE"
+        }
+    },
+    "player": {
+        "errors": {
+            "nodeReconnect": "Please try again! After the node reconnects.",
+            "noPlaySource": "Can't find any playable sources!",
+            "noPlayer": "No player has been found on this server.",
+            "noTrackPlaying": "There are no songs playing right now",
+            "noTrackFound": "No songs were found with that query! Please provide a valid url."
+        },
+        "dropdown": {
+            "trackSelect": "Select a song to skip to ...",
+            "filterSelect": "Select a filter to apply ..."
+        },
+        "buttons": {
+            "back": "Back",
+            "pause": "Pause",
+            "resume": "Resume",
+            "skip": "Skip",
+            "leave": "Leave",
+            "loop": "Loop",
+            "volumeUp": "Volume Up",
+            "volumeDown": "Volume Down",
+            "volumeMute": "Mute",
+            "volumeUnmute": "Unmute",
+            "autoPlay": "Autoplay",
+            "shuffle": "Shuffle",
+            "forward": "Forward",
+            "rewind": "Rewind",
+            "lyrics": "Lyrics"
+        },
+        "playback": {
+            "nowplayingDesc": "**Now Playing:**\n```{0}```",
+            "nowplayingField": "Up Next:",
+            "nowplayingLink": "Listen on {0}",
+            "playlistLoad": " 🎶 Added the playlist **{0}** with `{1}` songs to the queue.",
+            "trackLoad": "Added **[{0}](<{1}>)** by **{2}** (`{3}`) to begin playing.\n",
+            "trackLoadPos": "Added **[{0}](<{1}>)** by **{2}** (`{3}`) to the queue at position **{4}**\n"
+        },
+        "controls": {
+            "pause": {
+                "error": "The player is already paused.",
+                "vote": "{0} has voted to pause the song. [{1}/{2}]",
+                "success": "`{0}` has paused the player."
+            },
+            "resume": {
+                "error": "The player is not paused.",
+                "vote": "{0} has voted to resume the song. [{1}/{2}]",
+                "success": "`{0}` has resumed the player."
+            },
+            "shuffle": {
+                "error": "Add more songs to the queue before shuffling.",
+                "vote": "{0} has voted to shuffle the queue. [{1}/{2}]",
+                "success": "The queue is shuffled."
+            },
+            "skip": {
+                "error": "There are no songs too skip to.",
+                "vote": "{0} has voted to skip the song. [{1}/{2}]",
+                "success": "`{0}` has skipped the song."
+            },
+            "back": {
+                "vote": "{0} has voted to skip to the previous song. [{1}/{2}]",
+                "success": "`{0}` has skipping to previous song."
+            },
+            "leave": {
+                "vote": "{0} has voted to stop the player. [{1}/{2}]",
+                "success": "`{0}` has stopped the player."
+            },
+            "seek": "Set the player to **{0}**",
+            "repeat": "The repeat mode has been set to `{0}`",
+            "forward": "Forward the player to **{0}**",
+            "rewind": "Rewound the player to **{0}**",
+            "replay": "Replaying the current song.",
+            "autoplay": "Autoplay mode is now **{0}**"
+        }
+    },
+    "voice": {
+        "connection": {
+            "noChannel": "No voice channel to connect. Please either provide one or join one.",
+            "alreadyConnected": "Already connected to a voice channel.",
+            "noPermission": "Sorry! i don't have permissions to join or speak in your voice channel.",
+            "notInChannel": "{0}, you must be in {1} to use voice commands. Please rejoin if you are in voice!",
+            "connect": "Connected to {0}"
+        },
+        "stageChannel": {
+            "setAnnounceTemplate": "Done! From now on, voice status like the one you're in now will be named according to your template. You should see it update in a few seconds."
+        }
+    },
+    "permissions": {
+        "noCreatePermission": "Sorry! i don't have permissions to create a song requesting channel.",
+        "missingPosition": "Only the DJ or admins may change the position.",
+        "missingMode": "Only the DJ or admins may switch loop mode.",
+        "missingQueue": "Only the DJ or admins may remove track from the queue.",
+        "missingAutoPlay": "Only the DJ or admins can enable or disable autoplay mode!",
+        "missingFunction": "Only DJ or Admin can use this function.",
+        "notDj": "You are not DJ. The current DJ is {0}.",
+        "djToSelf": "You cannot transfer role of DJ to yourself or a bot.",
+        "djNotInChannel": "`{0}` is not in the voice channel.",
+        "djSwapped": "You have transferred the role of dj to `{0}`."
+    },
+    "settings": {
+        "actions": {
+            "languageNotFound": "No language pack found! please select an existing language pack.",
+            "languageChanged": "Successfully changed to `{0}` language pack.",
+            "prefixSet": "Done! My prefix in your server is now `{0}`. Try running `{1}ping` to test it out.",
+            "djSet": "Set the dj to {0}.",
+            "queueModeSet": "Set queue mode to `{0}`.",
+            "mode247": "24/7 mode is now `{0}`.",
+            "bypassVote": "You have `{0}` voting system.",
+            "volumeSet": "Set the volume to `{0}`%",
+            "controllerToggled": "You now have `{0}` the music controller.",
+            "duplicateTrackToggled": "You have now `{0}` duplicate track prevention.",
+            "controllerMsgToggled": "You now have `{0}` messages from the music controller.",
+            "silentMsgToggled": "You have {0} silent messaging."
+        },
+        "menu": "Server Settings | {0}",
+        "basic": {
+            "title": "❤️ Basic Info:",
+            "value": "```Prefix: {0}\nLanguage: {1}\nMusic Controller: {2}\nDJ Role: @{3}\nVote Bypass: {4}\n24/7: {5}\nDefault Volume: {6}%\nPlay Time: {7}```"
+        },
+        "queue": {
+            "title": "🔗 Queue info:",
+            "value": "```Queue Mode: {0}\nMax Song: {1}\nDuplicate Track: {2}```"
+        },
+        "voice": {
+            "title": "🎤 Voice Status Info:"
+        },
+        "permissions": {
+            "title": "✨ Permissions:",
+            "value": "```{0} Administrator\n{1} Manage_Guild\n{2} Manage_Channel\n{3} Manage_Messages```"
+        }
+    },
+    "ping": {
+        "title1": "Bot Info:",
+        "title2": "Player Info:",
+        "field1": "```Shard ID: {0}/{1}\nShard Latency: {2:.3f}s {3}\nRegion: {4}```",
+        "field2": "```Node: {0} - {1:.3f}s\nPlayers: {2}\nVoice Region: {3}```"
+    },
+    "effects": {
+        "added": "Applied the `{0}` effect.",
+        "cleared": "The sound effects have been cleared!",
+        "tagInUse": "This sound effect is already in use! Please use /cleareffect <Tag> to remove it."
+    },
+    "playlist": {
+        "view": {
+            "title": "All of {0}'s Playlists",
+            "headers": "ID:,Time:,Name:,Tracks:",
+            "footer": "Type /playlist play [playlist] to add a playlist the into the queue.",
+            "detailTitle": "Playlist Viewer",
+            "detailDesc": "```Name: {0} [{1}]\nTotal Tracks: {2}\nOwner: {3}\nType: {4}\n```",
+            "permsValue": "📖 Read: ✓    ✍🏽 Write: {0}    🗑️ Remove: {1}",
+            "permsValue2": "📖 Read: {0}",
+            "trackList": "Tracks",
+            "footer2": "Total Duration: {0}",
+            "playlistSelect": "Select a playlist to view ..."
+        },
+        "errors": {
+            "notFound": "Playlist [`{0}`] not found. Type /playlist view to view all your playlist.",
+            "noAccess": "Sorry! You are not allowed to access this playlist!",
+            "noTrack": "Sorry! There are no tracks in the playlist [`{0}`].",
+            "notAllowed": "This command is not allowed on linked and shared playlists.",
+            "nameOverLimit": "Sorry! The name of the playlist cannot exceed 10 characters.",
+            "sameName": "Sorry! Please select a new name for the playlist.",
+            "deleteDefault": "You are not allowed to delete the default playlist.",
+            "limitReached": "You cannot create more than `{0}` playlists!",
+            "exists": "Playlist [`{0}`] already exists.",
+            "invalidUrl": "Please enter a valid public spotify or youtube playlist link.",
+            "trackLimitReached": "You have reached the limit! You can only add `{0}` songs to your playlist.",
+            "playlistLinkNotAllowed": "You are not allowed to use playlist links.",
+            "streamNotAllowed": "You are not allowed to add streaming videos to your playlist.",
+            "positionNotFound": "Can't find position `{0}` from your playlist [`{1}`]!",
+            "streaming": "You are not allowed to add streaming videos to your playlist!",
+            "track": "There was a problem adding tracks to the playlist!",
+            "trackLimited": "You have reached the limit! You can only add {0} songs to your playlist.",
+            "trackRepeated": "This track is already in your playlist!"
+        },
+        "actions": {
+            "play": "Added the playlist [`{0}`] with `{1}` songs to the queue.",
+            "removed": "You have removed playlist [`{0}`].",
+            "created": "You have created `{0}` playlist. Type /playlist view for more info.",
+            "renamed": "You have renamed `{0}` to `{1}`.",
+            "trackRemoved": "👋 Removed **{0}** from {1}'s playlist [`{2}`].",
+            "cleared": "You have successfully clear your playlist [`{0}`].",
+            "trackAdded": "❤️ Added **{0}** into {1}'s playlist [`{2}`]!"
+        },
+        "sharing": {
+            "sendErrorPlayer": "Sorry! You are not able to send an invitation to yourself.",
+            "sendErrorBot": "Sorry! You are not able to send an invitation to a bot.",
+            "belongs": "Sorry! This playlist belongs to <@{0}>.",
+            "alreadyShared": "Sorry! This playlist has been shared with {0}.",
+            "alreadySent": "Sorry! You have already sent an invitation to that user before.",
+            "noAccount": "{0} didn't create a playlist account.",
+            "invitationSent": "Invitation sent to {0}."
+        },
+        "inbox": {
+            "full": "Sorry! {0}'s inbox is full.",
+            "noMessages": "There are no messages in your inbox."
+        }
+    },
+    "search": {
+        "noLinkSupport": "Search command does not support links!",
+        "title": "Search Query: {0}",
+        "desc": "➥ Platform: {0} **{1}**\n➥ Results: **{2}**\n\n{3}",
+        "wait": "Select the song you want to add to the queue.",
+        "success": "Song added to the queue."
+    },
+    "voting": {
+        "voted": "You have voted!"
+    },
+    "time": {
+        "formatError": "Incorrect time format. Example: 2:42 or 12:39:31",
+        "invalidStartTime": "Invalid start time, it must be between `00:00` and `{0}`",
+        "invalidEndTime": "Invalid end time, it must be between `00:00` and `{0}`"
+    },
+    "lyrics": {
+        "notFound": "Lyrics not found. Type /lyrics <Song Name> <Author> to find the lyrics."
+    },
+    "queue": {
+        "management": {
+            "title": "Upcoming Queue:",
+            "cleared": "Cleared all tracks in the `{0}`",
+            "removed": "`{0}` tracks were removed from the queue.",
+            "swapped": "`{0}` and `{1}` have been swapped",
+            "moved": "Moved `{0}` to `{1}`"
+        },
+        "view": {
+            "historyTitle": "History Queue:",
+            "title": "Music Queue",
+            "desc": "**Now Playing: [Click Me]({0}) ⮯**\n{1}"
+        },
+        "errors": {
+            "queueFull": "Sorry, you have reached the maximum of `{0}` tracks in the queue!",
+            "outOfList": "Please provide a valid track index!",
+            "duplicateTrack": "Sorry, this track is already in the queue."
+        }
+    },
+    "songRequest": {
+        "channelCreated": "A song request channel ({0}) has been created! You can start requesting any song by name or URL in that channel, without needing to use the bot prefix."
+    },
+    "pagination": {
+        "prev": "Prev",
+        "next": "Next",
+        "play": "Play",
+        "share": "Share",
+        "export": "Export",
+        "delete": "Delete",
+        "page": {
+            "title": "Enter Page Number",
+            "field": "Page Number"
+        }
+    }
 }

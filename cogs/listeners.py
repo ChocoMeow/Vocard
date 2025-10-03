@@ -29,6 +29,9 @@ import function as func
 
 from discord.ext import commands
 
+from voicelink import MongoDBHandler, Config
+from voicelink.utils import TempCtx
+
 class Listeners(commands.Cog):
     """Music Cog."""
 
@@ -41,20 +44,16 @@ class Listeners(commands.Cog):
         
     async def start_nodes(self) -> None:
         """Connect and intiate nodes."""
-        for n in func.settings.nodes.values():
+        for n in Config().nodes.values():
             try:
-                await self.voicelink.create_node(
-                    bot=self.bot,
-                    logger=func.logger,
-                    **n
-                )
+                await self.voicelink.create_node(bot=self.bot, **n)
             except Exception as e:
                 func.logger.error(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
 
     async def restore_last_session_players(self) -> None:
         """Re-establish connections for players from the last session."""
         await self.bot.wait_until_ready()
-        players = func.open_json(func.LAST_SESSION_FILE_NAME)
+        players = func.open_json(Config.LAST_SESSION_FILE_DIR)
         if not players:
             return
 
@@ -75,11 +74,11 @@ class Listeners(commands.Cog):
                     continue
 
                 # Get the guild settings
-                settings = await func.get_settings(channel.guild.id)
+                settings = await MongoDBHandler.get_settings(channel.guild.id)
 
                 # Connect to the channel and initialize the player.
                 player: voicelink.Player = await channel.connect(
-                    cls=voicelink.Player(self.bot, channel, func.TempCtx(dj_member, channel), settings)
+                    cls=voicelink.Player(self.bot, channel, TempCtx(dj_member, channel), settings)
                 )
 
                 # Restore the queue.
@@ -89,7 +88,7 @@ class Listeners(commands.Cog):
                     if not track_id:
                         continue
 
-                    decoded_track = voicelink.decode(track_id)
+                    decoded_track = voicelink.Track.decode(track_id)
                     requester = channel.guild.get_member(track_data.get("requester_id"))
                     track = voicelink.Track(track_id=track_id, info=decoded_track, requester=requester)
                     player.queue._queue.append(track)
@@ -125,12 +124,11 @@ class Listeners(commands.Cog):
 
         # Delete the last session file if it exists.
         try:
-            file_path = os.path.join(func.ROOT_DIR, func.LAST_SESSION_FILE_NAME)
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            if os.path.exists(Config.LAST_SESSION_FILE_DIR):
+                os.remove(Config.LAST_SESSION_FILE_DIR)
 
         except Exception as del_error:
-            func.logger.error("Failed to remove session file: %s", file_path, exc_info=del_error)
+            func.logger.error("Failed to remove session file: %s", Config.LAST_SESSION_FILE_DIR, exc_info=del_error)
 
     @commands.Cog.listener()
     async def on_voicelink_track_end(self, player: voicelink.Player, track, _):
@@ -178,8 +176,8 @@ class Listeners(commands.Cog):
             if player.is_paused and len([m for m in player.channel.members if not m.bot]) == 1:
                 await player.set_pause(False, member)
                   
-        if self.bot.ipc._is_connected:
-            await self.bot.ipc.send({
+        if player.is_ipc_connected:
+            await player._ipc_client.send({
                 "op": "updateGuild",
                 "user": {
                     "userId": str(member.id),

@@ -1,172 +1,262 @@
 {
-    "unknownException": "⚠️ Đã xảy ra lỗi khi chạy lệnh! Vui lòng thử lại sau hoặc vào server Discord của chúng tôi để được hỗ trợ.",
-    "enabled": "đã bật",
-    "disabled": "đã tắt",
-    "nodeReconnect": "Vui lòng thử lại! Sau khi node kết nối lại.",
-    "noChannel": "Không có kênh voice để kết nối. Vui lòng cung cấp một kênh hoặc tham gia một kênh.",
-    "alreadyConnected": "Đã kết nối với kênh voice.",
-    "noPermission": "Xin lỗi! Tôi không có quyền tham gia hoặc nói trong kênh voice của bạn.",
-    "noCreatePermission": "Xin lỗi! Tôi không có quyền tạo kênh yêu cầu bài hát.",
-    "noPlaySource": "Không thể tìm thấy nguồn phát nào!",
-    "noPlayer": "Không tìm thấy trình phát nào trên máy chủ này.",
-    "notVote": "Lệnh này yêu cầu bạn bình chọn! Gõ `/vote` để biết thêm thông tin.",
-    "missingIntents": "Xin lỗi, lệnh này không thể thực hiện vì bot thiếu quyền yêu cầu cần thiết: `({0})`.",
-    "languageNotFound": "Không tìm thấy gói ngôn ngữ! Vui lòng chọn một gói ngôn ngữ hiện có.",
-    "changedLanguage": "Đã thay đổi thành công sang gói ngôn ngữ `{0}`.",
-    "setPrefix": "Hoàn thành! Tiền tố của tôi trong máy chủ của bạn bây giờ là `{0}`. Thử chạy `{1}ping` để kiểm tra.",
-    "setDJ": "Đặt DJ thành {0}.",
-    "setQueue": "Đặt chế độ hàng đợi thành `{0}`.",
-    "247": "Chế độ 24/7 bây giờ là `{0}`.",
-    "bypassVote": "Bạn có hệ thống bình chọn `{0}`.",
-    "setVolume": "Đặt âm lượng thành `{0}`%",
-    "toggleController": "Bây giờ bạn đã `{0}` bộ điều khiển nhạc.",
-    "toggleDuplicateTrack": "Bây giờ bạn đã `{0}` tính năng ngăn chặn bài hát trùng lặp.",
-    "toggleControllerMsg": "Bây giờ bạn đã `{0}` tin nhắn từ bộ điều khiển nhạc.",
-    "toggleSilentMsg": "Bạn có {0} tin nhắn im lặng.",
-    "settingsMenu": "Cài Đặt Máy Chủ | {0}",
-    "settingsTitle": "❤️ Thông Tin Cơ Bản:",
-    "settingsValue": "```Tiền tố: {0}\nNgôn ngữ: {1}\nBộ Điều Khiển Nhạc: {2}\nVai Trò DJ: @{3}\nBỏ Qua Bình Chọn: {4}\n24/7: {5}\nÂm Lượng Mặc Định: {6}%\nThời Gian Phát: {7}```",
-    "settingsTitle2": "🔗 Thông tin hàng đợi:",
-    "settingsValue2": "```Chế Độ Hàng Đợi: {0}\nSố Bài Tối Đa: {1}\nBài Hát Trùng Lặp: {2}```",
-    "settingsTitle3": "🎤 Thông Tin Trạng Thái Voice:",
-    "settingsPermTitle": "✨ Quyền hạn:",
-    "settingsPermValue": "```{0} Quản Trị Viên\n{1} Quản_Lý_Guild\n{2} Quản_Lý_Kênh\n{3} Quản_Lý_Tin_Nhắn```",
-    "pingTitle1": "Thông Tin Bot:",
-    "pingTitle2": "Thông Tin Trình Phát:",
-    "pingField1": "```ID Shard: {0}/{1}\nĐộ Trễ Shard: {2:.3f}s {3}\nKhu Vực: {4}```",
-    "pingField2": "```Node: {0} - {1:.3f}s\nTrình Phát: {2}\nKhu Vực Voice: {3}```",
-    "addEffect": "Đã áp dụng hiệu ứng `{0}`.",
-    "clearEffect": "Các hiệu ứng âm thanh đã được xóa!",
-    "filterTagAlreadyInUse": "Hiệu ứng âm thanh này đã được sử dụng! Vui lòng sử dụng /cleareffect <Tag> để xóa nó.",
-    "playlistViewTitle": "📜 Tất Cả Playlist Của {0}",
-    "playlistViewHeaders": "ID:,Thời Gian:,Tên:,Bài Hát:",
-    "playlistFooter": "Gõ /playlist play [playlist] để thêm playlist vào hàng đợi.",
-    "playlistNotFound": "Không tìm thấy playlist [`{0}`]. Gõ /playlist view để xem tất cả playlist của bạn.",
-    "playlistNotAccess": "Xin lỗi! Bạn không được phép truy cập playlist này!",
-    "playlistNoTrack": "Xin lỗi! Không có bài hát nào trong playlist [`{0}`].",
-    "playlistNotAllow": "Lệnh này không được phép trên playlist được liên kết và chia sẻ.",
-    "playlistPlay": "Đã thêm playlist [`{0}`] với `{1}` bài hát vào hàng đợi.",
-    "playlistOverText": "Xin lỗi! Tên playlist không thể vượt quá 10 ký tự.",
-    "playlistSameName": "Xin lỗi! Vui lòng chọn tên mới cho playlist.",
-    "playlistDeleteError": "Bạn không được phép xóa playlist mặc định.",
-    "playlistRemove": "Bạn đã xóa playlist [`{0}`].",
-    "playlistSendErrorPlayer": "Xin lỗi! Bạn không thể gửi lời mời cho chính mình.",
-    "playlistSendErrorBot": "Xin lỗi! Bạn không thể gửi lời mời cho một bot.",
-    "playlistBelongs": "Xin lỗi! Playlist này thuộc về <@{0}>.",
-    "playlistShare": "Xin lỗi! Playlist này đã được chia sẻ với {0}.",
-    "playlistSent": "Xin lỗi! Bạn đã gửi lời mời cho người dùng đó trước đó rồi.",
-    "noPlaylistAcc": "{0} không tạo tài khoản playlist.",
-    "overPlaylistCreation": "Bạn không thể tạo nhiều hơn `{0}` playlist!",
-    "playlistExists": "Playlist [`{0}`] đã tồn tại.",
-    "playlistNotInvalidUrl": "Vui lòng nhập liên kết playlist Spotify hoặc Youtube công khai hợp lệ.",
-    "playlistCreated": "Bạn đã tạo playlist `{0}`. Gõ /playlist view để biết thêm thông tin.",
-    "playlistRenamed": "Bạn đã đổi tên `{0}` thành `{1}`.",
-    "playlistLimitTrack": "Bạn đã đạt giới hạn! Bạn chỉ có thể thêm `{0}` bài hát vào playlist của mình.",
-    "playlistPlaylistLink": "Bạn không được phép sử dụng liên kết playlist.",
-    "playlistStream": "Bạn không được phép thêm video trực tiếp vào playlist của mình.",
-    "playlistPositionNotFound": "Không thể tìm thấy vị trí `{0}` từ playlist [`{1}`] của bạn!",
-    "playlistRemoved": "👋 Đã xóa **{0}** khỏi playlist [`{2}`] của {1}.",
-    "playlistClear": "Bạn đã xóa thành công playlist [`{0}`] của mình.",
-    "playlistView": "Trình Xem Playlist",
-    "playlistViewDesc": "```Tên | ID: {0} | {1}\nTổng Số Bài Hát: {2}\nChủ Sở Hữu: {3}\nLoại: {4}\n```",
-    "playlistViewPermsValue": "📖 Đọc: ✓    ✍🏽 Viết: {0}    🗑️ Xóa: {1}",
-    "playlistViewPermsValue2": "📖 Đọc: {0}",
-    "playlistViewTrack": "Bài Hát",
-    "playlistViewPage": "Trang: {0}/{1} | Tổng Thời Lượng: {2}",
-    "inboxFull": "Xin lỗi! Hộp thư của {0} đã đầy.",
-    "inboxNoMsg": "Không có tin nhắn nào trong hộp thư của bạn.",
-    "invitationSent": "Đã gửi lời mời đến {0}.",
-    "notInChannel": "{0}, bạn phải ở trong {1} để sử dụng lệnh voice. Vui lòng tham gia lại nếu bạn đang ở trong voice!",
-    "noTrackPlaying": "Hiện tại không có bài hát nào đang phát",
-    "noTrackFound": "Không tìm thấy bài hát nào với truy vấn đó! Vui lòng cung cấp url hợp lệ.",
-    "noLinkSupport": "Lệnh tìm kiếm không hỗ trợ liên kết!",
-    "voted": "Bạn đã bình chọn!",
-    "missingPosPerm": "Chỉ DJ hoặc quản trị viên mới có thể thay đổi vị trí.",
-    "missingModePerm": "Chỉ DJ hoặc quản trị viên mới có thể chuyển chế độ lặp.",
-    "missingQueuePerm": "Chỉ DJ hoặc quản trị viên mới có thể xóa bài hát khỏi hàng đợi.",
-    "missingAutoPlayPerm": "Chỉ DJ hoặc quản trị viên mới có thể bật hoặc tắt chế độ tự động phát!",
-    "missingFunctionPerm": "Chỉ DJ hoặc Admin mới có thể sử dụng chức năng này.",
-    "timeFormatError": "Định dạng thời gian không chính xác. Ví dụ: 2:42 hoặc 12:39:31",
-    "lyricsNotFound": "Không tìm thấy lời bài hát. Gõ /lyrics <Tên Bài Hát> <Tác Giả> để tìm lời bài hát.",
-    "missingTrackInfo": "Một số chi tiết bài hát bị thiếu.",
-    "noVoiceChannel": "Không Tìm Thấy Kênh Voice!",
-    "playlistAddError": "Bạn không được phép thêm video trực tiếp vào playlist của mình!",
-    "playlistAddError2": "Đã xảy ra sự cố khi thêm bài hát vào playlist!",
-    "playlistLimited": "Bạn đã đạt giới hạn! Bạn chỉ có thể thêm {0} bài hát vào playlist của mình.",
-    "playlistRepeated": "Bài hát này đã có trong playlist của bạn!",
-    "playlistAdded": "❤️ Đã thêm **{0}** vào playlist [`{2}`] của {1}!",
-    "playerDropdown": "Chọn một bài hát để bỏ qua đến ...",
-    "playerFilter": "Chọn một bộ lọc để áp dụng ...",
-    "buttonBack": "Quay Lại",
-    "buttonPause": "Tạm Dừng",
-    "buttonResume": "Tiếp Tục",
-    "buttonSkip": "Bỏ Qua",
-    "buttonLeave": "Rời Khỏi",
-    "buttonLoop": "Lặp Lại",
-    "buttonVolumeUp": "Tăng Âm Lượng",
-    "buttonVolumeDown": "Giảm Âm Lượng",
-    "buttonVolumeMute": "Tắt Tiếng",
-    "buttonVolumeUnmute": "Bật Tiếng",
-    "buttonAutoPlay": "Tự Động Phát",
-    "buttonShuffle": "Trộn Bài",
-    "buttonForward": "Tua Tới",
-    "buttonRewind": "Tua Lùi",
-    "buttonLyrics": "Lời Bài Hát",
-    "nowplayingDesc": "**Đang Phát:**\n```{0}```",
-    "nowplayingField": "Tiếp Theo:",
-    "nowplayingLink": "Nghe trên {0}",
-    "connect": "Đã kết nối với {0}",
-    "live": "TRỰC TIẾP",
-    "playlistLoad": " 🎶 Đã thêm playlist **{0}** với `{1}` bài hát vào hàng đợi.",
-    "trackLoad": "Đã thêm **[{0}](<{1}>)** bởi **{2}** (`{3}`) để bắt đầu phát.\n",
-    "trackLoad_pos": "Đã thêm **[{0}](<{1}>)** bởi **{2}** (`{3}`) vào hàng đợi ở vị trí **{4}**\n",
-    "searchTitle": "Truy Vấn Tìm Kiếm: {0}",
-    "searchDesc": "➥ Nền tảng: {0} **{1}**\n➥ Kết quả: **{2}**\n\n{3}",
-    "searchWait": "Chọn bài hát bạn muốn thêm vào hàng đợi.",
-    "searchTimeout": "Tìm kiếm hết thời gian. Vui lòng thử lại sau.",
-    "searchSuccess": "Đã thêm bài hát vào hàng đợi.",
-    "queueTitle": "Hàng Đợi Sắp Tới:",
-    "historyTitle": "Lịch Sử Hàng Đợi:",
-    "viewTitle": "Hàng Đợi Nhạc",
-    "viewDesc": "**Đang Phát: [Nhấp Vào Đây]({0}) ⮯**\n{1}",
-    "viewFooter": "Trang: {0}/{1} | Tổng Thời Lượng: {2}",
-    "pauseError": "Trình phát đã được tạm dừng.",
-    "pauseVote": "{0} đã bình chọn tạm dừng bài hát. [{1}/{2}]",
-    "paused": "`{0}` đã tạm dừng trình phát.",
-    "resumeError": "Trình phát không bị tạm dừng.",
-    "resumeVote": "{0} đã bình chọn tiếp tục bài hát. [{1}/{2}]",
-    "resumed": "`{0}` đã tiếp tục trình phát.",
-    "shuffleError": "Thêm nhiều bài hát vào hàng đợi trước khi trộn bài.",
-    "shuffleVote": "{0} đã bình chọn trộn hàng đợi. [{1}/{2}]",
-    "shuffled": "Hàng đợi đã được trộn.",
-    "skipError": "Không có bài hát nào để bỏ qua.",
-    "skipVote": "{0} đã bình chọn bỏ qua bài hát. [{1}/{2}]",
-    "skipped": "`{0}` đã bỏ qua bài hát.",
-    "backVote": "{0} đã bình chọn quay lại bài hát trước. [{1}/{2}]",
-    "backed": "`{0}` đang quay lại bài hát trước.",
-    "leaveVote": "{0} đã bình chọn dừng trình phát. [{1}/{2}]",
-    "left": "`{0}` đã dừng trình phát.",
-    "seek": "Đặt trình phát thành **{0}**",
-    "repeat": "Chế độ lặp lại đã được đặt thành `{0}`",
-    "cleared": "Đã xóa tất cả bài hát trong `{0}`",
-    "removed": "`{0}` bài hát đã được xóa khỏi hàng đợi.",
-    "forward": "Tua tới trình phát đến **{0}**",
-    "rewind": "Tua lùi trình phát đến **{0}**",
-    "replay": "Phát lại bài hát hiện tại.",
-    "swapped": "`{0}` và `{1}` đã được hoán đổi",
-    "moved": "Đã di chuyển `{0}` đến `{1}`",
-    "autoplay": "Chế độ tự động phát bây giờ là **{0}**",
-    "notdj": "Bạn không phải là DJ. DJ hiện tại là {0}.",
-    "djToMe": "Bạn không thể chuyển vai trò DJ cho chính mình hoặc một bot.",
-    "djNotInChannel": "`{0}` không ở trong kênh voice.",
-    "djswap": "Bạn đã chuyển vai trò DJ cho `{0}`.",
-    "voicelinkQueueFull": "Xin lỗi, bạn đã đạt tối đa `{0}` bài hát trong hàng đợi!",
-    "voicelinkOutofList": "Vui lòng cung cấp chỉ số bài hát hợp lệ!",
-    "voicelinkDuplicateTrack": "Xin lỗi, bài hát này đã có trong hàng đợi.",
-    "decodeError": "Đã xảy ra lỗi khi giải mã tệp!",
-    "invalidStartTime": "Thời gian bắt đầu không hợp lệ, phải nằm giữa `00:00` và `{0}`",
-    "invalidEndTime": "Thời gian kết thúc không hợp lệ, phải nằm giữa `00:00` và `{0}`",
-    "invalidTimeOrder": "Thời gian kết thúc không thể nhỏ hơn hoặc bằng thời gian bắt đầu",
-    "setStageAnnounceTemplate": "Hoàn thành! Từ bây giờ, trạng thái voice như cái bạn đang ở sẽ được đặt tên theo mẫu của bạn. Bạn sẽ thấy nó cập nhật trong vài giây.",
-    "createSongRequestChannel": "Một kênh yêu cầu bài hát ({0}) đã được tạo! Bạn có thể bắt đầu yêu cầu bất kỳ bài hát nào bằng tên hoặc URL trong kênh đó, mà không cần sử dụng tiền tố bot."
+    "common": {
+        "errors": {
+            "unknown": "⚠️ Đã xảy ra lỗi khi chạy lệnh! Vui lòng thử lại sau hoặc vào server Discord của chúng tôi để được hỗ trợ.",
+            "missingIntents": "Xin lỗi, lệnh này không thể thực hiện vì bot thiếu quyền yêu cầu cần thiết: `({0})`."
+        },
+        "status": {
+            "enabled": "đã bật",
+            "disabled": "đã tắt",
+            "live": "TRỰC TIẾP"
+        }
+    },
+    "player": {
+        "errors": {
+            "nodeReconnect": "Vui lòng thử lại! Sau khi node kết nối lại.",
+            "noPlaySource": "Không thể tìm thấy nguồn phát nào!",
+            "noPlayer": "Không tìm thấy trình phát nào trên máy chủ này.",
+            "noTrackPlaying": "Hiện tại không có bài hát nào đang phát",
+            "noTrackFound": "Không tìm thấy bài hát nào với truy vấn đó! Vui lòng cung cấp url hợp lệ."
+        },
+        "dropdown": {
+            "trackSelect": "Chọn một bài hát để bỏ qua đến ...",
+            "filterSelect": "Chọn một bộ lọc để áp dụng ..."
+        },
+        "buttons": {
+            "back": "Quay Lại",
+            "pause": "Tạm Dừng",
+            "resume": "Tiếp Tục",
+            "skip": "Bỏ Qua",
+            "leave": "Rời Khỏi",
+            "loop": "Lặp Lại",
+            "volumeUp": "Tăng Âm Lượng",
+            "volumeDown": "Giảm Âm Lượng",
+            "volumeMute": "Tắt Tiếng",
+            "volumeUnmute": "Bật Tiếng",
+            "autoPlay": "Tự Động Phát",
+            "shuffle": "Trộn Bài",
+            "forward": "Tua Tới",
+            "rewind": "Tua Lùi",
+            "lyrics": "Lời Bài Hát"
+        },
+        "playback": {
+            "nowplayingDesc": "**Đang Phát:**\n```{0}```",
+            "nowplayingField": "Tiếp Theo:",
+            "nowplayingLink": "Nghe trên {0}",
+            "playlistLoad": " 🎶 Đã thêm playlist **{0}** với `{1}` bài hát vào hàng đợi.",
+            "trackLoad": "Đã thêm **[{0}](<{1}>)** bởi **{2}** (`{3}`) để bắt đầu phát.\n",
+            "trackLoadPos": "Đã thêm **[{0}](<{1}>)** bởi **{2}** (`{3}`) vào hàng đợi ở vị trí **{4}**\n"
+        },
+        "controls": {
+            "pause": {
+                "error": "Trình phát đã được tạm dừng.",
+                "vote": "{0} đã bình chọn tạm dừng bài hát. [{1}/{2}]",
+                "success": "`{0}` đã tạm dừng trình phát."
+            },
+            "resume": {
+                "error": "Trình phát không bị tạm dừng.",
+                "vote": "{0} đã bình chọn tiếp tục bài hát. [{1}/{2}]",
+                "success": "`{0}` đã tiếp tục trình phát."
+            },
+            "shuffle": {
+                "error": "Thêm nhiều bài hát vào hàng đợi trước khi trộn bài.",
+                "vote": "{0} đã bình chọn trộn hàng đợi. [{1}/{2}]",
+                "success": "Hàng đợi đã được trộn."
+            },
+            "skip": {
+                "error": "Không có bài hát nào để bỏ qua.",
+                "vote": "{0} đã bình chọn bỏ qua bài hát. [{1}/{2}]",
+                "success": "`{0}` đã bỏ qua bài hát."
+            },
+            "back": {
+                "vote": "{0} đã bình chọn quay lại bài hát trước. [{1}/{2}]",
+                "success": "`{0}` đang quay lại bài hát trước."
+            },
+            "leave": {
+                "vote": "{0} đã bình chọn dừng trình phát. [{1}/{2}]",
+                "success": "`{0}` đã dừng trình phát."
+            },
+            "seek": "Đặt trình phát thành **{0}**",
+            "repeat": "Chế độ lặp lại đã được đặt thành `{0}`",
+            "forward": "Tua tới trình phát đến **{0}**",
+            "rewind": "Tua lùi trình phát đến **{0}**",
+            "replay": "Phát lại bài hát hiện tại.",
+            "autoplay": "Chế độ tự động phát bây giờ là **{0}**"
+        }
+    },
+    "voice": {
+        "connection": {
+            "noChannel": "Không có kênh voice để kết nối. Vui lòng cung cấp một kênh hoặc tham gia một kênh.",
+            "alreadyConnected": "Đã kết nối với kênh voice.",
+            "noPermission": "Xin lỗi! Tôi không có quyền tham gia hoặc nói trong kênh voice của bạn.",
+            "notInChannel": "{0}, bạn phải ở trong {1} để sử dụng lệnh voice. Vui lòng tham gia lại nếu bạn đang ở trong voice!",
+            "connect": "Đã kết nối với {0}"
+        },
+        "stageChannel": {
+            "setAnnounceTemplate": "Hoàn thành! Từ bây giờ, trạng thái voice như cái bạn đang ở sẽ được đặt tên theo mẫu của bạn. Bạn sẽ thấy nó cập nhật trong vài giây."
+        }
+    },
+    "permissions": {
+        "noCreatePermission": "Xin lỗi! Tôi không có quyền tạo kênh yêu cầu bài hát.",
+        "missingPosition": "Chỉ DJ hoặc quản trị viên mới có thể thay đổi vị trí.",
+        "missingMode": "Chỉ DJ hoặc quản trị viên mới có thể chuyển chế độ lặp.",
+        "missingQueue": "Chỉ DJ hoặc quản trị viên mới có thể xóa bài hát khỏi hàng đợi.",
+        "missingAutoPlay": "Chỉ DJ hoặc quản trị viên mới có thể bật hoặc tắt chế độ tự động phát!",
+        "missingFunction": "Chỉ DJ hoặc Admin mới có thể sử dụng chức năng này.",
+        "notDj": "Bạn không phải là DJ. DJ hiện tại là {0}.",
+        "djToSelf": "Bạn không thể chuyển vai trò DJ cho chính mình hoặc một bot.",
+        "djNotInChannel": "`{0}` không ở trong kênh voice.",
+        "djSwapped": "Bạn đã chuyển vai trò DJ cho `{0}`."
+    },
+    "settings": {
+        "actions": {
+            "languageNotFound": "Không tìm thấy gói ngôn ngữ! Vui lòng chọn một gói ngôn ngữ hiện có.",
+            "languageChanged": "Đã thay đổi thành công sang gói ngôn ngữ `{0}`.",
+            "prefixSet": "Hoàn thành! Tiền tố của tôi trong máy chủ của bạn bây giờ là `{0}`. Thử chạy `{1}ping` để kiểm tra.",
+            "djSet": "Đặt DJ thành {0}.",
+            "queueModeSet": "Đặt chế độ hàng đợi thành `{0}`.",
+            "mode247": "Chế độ 24/7 bây giờ là `{0}`.",
+            "bypassVote": "Bạn có hệ thống bình chọn `{0}`.",
+            "volumeSet": "Đặt âm lượng thành `{0}`%",
+            "controllerToggled": "Bây giờ bạn đã `{0}` bộ điều khiển nhạc.",
+            "duplicateTrackToggled": "Bây giờ bạn đã `{0}` tính năng ngăn chặn bài hát trùng lặp.",
+            "controllerMsgToggled": "Bây giờ bạn đã `{0}` tin nhắn từ bộ điều khiển nhạc.",
+            "silentMsgToggled": "Bạn có {0} tin nhắn im lặng."
+        },
+        "menu": "Cài Đặt Máy Chủ | {0}",
+        "basic": {
+            "title": "❤️ Thông Tin Cơ Bản:",
+            "value": "```Tiền tố: {0}\nNgôn ngữ: {1}\nBộ Điều Khiển Nhạc: {2}\nVai Trò DJ: @{3}\nBỏ Qua Bình Chọn: {4}\n24/7: {5}\nÂm Lượng Mặc Định: {6}%\nThời Gian Phát: {7}```"
+        },
+        "queue": {
+            "title": "🔗 Thông tin hàng đợi:",
+            "value": "```Chế Độ Hàng Đợi: {0}\nSố Bài Tối Đa: {1}\nBài Hát Trùng Lặp: {2}```"
+        },
+        "voice": {
+            "title": "🎤 Thông Tin Trạng Thái Voice:"
+        },
+        "permissions": {
+            "title": "✨ Quyền hạn:",
+            "value": "```{0} Quản Trị Viên\n{1} Quản_Lý_Guild\n{2} Quản_Lý_Kênh\n{3} Quản_Lý_Tin_Nhắn```"
+        }
+    },
+    "ping": {
+        "title1": "Thông Tin Bot:",
+        "title2": "Thông Tin Trình Phát:",
+        "field1": "```ID Shard: {0}/{1}\nĐộ Trễ Shard: {2:.3f}s {3}\nKhu Vực: {4}```",
+        "field2": "```Node: {0} - {1:.3f}s\nTrình Phát: {2}\nKhu Vực Voice: {3}```"
+    },
+    "effects": {
+        "added": "Đã áp dụng hiệu ứng `{0}`.",
+        "cleared": "Các hiệu ứng âm thanh đã được xóa!",
+        "tagInUse": "Hiệu ứng âm thanh này đã được sử dụng! Vui lòng sử dụng /cleareffect <Tag> để xóa nó."
+    },
+    "playlist": {
+        "view": {
+            "title": "Tất Cả Playlist Của {0}",
+            "headers": "ID:,Thời Gian:,Tên:,Bài Hát:",
+            "footer": "Gõ /playlist play [playlist] để thêm playlist vào hàng đợi.",
+            "detailTitle": "Trình Xem Playlist",
+            "detailDesc": "```Tên: {0} [{1}]\nTổng Số Bài Hát: {2}\nChủ Sở Hữu: {3}\nLoại: {4}\n```",
+            "permsValue": "📖 Đọc: ✓    ✍🏽 Viết: {0}    🗑️ Xóa: {1}",
+            "permsValue2": "📖 Đọc: {0}",
+            "trackList": "Bài Hát",
+            "footer2": "Tổng thời gian: {0}",
+            "playlistSelect": "Chọn một danh sách phát để xem ..."
+        },
+        "errors": {
+            "notFound": "Không tìm thấy playlist [`{0}`]. Gõ /playlist view để xem tất cả playlist của bạn.",
+            "noAccess": "Xin lỗi! Bạn không được phép truy cập playlist này!",
+            "noTrack": "Xin lỗi! Không có bài hát nào trong playlist [`{0}`].",
+            "notAllowed": "Lệnh này không được phép trên playlist được liên kết và chia sẻ.",
+            "nameOverLimit": "Xin lỗi! Tên playlist không thể vượt quá 10 ký tự.",
+            "sameName": "Xin lỗi! Vui lòng chọn tên mới cho playlist.",
+            "deleteDefault": "Bạn không được phép xóa playlist mặc định.",
+            "limitReached": "Bạn không thể tạo nhiều hơn `{0}` playlist!",
+            "exists": "Playlist [`{0}`] đã tồn tại.",
+            "invalidUrl": "Vui lòng nhập liên kết playlist Spotify hoặc Youtube công khai hợp lệ.",
+            "trackLimitReached": "Bạn đã đạt giới hạn! Bạn chỉ có thể thêm `{0}` bài hát vào playlist của mình.",
+            "playlistLinkNotAllowed": "Bạn không được phép sử dụng liên kết playlist.",
+            "streamNotAllowed": "Bạn không được phép thêm video trực tiếp vào playlist của mình.",
+            "positionNotFound": "Không thể tìm thấy vị trí `{0}` từ playlist [`{1}`] của bạn!",
+            "streaming": "Bạn không được phép thêm video trực tiếp vào playlist của mình!",
+            "track": "Đã xảy ra sự cố khi thêm bài hát vào playlist!",
+            "trackLimited": "Bạn đã đạt giới hạn! Bạn chỉ có thể thêm {0} bài hát vào playlist của mình.",
+            "trackRepeated": "Bài hát này đã có trong playlist của bạn!"
+        },
+        "actions": {
+            "play": "Đã thêm playlist [`{0}`] với `{1}` bài hát vào hàng đợi.",
+            "removed": "Bạn đã xóa playlist [`{0}`].",
+            "created": "Bạn đã tạo playlist `{0}`. Gõ /playlist view để biết thêm thông tin.",
+            "renamed": "Bạn đã đổi tên `{0}` thành `{1}`.",
+            "trackRemoved": "👋 Đã xóa **{0}** khỏi playlist [`{2}`] của {1}.",
+            "cleared": "Bạn đã xóa thành công playlist [`{0}`] của mình.",
+            "trackAdded": "❤️ Đã thêm **{0}** vào playlist [`{2}`] của {1}!"
+        },
+        "sharing": {
+            "sendErrorPlayer": "Xin lỗi! Bạn không thể gửi lời mời cho chính mình.",
+            "sendErrorBot": "Xin lỗi! Bạn không thể gửi lời mời cho một bot.",
+            "belongs": "Xin lỗi! Playlist này thuộc về <@{0}>.",
+            "alreadyShared": "Xin lỗi! Playlist này đã được chia sẻ với {0}.",
+            "alreadySent": "Xin lỗi! Bạn đã gửi lời mời cho người dùng đó trước đó rồi.",
+            "noAccount": "{0} không tạo tài khoản playlist.",
+            "invitationSent": "Đã gửi lời mời đến {0}."
+        },
+        "inbox": {
+            "full": "Xin lỗi! Hộp thư của {0} đã đầy.",
+            "noMessages": "Không có tin nhắn nào trong hộp thư của bạn."
+        }
+    },
+    "search": {
+        "noLinkSupport": "Lệnh tìm kiếm không hỗ trợ liên kết!",
+        "title": "Truy Vấn Tìm Kiếm: {0}",
+        "desc": "➥ Nền tảng: {0} **{1}**\n➥ Kết quả: **{2}**\n\n{3}",
+        "wait": "Chọn bài hát bạn muốn thêm vào hàng đợi.",
+        "success": "Đã thêm bài hát vào hàng đợi."
+    },
+    "voting": {
+        "voted": "Bạn đã bình chọn!"
+    },
+    "time": {
+        "formatError": "Định dạng thời gian không chính xác. Ví dụ: 2:42 hoặc 12:39:31",
+        "invalidStartTime": "Thời gian bắt đầu không hợp lệ, phải nằm giữa `00:00` và `{0}`",
+        "invalidEndTime": "Thời gian kết thúc không hợp lệ, phải nằm giữa `00:00` và `{0}`"
+    },
+    "lyrics": {
+        "notFound": "Không tìm thấy lời bài hát. Gõ /lyrics <Tên Bài Hát> <Tác Giả> để tìm lời bài hát."
+    },
+    "queue": {
+        "management": {
+            "title": "Hàng Đợi Sắp Tới:",
+            "cleared": "Đã xóa tất cả bài hát trong `{0}`",
+            "removed": "`{0}` bài hát đã được xóa khỏi hàng đợi.",
+            "swapped": "`{0}` và `{1}` đã được hoán đổi",
+            "moved": "Đã di chuyển `{0}` đến `{1}`"
+        },
+        "view": {
+            "historyTitle": "Lịch Sử Hàng Đợi:",
+            "title": "Hàng Đợi Nhạc",
+            "desc": "**Đang Phát: [Nhấp Vào Đây]({0}) ⮯**\n{1}"
+        },
+        "errors": {
+            "queueFull": "Xin lỗi, bạn đã đạt tối đa `{0}` bài hát trong hàng đợi!",
+            "outOfList": "Vui lòng cung cấp chỉ số bài hát hợp lệ!",
+            "duplicateTrack": "Xin lỗi, bài hát này đã có trong hàng đợi."
+        }
+    },
+    "songRequest": {
+        "channelCreated": "Một kênh yêu cầu bài hát ({0}) đã được tạo! Bạn có thể bắt đầu yêu cầu bất kỳ bài hát nào bằng tên hoặc URL trong kênh đó, mà không cần sử dụng tiền tố bot."
+    },
+    "pagination": {
+        "prev": "Trước",
+        "next": "Tiếp",
+        "play": "Phát",
+        "share": "Chia sẻ",
+        "export": "Xuất",
+        "delete": "Xóa",
+        "page": {
+            "title": "Nhập số trang",
+            "field": "Số trang"
+        }
+    }
 }

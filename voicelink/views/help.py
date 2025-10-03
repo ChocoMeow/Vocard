@@ -24,10 +24,10 @@ SOFTWARE.
 import discord
 from discord.ext import commands
 
-import function as func
+from ..config import Config
 
 class HelpDropdown(discord.ui.Select):
-    def __init__(self, categories:list):
+    def __init__(self, categories: list[str]) -> None:
         self.view: HelpView
 
         super().__init__(
@@ -80,7 +80,7 @@ class HelpView(discord.ui.View):
     def build_embed(self, category: str) -> discord.Embed:
         category = category.lower()
         if category == "news":
-            embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=func.settings.embed_color)
+            embed = discord.Embed(title="Vocard Help Menu", url="https://discord.com/channels/811542332678996008/811909963718459392/1069971173116481636", color=Config().embed_color)
             embed.add_field(
                 name=f"Available Categories: [{2 + len(self.categories)}]",
                 value="```py\n👉 News\n2. Tutorial\n{}```".format("".join(f"{i}. {c}\n" for i, c in enumerate(self.categories, start=3))),
@@ -93,7 +93,7 @@ class HelpView(discord.ui.View):
             
             return embed
 
-        embed = discord.Embed(title=f"Category: {category.capitalize()}", color=func.settings.embed_color)
+        embed = discord.Embed(title=f"Category: {category.capitalize()}", color=Config().embed_color)
         embed.add_field(name=f"Categories: [{2 + len(self.categories)}]", value="```py\n" + "\n".join(("👉 " if c == category.capitalize() else f"{i}. ") + c for i, c in enumerate(['News', 'Tutorial'] + self.categories, start=1)) + "```", inline=True)
 
         if category == 'tutorial':

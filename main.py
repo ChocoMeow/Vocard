@@ -27,34 +27,40 @@ import os
 import aiohttp
 import update
 import logging
-import voicelink
 import function as func
 
 from discord.ext import commands
-from ipc import IPCClient
-from motor.motor_asyncio import AsyncIOMotorClient
 from logging.handlers import TimedRotatingFileHandler
-from addons import Settings
+from voicelink import Config, LangHandler, MongoDBHandler, IPCClient, VoicelinkException
+from voicelink.utils import dispatch_message
 
 class Translator(discord.app_commands.Translator):
+    MISSING_TRANSLATOR: dict[str, list[str]] = {}
+
     async def load(self):
         func.logger.info("Loaded Translator")
-
+        
     async def unload(self):
         func.logger.info("Unload Translator")
+        
+    async def translate(
+        self,
+        string: discord.app_commands.locale_str,
+        locale: discord.Locale,
+        context: discord.app_commands.TranslationContext
+    ) -> str | None:
+        locale_key = str(locale).upper()
+        local_translations = LangHandler._local_langs.get(locale_key)
+        if not local_translations:
+            return None
 
-    async def translate(self, string: discord.app_commands.locale_str, locale: discord.Locale, context: discord.app_commands.TranslationContext):
-        locale_key = str(locale)
-
-        if locale_key in func.LOCAL_LANGS:
-            translated_text = func.LOCAL_LANGS[locale_key].get(string.message)
-
-            if translated_text is None:
-                missing_translations = func.MISSING_TRANSLATOR.setdefault(locale_key, [])
-                if string.message not in missing_translations:
-                    missing_translations.append(string.message)
-
+        translated_text = local_translations.get(string.message)
+        if translated_text is not None:
             return translated_text
+
+        missing = self.MISSING_TRANSLATOR.setdefault(locale_key, [])
+        if string.message not in missing:
+            missing.append(string.message)
 
         return None
 
@@ -62,7 +68,7 @@ class Vocard(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ipc: IPCClient
+        self.ipc_client: IPCClient
 
     async def on_message(self, message: discord.Message, /) -> None:
         # Ignore messages from bots or DMs
@@ -77,48 +83,31 @@ class Vocard(commands.Bot):
             return await message.channel.send(f"My prefix is `{prefix}`")
 
         # Fetch guild settings and check if the mesage is in the music request channel
-        settings = await func.get_settings(message.guild.id)
+        settings = await MongoDBHandler.get_settings(message.guild.id)
         if settings and (request_channel := settings.get("music_request_channel")):
             if message.channel.id == request_channel.get("text_channel_id"):
-                ctx = await self.get_context(message)
+                ctx = await self.get_context(message)    
                 try:
-                    cmd = self.get_command("play")
-                    if message.content:
-                        await cmd(ctx, query=message.content)
+                    if not ctx.prefix:
+                        cmd = self.get_command("play")
+                        if message.content:
+                            await cmd(ctx, query=message.content)
 
-                    elif message.attachments:
-                        for attachment in message.attachments:
-                            await cmd(ctx, query=attachment.url)
+                        elif message.attachments:
+                            for attachment in message.attachments:
+                                await cmd(ctx, query=attachment.url)
 
                 except Exception as e:
-                    await func.send(ctx, str(e), ephemeral=True)
+                    await dispatch_message(ctx, str(e), ephemeral=True)
 
                 finally:
-                    return await message.delete()
+                    await message.delete()
 
         await self.process_commands(message)
 
-    async def connect_db(self) -> None:
-        if not ((db_name := func.settings.mongodb_name) and (db_url := func.settings.mongodb_url)):
-            raise Exception("MONGODB_NAME and MONGODB_URL can't not be empty in settings.json")
-
-        try:
-            func.MONGO_DB = AsyncIOMotorClient(host=db_url)
-            await func.MONGO_DB.server_info()
-            func.logger.info(f"Successfully connected to [{db_name}] MongoDB!")
-
-        except Exception as e:
-            func.logger.error("Not able to connect MongoDB! Reason:", exc_info=e)
-            exit()
-
-        func.SETTINGS_DB = func.MONGO_DB[db_name]["Settings"]
-        func.USERS_DB = func.MONGO_DB[db_name]["Users"]
-
     async def setup_hook(self) -> None:
-        func.langs_setup()
-
         # Connecting to MongoDB
-        await self.connect_db()
+        await MongoDBHandler.init(bot_config.mongodb_url, bot_config.mongodb_name)
 
         # Set translator
         await self.tree.set_translator(Translator())
@@ -132,32 +121,34 @@ class Vocard(commands.Bot):
                 except Exception as e:
                     func.logger.error(f"Something went wrong while loading {module[:-3]} cog.", exc_info=e)
 
-        self.ipc = IPCClient(self, **func.settings.ipc_client)
-        if func.settings.ipc_client.get("enable", False):
+        self.ipc_client: IPCClient = IPCClient(self, **bot_config.ipc_client)
+        if bot_config.ipc_client.get("enable", False):
             try:
-                await self.ipc.connect()
+                await self.ipc_client.connect()
             except Exception as e:
                 func.logger.error(f"Cannot connected to dashboard! - Reason: {e}")
 
         # Update version tracking
-        if not func.settings.version or func.settings.version != update.__version__:
+        if not bot_config.version or bot_config.version != update.__version__:
             await self.tree.sync()
             func.update_json("settings.json", new_data={"version": update.__version__})
-            for locale_key, values in func.MISSING_TRANSLATOR.items():
+            
+            for locale_key, values in self.tree.translator.MISSING_TRANSLATOR.items():
                 func.logger.warning(f'Missing translation for "{", ".join(values)}" in "{locale_key}"')
+            self.tree.translator.MISSING_TRANSLATOR.clear()
 
     async def on_ready(self):
         func.logger.info("------------------")
         func.logger.info(f"Logging As {self.user}")
         func.logger.info(f"Bot ID: {self.user.id}")
         func.logger.info("------------------")
+        func.logger.info(f"Vocard Version: {update.__version__}")
         func.logger.info(f"Discord Version: {discord.__version__}")
         func.logger.info(f"Python Version: {sys.version}")
         func.logger.info("------------------")
 
-        func.settings.client_id = self.user.id
-        func.LOCAL_LANGS.clear()
-        func.MISSING_TRANSLATOR.clear()
+        bot_config.client_id = self.user.id
+        LangHandler._local_langs.clear()
 
     async def on_command_error(self, ctx: commands.Context, exception, /) -> None:
         error = getattr(exception, 'original', exception)
@@ -178,12 +169,12 @@ class Vocard(commands.Bot):
                 description += f"**Aliases:**\n`{', '.join([f'{ctx.prefix}{alias}' for alias in ctx.command.aliases])}`\n\n"
             description += f"**Description:**\n{ctx.command.help}\n\u200b"
 
-            embed = discord.Embed(description=description, color=func.settings.embed_color)
-            embed.set_footer(icon_url=ctx.me.display_avatar.url, text=f"More Help: {func.settings.invite_link}")
+            embed = discord.Embed(description=description, color=bot_config.embed_color)
+            embed.set_footer(icon_url=ctx.me.display_avatar.url, text=f"More Help: {bot_config.invite_link}")
             return await ctx.reply(embed=embed)
 
-        elif not issubclass(error.__class__, voicelink.VoicelinkException):
-            error = await func.get_lang(ctx.guild.id, "unknownException") + func.settings.invite_link
+        elif not issubclass(error.__class__, VoicelinkException):
+            error = await Lang_handler.get_lang(ctx.guild.id, "common.errors.unknown") + bot_config.invite_link
             func.logger.error(f"An unexpected error occurred in the {ctx.command.name} command on the {ctx.guild.name}({ctx.guild.id}).", exc_info=exception)
 
         try:
@@ -206,13 +197,14 @@ class CommandCheck(discord.app_commands.CommandTree):
         return True
 
 async def get_prefix(bot: commands.Bot, message: discord.Message) -> str:
-    settings = await func.get_settings(message.guild.id)
-    return settings.get("prefix", func.settings.bot_prefix)
+    settings = await MongoDBHandler.get_settings(message.guild.id)
+    return settings.get("prefix", bot_config.bot_prefix)
 
 # Loading settings and logger
-func.settings = Settings(func.open_json("settings.json"))
+bot_config = Config(func.open_json("settings.json"))
+Lang_handler = LangHandler.init()
 
-LOG_SETTINGS = func.settings.logging
+LOG_SETTINGS = bot_config.logging
 if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
     log_path = os.path.abspath(LOG_FILE.get("path", "./logs"))
     if not os.path.exists(log_path):
@@ -229,9 +221,10 @@ for log_name, log_level in LOG_SETTINGS.get("level", {}).items():
 
 # Setup the bot object
 intents = discord.Intents.default()
-intents.message_content = False if func.settings.bot_prefix is None else True
-intents.members = func.settings.ipc_client.get("enable", False)
+intents.message_content = False if bot_config.bot_prefix is None else True
+intents.members = bot_config.ipc_client.get("enable", False)
 intents.voice_states = True
+intents.presences = False
 
 bot = Vocard(
     command_prefix=get_prefix,
@@ -245,4 +238,4 @@ bot = Vocard(
 
 if __name__ == "__main__":
     update.check_version(with_msg=True)
-    bot.run(func.settings.token, root_logger=True)
+    bot.run(bot_config.token, root_logger=True)

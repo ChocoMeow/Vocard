@@ -1,172 +1,262 @@
 {
-    "unknownException": "⚠️ Une erreur est survenue lors de l'exécution de la commande ! Veuillez réessayer plus tard ou rejoignez notre serveur Discord pour plus d'assistance.",
-    "enabled": "activé",
-    "disabled": "désactivé",
-    "nodeReconnect": "Veuillez réessayer après la reconnexion du node.",
-    "noChannel": "Aucun salon vocal pour se connecter. Veuillez en fournir un ou rejoindre un salon vocal.",
-    "alreadyConnected": "Déjà connecté à un salon vocal.",
-    "noPermission": "Désolé ! Je n'ai pas les permissions pour rejoindre ou parler dans votre salon vocal.",
-    "noCreatePermission": "Désolé ! Je n'ai pas les permissions pour créer un salon de demande de chansons.",
-    "noPlaySource": "Impossible de trouver une source à lire !",
-    "noPlayer": "Aucun lecteur n'a été trouvé sur ce serveur.",
-    "notVote": "Cette commande nécessite votre vote ! Tapez `/vote` pour en savoir plus.",
-    "missingIntents": "Désolé, cette commande ne peut pas être exécutée car le bot n'a pas l'intent requis : `({0})`.",
-    "languageNotFound": "Aucun pack de langue trouvé ! Veuillez sélectionner un pack de langue existant.",
-    "changedLanguage": "Changement réussi vers le pack de langue `{0}`.",
-    "setPrefix": "C'est fait ! Mon préfixe dans votre serveur est désormais `{0}`. Essayez de lancer `{1}ping` pour tester.",
-    "setDJ": "Le DJ a été défini sur {0}.",
-    "setQueue": "Le mode file d'attente est défini sur `{0}`.",
-    "247": "Le mode 24/7 est maintenant `{0}`.",
-    "bypassVote": "Vous avez le système de vote `{0}`.",
-    "setVolume": "Le volume est réglé à `{0}`%",
-    "toggleController": "Vous avez maintenant `{0}` le contrôleur de musique.",
-    "toggleDuplicateTrack": "Vous avez maintenant `{0}` la prévention des morceaux en double.",
-    "toggleControllerMsg": "Vous avez maintenant `{0}` les messages du contrôleur musical.",
-    "toggleSilentMsg": "Vous avez {0} messages silencieux.",
-    "settingsMenu": "Paramètres du serveur | {0}",
-    "settingsTitle": "❤️ Infos de base :",
-    "settingsValue": "```Préfixe : {0}\nLangue : {1}\nContrôleur musique : {2}\nRôle DJ : @{3}\nVote Bypass : {4}\n24/7 : {5}\nVolume par défaut : {6}%\nTemps de lecture : {7}```",
-    "settingsTitle2": "🔗 Infos sur la file :",
-    "settingsValue2": "```Mode de file : {0}\nMaximum de chansons : {1}\nPiste dupliquée : {2}```",
-    "settingsTitle3": "🎤 Infos sur l'état vocal :",
-    "settingsPermTitle": "✨ Permissions :",
-    "settingsPermValue": "```{0} Administrateur\n{1} Gérer_serveur\n{2} Gérer_salons\n{3} Gérer_messages```",
-    "pingTitle1": "Infos Bot :",
-    "pingTitle2": "Infos Lecteur :",
-    "pingField1": "```Shard ID : {0}/{1}\nLatence Shard : {2:.3f}s {3}\nRégion : {4}```",
-    "pingField2": "```Node : {0} - {1:.3f}s\nLecteurs : {2}\nRégion vocale : {3}```",
-    "addEffect": "Effet `{0}` appliqué.",
-    "clearEffect": "Les effets sonores ont été supprimés !",
-    "filterTagAlreadyInUse": "Cet effet sonore est déjà utilisé ! Veuillez utiliser /cleareffect <Tag> pour le retirer.",
-    "playlistViewTitle": "📜 Toutes les playlists de {0}",
-    "playlistViewHeaders": "ID:,Durée:,Nom:,Morceaux:",
-    "playlistFooter": "Tapez /playlist play [playlist] pour ajouter une playlist à la file.",
-    "playlistNotFound": "Playlist [`{0}`] introuvable. Tapez /playlist view pour voir toutes vos playlists.",
-    "playlistNotAccess": "Désolé ! Vous n'êtes pas autorisé à accéder à cette playlist !",
-    "playlistNoTrack": "Désolé ! Il n'y a aucun morceau dans la playlist [`{0}`].",
-    "playlistNotAllow": "Cette commande n'est pas autorisée sur les playlists liées ou partagées.",
-    "playlistPlay": "La playlist [`{0}`] avec `{1}` chansons a été ajoutée à la file.",
-    "playlistOverText": "Désolé ! Le nom de la playlist ne peut pas dépasser 10 caractères.",
-    "playlistSameName": "Désolé ! Veuillez choisir un nouveau nom pour la playlist.",
-    "playlistDeleteError": "Vous n'êtes pas autorisé à supprimer la playlist par défaut.",
-    "playlistRemove": "Vous avez supprimé la playlist [`{0}`].",
-    "playlistSendErrorPlayer": "Désolé ! Vous ne pouvez pas vous envoyer une invitation à vous-même.",
-    "playlistSendErrorBot": "Désolé ! Vous ne pouvez pas envoyer une invitation à un bot.",
-    "playlistBelongs": "Désolé ! Cette playlist appartient à <@{0}>.",
-    "playlistShare": "Désolé ! Cette playlist a été partagée avec {0}.",
-    "playlistSent": "Désolé ! Vous avez déjà envoyé une invitation à cet utilisateur auparavant.",
-    "noPlaylistAcc": "{0} n'a pas créé de compte playlist.",
-    "overPlaylistCreation": "Vous ne pouvez pas créer plus de `{0}` playlists !",
-    "playlistExists": "La playlist [`{0}`] existe déjà.",
-    "playlistNotInvalidUrl": "Veuillez entrer un lien valide de playlist publique Spotify ou YouTube.",
-    "playlistCreated": "Vous avez créé `{0}` playlists. Tapez /playlist view pour plus d'infos.",
-    "playlistRenamed": "Vous avez renommé `{0}` en `{1}`.",
-    "playlistLimitTrack": "Vous avez atteint la limite ! Vous ne pouvez ajouter que `{0}` chansons à votre playlist.",
-    "playlistPlaylistLink": "Vous n'êtes pas autorisé à utiliser des liens de playlist.",
-    "playlistStream": "Vous n'êtes pas autorisé à ajouter des vidéos en streaming à votre playlist.",
-    "playlistPositionNotFound": "Impossible de trouver la position `{0}` dans votre playlist [`{1}`] !",
-    "playlistRemoved": "👋 **{0}** a été retiré de la playlist [`{2}`] de {1}.",
-    "playlistClear": "Vous avez vidé avec succès votre playlist [`{0}`].",
-    "playlistView": "Visualiseur de playlist",
-    "playlistViewDesc": "```Nom | ID : {0} | {1}\nTotal Morceaux : {2}\nPropriétaire : {3}\nType : {4}\n```",
-    "playlistViewPermsValue": "📖 Lecture : ✓    ✍🏽 Écriture : {0}    🗑️ Suppression : {1}",
-    "playlistViewPermsValue2": "📖 Lecture : {0}",
-    "playlistViewTrack": "Morceaux",
-    "playlistViewPage": "Page : {0}/{1} | Durée totale : {2}",
-    "inboxFull": "Désolé ! La boîte de réception de {0} est pleine.",
-    "inboxNoMsg": "Aucun message dans votre boîte de réception.",
-    "invitationSent": "Invitation envoyée à {0}.",
-    "notInChannel": "{0}, vous devez être dans {1} pour utiliser les commandes vocales. Veuillez rejoindre à nouveau si vous êtes déjà en vocal !",
-    "noTrackPlaying": "Aucune chanson n'est en cours de lecture pour le moment",
-    "noTrackFound": "Aucune chanson trouvée pour cette requête ! Veuillez fournir une URL valide.",
-    "noLinkSupport": "La commande de recherche ne prend pas en charge les liens !",
-    "voted": "Vous avez voté !",
-    "missingPosPerm": "Seul le DJ ou les admins peuvent changer la position.",
-    "missingModePerm": "Seul le DJ ou les admins peuvent changer le mode de boucle.",
-    "missingQueuePerm": "Seul le DJ ou les admins peuvent retirer un morceau de la file.",
-    "missingAutoPlayPerm": "Seul le DJ ou les admins peuvent activer/désactiver l'autoplay !",
-    "missingFunctionPerm": "Seul le DJ ou un admin peut utiliser cette fonction.",
-    "timeFormatError": "Format de temps incorrect. Exemple : 2:42 ou 12:39:31",
-    "lyricsNotFound": "Paroles non trouvées. Tapez /lyrics <Nom de la Chanson> <Auteur> pour chercher les paroles.",
-    "missingTrackInfo": "Certaines informations sur le morceau sont manquantes.",
-    "noVoiceChannel": "Aucun salon vocal trouvé !",
-    "playlistAddError": "Vous n'êtes pas autorisé à ajouter des vidéos en streaming à votre playlist !",
-    "playlistAddError2": "Problème lors de l'ajout de morceaux à la playlist !",
-    "playlistLimited": "Vous avez atteint la limite ! Vous ne pouvez ajouter que {0} chansons à votre playlist.",
-    "playlistRepeated": "Ce morceau est déjà dans votre playlist !",
-    "playlistAdded": "❤️ **{0}** ajouté à la playlist [`{2}`] de {1} !",
-    "playerDropdown": "Sélectionnez une chanson vers laquelle passer...",
-    "playerFilter": "Sélectionnez un filtre à appliquer...",
-    "buttonBack": "Précédent",
-    "buttonPause": "Pause",
-    "buttonResume": "Reprendre",
-    "buttonSkip": "Passer",
-    "buttonLeave": "Quitter",
-    "buttonLoop": "Boucle",
-    "buttonVolumeUp": "Volume +",
-    "buttonVolumeDown": "Volume -",
-    "buttonVolumeMute": "Muet",
-    "buttonVolumeUnmute": "Son activé",
-    "buttonAutoPlay": "Autoplay",
-    "buttonShuffle": "Mélanger",
-    "buttonForward": "Avancer",
-    "buttonRewind": "Rembobiner",
-    "buttonLyrics": "Paroles",
-    "nowplayingDesc": "**Lecture en cours :**\n```{0}```",
-    "nowplayingField": "À suivre :",
-    "nowplayingLink": "Écouter sur {0}",
-    "connect": "Connecté à {0}",
-    "live": "EN DIRECT",
-    "playlistLoad": " 🎶 La playlist **{0}** avec `{1}` chansons a été ajoutée à la file.",
-    "trackLoad": "**[{0}](<{1}>)** de **{2}** (`{3}`) a été ajoutée et commencera à jouer.\n",
-    "trackLoad_pos": "**[{0}](<{1}>)** de **{2}** (`{3}`) a été ajoutée à la file à la position **{4}**\n",
-    "searchTitle": "Recherche : {0}",
-    "searchDesc": "➥ Plateforme : {0} **{1}**\n➥ Résultats : **{2}**\n\n{3}",
-    "searchWait": "Choisissez la chanson à ajouter à la file.",
-    "searchTimeout": "Recherche expirée. Veuillez réessayer plus tard.",
-    "searchSuccess": "Chanson ajoutée à la file.",
-    "queueTitle": "File à venir :",
-    "historyTitle": "Historique :",
-    "viewTitle": "File de musiques",
-    "viewDesc": "**Lecture en cours : [Cliquez ici]({0}) ⮯**\n{1}",
-    "viewFooter": "Page : {0}/{1} | Durée totale : {2}",
-    "pauseError": "Le lecteur est déjà en pause.",
-    "pauseVote": "{0} a voté pour mettre la chanson en pause. [{1}/{2}]",
-    "paused": "`{0}` a mis le lecteur en pause.",
-    "resumeError": "Le lecteur n'est pas en pause.",
-    "resumeVote": "{0} a voté pour reprendre la chanson. [{1}/{2}]",
-    "resumed": "`{0}` a repris le lecteur.",
-    "shuffleError": "Ajoutez plus de chansons à la file avant de mélanger.",
-    "shuffleVote": "{0} a voté pour mélanger la file. [{1}/{2}]",
-    "shuffled": "La file a été mélangée.",
-    "skipError": "Aucune chanson vers laquelle passer.",
-    "skipVote": "{0} a voté pour passer la chanson. [{1}/{2}]",
-    "skipped": "`{0}` a passé la chanson.",
-    "backVote": "{0} a voté pour passer à la chanson précédente. [{1}/{2}]",
-    "backed": "`{0}` est en train de passer à la chanson précédente.",
-    "leaveVote": "{0} a voté pour arrêter le lecteur. [{1}/{2}]",
-    "left": "`{0}` a arrêté le lecteur.",
-    "seek": "Le lecteur a été placé à **{0}**",
-    "repeat": "Le mode de répétition a été réglé sur `{0}`",
-    "cleared": "Tous les morceaux dans `{0}` ont été supprimés",
-    "removed": "`{0}` morceaux ont été retirés de la file.",
-    "forward": "Le lecteur a avancé à **{0}**",
-    "rewind": "Le lecteur a été rembobiné à **{0}**",
-    "replay": "Relecture de la chanson actuelle.",
-    "swapped": "`{0}` et `{1}` ont été échangés",
-    "moved": "`{0}` a été déplacé vers `{1}`",
-    "autoplay": "Le mode autoplay est maintenant **{0}**",
-    "notdj": "Vous n'êtes pas DJ. Le DJ actuel est {0}.",
-    "djToMe": "Impossible de transférer le rôle de DJ à vous-même ou à un bot.",
-    "djNotInChannel": "`{0}` n'est pas dans le salon vocal.",
-    "djswap": "Vous avez transféré le rôle de DJ à `{0}`.",
-    "voicelinkQueueFull": "Désolé, vous avez atteint le maximum de `{0}` morceaux dans la file !",
-    "voicelinkOutofList": "Veuillez fournir un index de morceau valide !",
-    "voicelinkDuplicateTrack": "Désolé, ce morceau est déjà dans la file.",
-    "decodeError": "Une erreur s'est produite lors du décodage du fichier !",
-    "invalidStartTime": "Heure de début invalide, doit être entre `00:00` et `{0}`",
-    "invalidEndTime": "Heure de fin invalide, doit être entre `00:00` et `{0}`",
-    "invalidTimeOrder": "L'heure de fin ne peut pas être inférieure ou égale à celle de début",
-    "setStageAnnounceTemplate": "C'est fait ! Désormais, le statut vocal tel que celui dans lequel vous êtes sera nommé selon votre modèle. Vous devriez le voir se mettre à jour dans quelques secondes.",
-    "createSongRequestChannel": "Un salon de demande de chansons ({0}) a été créé ! Vous pouvez commencer à demander n'importe quelle chanson par nom ou URL dans ce salon, sans besoin d'utiliser le préfixe du bot."
+    "common": {
+        "errors": {
+            "unknown": "⚠️ Une erreur est survenue lors de l'exécution de la commande ! Veuillez réessayer plus tard ou rejoignez notre serveur Discord pour plus d'assistance.",
+            "missingIntents": "Désolé, cette commande ne peut pas être exécutée car le bot n'a pas l'intent requis : `({0})`."
+        },
+        "status": {
+            "enabled": "activé",
+            "disabled": "désactivé",
+            "live": "EN DIRECT"
+        }
+    },
+    "player": {
+        "errors": {
+            "nodeReconnect": "Veuillez réessayer après la reconnexion du node.",
+            "noPlaySource": "Impossible de trouver une source à lire !",
+            "noPlayer": "Aucun lecteur n'a été trouvé sur ce serveur.",
+            "noTrackPlaying": "Aucune chanson n'est en cours de lecture pour le moment",
+            "noTrackFound": "Aucune chanson trouvée pour cette requête ! Veuillez fournir une URL valide."
+        },
+        "dropdown": {
+            "trackSelect": "Sélectionnez une chanson vers laquelle passer...",
+            "filterSelect": "Sélectionnez un filtre à appliquer..."
+        },
+        "buttons": {
+            "back": "Précédent",
+            "pause": "Pause",
+            "resume": "Reprendre",
+            "skip": "Passer",
+            "leave": "Quitter",
+            "loop": "Boucle",
+            "volumeUp": "Volume +",
+            "volumeDown": "Volume -",
+            "volumeMute": "Muet",
+            "volumeUnmute": "Son activé",
+            "autoPlay": "Autoplay",
+            "shuffle": "Mélanger",
+            "forward": "Avancer",
+            "rewind": "Rembobiner",
+            "lyrics": "Paroles"
+        },
+        "playback": {
+            "nowplayingDesc": "**Lecture en cours :**\n```{0}```",
+            "nowplayingField": "À suivre :",
+            "nowplayingLink": "Écouter sur {0}",
+            "playlistLoad": " 🎶 La playlist **{0}** avec `{1}` chansons a été ajoutée à la file.",
+            "trackLoad": "**[{0}](<{1}>)** de **{2}** (`{3}`) a été ajoutée et commencera à jouer.\n",
+            "trackLoadPos": "**[{0}](<{1}>)** de **{2}** (`{3}`) a été ajoutée à la file à la position **{4}**\n"
+        },
+        "controls": {
+            "pause": {
+                "error": "Le lecteur est déjà en pause.",
+                "vote": "{0} a voté pour mettre la chanson en pause. [{1}/{2}]",
+                "success": "`{0}` a mis le lecteur en pause."
+            },
+            "resume": {
+                "error": "Le lecteur n'est pas en pause.",
+                "vote": "{0} a voté pour reprendre la chanson. [{1}/{2}]",
+                "success": "`{0}` a repris le lecteur."
+            },
+            "shuffle": {
+                "error": "Ajoutez plus de chansons à la file avant de mélanger.",
+                "vote": "{0} a voté pour mélanger la file. [{1}/{2}]",
+                "success": "La file a été mélangée."
+            },
+            "skip": {
+                "error": "Aucune chanson vers laquelle passer.",
+                "vote": "{0} a voté pour passer la chanson. [{1}/{2}]",
+                "success": "`{0}` a passé la chanson."
+            },
+            "back": {
+                "vote": "{0} a voté pour passer à la chanson précédente. [{1}/{2}]",
+                "success": "`{0}` est en train de passer à la chanson précédente."
+            },
+            "leave": {
+                "vote": "{0} a voté pour arrêter le lecteur. [{1}/{2}]",
+                "success": "`{0}` a arrêté le lecteur."
+            },
+            "seek": "Le lecteur a été placé à **{0}**",
+            "repeat": "Le mode de répétition a été réglé sur `{0}`",
+            "forward": "Le lecteur a avancé à **{0}**",
+            "rewind": "Le lecteur a été rembobiné à **{0}**",
+            "replay": "Relecture de la chanson actuelle.",
+            "autoplay": "Le mode autoplay est maintenant **{0}**"
+        }
+    },
+    "voice": {
+        "connection": {
+            "noChannel": "Aucun salon vocal pour se connecter. Veuillez en fournir un ou rejoindre un salon vocal.",
+            "alreadyConnected": "Déjà connecté à un salon vocal.",
+            "noPermission": "Désolé ! Je n'ai pas les permissions pour rejoindre ou parler dans votre salon vocal.",
+            "notInChannel": "{0}, vous devez être dans {1} pour utiliser les commandes vocales. Veuillez rejoindre à nouveau si vous êtes déjà en vocal !",
+            "connect": "Connecté à {0}"
+        },
+        "stageChannel": {
+            "setAnnounceTemplate": "C'est fait ! Désormais, le statut vocal tel que celui dans lequel vous êtes sera nommé selon votre modèle. Vous devriez le voir se mettre à jour dans quelques secondes."
+        }
+    },
+    "permissions": {
+        "noCreatePermission": "Désolé ! Je n'ai pas les permissions pour créer un salon de demande de chansons.",
+        "missingPosition": "Seul le DJ ou les admins peuvent changer la position.",
+        "missingMode": "Seul le DJ ou les admins peuvent changer le mode de boucle.",
+        "missingQueue": "Seul le DJ ou les admins peuvent retirer un morceau de la file.",
+        "missingAutoPlay": "Seul le DJ ou les admins peuvent activer/désactiver l'autoplay !",
+        "missingFunction": "Seul le DJ ou un admin peut utiliser cette fonction.",
+        "notDj": "Vous n'êtes pas DJ. Le DJ actuel est {0}.",
+        "djToSelf": "Impossible de transférer le rôle de DJ à vous-même ou à un bot.",
+        "djNotInChannel": "`{0}` n'est pas dans le salon vocal.",
+        "djSwapped": "Vous avez transféré le rôle de DJ à `{0}`."
+    },
+    "settings": {
+        "actions": {
+            "languageNotFound": "Aucun pack de langue trouvé ! Veuillez sélectionner un pack de langue existant.",
+            "languageChanged": "Changement réussi vers le pack de langue `{0}`.",
+            "prefixSet": "C'est fait ! Mon préfixe dans votre serveur est désormais `{0}`. Essayez de lancer `{1}ping` pour tester.",
+            "djSet": "Le DJ a été défini sur {0}.",
+            "queueModeSet": "Le mode file d'attente est défini sur `{0}`.",
+            "mode247": "Le mode 24/7 est maintenant `{0}`.",
+            "bypassVote": "Vous avez le système de vote `{0}`.",
+            "volumeSet": "Le volume est réglé à `{0}`%",
+            "controllerToggled": "Vous avez maintenant `{0}` le contrôleur de musique.",
+            "duplicateTrackToggled": "Vous avez maintenant `{0}` la prévention des morceaux en double.",
+            "controllerMsgToggled": "Vous avez maintenant `{0}` les messages du contrôleur musical.",
+            "silentMsgToggled": "Vous avez {0} messages silencieux."
+        },
+        "menu": "Paramètres du serveur | {0}",
+        "basic": {
+            "title": "❤️ Infos de base :",
+            "value": "```Préfixe : {0}\nLangue : {1}\nContrôleur musique : {2}\nRôle DJ : @{3}\nVote Bypass : {4}\n24/7 : {5}\nVolume par défaut : {6}%\nTemps de lecture : {7}```"
+        },
+        "queue": {
+            "title": "🔗 Infos sur la file :",
+            "value": "```Mode de file : {0}\nMaximum de chansons : {1}\nPiste dupliquée : {2}```"
+        },
+        "voice": {
+            "title": "🎤 Infos sur l'état vocal :"
+        },
+        "permissions": {
+            "title": "✨ Permissions :",
+            "value": "```{0} Administrateur\n{1} Gérer_serveur\n{2} Gérer_salons\n{3} Gérer_messages```"
+        }
+    },
+    "ping": {
+        "title1": "Infos Bot :",
+        "title2": "Infos Lecteur :",
+        "field1": "```Shard ID : {0}/{1}\nLatence Shard : {2:.3f}s {3}\nRégion : {4}```",
+        "field2": "```Node : {0} - {1:.3f}s\nLecteurs : {2}\nRégion vocale : {3}```"
+    },
+    "effects": {
+        "added": "Effet `{0}` appliqué.",
+        "cleared": "Les effets sonores ont été supprimés !",
+        "tagInUse": "Cet effet sonore est déjà utilisé ! Veuillez utiliser /cleareffect <Tag> pour le retirer."
+    },
+    "playlist": {
+        "view": {
+            "title": "Toutes les playlists de {0}",
+            "headers": "ID:,Durée:,Nom:,Morceaux:",
+            "footer": "Tapez /playlist play [playlist] pour ajouter une playlist à la file.",
+            "detailTitle": "Visualiseur de playlist",
+            "detailDesc": "```Nom: {0} [{1}]\nTotal Morceaux : {2}\nPropriétaire : {3}\nType : {4}\n```",
+            "permsValue": "📖 Lecture : ✓    ✍🏽 Écriture : {0}    🗑️ Suppression : {1}",
+            "permsValue2": "📖 Lecture : {0}",
+            "trackList": "Morceaux",
+            "footer2": "Durée totale : {0}",
+            "playlistSelect": "Sélectionnez une playlist à afficher..."
+        },
+        "errors": {
+            "notFound": "Playlist [`{0}`] introuvable. Tapez /playlist view pour voir toutes vos playlists.",
+            "noAccess": "Désolé ! Vous n'êtes pas autorisé à accéder à cette playlist !",
+            "noTrack": "Désolé ! Il n'y a aucun morceau dans la playlist [`{0}`].",
+            "notAllowed": "Cette commande n'est pas autorisée sur les playlists liées ou partagées.",
+            "nameOverLimit": "Désolé ! Le nom de la playlist ne peut pas dépasser 10 caractères.",
+            "sameName": "Désolé ! Veuillez choisir un nouveau nom pour la playlist.",
+            "deleteDefault": "Vous n'êtes pas autorisé à supprimer la playlist par défaut.",
+            "limitReached": "Vous ne pouvez pas créer plus de `{0}` playlists !",
+            "exists": "La playlist [`{0}`] existe déjà.",
+            "invalidUrl": "Veuillez entrer un lien valide de playlist publique Spotify ou YouTube.",
+            "trackLimitReached": "Vous avez atteint la limite ! Vous ne pouvez ajouter que `{0}` chansons à votre playlist.",
+            "playlistLinkNotAllowed": "Vous n'êtes pas autorisé à utiliser des liens de playlist.",
+            "streamNotAllowed": "Vous n'êtes pas autorisé à ajouter des vidéos en streaming à votre playlist.",
+            "positionNotFound": "Impossible de trouver la position `{0}` dans votre playlist [`{1}`] !",
+            "streaming": "Vous n'êtes pas autorisé à ajouter des vidéos en streaming à votre playlist !",
+            "track": "Problème lors de l'ajout de morceaux à la playlist !",
+            "trackLimited": "Vous avez atteint la limite ! Vous ne pouvez ajouter que {0} chansons à votre playlist.",
+            "trackRepeated": "Ce morceau est déjà dans votre playlist !"
+        },
+        "actions": {
+            "play": "La playlist [`{0}`] avec `{1}` chansons a été ajoutée à la file.",
+            "removed": "Vous avez supprimé la playlist [`{0}`].",
+            "created": "Vous avez créé `{0}` playlists. Tapez /playlist view pour plus d'infos.",
+            "renamed": "Vous avez renommé `{0}` en `{1}`.",
+            "trackRemoved": "👋 **{0}** a été retiré de la playlist [`{2}`] de {1}.",
+            "cleared": "Vous avez vidé avec succès votre playlist [`{0}`].",
+            "trackAdded": "❤️ **{0}** ajouté à la playlist [`{2}`] de {1} !"
+        },
+        "sharing": {
+            "sendErrorPlayer": "Désolé ! Vous ne pouvez pas vous envoyer une invitation à vous-même.",
+            "sendErrorBot": "Désolé ! Vous ne pouvez pas envoyer une invitation à un bot.",
+            "belongs": "Désolé ! Cette playlist appartient à <@{0}>.",
+            "alreadyShared": "Désolé ! Cette playlist a été partagée avec {0}.",
+            "alreadySent": "Désolé ! Vous avez déjà envoyé une invitation à cet utilisateur auparavant.",
+            "noAccount": "{0} n'a pas créé de compte playlist.",
+            "invitationSent": "Invitation envoyée à {0}."
+        },
+        "inbox": {
+            "full": "Désolé ! La boîte de réception de {0} est pleine.",
+            "noMessages": "Aucun message dans votre boîte de réception."
+        }
+    },
+    "search": {
+        "noLinkSupport": "La commande de recherche ne prend pas en charge les liens !",
+        "title": "Recherche : {0}",
+        "desc": "➥ Plateforme : {0} **{1}**\n➥ Résultats : **{2}**\n\n{3}",
+        "wait": "Choisissez la chanson à ajouter à la file.",
+        "success": "Chanson ajoutée à la file."
+    },
+    "voting": {
+        "voted": "Vous avez voté !"
+    },
+    "time": {
+        "formatError": "Format de temps incorrect. Exemple : 2:42 ou 12:39:31",
+        "invalidStartTime": "Heure de début invalide, doit être entre `00:00` et `{0}`",
+        "invalidEndTime": "Heure de fin invalide, doit être entre `00:00` et `{0}`"
+    },
+    "lyrics": {
+        "notFound": "Paroles non trouvées. Tapez /lyrics <Nom de la Chanson> <Auteur> pour chercher les paroles."
+    },
+    "queue": {
+        "management": {
+            "title": "File à venir :",
+            "cleared": "Tous les morceaux dans `{0}` ont été supprimés",
+            "removed": "`{0}` morceaux ont été retirés de la file.",
+            "swapped": "`{0}` et `{1}` ont été échangés",
+            "moved": "`{0}` a été déplacé vers `{1}`"
+        },
+        "view": {
+            "historyTitle": "Historique :",
+            "title": "File de musiques",
+            "desc": "**Lecture en cours : [Cliquez ici]({0}) ⮯**\n{1}"
+        },
+        "errors": {
+            "queueFull": "Désolé, vous avez atteint le maximum de `{0}` morceaux dans la file !",
+            "outOfList": "Veuillez fournir un index de morceau valide !",
+            "duplicateTrack": "Désolé, ce morceau est déjà dans la file."
+        }
+    },
+    "songRequest": {
+        "channelCreated": "Un salon de demande de chansons ({0}) a été créé ! Vous pouvez commencer à demander n'importe quelle chanson par nom ou URL dans ce salon, sans besoin d'utiliser le préfixe du bot."
+    },
+    "pagination": {
+        "prev": "Précédent",
+        "next": "Suivant",
+        "play": "Jouer",
+        "share": "Partager",
+        "export": "Exporter",
+        "delete": "Supprimer",
+        "page": {
+            "title": "Entrez le numéro de page",
+            "field": "Numéro de page"
+        }
+    }
 }
