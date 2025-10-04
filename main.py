@@ -198,7 +198,8 @@ class CommandCheck(discord.app_commands.CommandTree):
 
 async def get_prefix(bot: commands.Bot, message: discord.Message) -> str:
     settings = await MongoDBHandler.get_settings(message.guild.id)
-    return settings.get("prefix", bot_config.bot_prefix)
+    prefix = settings.get("prefix", bot_config.bot_prefix)
+    return prefix if prefix is not None else ""
 
 # Loading settings and logger
 bot_config = Config(func.open_json("settings.json"))
