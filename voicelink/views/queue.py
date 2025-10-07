@@ -27,7 +27,7 @@ import discord
 
 from typing import TYPE_CHECKING
 
-from .utils import Pagination, BaseModal
+from .utils import Pagination
 from .pagination import PaginationView
 
 from ..language import LangHandler
@@ -52,32 +52,30 @@ class QueueView(PaginationView):
     """
 
     def __init__(self, player: "Player", author: discord.Member, is_queue: bool = True) -> None:
-        
-        self.player: Player = player
-        self.is_queue: bool = is_queue
-        self.total_duration = self.calculate_total_duration()
-        self.response: discord.Message = None
-
         super().__init__(
-            Pagination[Track](
+            Pagination["Track"](
                 items=player.queue.tracks() if is_queue else list(reversed(player.queue.history())),
                 page_size=7,
             ),
             author
         )
 
+        self.player: Player = player
+        self.is_queue: bool = is_queue
+        self.total_duration = self.calculate_total_duration()
+        self.response: discord.Message = None
+
     def calculate_total_duration(self) -> str:
         """Calculate the total duration of the tracks."""
         try:
-            return format_ms(sum(track.length for track in self.pagination._items))
+            return format_ms(sum(track.length for track in self.pagination.items))
         except Exception:
             return "∞"
 
     def format_description(self, tracks: list["Track"], texts: list[str]) -> str:
         """Format the description for the embed based on current tracks."""
         now_playing = (
-            texts[1].format(self.player.current.uri,
-                            f"```{self.player.current.title}```")
+            texts[1].format(self.player.current.uri, f"```{self.player.current.title}```")
             if self.player.current else texts[2].format("None")
         )
 

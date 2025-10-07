@@ -166,3 +166,13 @@ class Pagination(Generic[T]):
             int: The total number of items across all pages.
         """
         return len(self._items)
+
+    @property
+    def items(self) -> List[T]:
+        """
+        Gets the list of all items in the pagination.
+
+        Returns:
+            List[T]: The list of all items.
+        """
+        return self._items

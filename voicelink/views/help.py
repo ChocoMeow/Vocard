@@ -61,9 +61,6 @@ class HelpView(discord.ui.View):
         self.add_item(discord.ui.Button(label='Github', emoji=':github:1098265017268322406', url='https://github.com/ChocoMeow/Vocard'))
         self.add_item(discord.ui.Button(label='Donate', emoji=':patreon:913397909024800878', url='https://www.patreon.com/Vocard'))
         self.add_item(HelpDropdown(self.categories))
-    
-    async def on_error(self, error, item, interaction) -> None:
-        return
 
     async def on_timeout(self) -> None:
         for child in self.children:

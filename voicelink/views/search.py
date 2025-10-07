@@ -54,9 +54,6 @@ class SearchView(discord.ui.View):
         self.values: list[str] = None
         self.add_item(SearchDropdown(tracks, texts))
 
-    async def on_error(self, error, item, interaction):
-        return
-
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True

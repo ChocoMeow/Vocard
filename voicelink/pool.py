@@ -92,6 +92,7 @@ class Node:
         self._heartbeat: int = heartbeat
         self._secure: bool = secure
         self._logger: Optional[logging.Logger] = logger
+        self._stats: Optional[NodeStats] = None
 
         self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}/" + NODE_VERSION + "/websocket"
         self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"

@@ -73,9 +73,6 @@ class PaginationView(discord.ui.View):
                 child.disabled = state.get("disabled", False)
                 child.label = state.get("label")
     
-    async def on_error(self, error: Exception, item: discord.ui.Item, interaction: discord.Interaction) -> None:
-        return
-    
     async def update_message(self, interaction: discord.Interaction) -> None:
         """Update the view and edit the message."""
         

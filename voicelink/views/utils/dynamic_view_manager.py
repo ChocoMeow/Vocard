@@ -30,7 +30,7 @@ class DynamicViewManager(discord.ui.View):
         super().__init__(timeout=timeout)
 
         self._views: dict[str, discord.ui.View] = views
-        self._current_view: discord.ui.View | None = None
+        self._current_view: discord.ui.View | None = views.get("home")
 
     def add_view(self, name: str, view: discord.ui.View) -> None:
         """

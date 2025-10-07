@@ -33,86 +33,11 @@ import voicelink
 from typing import Optional
 from discord.ext import commands
 
+from .utils import BaseModal
 from ..config import Config
 from ..utils import format_ms, format_bytes
 
-class ExecuteModal(discord.ui.Modal):
-    def __init__(self, code: str, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.code: str = code
 
-        self.add_item(
-            discord.ui.TextInput(
-                label="Code Runner",
-                placeholder="Input Your Code",
-                style=discord.TextStyle.long,
-                default=self.code
-            )
-        )
-
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        self.code = self.children[0].value
-        self.stop()
-
-class AddNodeModal(discord.ui.Modal):
-    def __init__(self, view, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        
-        self.view: NodesPanel = view
-        
-        self.add_item(
-            discord.ui.TextInput(
-                label="Host",
-                placeholder="Enter the lavalink host e.g 0.0.0.0"
-            )
-        )
-        self.add_item(
-            discord.ui.TextInput(
-                label="Port",
-                placeholder="Enter the lavalink port e.g 2333"
-            )
-        )
-        self.add_item(
-            discord.ui.TextInput(
-                label="Password",
-                placeholder="Enter the lavalink password"
-            )
-        )
-        self.add_item(
-            discord.ui.TextInput(
-                label="Secure",
-                placeholder="Specify if your Lavalink uses SSL. Enter 'true' or 'false'"
-            )
-        )
-        self.add_item(
-            discord.ui.TextInput(
-                label="Identifier",
-                placeholder="Enter a name for your lavalink server"
-            )
-        )
-        
-    async def on_submit(self, interaction: discord.Interaction):
-        try:
-            config = {
-                "host": self.children[0].value,
-                "port": int(self.children[1].value),
-                "password": self.children[2].value,
-                "secure": self.children[3].value.lower() == "true",
-                "identifier": self.children[4].value
-            }
-        except Exception:
-            return await interaction.response.send_message("Some of your input is invalid! Please try again.", ephemeral=True)
-        
-        await interaction.response.defer()
-        try:
-            await voicelink.NodePool.create_node(bot=interaction.client, **config)
-            await interaction.followup.send(f"Node {self.children[4].value} is connected!", ephemeral=True)
-            await self.view.message.edit(embed=self.view.build_embed(), view=self.view)
-            
-        except Exception as e:
-            return await interaction.followup.send(e, ephemeral=True)
-        
 class CogsDropdown(discord.ui.Select):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
@@ -206,11 +131,21 @@ class ExecutePanel(discord.ui.View):
             await self.message.edit(view=self)
 
     async def execute(self, interaction: discord.Interaction):
-        modal = ExecuteModal(self.code, title="Enter Your Code")
+        modal = BaseModal(
+            title="Enter Your Code",
+            custom_id="execute_code_modal",
+            items=[discord.ui.TextInput(
+                label="Code Runner",
+                placeholder="Input Your Code",
+                style=discord.TextStyle.long,
+                custom_id="code_runner",
+                default=self.code
+            )]
+        )
         await interaction.response.send_modal(modal)
         await modal.wait()
 
-        if not (code := modal.code):
+        if not (code := modal.values.get("code_runner")):
             return
         
         self._error = None
@@ -287,7 +222,7 @@ class NodesPanel(discord.ui.View):
                 if self.selected_node and self.selected_node._identifier != node._identifier:
                     continue
                 
-                if node._available:
+                if node._available and node.stats:
                     total_memory = node.stats.used + node.stats.free
                     embed.add_field(
                         name=f"{name} Node - 🟢 Connected",
@@ -312,9 +247,61 @@ class NodesPanel(discord.ui.View):
     
     @discord.ui.button(label="Add", emoji="➕", style=discord.ButtonStyle.green)
     async def add(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = AddNodeModal(self, title="Create Node")
+        modal = BaseModal(
+            title="Create Node",
+            custom_id="add_node_modal",
+            items=[
+                discord.ui.TextInput(
+                    label="Host",
+                    placeholder="Enter the lavalink host e.g 0.0.0.0",
+                    custom_id="host"
+                ),
+                    discord.ui.TextInput(
+                    label="Port",
+                    placeholder="Enter the lavalink port e.g 2333",
+                    custom_id="port"
+                ),
+                discord.ui.TextInput(
+                    label="Password",
+                    placeholder="Enter the lavalink password",
+                    custom_id="password"
+                ),
+                discord.ui.TextInput(
+                    label="Secure",
+                    placeholder="Specify if your Lavalink uses SSL. Enter 'true' or 'false'",
+                    custom_id="secure",
+                    default="false"
+                ),
+                discord.ui.TextInput(
+                    label="Identifier",
+                    placeholder="Enter a name for your lavalink server",
+                    custom_id="identifier"
+                )
+            ]
+        )
         await interaction.response.send_modal(modal)
-    
+        await modal.wait()
+        
+        v = modal.values
+        try:
+            config = {
+                "host": v["host"],
+                "port": int(v["port"]),
+                "password": v["password"],
+                "secure": v["secure"].startswith("t"),
+                "identifier": v["identifier"]
+            }
+        except Exception:
+            return await interaction.response.send_message("Some of your input is invalid! Please try again.", ephemeral=True)
+        
+        try:
+            await voicelink.NodePool.create_node(bot=interaction.client, **config)
+            await interaction.followup.send(f"Node {v['identifier']} is connected!", ephemeral=True)
+            await self.message.edit(embed=self.build_embed(), view=self)
+            
+        except Exception as e:
+            return await interaction.followup.send(e, ephemeral=True)
+        
     @discord.ui.button(label="Remove", emoji="➖", style=discord.ButtonStyle.red, disabled=True)
     async def remove(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.selected_node:
