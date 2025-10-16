@@ -95,10 +95,10 @@ class Basic(commands.Cog):
             if isinstance(tracks, voicelink.Playlist):
                 tracks = tracks.tracks
 
-            return [app_commands.Choice(name=truncate_string(f"🎵 {track.author} - {track.title}", 100), value=truncate_string(f"{track.author} - {track.title}", 100)) for track in tracks]
+            return [app_commands.Choice(name=truncate_string(f"🎵 [{track.formatted_length}] {track.author} - {track.title}", 100), value=track.uri) for track in tracks]
         
         history = {track["identifier"]: track for track_id in reversed(await MongoDBHandler.get_user(interaction.user.id, d_type="history")) if (track := voicelink.Track.decode(track_id))["uri"]}
-        return [app_commands.Choice(name=truncate_string(f"🕒 {track['author']} - {track['title']}", 100), value=track['uri']) for track in history.values() if len(track['uri']) <= 100][:25]
+        return [app_commands.Choice(name=truncate_string(f"🕒 [{format_ms(track['length'])}] {track['author']} - {track['title']}", 100), value=track['uri']) for track in history.values() if len(track['uri']) <= 100][:25]
             
     @commands.hybrid_command(name="connect", aliases=get_aliases("connect"))
     @app_commands.describe(channel="Provide a channel to connect.")
@@ -226,7 +226,7 @@ class Basic(commands.Cog):
         if url(query):
             return await send_localized_message(ctx, "search.noLinkSupport", ephemeral=True)
         
-        search_type: voicelink.SearchType = voicelink.SearchType.match(platform) or Config().search_platform
+        search_type: voicelink.SearchType = voicelink.SearchType.from_platform(platform) or Config().search_platform
         tracks = await player.get_tracks(query=query, requester=ctx.author, search_type=search_type)
         if not tracks:
             return await send_localized_message(ctx, "player.errors.noTrackFound")

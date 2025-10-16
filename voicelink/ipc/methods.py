@@ -152,7 +152,7 @@ async def getRecommendation(bot: commands.Bot, data: Dict) -> None:
     
     track_data = Track.decode(track_id := data.get("trackId"))
     track = Track(track_id=track_id, info=track_data, requester=bot.user)
-    tracks: List[Track] = await node.get_recommendations(track, limit=60)
+    tracks: List[Track] = await track.get_recommendations(node)
 
     return {
         "op": "getRecommendation",
@@ -433,7 +433,7 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
                 return {
                     "op": "updatePlaylist",
                     "status": "error",
-                    "msg": f"Please enter a valid link or public spotify or youtube playlist link.",
+                    "msg": f"Please enter a valid link or public playlist link.",
                     "field": "playlistUrl",
                     "userId": str(user_id)
                 }
@@ -792,8 +792,7 @@ async def process_methods(ipc_client: IPCClient, bot: commands.Bot, data: Dict) 
             await ipc_client.send(resp)
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        ipc_client._logger.error(f"Failed to process method '{op}' by user {user_id}", exc_info=e)
         payload = {
             "op": "errorMsg",
             "level": "error",

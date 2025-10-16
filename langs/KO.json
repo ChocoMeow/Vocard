@@ -174,7 +174,7 @@
             "deleteDefault": "기본 재생 목록은 삭제할 수 없습니다.",
             "limitReached": "더 이상 {0}개 이상의 재생 목록을 만들 수 없습니다!",
             "exists": "재생 목록 [{0}]이(가) 이미 있습니다.",
-            "invalidUrl": "유효한 링크 또는 공개 Spotify 또는 YouTube 재생 목록 링크를 입력하세요.",
+            "invalidUrl": "유효한 공개 재생목록 링크를 입력하세요.",
             "trackLimitReached": "죄송합니다! 재생 목록에 추가할 수 있는 노래는 {0}곡까지입니다.",
             "playlistLinkNotAllowed": "재생 목록 링크를 사용할 수 없습니다.",
             "streamNotAllowed": "스트리밍 비디오를 재생 목록에 추가할 수 없습니다.",

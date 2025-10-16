@@ -390,26 +390,6 @@ class Node:
 
         elif load_type == "track":
             return [Track(track_id=data["encoded"], info=data["info"], requester=requester)]
-
-    async def get_recommendations(self, track: Track, limit: int = 20) -> List[Optional[Track]]:
-        query = ""
-        if track.source == "youtube":
-            query = f"https://www.youtube.com/watch?v={track.identifier}&list=RD{track.identifier}"
-
-        elif track.source == "spotify":
-            query = f"sprec:seed_tracks={track.identifier}"
-
-        if not query:
-            return []
-        
-        tracks = await self.get_tracks(query=query, requester=self.bot.user)
-        if not tracks:
-            return []
-        
-        if isinstance(tracks, Playlist):
-            tracks = tracks.tracks
-
-        return tracks[:limit] if limit else tracks
     
     async def update_refresh_yt_access_token(self, token: YTToken) -> dict:
         if not self._available:

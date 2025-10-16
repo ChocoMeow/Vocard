@@ -174,7 +174,7 @@
             "deleteDefault": "不允許刪除預設播放清單。",
             "limitReached": "您最多只能建立 `{0}` 個播放清單！",
             "exists": "播放清單 [`{0}`] 已存在。",
-            "invalidUrl": "請輸入有效的公開 Spotify 或 YouTube 播放清單連結。",
+            "invalidUrl": "請輸入有效的公開播放清單連結。",
             "trackLimitReached": "已達到上限！每個播放清單最多只能新增 `{0}` 首歌曲。",
             "playlistLinkNotAllowed": "不允許使用播放清單連結。",
             "streamNotAllowed": "不允許將串流影片加入播放清單。",

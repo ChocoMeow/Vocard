@@ -54,7 +54,7 @@ class QueueView(PaginationView):
     def __init__(self, player: "Player", author: discord.Member, is_queue: bool = True) -> None:
         super().__init__(
             Pagination["Track"](
-                items=player.queue.tracks() if is_queue else list(reversed(player.queue.history())),
+                items=player.queue.tracks() if is_queue else list(reversed(player.queue.history(not player.current))),
                 page_size=7,
             ),
             author

@@ -174,7 +174,7 @@
             "deleteDefault": "Nie możesz usuwać domyślnej playlisty",
             "limitReached": "Nie możesz stworzyć więcej niż `{0}` playlist!",
             "exists": "Playlista [`{0}`] już istnieje.",
-            "invalidUrl": "Podaj poprawny link do playlisty z Spotify lub Youtube.",
+            "invalidUrl": "Proszę podać prawidłowy link do publicznej playlisty.",
             "trackLimitReached": "Osiągnąłeś limit! Możesz dodać maksymalnie `{0}` pozycji do playlisty.",
             "playlistLinkNotAllowed": "Linki do playlist są nie obsługiwane.",
             "streamNotAllowed": "Nie możesz dodać transmisji na żywo do playlisty.",

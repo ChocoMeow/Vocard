@@ -21,19 +21,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import re
+from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, List, TYPE_CHECKING
 from tldextract import extract
 from discord import Member
 
-from .enums import SearchType
+from .enums import SearchType, TrackRecType
 from .config import Config
 from .utils import format_ms
 from .transformer import encode, decode
 
-YOUTUBE_REGEX = re.compile(r'(https?://)?(www\.)?youtube\.(com|nl)/watch\?v=([-\w]+)')
+if TYPE_CHECKING:
+    from .pool import Node
 
+    
 class Track:
     """The base track object. Returns critical track information needed for parsing by Lavalink.
        You can also pass in commands.Context to get a discord.py Context object in your track.
@@ -80,9 +82,6 @@ class Track:
         self._search_type: SearchType = search_type
 
         self.thumbnail: str = info.get("artworkUrl")
-        if not self.thumbnail and YOUTUBE_REGEX.match(self.uri):
-            self.thumbnail = f"https://img.youtube.com/vi/{self.identifier}/maxresdefault.jpg"
-        
         self.emoji: str = Config().get_source_config(self.source, "emoji")
         self.length: float = info.get("length")
         
@@ -94,16 +93,37 @@ class Track:
         self.end_time: Optional[int] = None
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, Track):
-            return False
-
-        return other.track_id == self.track_id
+        """Checks equality between two tracks."""
+        if isinstance(other, Track):
+            return other.track_id == self.track_id
+        
+        return False
 
     def __str__(self) -> str:
+        """String representation of the track."""
         return self.title
 
     def __repr__(self) -> str:
         return f"<Voicelink.track title={self.title!r} uri=<{self.uri!r}> length={self.length}>"
+
+    async def get_recommendations(self, node: Node) -> List[Track]:
+        """Fetches recommended tracks based on the current track."""
+        if not node or not node._available:
+            return []
+
+        rec_type = TrackRecType.from_platform(self.source)
+        if not rec_type:
+            return []
+        
+        query = rec_type.format(track_id=self.identifier)
+        tracks = await node.get_tracks(query=query, requester=node.bot.user)
+        if not tracks:
+            return []
+        
+        if isinstance(tracks, Playlist):
+            tracks = tracks.tracks
+
+        return tracks
 
     @property
     def track_id(self) -> str:
@@ -115,7 +135,7 @@ class Track:
     @property
     def formatted_length(self) -> str:
         return format_ms(self.length)
-    
+
     @property
     def data(self) -> dict:
         return {

@@ -11,7 +11,7 @@ Vocard is a highly customizable Discord music bot, designed to deliver a user-fr
 * Lightweight design
 * Smooth playback
 * Clean and nice interface
-* Supports many music platforms (YouTube, SoundCloud, etc.)
+* Supports many music platforms (YouTube, SoundCloud, Spotify, Apple Music etc.)
 * Built-in playlist support
 * Fully customizable settings
 * Lyrics support
@@ -19,6 +19,7 @@ Vocard is a highly customizable Discord music bot, designed to deliver a user-fr
 * Multiple languages available
 * Easy to update
 * Supports docker
+* [One Click Installer](https://github.com/ChocoMeow/Vocard-Installer)
 * [Premium dashboard](https://github.com/ChocoMeow/Vocard-Dashboard)
 
 ## Screenshot

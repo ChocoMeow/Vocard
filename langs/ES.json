@@ -174,7 +174,7 @@
             "deleteDefault": "No está autorizado para eliminar la lista de reproducción predeterminada.",
             "limitReached": "¡No puede crear más de `{0}` listas de reproducción!",
             "exists": "La lista de reproducción [`{0}`] ya existe.",
-            "invalidUrl": "Ingrese un enlace válido o un enlace público de lista de reproducción de Spotify o YouTube.",
+            "invalidUrl": "Por favor, introduzca un enlace válido de lista de reproducción pública.",
             "trackLimitReached": "¡Ha alcanzado el límite! Solo puede agregar `{0}` canciones a su lista de reproducción.",
             "playlistLinkNotAllowed": "No está autorizado para usar enlaces de lista de reproducción.",
             "streamNotAllowed": "No está autorizado para agregar videos de transmisión a su lista de reproducción.",

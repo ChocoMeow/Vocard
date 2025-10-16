@@ -174,7 +174,7 @@
             "deleteDefault": "You are not allowed to delete the default playlist.",
             "limitReached": "You cannot create more than `{0}` playlists!",
             "exists": "Playlist [`{0}`] already exists.",
-            "invalidUrl": "Please enter a valid public spotify or youtube playlist link.",
+            "invalidUrl": "Please enter a valid public playlist link.",
             "trackLimitReached": "You have reached the limit! You can only add `{0}` songs to your playlist.",
             "playlistLinkNotAllowed": "You are not allowed to use playlist links.",
             "streamNotAllowed": "You are not allowed to add streaming videos to your playlist.",

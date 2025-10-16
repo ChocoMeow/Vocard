@@ -92,7 +92,7 @@ class SearchType(Enum):
         return self.value
     
     @classmethod
-    def match(cls, value: str):
+    def from_platform(cls, value: str):
         """find an enum based on a search string."""
         normalized_value = value.lower().replace("_", "").replace(" ", "")
 
@@ -106,6 +106,81 @@ class SearchType(Enum):
     def display_name(self) -> str:
         return self.name.replace("_", " ").title()
 
+class TrackRecType(Enum):
+    """Enum representing track recommendation key formats for various platforms.
+
+    Each key format is used to generate a recommendation link or identifier
+    for a given track ID on the respective platform.
+
+    - RecommendationType.SPOTIFY:
+      Generates a Spotify recommendation key in the format 'sprec:mix:track:{track_id}'.
+
+    - RecommendationType.YOUTUBE:
+      Generates a YouTube recommendation URL with a playlist context.
+      
+    - RecommendationType.YOUTUBE_MUSIC:
+      Same as YouTube, generates a YouTube Music recommendation URL.
+      
+    - RecommendationType.DEEZER:
+      Generates a Deezer recommendation key in the format 'dzrec:{track_id}'.
+      
+    - RecommendationType.YANDEX_MUSIC:
+      Generates a Yandex Music recommendation key in the format 'ymrec:{track_id}'.
+    
+    - RecommendationType.VK_MUSIC:
+      Generates a VK Music recommendation key in the format 'vkrec:{track_id}'.
+    
+    - RecommendationType.TIDAL:
+      Generates a Tidal recommendation key in the format 'tdrec:{track_id}'.
+    
+    - RecommendationType.QOBUZ:
+      Generates a Qobuz recommendation key in the format 'qbrec:{track_id}'.
+    
+    - RecommendationType.JIOSAAVN:
+      Generates a JioSaavn recommendation key in the format 'jsrec:{track_id}'
+    """
+
+    YOUTUBE = "https://www.youtube.com/watch?v={track_id}&list=RD{track_id}"
+    YOUTUBE_MUSIC = YOUTUBE
+    SPOTIFY = "sprec:mix:track:{track_id}"
+    DEEZER = "dzrec:{track_id}"
+    YANDEX_MUSIC = "ymrec:{track_id}"
+    VK_MUSIC = "vkrec:{track_id}"
+    TIDAL = "tdrec:{track_id}"
+    QOBUZ = "qbrec:{track_id}"
+    JIOSAAVN = "jsrec:{track_id}"
+
+    def __str__(self) -> str:
+        return self.name
+
+    def format(self, track_id: str) -> str:
+        """Format the recommendation key using the provided track ID.
+        
+        Args:
+            track_id (str): The ID of the track to format.
+        
+        Returns:
+            str: The formatted recommendation link.
+        """
+        return self.value.format(track_id=track_id)
+
+    @classmethod
+    def from_platform(cls, platform: str) -> 'TrackRecType':
+        """Find the enum member based on a platform name.
+        
+        Args:
+            platform (str): The name of the platform.
+        
+        Returns:
+            TrackRecType: The corresponding enum member, or None if not found.
+        """
+        normalized = platform.lower().replace("_", "").replace(" ", "")
+        for member in cls:
+            if member.name.lower().replace("_", "") == normalized:
+                return member
+            
+        return None
+      
 class RequestMethod(Enum):
     """The enum for the different request methods in Voicelink
     """

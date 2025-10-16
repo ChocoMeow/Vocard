@@ -24,7 +24,6 @@ SOFTWARE.
 import discord
 import re
 import voicelink
-import traceback
 
 from discord.ext import commands
 from typing import Optional, Dict, Type, Union, Any

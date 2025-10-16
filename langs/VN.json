@@ -174,7 +174,7 @@
             "deleteDefault": "Bạn không được phép xóa playlist mặc định.",
             "limitReached": "Bạn không thể tạo nhiều hơn `{0}` playlist!",
             "exists": "Playlist [`{0}`] đã tồn tại.",
-            "invalidUrl": "Vui lòng nhập liên kết playlist Spotify hoặc Youtube công khai hợp lệ.",
+            "invalidUrl": "Vui lòng nhập liên kết hợp lệ đến danh sách phát công khai.",
             "trackLimitReached": "Bạn đã đạt giới hạn! Bạn chỉ có thể thêm `{0}` bài hát vào playlist của mình.",
             "playlistLinkNotAllowed": "Bạn không được phép sử dụng liên kết playlist.",
             "streamNotAllowed": "Bạn không được phép thêm video trực tiếp vào playlist của mình.",

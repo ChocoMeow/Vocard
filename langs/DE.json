@@ -174,7 +174,7 @@
             "deleteDefault": "Du kannst die Standard-Wiedergabeliste nicht löschen.",
             "limitReached": "Du kannst nicht mehr als `{0}` Wiedergabelisten erstellen!",
             "exists": "Die Playlist [`{0}`] existiert bereits.",
-            "invalidUrl": "Bitte gebe einen gültigen Link oder öffentlichen Spotify/YouTube-Playlist-Link ein.",
+            "invalidUrl": "Bitte geben Sie einen gültigen öffentlichen Playlist-Link ein.",
             "trackLimitReached": "Du hast die Grenze erreicht! Du kannst deiner Playlist nur noch `{0}` Songs hinzufügen.",
             "playlistLinkNotAllowed": "Du kannst keine Playlist-Links verwenden.",
             "streamNotAllowed": "Du darfst deiner Playlist keine aktiven Streams hinzufügen.",

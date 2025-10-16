@@ -27,10 +27,10 @@ import socket
 import discord
 
 from itertools import zip_longest
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 from timeit import default_timer as timer
 from discord.ext import commands
-from typing import Union
+from discord.utils import MISSING
 
 from .mongodb import MongoDBHandler
 from .language import LangHandler
@@ -301,9 +301,9 @@ async def dispatch_message(
     ctx: Union[commands.Context, discord.Interaction, TempCtx],
     content: Union[str, discord.Embed] = None,
     *params,
-    view: discord.ui.View = None,
-    file: discord.File = None,
-    delete_after: float = None,
+    view: Optional[discord.ui.View] = None,
+    file: Optional[discord.File] = None,
+    delete_after: Optional[float] = MISSING,
     ephemeral: bool = False,
     requires_fetch: bool = False
 ) -> Optional[discord.Message]:
@@ -354,7 +354,7 @@ async def dispatch_message(
         send_kwargs["view"] = view
         
     if "delete_after" in send_func.__code__.co_varnames:
-        if not delete_after and settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
+        if delete_after is MISSING and settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
             delete_after = 10
         send_kwargs["delete_after"] = delete_after
     

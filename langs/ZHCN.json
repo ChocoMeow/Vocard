@@ -174,7 +174,7 @@
             "deleteDefault": "不允许删除默认播放列表。",
             "limitReached": "您最多只能创建 `{0}` 个播放列表！",
             "exists": "播放列表 [`{0}`] 已存在。",
-            "invalidUrl": "请输入有效的公共 Spotify 或 YouTube 播放列表链接。",
+            "invalidUrl": "请输入有效的公共播放列表链接。",
             "trackLimitReached": "已达到上限！每个播放列表最多只能添加 `{0}` 首歌。",
             "playlistLinkNotAllowed": "不允许使用播放列表链接。",
             "streamNotAllowed": "不允许将流媒体视频添加到播放列表。",

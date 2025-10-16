@@ -84,9 +84,9 @@ class HelpView(discord.ui.View):
                 inline=True
             )
 
-            update = "Vocard is a simple music bot. It leads to a comfortable experience which is user-friendly, It supports YouTube, Soundcloud, Spotify, Twitch and more!"
+            update = "Vocard is a simple music bot. It leads to a comfortable experience which is user-friendly, It supports Soundcloud, Spotify, Twitch and more!"
             embed.add_field(name="📰 Information:", value=update, inline=True)
-            embed.add_field(name="Get Started", value="```Join a voice channel and /play {Song/URL} a song. (Names, Youtube Video Links or Playlist links or Spotify links are supported on Vocard)```", inline=False)
+            embed.add_field(name="Get Started", value="```Join a voice channel and /play {Song/URL} a song. (Names, Video Links or Playlist links are supported on Vocard)```", inline=False)
             
             return embed
 

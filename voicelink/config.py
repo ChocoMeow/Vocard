@@ -84,7 +84,7 @@ class Config:
         self.invite_link: str = "https://discord.gg/wRCgB7vBQv"
         self.nodes: Dict[str, Dict[str, Union[str, int, bool]]] = settings.get("nodes", {})
         self.max_queue: int = settings.get("default_max_queue", 1000)
-        self.search_platform: SearchType = SearchType.match(settings.get("default_search_platform", "youtube")) or SearchType.YOUTUBE
+        self.search_platform: SearchType = SearchType.from_platform(settings.get("default_search_platform", "youtube")) or SearchType.YOUTUBE
         self.bot_prefix: str = settings.get("prefix", "")
         self.activity: List[Dict[str, str]] = settings.get("activity", [{"listen": "/help"}])
         self.logging: Dict[Union[str, Dict[str, Union[str, bool]]]] = settings.get("logging", {})
