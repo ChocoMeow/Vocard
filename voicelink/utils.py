@@ -356,11 +356,11 @@ async def dispatch_message(
     if "delete_after" in send_func.__code__.co_varnames:
         if delete_after is MISSING and settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
             delete_after = 10
-        send_kwargs["delete_after"] = delete_after
+        send_kwargs["delete_after"] = delete_after if delete_after != MISSING else None
     
     if "ephemeral" in send_func.__code__.co_varnames:
         send_kwargs["ephemeral"] = ephemeral
-
+        
     # Send the message or embed
     message = await send_func(**send_kwargs)
 

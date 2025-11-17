@@ -514,10 +514,11 @@ class Player(VoiceProtocol):
 
         try:
             await self.update_voice_status(remove_status=True)
-            if self.controller and self.controller.id == self.settings.get("music_request_channel", {}).get("controller_msg_id"):
-                await self.controller.edit(embed=self.build_embed(), view=None)
-            else:    
-                await self.controller.delete()
+            if self.controller:
+                if self.controller.id == self.settings.get("music_request_channel", {}).get("controller_msg_id"):
+                    await self.controller.edit(embed=self.build_embed(), view=None)
+                else: 
+                    await self.controller.delete()
         except:
             pass
 
