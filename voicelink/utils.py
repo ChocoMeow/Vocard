@@ -30,7 +30,6 @@ from itertools import zip_longest
 from typing import Dict, Optional, Union
 from timeit import default_timer as timer
 from discord.ext import commands
-from discord.utils import MISSING
 
 from .mongodb import MongoDBHandler
 from .language import LangHandler
@@ -303,7 +302,7 @@ async def dispatch_message(
     *params,
     view: Optional[discord.ui.View] = None,
     file: Optional[discord.File] = None,
-    delete_after: Optional[float] = MISSING,
+    delete_after: Optional[float] = discord.utils.MISSING,
     ephemeral: bool = False,
     requires_fetch: bool = False
 ) -> Optional[discord.Message]:
@@ -323,12 +322,12 @@ async def dispatch_message(
     Returns:
         The sent message object, or None.
     """
-    if content is None:
+    if not content:
         content = "No content provided."
 
     # Determine the text to send
     embed = content if isinstance(content, discord.Embed) else None
-    text = None if embed else content.format(*params)
+    text = None if embed else str(content).format(*params) if params else str(content)
         
     # Determine the sending function
     send_func = (
@@ -354,13 +353,13 @@ async def dispatch_message(
         send_kwargs["view"] = view
         
     if "delete_after" in send_func.__code__.co_varnames:
-        if delete_after is MISSING and settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
+        if delete_after is discord.utils.MISSING and settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
             delete_after = 10
-        send_kwargs["delete_after"] = delete_after if delete_after != MISSING else None
+        send_kwargs["delete_after"] = delete_after if delete_after is not discord.utils.MISSING else None
     
     if "ephemeral" in send_func.__code__.co_varnames:
         send_kwargs["ephemeral"] = ephemeral
-        
+
     # Send the message or embed
     message = await send_func(**send_kwargs)
 

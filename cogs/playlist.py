@@ -26,6 +26,7 @@ import discord
 import voicelink
 
 from io import StringIO
+from typing import Optional, Tuple
 from discord import app_commands
 from discord.ext import commands
 from function import (
@@ -43,17 +44,47 @@ def assign_playlist_id(existed: list) -> str:
         if str(i) not in existed:
             return str(i)
 
-async def check_playlist_perms(user_id: int, author_id: int, playlist_id: str) -> dict:
-    """Check if user has read permissions for a specific playlist."""
+def resolve_owner_display(ctx: commands.Context[commands.Bot], owner_id: int):
+    if owner_id == ctx.author.id:
+        return ctx.author
+    if ctx.guild:
+        member = ctx.guild.get_member(owner_id)
+        if member:
+            return member
+    user = ctx.bot.get_user(owner_id)
+    return user if user else f"<@{owner_id}>"
+
+async def check_playlist_perms(
+    user_id: int,
+    author_id: int,
+    playlist_id: str,
+    *,
+    required_perm: Optional[str] = "read"
+) -> Tuple[Optional[dict], Optional[str]]:
+    """Check if user has the requested permissions for a specific playlist."""
     user_data = await MongoDBHandler.get_user(author_id, d_type='playlist')
     playlist = user_data.get(playlist_id)
     
-    if not playlist or user_id not in playlist['perms']['read']:
-        return {}
+    if not playlist:
+        return None, "not_found"
     
-    return playlist
+    perms = playlist.get('perms', {})
+    if user_id not in perms.get('read', []):
+        return None, "no_read"
+    
+    if required_perm and required_perm != "read":
+        if user_id not in perms.get(required_perm, []):
+            return None, "no_permission"
+    
+    return playlist, None
 
-async def check_playlist(ctx: commands.Context, name: str = None, full: bool = False, share: bool = True) -> dict:
+async def check_playlist(
+    ctx: commands.Context,
+    name: str = None,
+    full: bool = False,
+    share: bool = True,
+    share_perm: Optional[str] = None
+) -> dict:
     """Get user's playlist data with various filtering options."""
     user_playlists = await MongoDBHandler.get_user(ctx.author.id, d_type='playlist')
 
@@ -64,23 +95,70 @@ async def check_playlist(ctx: commands.Context, name: str = None, full: bool = F
         return user_playlists
     
     if not name:
-        return {'playlist': user_playlists['200'], 'position': 1, 'id': "200"}
+        return {
+            'playlist': user_playlists['200'],
+            'position': 1,
+            'id': "200",
+            'is_shared': False,
+            'owner_id': ctx.author.id,
+            'owner_playlist_id': "200",
+            'error': None
+        }
     
     for index, playlist_id in enumerate(user_playlists, start=1):
         playlist = user_playlists[playlist_id]
         
         if playlist['name'].lower() == name.lower():
             if playlist['type'] == 'share' and share:
-                shared_playlist = await check_playlist_perms(ctx.author.id, playlist['user'], playlist['referId'])
+                shared_playlist, error = await check_playlist_perms(
+                    ctx.author.id,
+                    playlist['user'],
+                    playlist['referId'],
+                    required_perm=share_perm or "read"
+                )
                 
-                if not shared_playlist or ctx.author.id not in shared_playlist['perms']['read']:
-                    return {'playlist': None, 'position': index, 'id': playlist_id}
+                if not shared_playlist:
+                    if error == "not_found":
+                        await MongoDBHandler.update_user(ctx.author.id, {"$unset": {f"playlist.{playlist_id}": 1}})
+                    return {
+                        'playlist': None,
+                        'position': index,
+                        'id': playlist_id,
+                        'is_shared': True,
+                        'owner_id': playlist['user'],
+                        'owner_playlist_id': playlist['referId'],
+                        'error': 'permission' if error in {'no_read', 'no_permission'} else None
+                    }
                 
-                return {'playlist': shared_playlist, 'position': index, 'id': playlist_id}
+                return {
+                    'playlist': shared_playlist,
+                    'position': index,
+                    'id': playlist_id,
+                    'is_shared': True,
+                    'owner_id': playlist['user'],
+                    'owner_playlist_id': playlist['referId'],
+                    'error': None
+                }
             
-            return {'playlist': playlist, 'position': index, 'id': playlist_id}
+            return {
+                'playlist': playlist,
+                'position': index,
+                'id': playlist_id,
+                'is_shared': False,
+                'owner_id': ctx.author.id,
+                'owner_playlist_id': playlist_id,
+                'error': None
+            }
     
-    return {'playlist': None, 'position': None, 'id': None}
+    return {
+        'playlist': None,
+        'position': None,
+        'id': None,
+        'is_shared': False,
+        'owner_id': ctx.author.id,
+        'owner_playlist_id': None,
+        'error': None
+    }
 
 async def search_playlist(url: str, requester: discord.Member, time_needed: bool = True) -> dict:
     """Search for playlist tracks from a URL."""
@@ -127,14 +205,15 @@ async def _process_playlist(ctx: commands.Context, playlist_data: dict, playlist
     
     # Handle shared playlist
     if playlist_type == 'share':
-        shared_playlist = await check_playlist_perms(
+        shared_playlist, error = await check_playlist_perms(
             ctx.author.id, 
             playlist_data['user'], 
             playlist_data['referId']
         )
         
         if not shared_playlist:
-            await MongoDBHandler.update_user(ctx.author.id, {"$unset": {f"playlist.{playlist_id}": 1}})
+            if error == "not_found":
+                await MongoDBHandler.update_user(ctx.author.id, {"$unset": {f"playlist.{playlist_id}": 1}})
             return None
         
         if shared_playlist['type'] == 'link':
@@ -330,7 +409,7 @@ class Playlists(commands.Cog, name="playlist"):
             await MongoDBHandler.update_user(result['playlist']['user'], {"$pull": {f"playlist.{result['playlist']['referId']}.perms.read": ctx.author.id}})
 
         await MongoDBHandler.update_user(ctx.author.id, {"$unset": {f"playlist.{result['id']}": 1}})
-        return await send_localized_message(ctx, "playlist.actions.remove", result["playlist"]["name"])
+        return await send_localized_message(ctx, "playlist.actions.removed", result["playlist"]["name"])
 
     @playlist.command(name="share", aliases=get_aliases("share"))
     @app_commands.describe(
@@ -375,6 +454,70 @@ class Playlists(commands.Cog, name="playlist"):
             }}}
         )
         return await send_localized_message(ctx, "playlist.sharing.invitationSent", member)
+
+    @playlist.command(name="permission", aliases=get_aliases("permission"))
+    @app_commands.describe(
+        name="The name of the playlist.",
+        member="The user to grant or revoke permissions for.",
+        permission="The permission type: read, write, or remove.",
+        action="Whether to grant or revoke the permission."
+    )
+    @app_commands.choices(permission=[
+        app_commands.Choice(name="read", value="read"),
+        app_commands.Choice(name="write", value="write"),
+        app_commands.Choice(name="remove", value="remove")
+    ])
+    @app_commands.choices(action=[
+        app_commands.Choice(name="grant", value="grant"),
+        app_commands.Choice(name="revoke", value="revoke")
+    ])
+    @app_commands.autocomplete(name=playlist_autocomplete)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def permission(self, ctx: commands.Context, name: str, member: discord.Member, permission: str, action: str):
+        "Grant or revoke permissions for a playlist."
+        if member.id == ctx.author.id:
+            return await send_localized_message(ctx, 'playlist.permissions.cannotModifySelf', ephemeral=True)
+        if member.bot:
+            return await send_localized_message(ctx, 'playlist.sharing.sendErrorBot', ephemeral=True)
+        
+        result = await check_playlist(ctx, name.lower(), share=False)
+        if not result['playlist']:
+            return await send_localized_message(ctx, 'playlist.errors.notFound', name, ephemeral=True)
+        
+        if result['playlist']['type'] in ['share', 'link']:
+            return await send_localized_message(ctx, 'playlist.errors.notAllowed', ephemeral=True)
+        
+        perm_type = result['playlist'].get('perms', {})
+        if permission not in perm_type:
+            return await send_localized_message(ctx, 'playlist.permissions.invalidPermission', ephemeral=True)
+        
+        perm_list = perm_type.get(permission, [])
+        if action == "grant":
+            if member.id in perm_list:
+                return await send_localized_message(ctx, 'playlist.permissions.alreadyGranted', member, permission, ephemeral=True)
+            
+            # Ensure user has read access first
+            if permission != 'read' and member.id not in perm_type.get('read', []):
+                return await send_localized_message(ctx, f'You haven\'t shared your playlist to {member.mention}', member, ephemeral=True)
+            
+            await MongoDBHandler.update_user(ctx.author.id, {"$push": {f"playlist.{result['id']}.perms.{permission}": member.id}})
+            return await send_localized_message(ctx, 'playlist.permissions.granted', member, permission, result['playlist']['name'])
+        
+        elif action == "revoke":
+            if member.id not in perm_list:
+                return await send_localized_message(ctx, 'playlist.permissions.notGranted', member, permission, ephemeral=True)
+            
+            await MongoDBHandler.update_user(ctx.author.id, {"$pull": {f"playlist.{result['id']}.perms.{permission}": member.id}})
+            
+            # If revoking read, also revoke write and remove
+            if permission == 'read':
+                await MongoDBHandler.update_user(ctx.author.id, {"$pull": {f"playlist.{result['id']}.perms.write": member.id}})
+                await MongoDBHandler.update_user(ctx.author.id, {"$pull": {f"playlist.{result['id']}.perms.remove": member.id}})
+            
+            return await send_localized_message(ctx, 'playlist.permissions.revoked', member, permission, result['playlist']['name'])
+        
+        else:
+            return await send_localized_message(ctx, 'playlist.permissions.invalidAction', ephemeral=True)
 
     @playlist.command(name="rename", aliases=get_aliases("rename"))
     @app_commands.describe(
@@ -445,10 +588,12 @@ class Playlists(commands.Cog, name="playlist"):
     @app_commands.autocomplete(name=playlist_autocomplete)
     async def add(self, ctx: commands.Context, name: str, query: str) -> None:
         "Add tracks in to your custom playlist."
-        result = await check_playlist(ctx, name.lower(), share=False)
+        result = await check_playlist(ctx, name.lower(), share=True, share_perm='write')
         if not result['playlist']:
+            if result.get('error') == 'permission':
+                return await send_localized_message(ctx, 'playlist.errors.noAccess', ephemeral=True)
             return await send_localized_message(ctx, 'playlist.errors.notFound', name, ephemeral=True)
-        if result['playlist']['type'] in ['share', 'link']:
+        if result['playlist']['type'] == 'link':
             return await send_localized_message(ctx, 'playlist.errors.notAllowed', ephemeral=True)
         
         _, max_t, _ = Config().get_playlist_config()
@@ -465,8 +610,11 @@ class Playlists(commands.Cog, name="playlist"):
         if results[0].is_stream:
             return await send_localized_message(ctx, 'playlist.errors.streamNotAllowed', ephemeral=True)
 
-        await MongoDBHandler.update_user(ctx.author.id, {"$push": {f'playlist.{result["id"]}.tracks': results[0].track_id}})
-        await send_localized_message(ctx, 'playlist.actions.trackAdded', results[0].title, ctx.author, result['playlist']['name'])
+        owner_id = result.get('owner_id', ctx.author.id)
+        owner_playlist_id = result.get('owner_playlist_id', result['id'])
+        await MongoDBHandler.update_user(owner_id, {"$push": {f'playlist.{owner_playlist_id}.tracks': results[0].track_id}})
+        owner_display = resolve_owner_display(ctx, owner_id)
+        await send_localized_message(ctx, 'playlist.actions.trackAdded', results[0].title, owner_display, result['playlist']['name'])
 
     @playlist.command(name="remove", aliases=get_aliases("remove"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -477,32 +625,41 @@ class Playlists(commands.Cog, name="playlist"):
     @app_commands.autocomplete(name=playlist_autocomplete)
     async def remove(self, ctx: commands.Context, name: str, position: int):
         "Remove song from your favorite playlist."
-        result = await check_playlist(ctx, name.lower(), share=False)
+        result = await check_playlist(ctx, name.lower(), share=True, share_perm='remove')
         if not result['playlist']:
+            if result.get('error') == 'permission':
+                return await send_localized_message(ctx, 'playlist.errors.noAccess', ephemeral=True)
             return await send_localized_message(ctx, 'playlist.errors.notFound', name, ephemeral=True)
-        if result['playlist']['type'] in ['link', 'share']:
+        if result['playlist']['type'] == 'link':
             return await send_localized_message(ctx, 'playlist.errors.notAllowed', ephemeral=True)
         if not 0 < position <= len(result['playlist']['tracks']):
             return await send_localized_message(ctx, 'playlist.errors.positionNotFound', position, name)
 
-        await MongoDBHandler.update_user(ctx.author.id, {"$pull": {f'playlist.{result["id"]}.tracks': result['playlist']['tracks'][position - 1]}})
+        owner_id = result.get('owner_id', ctx.author.id)
+        owner_playlist_id = result.get('owner_playlist_id', result['id'])
+        await MongoDBHandler.update_user(owner_id, {"$pull": {f'playlist.{owner_playlist_id}.tracks': result['playlist']['tracks'][position - 1]}})
         
         track = voicelink.Track.decode(result['playlist']['tracks'][position - 1])
-        await send_localized_message(ctx, 'playlist.actions.trackRemoved', track.get("title"), ctx.author, name)
+        owner_display = resolve_owner_display(ctx, owner_id)
+        await send_localized_message(ctx, 'playlist.actions.trackRemoved', track.get("title"), owner_display, name)
 
     @playlist.command(name="clear", aliases=get_aliases("clear"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     @app_commands.autocomplete(name=playlist_autocomplete)
     async def clear(self, ctx: commands.Context, name: str) -> None:
         "Remove all songs from your favorite playlist."
-        result = await check_playlist(ctx, name.lower(), share=False)
+        result = await check_playlist(ctx, name.lower(), share=True, share_perm='remove')
         if not result['playlist']:
+            if result.get('error') == 'permission':
+                return await send_localized_message(ctx, 'playlist.errors.noAccess', ephemeral=True)
             return await send_localized_message(ctx, 'playlist.errors.notFound', name, ephemeral=True)
 
-        if result['playlist']['type'] in ['link', 'share']:
+        if result['playlist']['type'] == 'link':
             return await send_localized_message(ctx, 'playlist.errors.notAllowed', ephemeral=True)
 
-        await MongoDBHandler.update_user(ctx.author.id, {"$set": {f'playlist.{result["id"]}.tracks': []}})
+        owner_id = result.get('owner_id', ctx.author.id)
+        owner_playlist_id = result.get('owner_playlist_id', result['id'])
+        await MongoDBHandler.update_user(owner_id, {"$set": {f'playlist.{owner_playlist_id}.tracks': []}})
         await send_localized_message(ctx, 'playlist.actions.cleared', name)
 
     @playlist.command(name="export", aliases=get_aliases("export"))

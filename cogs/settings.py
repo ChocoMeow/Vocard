@@ -122,8 +122,8 @@ class Settings(commands.Cog, name="settings"):
     async def bypassvote(self, ctx: commands.Context):
         "Toggles voting system."
         settings = await MongoDBHandler.get_settings(ctx.guild.id)
-        toggle = settings.get('common.status.disabled_vote', True)
-        await MongoDBHandler.update_settings(ctx.guild.id, {"$set": {'common.status.disabled_vote': not toggle}})
+        toggle = settings.get('disabled_vote', True)
+        await MongoDBHandler.update_settings(ctx.guild.id, {"$set": {'disabled_vote': not toggle}})
         await send_localized_message(ctx, 'settings.actions.bypassVote', await LangHandler.get_lang(ctx.guild.id, "common.status.enabled" if not toggle else "common.status.disabled"))
 
     @settings.command(name="view", aliases=get_aliases("view"))
@@ -145,7 +145,7 @@ class Settings(commands.Cog, name="settings"):
             settings.get('lang', LangHandler._default_lang),
             settings.get('controller', True),
             dj_role.name if dj_role else 'None',
-            settings.get('common.status.disabled_vote', False),
+            settings.get('disabled_vote', False),
             settings.get('24/7', False),
             settings.get('volume', 100),
             format_ms(settings.get('played_time', 0) * 60 * 1000),

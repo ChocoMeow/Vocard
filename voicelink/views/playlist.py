@@ -31,9 +31,10 @@ from typing import Any
 from .utils import DynamicViewManager, Pagination
 from .pagination import PaginationView
 from ..config import Config
-from ..utils import format_ms, truncate_string
+from ..utils import format_ms, truncate_string, dispatch_message
 from ..mongodb import MongoDBHandler
 from ..language import LangHandler
+from ..exceptions import VoicelinkException
 
 class PlaylistDropdown(discord.ui.Select):
     def __init__(self, results: list[dict[str, Any]], lang: str) -> None:
@@ -108,7 +109,7 @@ class PlaylistView(PaginationView):
         embed.description += f"\n\n**{texts[5]}:**\n"
         if tracks:
             for index, track in enumerate(tracks, start=self.pagination.start_index + 1):
-                if self.type == "playlist":
+                if isinstance(track, dict):
                     source_emoji = Config().get_source_config(track['sourceName'], 'emoji')
                     track_info = f"{source_emoji} `{index:>2}.` `[{format_ms(track['length'])}]` [{truncate_string(track['title'])}]({track['uri']})"
                 else:
@@ -139,6 +140,10 @@ class PlaylistView(PaginationView):
             },
         }
         return super().update_view(extra_states)
+    
+    async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
+        if isinstance(error, VoicelinkException):
+            return await dispatch_message(interaction, content=getattr(error, 'original', error), ephemeral=True)
     
     async def update_message(self, interaction: discord.Interaction) -> None:
         """Update the view and edit the message with the new embed."""
@@ -199,6 +204,18 @@ class PlaylistViewManager(DynamicViewManager):
         self.response: discord.Message = None
         self.add_item(PlaylistDropdown(results, self.lang))
 
+    async def on_timeout(self) -> None:
+        for view in self._views.values():
+            view.stop()
+
+        for child in self.current_view.children:
+            child.disabled = True
+
+        try:
+            await self.response.edit(view=self)
+        except:
+            pass
+
     def get_width(self, s):
         width = 0
         for char in str(s):
@@ -214,18 +231,6 @@ class PlaylistViewManager(DynamicViewManager):
         padding = width - current_width
         return s + " " * padding
     
-    async def on_timeout(self) -> None:
-        for view in self._views.values():
-            view.stop()
-
-        for child in self.current_view.children:
-            child.disabled = True
-
-        try:
-            await self.response.edit(view=self)
-        except:
-            pass
-        
     def build_embed(self) -> discord.Embed:
         """
         Build the embed for the playlist overview.
