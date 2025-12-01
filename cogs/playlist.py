@@ -473,7 +473,7 @@ class Playlists(commands.Cog, name="playlist"):
     ])
     @app_commands.autocomplete(name=playlist_autocomplete)
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def permission(self, ctx: commands.Context, name: str, member: discord.Member, permission: str, action: str):
+    async def permission(self, ctx: commands.Context, member: discord.Member, name: str, permission: str, action: str):
         "Grant or revoke permissions for a playlist."
         if member.id == ctx.author.id:
             return await send_localized_message(ctx, 'playlist.permissions.cannotModifySelf', ephemeral=True)

@@ -28,7 +28,7 @@ from tldextract import extract
 from discord.ext import commands
 from typing import Any
 
-from .utils import DynamicViewManager, Pagination
+from .utils import DynamicViewManager, Pagination, BaseModal
 from .pagination import PaginationView
 from ..config import Config
 from ..utils import format_ms, truncate_string, dispatch_message
@@ -144,7 +144,9 @@ class PlaylistView(PaginationView):
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
         if isinstance(error, VoicelinkException):
             return await dispatch_message(interaction, content=getattr(error, 'original', error), ephemeral=True)
-    
+        
+        return await super().on_error(interaction, error, item)
+        
     async def update_message(self, interaction: discord.Interaction) -> None:
         """Update the view and edit the message with the new embed."""
         self.update_view()
@@ -168,7 +170,29 @@ class PlaylistView(PaginationView):
     
     @discord.ui.button(label="Share", custom_id="share", style=discord.ButtonStyle.gray)
     async def share(self, interaction: discord.Interaction[commands.Bot], button: discord.ui.Button) -> None:
-        await interaction.response.defer()
+        modal = BaseModal(
+            title="Share Playlist",
+            custom_id="share_modal",
+            items=[
+                discord.ui.Label(
+                    text="User to share with",
+                    description="Select a user to share with",
+                    component=discord.ui.UserSelect(
+                        custom_id="user_select",
+                        placeholder="Select a user to share with",
+                        required=True
+                    ),
+                )
+            ]
+        )
+        await interaction.response.send_modal(modal)
+        await modal.wait()
+        
+        user = modal.values.get("user_select")
+        if not user:
+            return
+        
+        await interaction.client.get_command("playlist share")(self.primary_view.ctx, user[0], self.name)
 
     @discord.ui.button(label="Export", custom_id="export", style=discord.ButtonStyle.gray)
     async def export(self, interaction: discord.Interaction[commands.Bot], button: discord.ui.Button) -> None:

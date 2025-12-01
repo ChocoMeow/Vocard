@@ -42,3 +42,5 @@ class BaseModal(discord.ui.Modal):
         for item in self.walk_children():
             if isinstance(item, discord.ui.TextInput):
                 self.values[item.custom_id] = item.value
+            elif isinstance(item, (discord.ui.Select, discord.ui.UserSelect, discord.ui.RoleSelect, discord.ui.ChannelSelect, discord.ui.MentionableSelect)):
+                self.values[item.custom_id] = item.values
