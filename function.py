@@ -40,6 +40,8 @@ def open_json(path: str) -> dict:
     try:
         with open(os.path.join(ROOT_DIR, path), encoding="utf8") as json_file:
             return json.load(json_file)
+    except json.decoder.JSONDecodeError as e:
+        raise Exception(f"There is some error in the settings file! ({e})") from e
     except:
         return {}
 
