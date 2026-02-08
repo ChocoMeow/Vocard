@@ -391,7 +391,7 @@ class Playlists(commands.Cog, name="playlist"):
 
         data = {'uri': link, 'perms': {'read': []}, 'name': name, 'type': 'link'} if link else {'tracks': [], 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
         await MongoDBHandler.update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlist_id([data for data in user])}": data}})
-        await send_localized_message(ctx, "playlist.actions.create", name)
+        await send_localized_message(ctx, "playlist.actions.created", name)
 
     @playlist.command(name="delete", aliases=get_aliases("delete"))
     @app_commands.describe(name="The name of the playlist.")
