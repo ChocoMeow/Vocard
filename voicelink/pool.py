@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from .player import Player
 
 URL_REGEX = re.compile(
-    r"https?://(?:www\.)?.+"
+    r"<?https?://(?:www\.)?.+"
 )
 
 NODE_VERSION = "v4"
@@ -365,8 +365,11 @@ class Node:
         """
         if not search_type:
             search_type = Config().search_platform
-            
-        if not URL_REGEX.match(query) and ':' not in query:
+
+        if URL_REGEX.match(query):
+            if query[0] == '<' and query[-1] == '>':
+                query = query[1:-1]
+        elif ':' not in query:
             query = f"{search_type}:{query}"
 
         response: dict[str, Any] = await self.send(RequestMethod.GET, f"loadtracks?identifier={quote(query)}")
