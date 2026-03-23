@@ -104,7 +104,7 @@ lavalink:
   plugins:
     - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.0" # Please check the latest version at https://github.com/lavalink-devs/youtube-source/releases
       snapshot: false
-    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.7.3" # Please check the latest version at https://github.com/topi314/LavaSrc/releases
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.8.1" # Please check the latest version at https://github.com/topi314/LavaSrc/releases
       snapshot: false
 #    - dependency: "com.github.example:example-plugin:1.0.0" # required, the coordinates of your plugin
 #      repository: "https://maven.example.com/releases" # optional, defaults to the Lavalink releases repository by default
