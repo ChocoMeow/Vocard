@@ -121,7 +121,9 @@
             "controllerToggled": "Ahora tienes `{0}` el controlador de música.",
             "duplicateTrackToggled": "Ahora tienes `{0}` para evitar que se agreguen pistas duplicadas a la cola.",
             "controllerMsgToggled": "Ahora tiene `{0}` mensajes del controlador de música.",
-            "silentMsgToggled": "Tienes {0} mensajes silenciosos."
+            "silentMsgToggled": "Tienes {0} mensajes silenciosos.",
+            "resetDone": "Reset `{0}` to server defaults.",
+            "resetNotFound": "Nombre de opción inválido. Por favor, use una de las siguientes opciones: {0}"
         },
         "menu": "Configuración del servidor | {0}",
         "basic": {

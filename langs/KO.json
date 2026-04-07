@@ -121,7 +121,9 @@
             "controllerToggled": "이제 음악 컨트롤러가 `{0}`(으)로 설정되었습니다.",
             "duplicateTrackToggled": "이제 대기열에서 중복된 트랙을 방지하기 위해 `{0}`(으)로 설정되었습니다.",
             "controllerMsgToggled": "이제 음악 컨트롤러로부터 `{0}` 메시지가 있습니다.",
-            "silentMsgToggled": "당신은 {0} 침묵 메시지를 사용하고 있습니다."
+            "silentMsgToggled": "당신은 {0} 침묵 메시지를 사용하고 있습니다.",
+            "resetDone": "`{0}`을(를) 서버 기본값으로 초기화했습니다.",
+            "resetNotFound": "잘못된 설정 이름입니다. 다음 중 하나를 사용하세요: {0}"
         },
         "menu": "서버 설정 | {0}",
         "basic": {

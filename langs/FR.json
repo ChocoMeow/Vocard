@@ -121,7 +121,9 @@
             "controllerToggled": "Vous avez maintenant `{0}` le contrôleur de musique.",
             "duplicateTrackToggled": "Vous avez maintenant `{0}` la prévention des morceaux en double.",
             "controllerMsgToggled": "Vous avez maintenant `{0}` les messages du contrôleur musical.",
-            "silentMsgToggled": "Vous avez {0} messages silencieux."
+            "silentMsgToggled": "Vous avez {0} messages silencieux.",
+            "resetDone": "`{0}` a été réinitialisé aux paramètres par défaut du serveur.",
+            "resetNotFound": "Nom d'option invalide. Veuillez utiliser une des options suivantes: {0}"
         },
         "menu": "Paramètres du serveur | {0}",
         "basic": {

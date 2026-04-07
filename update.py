@@ -31,7 +31,7 @@ import subprocess
 from io import BytesIO
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-__version__ = "v2.7.3b1"
+__version__ = "v2.7.3b2"
 
 # URLs for update and migration
 PYTHON_CMD_NAME = os.path.basename(sys.executable)

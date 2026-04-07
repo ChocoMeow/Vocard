@@ -29,6 +29,8 @@ import logging
 from typing import Any, Dict, Optional, Literal, TypedDict, List
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 
+from .config import Config
+
 logger: logging.Logger = logging.getLogger("vocard.db")
 
 # Type definitions for better code clarity
@@ -406,6 +408,7 @@ class MongoDBHandler:
                     user = await cls._users_db.find_one({"_id": user_id})
                     if not user:
                         user = {**copy.deepcopy(cls._user_base), "_id": user_id}
+                        user["playlist"]["200"]["name"] = Config().get_playlist_config()[2]
                         try:
                             await cls._users_db.insert_one(user)
                         except Exception as e:

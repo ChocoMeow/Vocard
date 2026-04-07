@@ -191,7 +191,7 @@ class CommandCheck(discord.app_commands.CommandTree):
 
             channel_perm = interaction.channel.permissions_for(interaction.guild.me)
             if not channel_perm.read_messages or not channel_perm.send_messages:
-                await interaction.response.send_message("I don't have permission to read or send messages in this channel.")
+                await interaction.response.send_message("I don't have permission to read or send messages in this channel.", ephemeral=True)
                 return False
             
         return True

@@ -121,7 +121,9 @@
             "controllerToggled": "Der Musikcontroller wurde erfolgreich `{0}`",
             "duplicateTrackToggled": "Du hast das hinzufügen von doppelten Tracks in der Warteschlange `{0}`",
             "controllerMsgToggled": "Nachrichten vom Musik-Controller wurden erfolgreich `{0}`",
-            "silentMsgToggled": "Sie haben {0} stille Nachrichten."
+            "silentMsgToggled": "Sie haben {0} stille Nachrichten.",
+            "resetDone": "`{0}` wurde auf die Standardwerte des Servers zurückgesetzt.",
+            "resetNotFound": "Ungültiger Einstellungsname. Bitte verwende eine der folgenden Einstellungen: {0}"
         },
         "menu": "Servereinstellungen | {0}",
         "basic": {

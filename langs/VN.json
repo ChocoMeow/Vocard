@@ -121,7 +121,9 @@
             "controllerToggled": "Bây giờ bạn đã `{0}` bộ điều khiển nhạc.",
             "duplicateTrackToggled": "Bây giờ bạn đã `{0}` tính năng ngăn chặn bài hát trùng lặp.",
             "controllerMsgToggled": "Bây giờ bạn đã `{0}` tin nhắn từ bộ điều khiển nhạc.",
-            "silentMsgToggled": "Bạn có {0} tin nhắn im lặng."
+            "silentMsgToggled": "Bạn có {0} tin nhắn im lặng.",
+            "resetDone": "Reset `{0}` to server defaults.",
+            "resetNotFound": "Tên cài đặt không hợp lệ. Vui lòng sử dụng một trong các tùy chọn sau: {0}"
         },
         "menu": "Cài Đặt Máy Chủ | {0}",
         "basic": {

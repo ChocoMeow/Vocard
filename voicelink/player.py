@@ -23,10 +23,9 @@ SOFTWARE.
 
 from __future__ import annotations
 
-import time, logging
+import time, logging, asyncio
 
 from math import ceil
-from asyncio import sleep
 from random import shuffle, choice
 from typing import Any, Dict, List, Optional, Union, Tuple, TYPE_CHECKING
 
@@ -155,6 +154,7 @@ class Player(VoiceProtocol):
 
         self._ph = PlayerPlaceholder(client, self)
         self._logger: Optional[logging.Logger] = self._node._logger
+        self._inactive_cleanup_task: Optional[asyncio.Task[None]] = None
 
     def __repr__(self):
         return (
@@ -238,10 +238,12 @@ class Player(VoiceProtocol):
     
     @property
     def autoplay(self) -> bool:
+        """Indicates whether the player is set to autoplay."""
         return self.settings.get("autoplay", False)
     
     @property
     def data(self) -> dict:
+        """Returns a dictionary containing the player's data."""
         return {
             "guild_id": self._guild.id,
             "channel_id": self.channel.id,
@@ -350,6 +352,7 @@ class Player(VoiceProtocol):
             "token": state['event']['token'],
             "endpoint": state['event']['endpoint'],
             "sessionId": state['sessionId'],
+            "channelId": str(self.channel.id),
         }
         
         await self.send(method=RequestMethod.PATCH, data={"voice": data})
@@ -404,7 +407,7 @@ class Player(VoiceProtocol):
             self._paused = False
 
         if self._track_is_stuck:
-            await sleep(10)
+            await asyncio.sleep(10)
             self._track_is_stuck = False
 
         if not self.guild.me.voice:
@@ -422,12 +425,14 @@ class Player(VoiceProtocol):
         if not track:
             if self.autoplay and await self.get_recommendations():
                 return await self.do_next()
+            if self.queue.is_empty:
+                self._schedule_inactive_cleanup_timer()
         else:
             try:
                 await self.play(track, start=track.position)
             except Exception as e:
                 self._logger.error(f"Something went wrong while playing music in {self.guild.name}({self.guild.id})", exc_info=e)
-                await sleep(5)
+                await asyncio.sleep(5)
                 return await self.do_next()
 
             if not track.requester.bot:
@@ -514,6 +519,7 @@ class Player(VoiceProtocol):
 
         try:
             await self.update_voice_status(remove_status=True)
+            self._cancel_inactive_cleanup_timer()
             if self.controller:
                 if self.controller.id == self.settings.get("music_request_channel", {}).get("controller_msg_id"):
                     await self.controller.edit(embed=self.build_embed(), view=None)
@@ -629,6 +635,21 @@ class Player(VoiceProtocol):
             track.position = start_time
             track.end_time = end_time
 
+    def _cancel_inactive_cleanup_timer(self) -> None:
+        """Cancels the per-player inactivity cleanup timer (if any)."""
+        task: Optional[asyncio.Task] = getattr(self, "_inactive_cleanup_task", None)
+        if task and not task.done():
+            task.cancel()
+        self._inactive_cleanup_task = None
+
+    def _schedule_inactive_cleanup_timer(self) -> None:
+        """Schedules per-player cleanup after inactivity."""
+        self._cancel_inactive_cleanup_timer()
+        seconds = Config().timer_settings.get("inactive_player_cleanup", 600)
+        self._inactive_cleanup_task = self.bot.loop.create_task(
+            self._inactive_cleanup_timer_worker(seconds)
+        )
+        
     async def add_track(self, raw_tracks: Union[Track, List[Track]], *, start_time: int = 0, end_time: int = 0, at_front: bool = False, duplicate: bool = True) -> int:
         """Adds one or more tracks to the queue."""
         tracks: List[Track] = []
@@ -655,6 +676,8 @@ class Player(VoiceProtocol):
                 
         finally:
             if tracks:
+                if self.channel.members and len([m for m in self.channel.members if not m.bot]) > 0:
+                    self._cancel_inactive_cleanup_timer()
                 if self.is_ipc_connected:
                     await self.send_ws({"op": "addTrack", "tracks": [track.track_id for track in tracks], "position": -1 if is_list else position}, tracks[0].requester)
 
@@ -900,3 +923,38 @@ class Player(VoiceProtocol):
         if requester:
             payload['requesterId'] = str(requester.id)
         await self._ipc_client.send(payload)
+
+    async def _inactive_cleanup_timer_worker(self, seconds: int) -> None:
+        try:
+            await asyncio.sleep(seconds)
+            if not self._guild or not self._node:
+                return
+            if self._guild.id not in self._node._players:
+                return
+
+            members = self.channel.members if self.channel else []
+            has_non_bot = any(not m.bot or not m.voice.self_deaf for m in members)
+            # Empty channel: always pause/teardown. If people remain: only when idle (not playing + empty queue).
+            if has_non_bot and (self.is_playing or not self.queue.is_empty):
+                return
+
+            self._inactive_cleanup_task = None
+
+            if self.settings.get("24/7", False):
+                if not self.is_paused:
+                    await self.set_pause(True)
+            else:
+                await self.teardown()
+        except asyncio.CancelledError:
+            return
+        except Exception as e:
+            # Logger is best-effort; timer cleanup should never crash the loop.
+            try:
+                guild_id = self._guild.id if self._guild else "unknown"
+            except Exception:
+                guild_id = "unknown"
+            if self._logger:
+                self._logger.error(
+                    f"Inactive cleanup timer failed for guild {guild_id}",
+                    exc_info=e
+                )

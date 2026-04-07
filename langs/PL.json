@@ -121,7 +121,9 @@
             "controllerToggled": "Kontroler muzyki: `{0}`",
             "duplicateTrackToggled": "Unikanie duplikowania pozycji w kolejce: `{0}`",
             "controllerMsgToggled": "Wiadomości od kontrolera muzyki: `{0}`",
-            "silentMsgToggled": "Masz {0} ciche wiadomości."
+            "silentMsgToggled": "Masz {0} ciche wiadomości.",
+            "resetDone": "`{0}` zostało zresetowane na domyślne ustawienia serwera.",
+            "resetNotFound": "Nieprawidłowa nazwa ustawienia. Proszę użyć jednej z następujących opcji: {0}"
         },
         "menu": "Ustawnienia serwera | {0}",
         "basic": {

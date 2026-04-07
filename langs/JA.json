@@ -121,7 +121,9 @@
             "controllerToggled": "今、音楽コントローラーは「{0}」です。",
             "duplicateTrackToggled": "今、キュー内の重複トラックを防止するための設定は「{0}」です。",
             "controllerMsgToggled": "現在、音楽コントローラーから `{0}` 件のメッセージがあります。",
-            "silentMsgToggled": "あなたは{0}サイレントメッセージを持っています。"
+            "silentMsgToggled": "あなたは{0}サイレントメッセージを持っています。",
+            "resetDone": "`{0}`をサーバーのデフォルトにリセットしました。",
+            "resetNotFound": "無効な設定名です。次のいずれかを使用してください: {0}"
         },
         "menu": "サーバー設定| {0}",
         "basic": {

@@ -121,7 +121,9 @@
             "controllerToggled": "您现在已 `{0}` 音乐控制器。",
             "duplicateTrackToggled": "您已 `{0}` 重复曲目预防功能。",
             "controllerMsgToggled": "您现在已 `{0}` 来自音乐控制器的消息。",
-            "silentMsgToggled": "您已 {0} 静默消息。"
+            "silentMsgToggled": "您已 {0} 静默消息。",
+            "resetDone": "`{0}` 已重置为服务器默认值。",
+            "resetNotFound": "无效的设置名称。请使用以下之一: {0}"
         },
         "menu": "服务器设置 | {0}",
         "basic": {

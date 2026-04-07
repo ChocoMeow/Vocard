@@ -232,5 +232,8 @@
     "stageannounce": "anuncio_escenario",
     "Soundcloud": "Soundcloud",
     "Fairqueue":"ColaJusta",
-    "togglecontroller":"cambiarcontrolador"
+    "togglecontroller":"cambiarcontrolador",
+    "reset": "reiniciar",
+    "Which setting to restore to defaults": "Qué configuración restaurar a los valores por defecto.",
+    "Remove one guild setting override so the bot uses its default again.": "Restablece una opción del servidor a su valor predeterminado."
 }

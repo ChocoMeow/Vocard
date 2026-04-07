@@ -173,9 +173,20 @@ class Listeners(commands.Cog):
                 is_joined = False
                 
         if is_joined and player.settings.get("24/7", False):
-            if player.is_paused and len([m for m in player.channel.members if not m.bot]) == 1:
+            if player.is_paused and len([m for m in player.channel.members if not m.bot or not m.voice.self_deaf]) == 1:
                 await player.set_pause(False, member)
-                  
+                    
+        if not is_joined:
+            if not player.is_paused and len([m for m in player.channel.members if not m.bot or not m.voice.self_deaf]) == 0:
+                player._schedule_inactive_cleanup_timer()
+
+        # if dj is not in the channel, find a new DJ
+        if player.dj not in player.channel.members:
+            for m in player.channel.members:
+                if not m.bot or not m.voice.self_deaf:
+                    player.dj = m
+                    break
+                    
         if player.is_ipc_connected:
             await player._ipc_client.send({
                 "op": "updateGuild",

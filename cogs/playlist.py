@@ -86,10 +86,10 @@ async def check_playlist(
     share_perm: Optional[str] = None
 ) -> dict:
     """Get user's playlist data with various filtering options."""
-    user_playlists = await MongoDBHandler.get_user(ctx.author.id, d_type='playlist')
-
     if isinstance(ctx, discord.Interaction) and not ctx.interaction.response.is_done():
         await ctx.defer()
+    
+    user_playlists = await MongoDBHandler.get_user(ctx.author.id, d_type='playlist')
     
     if full:
         return user_playlists

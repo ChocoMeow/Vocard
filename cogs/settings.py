@@ -38,6 +38,23 @@ from voicelink.views import DebugView, HelpView, EmbedBuilderView
 from voicelink.placeholders import PlayerPlaceholder
 from voicelink.utils import format_ms, format_bytes, dispatch_message, send_localized_message
 
+_RESET_LABELS: dict[str, str] = {
+    "prefix": "prefix",
+    "language": "lang",
+    "dj role": "dj",
+    "queue mode": "queue_type",
+    "24/7 mode": "24/7",
+    "vote bypass": "disabled_vote",
+    "default volume": "volume",
+    "music controller": "controller",
+    "duplicate tracks": "duplicate_track",
+    "controller messages": "controller_msg",
+    "silent messages": "silent_msg",
+    "stage announce template": "stage_announce_template",
+    "song request channel": "music_request_channel",
+    "custom controller embeds": "default_controller"
+}
+         
 def status_icon(status: bool) -> str:
     return "✅" if status else "❌"
 
@@ -295,10 +312,32 @@ class Settings(commands.Cog, name="settings"):
         }}})
         await send_localized_message(ctx, "songRequest.channelCreated", channel.mention)
 
+    @settings.command(name="reset", aliases=get_aliases("reset"))
+    @app_commands.describe(setting="Which setting to restore to defaults.")
+    @app_commands.choices(setting=[
+        app_commands.Choice(name=label.capitalize(), value=label)
+        for label in _RESET_LABELS.keys()
+    ])
+    @commands.has_permissions(manage_guild=True)
+    @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
+    async def reset_setting(self, ctx: commands.Context, *, setting: str):
+        "Remove one guild setting override so the bot uses its default again."
+        setting_key = _RESET_LABELS.get(setting.lower())
+        if not setting_key:
+            return await send_localized_message(ctx, "settings.actions.resetNotFound", ", ".join(_RESET_LABELS.keys()))
+        
+        await MongoDBHandler.update_settings(ctx.guild.id, {"$unset": {setting_key: ""}})
+        player: voicelink.Player = ctx.guild.voice_client
+        if setting_key == "volume" and player:
+            await player.set_volume(100, ctx.author)
+        elif setting_key == "duplicate_track" and player:
+            player.queue._allow_duplicate = True
+        await send_localized_message(ctx, "settings.actions.resetDone", setting.capitalize())
+        
     @app_commands.command(name="debug")
     async def debug(self, interaction: discord.Interaction):
         if interaction.user.id not in voicelink.Config().bot_access_user:
-            return await interaction.response.send_message("You are not able to use this command!")
+            return await interaction.response.send_message("You are not able to use this command!", ephemeral=True)
 
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage(func.ROOT_DIR)

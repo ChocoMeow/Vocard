@@ -508,7 +508,6 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         if playlist['type'] in ['share', 'link']:
             return error_msg("You cannot add songs to a linked playlist through Vocard.", user_id=user_id, level='error')
         
-        max_p, max_t, _ = Config().get_playlist_config()
         if len(playlist['tracks']) >= max_t:
             return error_msg(f"You have reached the limit! You can only add {max_t} songs to your playlist.", user_id=user_id)
 

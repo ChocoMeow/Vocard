@@ -232,5 +232,8 @@
     "stageannounce": "舞台公告",
     "Soundcloud": "SoundCloud",
     "Fairqueue": "公平队列",
-    "togglecontroller": "切换控制器"
+    "togglecontroller": "切换控制器",
+    "reset": "重置",
+    "Which setting to restore to defaults": "要重置为默认值的设置。",
+    "Remove one guild setting override so the bot uses its default again.": "移除一个服务器设置覆盖，使机器人使用其默认值。"
 }
