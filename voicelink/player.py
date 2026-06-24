@@ -69,8 +69,13 @@ async def connect_channel(ctx: Union[commands.Context, Interaction], channel: Vo
     except:
         raise VoicelinkException(texts[0])
 
-    check = channel.permissions_for(ctx.guild.me)
-    if check.connect == False or check.speak == False:
+    bot_perms = channel.permissions_for(ctx.guild.me)
+    if not bot_perms.connect or not bot_perms.speak:
+        raise VoicelinkException(texts[1])
+
+    is_full = channel.user_limit > 0 and len(channel.members) >= channel.user_limit
+    can_bypass = bot_perms.administrator or bot_perms.move_members
+    if is_full and not can_bypass:
         raise VoicelinkException(texts[1])
 
     settings = await MongoDBHandler.get_settings(channel.guild.id)

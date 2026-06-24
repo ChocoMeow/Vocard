@@ -83,7 +83,7 @@ class ControlButton(discord.ui.Button):
         return await send_localized_message(
             interaction, key, *params,
             view=view,
-            delete_after=None if ephemeral or stay else 10,
+            delete_after=discord.utils.MISSING if ephemeral or stay else 10,
             ephemeral=ephemeral
         )
 
@@ -92,7 +92,7 @@ class ControlButton(discord.ui.Button):
         return await dispatch_message(
             interaction, embed, *params,
             view=view,
-            delete_after=None if ephemeral or stay else 10,
+            delete_after=discord.utils.MISSING if ephemeral or stay else 10,
             ephemeral=ephemeral
         )
 
@@ -111,7 +111,7 @@ class ControlSelect(discord.ui.Select):
         return await send_localized_message(
             interaction, key, *params,
             view=view,
-            delete_after=None if ephemeral or stay else 10,
+            delete_after=discord.utils.MISSING if ephemeral or stay else 10,
             ephemeral=ephemeral
         )
 
