@@ -43,12 +43,30 @@ class Listeners(commands.Cog):
         bot.loop.create_task(self.restore_last_session_players())
         
     async def start_nodes(self) -> None:
-        """Connect and intiate nodes."""
-        for n in Config().nodes.values():
-            try:
-                await self.voicelink.create_node(bot=self.bot, **n)
-            except Exception as e:
-                func.logger.error(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
+        """Connect and intiate nodes with retry."""
+        nodes = list(Config().nodes.values())
+        max_retries = 12
+
+        for attempt in range(max_retries):
+            for n in nodes:
+                # Skip already connected nodes
+                if n["identifier"] in self.voicelink._nodes:
+                    continue
+                try:
+                    await self.voicelink.create_node(bot=self.bot, **n)
+                    func.logger.info(f'Node {n["identifier"]} connected successfully.')
+                except Exception as e:
+                    func.logger.error(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
+
+            if len(self.voicelink._nodes) == len(nodes):
+                func.logger.info("All nodes connected successfully.")
+                return
+
+            if attempt < max_retries - 1:
+                func.logger.info(f"Retrying nodes in 5s ({attempt + 1}/{max_retries})...")
+                await asyncio.sleep(5)
+
+        func.logger.warning(f"Some nodes failed to connect after {max_retries} attempts.")
 
     async def restore_last_session_players(self) -> None:
         """Re-establish connections for players from the last session."""
