@@ -43,27 +43,46 @@ class Listeners(commands.Cog):
         bot.loop.create_task(self.restore_last_session_players())
         
     async def start_nodes(self) -> None:
-        """Connect and intiate nodes with retry."""
+        """Connect and initiate nodes."""
         nodes = list(Config().nodes.values())
         max_retries = 12
 
         for attempt in range(max_retries):
             for n in nodes:
-                # Skip already connected nodes
-                if n["identifier"] in self.voicelink._nodes:
+                n_id = n["identifier"]
+
+                # TryOnce nodes skip all retries (pass 0 only)
+                if n.get("reconnect_strategy", "TryOnce") != "ReconnectOnDrop" and attempt > 0:
                     continue
+
+                # Skip nodes that are already connected
+                if n_id in self.voicelink._nodes:
+                    continue
+
                 try:
                     await self.voicelink.create_node(bot=self.bot, **n)
-                    func.logger.info(f'Node {n["identifier"]} connected successfully.')
+                    func.logger.info(f'Node {n_id} connected successfully.')
                 except Exception as e:
-                    func.logger.error(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
+                    func.logger.error(f'Node {n_id} is not able to connect! - Reason: {e}')
 
+            # Check if all nodes are connected after this pass
             if len(self.voicelink._nodes) == len(nodes):
                 func.logger.info("All nodes connected successfully.")
                 return
 
+            # Count remaining ReconnectOnDrop nodes
+            num_remaining = len([
+                n for n in nodes
+                if n["identifier"] not in self.voicelink._nodes
+                and n.get("reconnect_strategy", "TryOnce") == "ReconnectOnDrop"
+            ])
+
+            # No retryable nodes left
+            if num_remaining == 0:
+                return
+
             if attempt < max_retries - 1:
-                func.logger.info(f"Retrying nodes in 5s ({attempt + 1}/{max_retries})...")
+                func.logger.info(f"Retrying {num_remaining} node(s) in 5s ({attempt + 1}/{max_retries})...")
                 await asyncio.sleep(5)
 
         func.logger.warning(f"Some nodes failed to connect after {max_retries} attempts.")
