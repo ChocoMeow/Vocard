@@ -47,7 +47,6 @@ class Listeners(commands.Cog):
         for n in Config().nodes.values():
             try:
                 await self.voicelink.create_node(bot=self.bot, **n)
-                func.logger.info(f'Node {n["identifier"]} connected successfully.')
             except Exception as e:
                 func.logger.error(f'Node {n["identifier"]} is not able to connect! - Reason: {e}')
 
