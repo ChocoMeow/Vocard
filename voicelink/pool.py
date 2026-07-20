@@ -38,7 +38,7 @@ from . import (
     __version__
 )
 
-from .enums import SearchType, NodeAlgorithm
+from .enums import SearchType, NodeAlgorithm, RequestMethod, ReconnectStrategy
 from .exceptions import (
     NodeConnectionFailure,
     NodeCreationError,
@@ -49,7 +49,6 @@ from .exceptions import (
 )
 from .objects import Playlist, Track
 from .utils import ExponentialBackoff, NodeStats, NodeInfo, Ping
-from .enums import RequestMethod
 from .ratelimit import YTRatelimit, YTToken, STRATEGY
 from .config import Config
 
@@ -81,7 +80,8 @@ class Node:
         yt_ratelimit: dict = None,
         session: Optional[aiohttp.ClientSession] = None,
         resume_key: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
+        reconnect_strategy: ReconnectStrategy = ReconnectStrategy.TRY_ONCE
     ):
         self._bot: Bot = bot
         self._host: str = host
@@ -93,6 +93,7 @@ class Node:
         self._secure: bool = secure
         self._logger: Optional[logging.Logger] = logger
         self._stats: Optional[NodeStats] = None
+        self._reconnect_strategy: ReconnectStrategy = reconnect_strategy
 
         self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}/" + NODE_VERSION + "/websocket"
         self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
@@ -219,6 +220,13 @@ class Node:
                 break
 
         while not self._available:
+            if not self._reconnect_strategy.reconnect_on_drop:
+                self._logger.warning(
+                    f"Node [{self._identifier}] disconnected. "
+                    f"Reconnect strategy is {self._reconnect_strategy}, not reconnecting."
+                )
+                return
+
             retry = backoff.delay()
             self._logger.info(f"Trying to reconnect node [{self._identifier}] in {round(retry)}s")
             await asyncio.sleep(retry)
@@ -485,7 +493,8 @@ class NodePool:
         yt_ratelimit: dict = None,
         session: Optional[aiohttp.ClientSession] = None,
         resume_key: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
+        reconnect_strategy: Union[str, ReconnectStrategy] = ReconnectStrategy.RECONNECT_ON_DROP
     ) -> Node:
         """Creates a Node object to be then added into the node pool.
         """
@@ -494,13 +503,36 @@ class NodePool:
         
         if not logger:
             logger = logging.getLogger("vocard")
-            
+
+        strategy = ReconnectStrategy.from_value(reconnect_strategy)
+        max_retries = strategy.max_startup_retries
+        backoff = ExponentialBackoff(base=7) if max_retries != 1 else None
+
         node = Node(
             pool=cls, bot=bot, host=host, port=port, password=password,
             identifier=identifier, secure=secure, heartbeat=heartbeat, yt_ratelimit=yt_ratelimit,
-            session=session, resume_key=resume_key, logger=logger
+            session=session, resume_key=resume_key, logger=logger, reconnect_strategy=strategy
         )
 
-        await node.connect()
-        cls._nodes[node._identifier] = node
-        return node
+        attempt = 0
+        last_error: Exception = None
+        while True:
+            attempt += 1
+            try:
+                await node.connect()
+                cls._nodes[node._identifier] = node
+                return node
+            except Exception as e:
+                last_error = e
+                if max_retries is not None and attempt >= max_retries:
+                    break
+
+                retry = backoff.delay()
+                retries_label = "inf" if max_retries is None else str(max_retries)
+                logger.warning(
+                    f"Node [{identifier}] failed to connect ({attempt}/{retries_label}): {e}. "
+                    f"Retrying in {round(retry)}s..."
+                )
+                await asyncio.sleep(retry)
+
+        raise last_error
