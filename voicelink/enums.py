@@ -214,3 +214,52 @@ class NodeAlgorithm(Enum):
 
     def __str__(self) -> str:
         return self.value
+
+class ReconnectStrategy(Enum):
+    """The enum for Lavalink node connection retry strategies.
+
+        ReconnectStrategy.TRY_ONCE:
+          Connect once on startup. Do not reconnect if the connection drops.
+
+        ReconnectStrategy.RETRY_ON_STARTUP:
+          Retry failed startup connections (limited). Do not reconnect on drop.
+
+        ReconnectStrategy.RECONNECT_ON_DROP:
+          Retry failed startup connections (limited) and reconnect if the
+          websocket drops.
+
+        ReconnectStrategy.ALWAYS:
+          Keep retrying forever on startup and on websocket drop.
+    """
+
+    TRY_ONCE = "TryOnce"
+    RETRY_ON_STARTUP = "RetryOnStartup"
+    RECONNECT_ON_DROP = "ReconnectOnDrop"
+    ALWAYS = "Always"
+
+    def __str__(self) -> str:
+        return self.value
+
+    @property
+    def reconnect_on_drop(self) -> bool:
+        return self in (ReconnectStrategy.RECONNECT_ON_DROP, ReconnectStrategy.ALWAYS)
+
+    @property
+    def max_startup_retries(self):
+        """Max startup attempts. ``None`` means retry forever."""
+        if self == ReconnectStrategy.TRY_ONCE:
+            return 1
+        if self == ReconnectStrategy.ALWAYS:
+            return None
+        return 12  # RETRY_ON_STARTUP, RECONNECT_ON_DROP
+
+    @classmethod
+    def from_value(cls, value: str = None) -> "ReconnectStrategy":
+        if isinstance(value, cls):
+            return value
+        if not value:
+            return cls.TRY_ONCE
+        for member in cls:
+            if member.value.lower() == value.lower() or member.name.lower() == value.lower():
+                return member
+        return cls.TRY_ONCE

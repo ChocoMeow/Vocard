@@ -11,6 +11,7 @@
             "password": "youshallnotpass",
             "secure": false,
             "identifier": "DEFAULT",
+            "reconnect_strategy": "ReconnectOnDrop",
             "yt_ratelimit": {
                 "tokens": [],
                 "config": {
