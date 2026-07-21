@@ -11,6 +11,7 @@
             "password": "youshallnotpass",
             "secure": false,
             "identifier": "DEFAULT",
+            "reconnect_strategy": "ReconnectOnDrop",
             "yt_ratelimit": {
                 "tokens": [],
                 "config": {
@@ -35,7 +36,7 @@
             "vocard": "INFO",
             "ipc_client": "INFO"
         },
-        "max-history": 30
+        "max_history": 30
     },
     "bot_access_user": [],
     "embed_color":"0xb3b3b3",

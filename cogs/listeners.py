@@ -43,7 +43,7 @@ class Listeners(commands.Cog):
         bot.loop.create_task(self.restore_last_session_players())
         
     async def start_nodes(self) -> None:
-        """Connect and intiate nodes."""
+        """Connect and initiate nodes."""
         for n in Config().nodes.values():
             try:
                 await self.voicelink.create_node(bot=self.bot, **n)

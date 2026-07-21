@@ -29,7 +29,7 @@ from discord.ext import commands
 from typing import Optional, Dict, Type, Union, Any
 
 from ..config import Config
-from ..utils import format_ms, send_localized_message
+from ..utils import format_ms, send_localized_message, dispatch_message
 from ..language import LangHandler
 from ..mongodb import MongoDBHandler
     
@@ -83,7 +83,35 @@ class ControlButton(discord.ui.Button):
         return await send_localized_message(
             interaction, key, *params,
             view=view,
-            delete_after=None if ephemeral or stay else 10,
+            delete_after=discord.utils.MISSING if ephemeral or stay else 10,
+            ephemeral=ephemeral
+        )
+
+    async def send_embed(self, interaction: discord.Interaction, embed: discord.Embed, *params, view: discord.ui.View = None, ephemeral: bool = False) -> None:
+        stay = self.player.settings.get("controller_msg", True)
+        return await dispatch_message(
+            interaction, embed, *params,
+            view=view,
+            delete_after=discord.utils.MISSING if ephemeral or stay else 10,
+            ephemeral=ephemeral
+        )
+
+class ControlSelect(discord.ui.Select):
+    def __init__(
+        self,
+        player: "voicelink.Player",
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+
+        self.player: voicelink.Player = player
+
+    async def send(self, interaction: discord.Interaction, key: str, *params, view: discord.ui.View = None, ephemeral: bool = False) -> None:
+        stay = self.player.settings.get("controller_msg", True)
+        return await send_localized_message(
+            interaction, key, *params,
+            view=view,
+            delete_after=discord.utils.MISSING if ephemeral or stay else 10,
             ephemeral=ephemeral
         )
 
@@ -279,7 +307,7 @@ class AutoPlay(ControlButton):
 
         check = not self.player.settings.get("autoplay", False)
         self.player.settings['autoplay'] = check
-        await self.send(interaction, 'autoplay', await LangHandler.get_lang(interaction.guild_id, 'common.status.enabled' if check else "common.status.disabled"))
+        await self.send(interaction, 'player.controls.autoplay', await LangHandler.get_lang(interaction.guild_id, 'common.status.enabled' if check else "common.status.disabled"))
 
         if not self.player.is_playing:
             await self.player.do_next()
@@ -319,7 +347,7 @@ class Forward(ControlButton):
         position = int(self.player.position + 10000)
 
         await self.player.seek(position)
-        await self.send(interaction, 'forward', format_ms(position))
+        await self.send(interaction, 'player.controls.forward', format_ms(position))
 
 class Rewind(ControlButton):
     def __init__(self, **kwargs):
@@ -338,7 +366,7 @@ class Rewind(ControlButton):
         position = 0 if (value := int(self.player.position - 30000)) <= 0 else value
         
         await self.player.seek(position)
-        await self.send(interaction, 'rewind', format_ms(position))
+        await self.send(interaction, 'player.controls.rewind', format_ms(position))
 
 class Lyrics(ControlButton):
     def __init__(self, **kwargs):
@@ -352,6 +380,8 @@ class Lyrics(ControlButton):
         if not self.player or not self.player.is_playing:
             return await self.send(interaction, "player.errors.noTrackPlaying", ephemeral=True)
         
+        await interaction.response.defer()
+
         title = self.player.current.title
         artist = self.player.current.author
         
@@ -362,23 +392,22 @@ class Lyrics(ControlButton):
                 return await self.send(interaction, "lyrics.notFound", ephemeral=True)
 
             view = LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()}, author=interaction.user)
-            view.response = await self.send(interaction, view.build_embed(), view=view, ephemeral=True)
+            view.response = await self.send_embed(interaction, await view.build_embed(), view=view, ephemeral=True)
 
-class Tracks(discord.ui.Select):
+class Tracks(ControlSelect):
     def __init__(self, player: "voicelink.Player", btn_data, **kwargs):
-        self.player: voicelink.Player = player
-        
         if player.queue.is_empty:
             raise ValueError("Player queue is empty, cannot create Tracks row instance.")
         
         options = []
-        for index, track in enumerate(self.player.queue.tracks(), start=1):
+        for index, track in enumerate(player.queue.tracks(), start=1):
             if index > min(max(btn_data.get("max_options", 10), 1), 25):
                 break
             options.append(discord.SelectOption(label=f"{index}. {track.title[:40]}", description=f"{track.author[:30]} · " + ("Live" if track.is_stream else track.formatted_length), emoji=track.emoji))
 
         super().__init__(
-            placeholder=self.player._ph.replace(btn_data.get("label"), {}),
+            placeholder=player._ph.replace(btn_data.get("label"), {}),
+            player=player,
             options=options,
             disabled=player.queue.is_empty,
             **kwargs
@@ -386,47 +415,49 @@ class Tracks(discord.ui.Select):
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await send_localized_message(interaction, "permissions.missingFunction", ephemeral=True)
+            return await self.send(interaction, "permissions.missingFunction", ephemeral=True)
         
+        await interaction.response.defer()
+
         self.player.queue.skipto(int(self.values[0].split(". ")[0]))
         await self.player.stop()
 
         if self.player.settings.get("controller_msg", True):
-            await send_localized_message(interaction, "player.controls.skip.success", interaction.user)
+            await self.send(interaction, "player.controls.skip.success", interaction.user)
 
-class Effects(discord.ui.Select):
+class Effects(ControlSelect):
     def __init__(self, player: "voicelink.Player", btn_data, row):
-
-        self.player: voicelink.Player = player
-        
         options = [discord.SelectOption(label="None", value="None")]
         for name in voicelink.Filters.get_available_filters():
             options.append(discord.SelectOption(label=name.capitalize(), value=name))
 
         super().__init__(
-            placeholder=self.player._ph.replace(btn_data.get("label"), {}),
+            placeholder=player._ph.replace(btn_data.get("label"), {}),
+            player=player,
             options=options,
             row=row
         )
     
     async def callback(self, interaction: discord.Interaction):
         if not self.player.is_privileged(interaction.user):
-            return await send_localized_message(interaction, "permissions.missingFunction", ephemeral=True)
+            return await self.send(interaction, "permissions.missingFunction", ephemeral=True)
         
+        await interaction.response.defer()
+
         avalibable_filters = voicelink.Filters.get_available_filters()
         if self.values[0] == "None":
             await self.player.reset_filter(requester=interaction.user)
-            return await send_localized_message(interaction, "effects.cleared")
+            return await self.send(interaction, "effects.cleared")
         
-        selected_filter = avalibable_filters.get(self.values[0].lower())()
+        selected_filter: voicelink.Filter = avalibable_filters.get(self.values[0].lower())()
         if self.player.filters.has_filter(filter_tag=selected_filter.tag):
             await self.player.remove_filter(filter_tag=selected_filter.tag, requester=interaction.user)
-            await send_localized_message(interaction, "effects.cleared")
+            await self.send(interaction, "effects.cleared")
         else:
             await self.player.add_filter(selected_filter, requester=interaction.user)
-            await send_localized_message(interaction, "effects.added", selected_filter.tag)
+            await self.send(interaction, "effects.added", selected_filter.tag)
 
-BUTTON_TYPE: Dict[str, Type[Union[ControlButton, discord.ui.Select]]] = {
+BUTTON_TYPE: Dict[str, Type[Union[ControlButton, ControlSelect]]] = {
     "back": Back,
     "play-pause": PlayPause,
     "skip": Skip,
@@ -446,7 +477,7 @@ BUTTON_TYPE: Dict[str, Type[Union[ControlButton, discord.ui.Select]]] = {
 }
 
 class InteractiveController(discord.ui.View):
-    def __init__(self, player):
+    def __init__(self, player: "voicelink.Player"):
         super().__init__(timeout=None)
 
         self.player: voicelink.Player = player
@@ -485,4 +516,7 @@ class InteractiveController(discord.ui.View):
             sec = int(error.retry_after)
             return await interaction.response.send_message(f"You're on cooldown for {sec} second{'' if sec == 1 else 's'}!", ephemeral=True)
         
-        super().on_error(interaction, error, item)
+        if isinstance(error, voicelink.VoicelinkException):
+            return await interaction.response.send_message(error, ephemeral=True)
+        
+        await super().on_error(interaction, error, item)

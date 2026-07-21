@@ -790,7 +790,7 @@ class Basic(commands.Cog):
     @commands.hybrid_command(name="lyrics", aliases=get_aliases("lyrics"))
     @app_commands.describe(title="Searches for your query and displays the reutned lyrics.")
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
-    async def lyrics(self, ctx: commands.Context, title: str = "", artist: str = ""):
+    async def lyrics(self, ctx: commands.Context, *, title: str = "", artist: str = ""):
         "Displays lyrics for the playing track."
         if not title:
             player: voicelink.Player = ctx.guild.voice_client

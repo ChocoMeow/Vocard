@@ -211,7 +211,7 @@ if (LOG_FILE := LOG_SETTINGS.get("file", {})).get("enable", True):
     if not os.path.exists(log_path):
         os.makedirs(log_path)
 
-    file_handler = TimedRotatingFileHandler(filename=f'{log_path}/vocard.log', encoding="utf-8", backupCount=LOG_SETTINGS.get("max-history", 30), when="d")
+    file_handler = TimedRotatingFileHandler(filename=f'{log_path}/vocard.log', encoding="utf-8", backupCount=LOG_SETTINGS.get("max_history", 30), when="d")
     file_handler.namer = lambda name: name.replace(".log", "") + ".log"
     file_handler.setFormatter(logging.Formatter('{asctime} [{levelname:<8}] {name}: {message}', '%Y-%m-%d %H:%M:%S', style='{'))
     logging.getLogger().addHandler(file_handler)

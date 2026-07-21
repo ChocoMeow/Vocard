@@ -353,7 +353,7 @@ async def dispatch_message(
         send_kwargs["view"] = view
         
     if "delete_after" in send_func.__code__.co_varnames:
-        if delete_after is discord.utils.MISSING and settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
+        if delete_after is discord.utils.MISSING and not ephemeral and settings and ctx.channel.id == settings.get("music_request_channel", {}).get("text_channel_id"):
             delete_after = 10
         send_kwargs["delete_after"] = delete_after if delete_after is not discord.utils.MISSING else None
     
