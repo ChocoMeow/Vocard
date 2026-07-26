@@ -377,6 +377,24 @@ async def _getPlaylist(user_id: int, playlist_id: str) -> Dict:
 
     return playlist
 
+async def _getEditablePlaylist(user_id: int, playlist_id: str, perm: str) -> Optional[tuple]:
+    """Return (owner_id, owner_playlist_id, playlist) if user can edit with `perm` (write/remove)."""
+    entry = (await MongoDBHandler.get_user(user_id, d_type="playlist")).get(playlist_id)
+    if not entry or entry["type"] == "link":
+        return None
+
+    if entry["type"] == "share":
+        owner_id, owner_playlist_id = entry["user"], entry["referId"]
+        playlist = (await MongoDBHandler.get_user(owner_id, d_type="playlist")).get(owner_playlist_id)
+        if not playlist or user_id not in playlist.get("perms", {}).get(perm, []):
+            return None
+    else:
+        owner_id, owner_playlist_id, playlist = user_id, playlist_id, entry
+
+    playlist = dict(playlist)
+    playlist["tracks"] = await _loadPlaylist(playlist)
+    return owner_id, owner_playlist_id, playlist
+
 async def getPlaylist(bot: commands.Bot, data: Dict) -> Dict:
     user_id = int(data.get("userId"))
     playlist_id = str(data.get("playlistId"))
@@ -503,19 +521,20 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
         track_id = data.get("trackId")
         if not track_id:
             return error_msg("No track ID could be located.", user_id=user_id, level='error')
-        
-        playlist = await _getPlaylist(user_id, playlist_id)
-        if playlist['type'] in ['share', 'link']:
-            return error_msg("You cannot add songs to a linked playlist through Vocard.", user_id=user_id, level='error')
-        
+
+        result = await _getEditablePlaylist(user_id, playlist_id, "write")
+        if not result:
+            return error_msg("You cannot add songs to this playlist.", user_id=user_id, level='error')
+        owner_id, owner_playlist_id, playlist = result
+
         if len(playlist['tracks']) >= max_t:
             return error_msg(f"You have reached the limit! You can only add {max_t} songs to your playlist.", user_id=user_id)
 
         decoded_track = Track(track_id=track_id, info=Track.decode(track_id), requester=None)
         if decoded_track.is_stream:
             return error_msg("You are not allowed to add streaming videos to your playlist.", user_id=user_id)
-        
-        await MongoDBHandler.update_user(user_id, {"$push": {f'playlist.{playlist_id}.tracks': track_id}})
+
+        await MongoDBHandler.update_user(owner_id, {"$push": {f'playlist.{owner_playlist_id}.tracks': track_id}})
         return {
             "op": "updatePlaylist",
             "status": "addTrack",
@@ -524,27 +543,25 @@ async def updatePlaylist(bot: commands.Bot, data: Dict) -> Dict:
             "msg": f"Added {decoded_track.title} into '{playlist['name']}' playlist.",
             "userId": str(user_id)
         }
-        
+
     elif _type == "removeTrack":
         track_id, track_position = data.get("trackId"), data.get("trackPosition", 0)
         if not track_id:
             return error_msg("No track ID could be located.", user_id=user_id, level='error')
-        
-        playlist = await _getPlaylist(user_id, playlist_id)
-        if not playlist:
-            return error_msg("Playlist not found!", user_id=user_id, level='error')
-        
-        if playlist['type'] in ['share', 'link']:
-            return error_msg("You cannot remove songs from a linked playlist through Vocard.", user_id=user_id, level='error')
-        
+
+        result = await _getEditablePlaylist(user_id, playlist_id, "remove")
+        if not result:
+            return error_msg("You cannot remove songs from this playlist.", user_id=user_id, level='error')
+        owner_id, owner_playlist_id, playlist = result
+
         if not 0 <= track_position < len(playlist['tracks']):
             return error_msg("Cannot find the position from your playlist.", user_id=user_id, level="error")
 
         if playlist['tracks'][track_position] != track_id:
             return error_msg("Something wrong while removing the track from your playlist.", user_id=user_id, level='error')
-        
-        await MongoDBHandler.update_user(user_id, {"$pull": {f'playlist.{playlist_id}.tracks': playlist['tracks'][track_position]}})
-        
+
+        await MongoDBHandler.update_user(owner_id, {"$pull": {f'playlist.{owner_playlist_id}.tracks': playlist['tracks'][track_position]}})
+
         decoded_track = Track.decode(playlist['tracks'][track_position])
         return {
             "op": "updatePlaylist",
