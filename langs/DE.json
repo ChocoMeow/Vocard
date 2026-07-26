@@ -31,6 +31,7 @@
             "loopOff": "Aus",
             "loopTrack": "Track",
             "loopQueue": "Warteschlange",
+            "volumeUp": "Lauter",
             "volumeDown": "Leiser",
             "volumeMute": "Stummschalten",
             "volumeUnmute": "Stummschaltung aufheben",
@@ -208,6 +209,15 @@
         "inbox": {
             "full": "Es tut mir leid! Der Posteingang von {0} ist voll.",
             "noMessages": "Es sind keine Nachrichten in Deinem Posteingang."
+        },
+        "permissions": {
+            "granted": "**{1}**-Berechtigung für {0} bei Playlist [`{2}`] erteilt.",
+            "revoked": "**{1}**-Berechtigung von {0} bei Playlist [`{2}`] entzogen.",
+            "alreadyGranted": "{0} hat bereits die **{1}**-Berechtigung für diese Playlist.",
+            "notGranted": "{0} hat keine **{1}**-Berechtigung für diese Playlist.",
+            "cannotModifySelf": "Du kannst deine eigenen Berechtigungen nicht ändern.",
+            "invalidPermission": "Ungültiger Berechtigungstyp. Muss sein: read, write oder remove.",
+            "invalidAction": "Ungültige Aktion. Muss sein: grant oder revoke."
         }
     },
     "search": {

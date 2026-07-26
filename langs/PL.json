@@ -209,6 +209,15 @@
         "inbox": {
             "full": "Błąd! Skrzynka odbiorcza {0} jest pełna.",
             "noMessages": "W twojej skrzynce odbiorczej nie ma wiadomości."
+        },
+        "permissions": {
+            "granted": "Przyznano uprawnienie **{1}** użytkownikowi {0} dla playlisty [`{2}`].",
+            "revoked": "Cofnięto uprawnienie **{1}** użytkownikowi {0} dla playlisty [`{2}`].",
+            "alreadyGranted": "{0} ma już uprawnienie **{1}** do tej playlisty.",
+            "notGranted": "{0} nie ma uprawnienia **{1}** do tej playlisty.",
+            "cannotModifySelf": "Nie możesz modyfikować własnych uprawnień.",
+            "invalidPermission": "Nieprawidłowy typ uprawnienia. Musi być: read, write lub remove.",
+            "invalidAction": "Nieprawidłowa akcja. Musi być: grant lub revoke."
         }
     },
     "search": {

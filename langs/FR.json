@@ -209,6 +209,15 @@
         "inbox": {
             "full": "Désolé ! La boîte de réception de {0} est pleine.",
             "noMessages": "Aucun message dans votre boîte de réception."
+        },
+        "permissions": {
+            "granted": "Permission **{1}** accordée à {0} pour la playlist [`{2}`].",
+            "revoked": "Permission **{1}** retirée à {0} pour la playlist [`{2}`].",
+            "alreadyGranted": "{0} a déjà la permission **{1}** pour cette playlist.",
+            "notGranted": "{0} n'a pas la permission **{1}** pour cette playlist.",
+            "cannotModifySelf": "Vous ne pouvez pas modifier vos propres permissions.",
+            "invalidPermission": "Type de permission invalide. Doit être : read, write ou remove.",
+            "invalidAction": "Action invalide. Doit être : grant ou revoke."
         }
     },
     "search": {

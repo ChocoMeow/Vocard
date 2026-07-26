@@ -209,6 +209,15 @@
         "inbox": {
             "full": "¡Lo siento! La bandeja de entrada de {0} está llena.",
             "noMessages": "No hay mensajes en su bandeja de entrada."
+        },
+        "permissions": {
+            "granted": "Se otorgó el permiso **{1}** a {0} para la playlist [`{2}`].",
+            "revoked": "Se revocó el permiso **{1}** de {0} para la playlist [`{2}`].",
+            "alreadyGranted": "{0} ya tiene el permiso **{1}** para esta playlist.",
+            "notGranted": "{0} no tiene el permiso **{1}** para esta playlist.",
+            "cannotModifySelf": "No puedes modificar tus propios permisos.",
+            "invalidPermission": "Tipo de permiso inválido. Debe ser: read, write o remove.",
+            "invalidAction": "Acción inválida. Debe ser: grant o revoke."
         }
     },
     "search": {

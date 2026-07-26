@@ -209,6 +209,15 @@
         "inbox": {
             "full": "죄송합니다! {0}님의 받은 편지함이 가득 찼습니다.",
             "noMessages": "받은 편지함에 메시지가 없습니다."
+        },
+        "permissions": {
+            "granted": "{0}에게 플레이리스트 [`{2}`]의 **{1}** 권한을 부여했습니다.",
+            "revoked": "{0}에게서 플레이리스트 [`{2}`]의 **{1}** 권한을 취소했습니다.",
+            "alreadyGranted": "{0}님은 이미 이 플레이리스트의 **{1}** 권한을 가지고 있습니다.",
+            "notGranted": "{0}님은 이 플레이리스트의 **{1}** 권한을 가지고 있지 않습니다.",
+            "cannotModifySelf": "자신의 권한은 수정할 수 없습니다.",
+            "invalidPermission": "잘못된 권한 유형입니다. read, write 또는 remove여야 합니다.",
+            "invalidAction": "잘못된 작업입니다. grant 또는 revoke여야 합니다."
         }
     },
     "search": {

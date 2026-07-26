@@ -209,6 +209,15 @@
         "inbox": {
             "full": "抱歉！{0} 的收件箱已满。",
             "noMessages": "您的收件箱中没有消息。"
+        },
+        "permissions": {
+            "granted": "已授予 {0} 对播放列表 [`{2}`] 的 **{1}** 权限。",
+            "revoked": "已撤销 {0} 对播放列表 [`{2}`] 的 **{1}** 权限。",
+            "alreadyGranted": "{0} 已拥有此播放列表的 **{1}** 权限。",
+            "notGranted": "{0} 没有此播放列表的 **{1}** 权限。",
+            "cannotModifySelf": "您不能修改自己的权限。",
+            "invalidPermission": "无效的权限类型。必须是：read、write 或 remove。",
+            "invalidAction": "无效的操作。必须是：grant 或 revoke。"
         }
     },
     "search": {

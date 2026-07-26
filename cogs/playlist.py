@@ -731,7 +731,7 @@ class Playlists(commands.Cog, name="playlist"):
 
             data = {'tracks': track_ids, 'perms': {'read': [], 'write': [], 'remove': []}, 'name': name, 'type': 'playlist'}
             await MongoDBHandler.update_user(ctx.author.id, {"$set": {f"playlist.{assign_playlist_id([data for data in user])}": data}})
-            await send_localized_message(ctx, 'playlist.actions.create', name)
+            await send_localized_message(ctx, 'playlist.actions.created', name)
 
         except Exception as e:
             logger.error("Decode Error", exc_info=e)

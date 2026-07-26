@@ -209,6 +209,15 @@
         "inbox": {
             "full": "Xin lỗi! Hộp thư của {0} đã đầy.",
             "noMessages": "Không có tin nhắn nào trong hộp thư của bạn."
+        },
+        "permissions": {
+            "granted": "Đã cấp quyền **{1}** cho {0} đối với playlist [`{2}`].",
+            "revoked": "Đã thu hồi quyền **{1}** của {0} đối với playlist [`{2}`].",
+            "alreadyGranted": "{0} đã có quyền **{1}** cho playlist này.",
+            "notGranted": "{0} không có quyền **{1}** cho playlist này.",
+            "cannotModifySelf": "Bạn không thể sửa đổi quyền của chính mình.",
+            "invalidPermission": "Loại quyền không hợp lệ. Phải là: read, write hoặc remove.",
+            "invalidAction": "Hành động không hợp lệ. Phải là: grant hoặc revoke."
         }
     },
     "search": {
