@@ -28,6 +28,7 @@ def _bare_player() -> Player:
     player._watchdog_task = None
     player._exception_fallback_task = None
     player._recovery_task = None
+    player._notify_tasks = set()
     player._desired_connected = True
     player._tearing_down = False
     player._had_started = False

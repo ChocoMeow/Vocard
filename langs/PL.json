@@ -47,7 +47,9 @@
             "nowplayingLink": "Słuchaj na: {0}",
             "playlistLoad": " 🎶 Dodano playlistę **{0}** z `{1}` pozycjami do kolejki.",
             "trackLoad": "Rozpoczęto odtwarzanie **[{0}](<{1}>)** autorstwa **{2}** (`{3}`).\n",
-            "trackLoadPos": "Dodano **[{0}](<{1}>)** autorstwa **{2}** (`{3}`) do kolejki na pozycji **{4}**\n"
+            "trackLoadPos": "Dodano **[{0}](<{1}>)** autorstwa **{2}** (`{3}`) do kolejki na pozycji **{4}**\n",
+            "loadFailed": "Nie można odtworzyć **{0}**.",
+            "loadFailedSkip": "Nie można odtworzyć **{0}**. Przechodzę do następnego utworu."
         },
         "controls": {
             "pause": {

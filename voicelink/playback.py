@@ -150,7 +150,7 @@ _EXCEPTION_LOG_SKIP_KEYS = {
     "token",
     "secret",
 }
-_QUOTED_LOG_KEYS = {"track", "message", "cause", "uri", "causeMessage", "severity"}
+_QUOTED_LOG_KEYS = {"track", "message", "cause", "uri", "causeMessage", "severity", "error"}
 
 
 def snapshot_exception(data: Optional[dict]) -> dict:
@@ -224,6 +224,7 @@ class QueueItem:
     retry_count: int = 0
     fail_exhausted: bool = False
     history_recorded: bool = False
+    failure_notified: bool = False
 
     def can_retry(self) -> bool:
         return self.retry_count < MAX_ITEM_RETRIES and not self.fail_exhausted
@@ -241,6 +242,7 @@ class QueueItem:
         self.retry_count = 0
         self.fail_exhausted = False
         self.history_recorded = False
+        self.failure_notified = False
 
     def clear_failure_for_user_select(self, new_item_id: int) -> None:
         self.begin_new_cycle(new_item_id)
@@ -331,6 +333,7 @@ class NotifySnapshot:
     title: str
     reason: str
     retry_count: int
+    has_next: bool = False
     guild_id: Optional[int] = None
     channel_id: Optional[int] = None
 
@@ -657,16 +660,20 @@ class PlaybackSession:
         )
         return attempt
 
-    def snapshot_notify(self, reason: PlaybackAdvanceReason) -> Optional[NotifySnapshot]:
+    def snapshot_notify(self, reason: PlaybackAdvanceReason, *, has_next: bool = False) -> Optional[NotifySnapshot]:
         item = self.current_item
-        if item is None:
+        if item is None or item.failure_notified:
             return None
+        if item.can_retry() and not item.fail_exhausted:
+            return None
+        item.failure_notified = True
         title = getattr(item.track, "title", "") or ""
         return NotifySnapshot(
             item_id=item.item_id,
             title=title,
             reason=str(reason),
             retry_count=item.retry_count,
+            has_next=has_next,
         )
 
     def commit_advance(
@@ -678,7 +685,11 @@ class PlaybackSession:
     ) -> AdvanceCommit:
         from_item = self.current_item
         from_attempt = self.attempt
-        notify_snap = self.snapshot_notify(reason) if notify and from_item else None
+        notify_snap = (
+            self.snapshot_notify(reason, has_next=next_item is not None)
+            if notify and from_item
+            else None
+        )
         if from_attempt:
             from_attempt.discard_pending()
             if not from_attempt.is_terminal:

@@ -389,6 +389,86 @@ class PlaybackTransitionTests(unittest.TestCase):
         self.assertEqual(empty.stale_ops.get(51), 2)
         self.assertEqual(empty.stale_ops.get(1), from_seq)
 
+    def _exhaust(self, item, next_item=None, notify=True):
+        self._start(item)
+        self.assertEqual(self.session.on_load_failed(), "RETRY")
+        self.assertFalse(item.failure_notified)
+        self.session.commit_retry()
+        self.session.mark_play_in_flight()
+        self.session.arm_after_play_success()
+        self.session.apply_track_start(item.track.track_id)
+        self.assertEqual(self.session.on_load_failed(), "ADVANCE")
+        return self.session.commit_advance(PlaybackAdvanceReason.LOAD_FAILED, next_item, notify=notify)
+
+    def test_retryable_failure_does_not_notify(self):
+        self._start(self.item_a)
+        self.assertEqual(self.session.on_load_failed(), "RETRY")
+        self.assertIsNone(self.session.snapshot_notify(PlaybackAdvanceReason.LOAD_FAILED, has_next=True))
+        self.assertFalse(self.item_a.failure_notified)
+        retry = self.session.commit_retry()
+        self.assertIsNotNone(retry)
+        self.assertEqual(len(self.session.queue_advance_logs), 0)
+        self.assertFalse(self.item_a.failure_notified)
+
+    def test_exhausted_failure_notifies_once(self):
+        commit = self._exhaust(self.item_a, self.item_b)
+        self.assertIsNotNone(commit.notify)
+        self.assertEqual(commit.notify.item_id, 1)
+        self.assertEqual(commit.notify.title, "A")
+        self.assertTrue(commit.notify.has_next)
+        self.assertTrue(self.item_a.failure_notified)
+        self.assertEqual(len(self.session.queue_advance_logs), 1)
+        self.assertIsNone(self.session.snapshot_notify(PlaybackAdvanceReason.LOAD_FAILED, has_next=True))
+
+    def test_exhausted_failure_with_next_item_notifies_once(self):
+        commit = self._exhaust(self.item_a, self.item_b)
+        self.assertEqual(commit.to_item.item_id, 2)
+        self.assertEqual(commit.notify.item_id, 1)
+        self.assertTrue(commit.notify.has_next)
+        self.assertEqual(self.session.current_item.item_id, 2)
+        self.assertEqual(len(self.session.queue_advance_logs), 1)
+
+    def test_exhausted_failure_empty_queue_notifies_without_extra_advance(self):
+        commit = self._exhaust(self.item_a, None)
+        self.assertIsNone(commit.to_item)
+        self.assertIsNotNone(commit.notify)
+        self.assertFalse(commit.notify.has_next)
+        self.assertEqual(len(self.session.queue_advance_logs), 1)
+        self.assertIsNone(self.session.current_item)
+
+    def test_stale_duplicate_terminal_does_not_notify_again(self):
+        commit = self._exhaust(self.item_a, self.item_b)
+        self.assertIsNotNone(commit.notify)
+        stale = self.session.enqueue_or_apply(
+            PendingEventKind.TRACK_END, encoded="enc-a", reason="loadFailed"
+        )
+        self.assertEqual(stale, EventDisposition.IGNORE)
+        self.assertEqual(len(self.session.queue_advance_logs), 1)
+        self.session.current_item = self.item_a
+        self.assertIsNone(self.session.snapshot_notify(PlaybackAdvanceReason.LOAD_FAILED, has_next=True))
+
+    def test_manual_skip_does_not_notify(self):
+        self._start(self.item_a)
+        self.assertEqual(self.session.user_skip(), "STOP_THEN_ADVANCE")
+        commit = self.session.commit_advance(PlaybackAdvanceReason.MANUAL_SKIP, self.item_b, notify=False)
+        self.assertIsNone(commit.notify)
+        self.assertFalse(self.item_a.failure_notified)
+
+    def test_forceplay_supersession_does_not_notify(self):
+        self._start(self.item_a)
+        self.session.begin_forceplay(self.item_b.item_id)
+        self.assertEqual(self.session.on_replaced(), "FORCEPLAY_ADVANCE")
+        commit = self.session.commit_advance(PlaybackAdvanceReason.FORCEPLAY, self.item_b, notify=False)
+        self.assertIsNone(commit.notify)
+        self.assertFalse(self.item_a.failure_notified)
+
+    def test_node_unavailable_does_not_notify(self):
+        self._start(self.item_a)
+        self.assertEqual(self.session.on_node_unavailable(), "IGNORE")
+        self.assertEqual(len(self.session.queue_advance_logs), 0)
+        self.assertFalse(self.item_a.failure_notified)
+        self.assertIsNone(self.session.snapshot_notify(PlaybackAdvanceReason.LOAD_FAILED, has_next=False))
+
     def test_node_exception_play_kind(self):
         play_err = NodeException("x", kind="PLAYER_PLAY")
         load_err = NodeException("y", kind="LOADTRACKS")

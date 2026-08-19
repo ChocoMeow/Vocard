@@ -76,7 +76,7 @@ class Queue:
         self._item_ids += 1
         return self._item_ids
 
-    def _wrap(self, item: Union[Track, QueueItem], *, reuse: bool = False) -> QueueItem:
+    def _wrap(self, item: Union[Track, QueueItem]) -> QueueItem:
         if isinstance(item, QueueItem):
             if item.item_id is None:
                 item.item_id = self._alloc_id()

@@ -47,7 +47,9 @@
             "nowplayingLink": "Nghe trên {0}",
             "playlistLoad": " 🎶 Đã thêm playlist **{0}** với `{1}` bài hát vào hàng đợi.",
             "trackLoad": "Đã thêm **[{0}](<{1}>)** bởi **{2}** (`{3}`) để bắt đầu phát.\n",
-            "trackLoadPos": "Đã thêm **[{0}](<{1}>)** bởi **{2}** (`{3}`) vào hàng đợi ở vị trí **{4}**\n"
+            "trackLoadPos": "Đã thêm **[{0}](<{1}>)** bởi **{2}** (`{3}`) vào hàng đợi ở vị trí **{4}**\n",
+            "loadFailed": "Không thể phát **{0}**.",
+            "loadFailedSkip": "Không thể phát **{0}**. Chuyển sang bài tiếp theo."
         },
         "controls": {
             "pause": {

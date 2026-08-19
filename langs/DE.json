@@ -46,7 +46,9 @@
             "nowplayingLink": "Auf {0} anhören",
             "playlistLoad": " 🎶 Die Wiedergabeliste **{0}** mit `{1}` Songs wurde zur Warteschlange hinzugefügt.",
             "trackLoad": "**[{0}](<{1}>)** von **{2}** (`{3}`) wurde zum Abspielen hinzugefügt.\n",
-            "trackLoadPos": "**[{0}](<{1}>)** von **{2}** (`{3}`) wurde in der Warteschlange zu Position **{4}** hinzugefügt.\n"
+            "trackLoadPos": "**[{0}](<{1}>)** von **{2}** (`{3}`) wurde in der Warteschlange zu Position **{4}** hinzugefügt.\n",
+            "loadFailed": "Konnte **{0}** nicht abspielen.",
+            "loadFailedSkip": "Konnte **{0}** nicht abspielen. Spiele den nächsten Titel."
         },
         "controls": {
             "pause": {

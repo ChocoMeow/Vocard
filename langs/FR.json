@@ -47,7 +47,9 @@
             "nowplayingLink": "Écouter sur {0}",
             "playlistLoad": " 🎶 La playlist **{0}** avec `{1}` chansons a été ajoutée à la file.",
             "trackLoad": "**[{0}](<{1}>)** de **{2}** (`{3}`) a été ajoutée et commencera à jouer.\n",
-            "trackLoadPos": "**[{0}](<{1}>)** de **{2}** (`{3}`) a été ajoutée à la file à la position **{4}**\n"
+            "trackLoadPos": "**[{0}](<{1}>)** de **{2}** (`{3}`) a été ajoutée à la file à la position **{4}**\n",
+            "loadFailed": "Impossible de lire **{0}**.",
+            "loadFailedSkip": "Impossible de lire **{0}**. Passage au morceau suivant."
         },
         "controls": {
             "pause": {

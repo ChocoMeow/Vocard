@@ -57,7 +57,7 @@ from .queue import Queue, QUEUE_TYPES
 from .mongodb import MongoDBHandler
 from .language import LangHandler
 from .views import InteractiveController
-from .utils import format_ms, dispatch_message
+from .utils import format_ms
 from .playback import (
     AttemptIntent,
     AttemptState,
@@ -74,6 +74,13 @@ from .playback import (
 )
 from .resume import fetch_player_state, remote_encoded_track
 from .health import health_store
+
+_FAILURE_ADVANCE_REASONS = (
+    PlaybackAdvanceReason.LOAD_FAILED,
+    PlaybackAdvanceReason.TRACK_STUCK,
+    PlaybackAdvanceReason.PLAY_REQUEST_FAILED,
+    PlaybackAdvanceReason.PLAYBACK_EXCEPTION,
+)
 
 if TYPE_CHECKING:
     from .ipc import IPCClient
@@ -188,6 +195,7 @@ class Player(VoiceProtocol):
         self._watchdog_task: Optional[asyncio.Task] = None
         self._exception_fallback_task: Optional[asyncio.Task] = None
         self._recovery_task: Optional[asyncio.Task] = None
+        self._notify_tasks: set[asyncio.Task] = set()
         self._desired_connected: bool = True
         self._tearing_down: bool = False
         self._had_started: bool = False
@@ -650,12 +658,7 @@ class Player(VoiceProtocol):
         if decision in ("ADVANCE", "FORCEPLAY_ADVANCE"):
             await self._commit_and_play(
                 reason,
-                skip_exhausted=reason in (
-                    PlaybackAdvanceReason.LOAD_FAILED,
-                    PlaybackAdvanceReason.TRACK_STUCK,
-                    PlaybackAdvanceReason.PLAY_REQUEST_FAILED,
-                    PlaybackAdvanceReason.PLAYBACK_EXCEPTION,
-                ),
+                skip_exhausted=reason in _FAILURE_ADVANCE_REASONS,
             )
             return
         if decision == "RECOVER":
@@ -677,12 +680,7 @@ class Player(VoiceProtocol):
                 commit = self._playback.commit_advance(
                     reason,
                     next_item,
-                    notify=reason in (
-                        PlaybackAdvanceReason.LOAD_FAILED,
-                        PlaybackAdvanceReason.TRACK_STUCK,
-                        PlaybackAdvanceReason.PLAY_REQUEST_FAILED,
-                        PlaybackAdvanceReason.PLAYBACK_EXCEPTION,
-                    ),
+                    notify=reason in _FAILURE_ADVANCE_REASONS,
                 )
                 self._sync_current()
                 self._had_started = False
@@ -698,8 +696,7 @@ class Player(VoiceProtocol):
                     )
                 notify = commit.notify
         await self._absorb_cancelled(cancelled)
-        if notify and not self._tearing_down:
-            self.bot.loop.create_task(self._notify_playback_failure(notify))
+        self._schedule_playback_failure_notification(notify)
         await self._after_new_item()
         if self._current_item and self._desired_connected and not self._tearing_down:
             await self._issue_play()
@@ -871,17 +868,103 @@ class Player(VoiceProtocol):
         elif event.kind == PendingEventKind.TRACK_STUCK:
             await self.handle_track_stuck(self._current, event.threshold, encoded=event.encoded)
 
-    async def _notify_playback_failure(self, snapshot) -> None:
-        if self._tearing_down or not self._desired_connected:
-            return
+    def _request_channel_id(self) -> Optional[int]:
+        channel = getattr(getattr(self, "context", None), "channel", None)
+        channel_id = getattr(channel, "id", None)
+        if channel_id:
+            return channel_id
+        request = (getattr(self, "settings", None) or {}).get("music_request_channel") or {}
+        return request.get("text_channel_id")
+
+    def _playback_failure_message(self, snapshot) -> str:
+        title = getattr(snapshot, "title", "") or ""
+        has_next = bool(getattr(snapshot, "has_next", False))
+        key = "player.playback.loadFailedSkip" if has_next else "player.playback.loadFailed"
+        template = self.get_msg(key) if hasattr(self, "get_msg") else None
+        if not template or template == "Not found!":
+            if has_next:
+                return f"Couldn't play **{title}**. Skipping to the next track."
+            return f"Couldn't play **{title}**."
+        if "{0}" in template:
+            return template.replace("{0}", title, 1)
         try:
-            if self.context:
-                await self.context.send(
-                    f"{snapshot.title} could not be played. Skipping to the next track.",
-                    delete_after=10,
-                )
-        except Exception:
-            self._playback_log.warning("Failed to send playback failure notification for item_id=%s", snapshot.item_id)
+            return template.format(title)
+        except (IndexError, KeyError, ValueError):
+            return template
+
+    def _schedule_playback_failure_notification(self, snapshot) -> None:
+        if not snapshot or self._tearing_down:
+            return
+        if snapshot.channel_id is None:
+            snapshot.channel_id = self._request_channel_id()
+        if snapshot.guild_id is None:
+            snapshot.guild_id = getattr(self.guild, "id", None) if getattr(self, "guild", None) else None
+        loop = getattr(self.bot, "loop", None) or asyncio.get_running_loop()
+        task = loop.create_task(self._notify_playback_failure(snapshot))
+        self._notify_tasks.add(task)
+        task.add_done_callback(self._notify_tasks.discard)
+
+    async def _cancel_pending_notifications(self) -> None:
+        owned = {f"notify_{id(task)}": task for task in list(self._notify_tasks)}
+        self._notify_tasks.clear()
+        _, pending = cancel_owned_tasks(owned)
+        await self._absorb_cancelled(pending)
+
+    def _log_notify_failed(self, snapshot, channel_id, error: str) -> None:
+        self._log_playback(
+            "PLAYBACK_NOTIFICATION_FAILED",
+            level=logging.WARNING,
+            item_id=getattr(snapshot, "item_id", None),
+            channel_id=channel_id,
+            error=error,
+        )
+
+    async def _resolve_notify_channel(self, channel_id: Optional[int]):
+        if not channel_id or not self._bot:
+            return None
+        channel = self._bot.get_channel(channel_id) if hasattr(self._bot, "get_channel") else None
+        if channel is None and hasattr(self._bot, "fetch_channel"):
+            try:
+                channel = await self._bot.fetch_channel(channel_id)
+            except errors.NotFound:
+                return None
+        if channel is None or not callable(getattr(channel, "send", None)):
+            return None
+        return channel
+
+    async def _send_controller_message(self, embed, view):
+        channel = await self._resolve_notify_channel(self._request_channel_id())
+        if channel is None:
+            return None
+        return await channel.send(embed=embed, view=view)
+
+    async def _notify_playback_failure(self, snapshot) -> None:
+        channel_id = getattr(snapshot, "channel_id", None)
+        try:
+            if self._tearing_down or not self._desired_connected:
+                return
+            if not channel_id:
+                self._log_notify_failed(snapshot, None, "destination channel unavailable")
+                return
+            channel = await self._resolve_notify_channel(channel_id)
+            if channel is None:
+                self._log_notify_failed(snapshot, channel_id, "destination channel unavailable")
+                return
+            await channel.send(self._playback_failure_message(snapshot), delete_after=10)
+            self._log_playback(
+                "PLAYBACK_NOTIFICATION_SENT",
+                level=logging.DEBUG,
+                item_id=snapshot.item_id,
+                channel_id=channel_id,
+            )
+        except asyncio.CancelledError:
+            return
+        except Exception as exc:
+            self._log_notify_failed(
+                snapshot,
+                channel_id,
+                safe_log_text(f"{type(exc).__name__}: {exc}", limit=180) or type(exc).__name__,
+            )
 
     async def _request_reconcile(self) -> None:
         generation = self._playback.mark_reconcile()
@@ -977,7 +1060,7 @@ class Player(VoiceProtocol):
                 
                 # Send a new controller message if none exists
                 if not self.controller:
-                    self.controller = await dispatch_message(self.context, content=embed, view=view, delete_after=None, requires_fetch=True)
+                    self.controller = await self._send_controller_message(embed, view)
 
             elif not await self.is_position_fresh():
                 try:
@@ -985,7 +1068,7 @@ class Player(VoiceProtocol):
                 except errors.NotFound:
                     self.controller = None
                     
-                self.controller = await dispatch_message(self.context, content=embed, view=view, delete_after=None, requires_fetch=True)
+                self.controller = await self._send_controller_message(embed, view)
 
             else:
                 await self.controller.edit(embed=embed, view=view)
@@ -1023,6 +1106,7 @@ class Player(VoiceProtocol):
         self._recovery_task = None
         _, pending = cancel_owned_tasks({"_recovery_task": recovery})
         await self._absorb_cancelled(pending)
+        await self._cancel_pending_notifications()
         try:
             await MongoDBHandler.update_settings(self.guild.id, {"$set": {
                 "last_active": (timeNow := round(time.time())), 

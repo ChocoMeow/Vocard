@@ -47,7 +47,9 @@
             "nowplayingLink": "Listen on {0}",
             "playlistLoad": " 🎶 Added the playlist **{0}** with `{1}` songs to the queue.",
             "trackLoad": "Added **[{0}](<{1}>)** by **{2}** (`{3}`) to begin playing.\n",
-            "trackLoadPos": "Added **[{0}](<{1}>)** by **{2}** (`{3}`) to the queue at position **{4}**\n"
+            "trackLoadPos": "Added **[{0}](<{1}>)** by **{2}** (`{3}`) to the queue at position **{4}**\n",
+            "loadFailed": "Couldn't play **{0}**.",
+            "loadFailedSkip": "Couldn't play **{0}**. Skipping to the next track."
         },
         "controls": {
             "pause": {
