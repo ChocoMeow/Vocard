@@ -53,6 +53,7 @@ from .utils import ExponentialBackoff, NodeStats, NodeInfo, Ping
 from .enums import RequestMethod
 from .ratelimit import YTRatelimit, YTToken, STRATEGY
 from .config import Config
+from .health import health_store
 
 if TYPE_CHECKING:
     from .player import Player
@@ -134,6 +135,32 @@ class Node:
         """Takes a guild ID as a parameter. Returns a voicelink Player object."""
         return self._players.get(guild_id, None)
     
+    def _sync_health(self, available: bool) -> None:
+        version = None
+        plugins = None
+        if self._info:
+            version = getattr(self._info.version, "semver", None)
+            plugins = self._info.plugins
+        health_store.record_node(
+            self._identifier,
+            available=available,
+            version=version,
+            plugins=plugins,
+        )
+
+    async def broadcast_playback_health(self, *, guild_id: int = None, playback_failure: dict = None) -> None:
+        for player in self._players.copy().values():
+            if guild_id is not None and getattr(player.guild, "id", None) != guild_id:
+                continue
+            if not getattr(player, "is_ipc_connected", False):
+                continue
+            payload = health_store.ipc_payload(
+                guild_id=player.guild.id,
+                voice_connected=player.is_connected,
+                playback_failure=playback_failure if guild_id == player.guild.id else None,
+            )
+            await player.send_ws(payload)
+
     @property
     def is_connected(self) -> bool:
         """"Property which returns whether this node is connected or not"""
@@ -204,19 +231,24 @@ class Node:
 
                 if msg.type == aiohttp.WSMsgType.CLOSED:
                     self._available = False
+                    self._sync_health(False)
                     self._logger.warning(f"WebSocket closed for node [{self._identifier}]")
                     for player in self._players.copy().values():
                         suspend = getattr(player, "suspend_playback_watchdog", None)
                         if callable(suspend):
                             suspend()
+                    await NodePool.broadcast_playback_health()
                     break
 
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     self._logger.error(f"WebSocket error for node [{self._identifier}]")
+                    self._available = False
+                    self._sync_health(False)
                     for player in self._players.copy().values():
                         suspend = getattr(player, "suspend_playback_watchdog", None)
                         if callable(suspend):
                             suspend()
+                    await NodePool.broadcast_playback_health()
                     break
                 
                 self._bot.loop.create_task(self._handle_payload(msg.json()))
@@ -224,11 +256,15 @@ class Node:
             except aiohttp.ClientConnectionError as e:
                 self._logger.error(f"Connection error: {e}")
                 self._available = False
+                self._sync_health(False)
+                await NodePool.broadcast_playback_health()
                 break
             
             except Exception as e:
                 self._logger.exception(f"Unexpected error: {e}")
                 self._available = False
+                self._sync_health(False)
+                await NodePool.broadcast_playback_health()
                 break
 
         while not self._available:
@@ -379,6 +415,8 @@ class Node:
             except asyncio.TimeoutError:
                 self._logger.warning(f"Node [{self._identifier}] did not receive a ready event in time.")
             self._info = NodeInfo(await self.send(RequestMethod.GET, query="info"))
+            self._sync_health(True)
+            await NodePool.broadcast_playback_health()
             
             self._logger.info(f"Node [{self._identifier}] is connected!")
         
@@ -418,13 +456,15 @@ class Node:
         """Disconnects a connected Lavalink node and removes it from the node pool.
            This also destroys any players connected to the node.
         """
+        self._available = False
+        self._sync_health(False)
+        await NodePool.broadcast_playback_health()
         for player in self.players.copy().values():
             await player.teardown()
         
         await self._websocket.close()
         if remove_from_pool:
             del self._pool._nodes[self._identifier]
-        self._available = False
         self._task.cancel()
         
         self._logger.info(f"Node [{self._identifier}] is disconnected!")
@@ -572,6 +612,11 @@ class NodePool:
         elif algorithm == NodeAlgorithm.BY_PLAYERS:
             tested_nodes = {node: len(node.players.keys()) for node in available_nodes}
             return min(tested_nodes, key=tested_nodes.get)
+
+    @classmethod
+    async def broadcast_playback_health(cls, *, guild_id: int = None, playback_failure: dict = None) -> None:
+        for node in cls._nodes.values():
+            await node.broadcast_playback_health(guild_id=guild_id, playback_failure=playback_failure)
 
     @classmethod
     def get_node(cls, *, identifier: str = None) -> Node:

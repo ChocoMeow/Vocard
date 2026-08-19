@@ -7,6 +7,7 @@ from typing import List, Dict, Union, Optional, TYPE_CHECKING
 from discord import User, Member
 from discord.ext import commands
 from voicelink import Player, Track, Playlist, NodePool, LoopType, Filters, Config, MongoDBHandler, LangHandler, LYRICS_PLATFORMS, AttemptIntent
+from voicelink.health import health_store
 from voicelink.utils import TempCtx
 
 if TYPE_CHECKING:
@@ -135,7 +136,8 @@ async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
         "autoplay": player.settings.get("autoplay", False),
         "volume": player.volume,
         "filters": [{"tag": filter.tag, "scope": filter.scope, "payload": filter.payload} for filter in player.filters.get_filters()],
-        "availableFilters": available_filters
+        "availableFilters": available_filters,
+        "health": health_store.snapshot(guild_id=player.guild.id, voice_connected=player.is_connected),
     }
 
 async def closeConnection(bot: commands.Bot, data: Dict) -> None:
@@ -144,6 +146,14 @@ async def closeConnection(bot: commands.Bot, data: Dict) -> None:
     player: Player = guild.voice_client
     if player:
         player._ipc_connection = False
+
+async def getHealth(player: Player, member: Member, data: Dict) -> Dict:
+    payload = health_store.ipc_payload(
+        guild_id=player.guild.id,
+        voice_connected=player.is_connected,
+    )
+    payload["userId"] = str(data.get("userId") or getattr(member, "id", ""))
+    return payload
 
 async def getRecommendation(bot: commands.Bot, data: Dict) -> None: 
     node = NodePool.get_node()
@@ -716,6 +726,7 @@ METHODS: Dict[str, Union[SystemMethod, PlayerMethod]] = {
     "updateSettings": SystemMethod(updateSettings),
     "getRecommendation": SystemMethod(getRecommendation, credit=5),
     "closeConnection": SystemMethod(closeConnection, credit=0),
+    "getHealth": PlayerMethod(getHealth, credit=0),
     "getTracks": SystemMethod(getTracks, credit=5),
     "initPlayer": PlayerMethod(initPlayer),
     "skipTo": PlayerMethod(skipTo),

@@ -371,7 +371,8 @@ class Settings(commands.Cog, name="settings"):
                         f"• CPU:     {node.stats.cpu_process_load:.1f}%\n" \
                         f"• RAM:     {format_bytes(node.stats.free)}/{format_bytes(total_memory, True)} ({(node.stats.free/total_memory) * 100:.1f}%)\n"
                         f"• LATENCY: {node.latency:.2f}ms\n" \
-                        f"• UPTIME:  {format_ms(node.stats.uptime)}```"
+                        f"• UPTIME:  {format_ms(node.stats.uptime)}\n" \
+                        f"• PLUGINS: {', '.join(f'{p.name} {p.version}' for p in (node._info.plugins if node._info else [])) or 'none'}```"
                 )
             else:
                 embed.add_field(

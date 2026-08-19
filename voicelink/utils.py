@@ -27,7 +27,7 @@ import socket
 import discord
 
 from itertools import zip_longest
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 from timeit import default_timer as timer
 from discord.ext import commands
 
@@ -133,11 +133,12 @@ class NodeInfo:
        Gives basic information on the node.
     """
     def __init__(self, data: Dict) -> None:
-        self.version: NodeInfoVersion = NodeInfoVersion(data.get("version"))
+        self.version: NodeInfoVersion = NodeInfoVersion(data.get("version") or {})
         self.build_time: int = data.get("buildTime")
         self.jvm: str = data.get("jvm")
         self.lavaplayer: str = data.get("lavaplayer")
-        self.plugins: Optional[Dict[str, Plugin]] = [Plugin(plugin_data) for plugin_data in data.get("plugins")]
+        self.plugins: List[Plugin] = [Plugin(plugin_data) for plugin_data in (data.get("plugins") or [])]
+        self.source_managers: List[str] = list(data.get("sourceManagers") or [])
 
 class Plugin:
     """The base class for the plugin object.

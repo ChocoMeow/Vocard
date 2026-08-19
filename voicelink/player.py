@@ -73,6 +73,7 @@ from .playback import (
     TRACK_START_TIMEOUT,
 )
 from .resume import fetch_player_state, remote_encoded_track
+from .health import health_store
 
 if TYPE_CHECKING:
     from .ipc import IPCClient
@@ -466,6 +467,12 @@ class Player(VoiceProtocol):
         await self._absorb_cancelled(tasks)
         if applied:
             self._log_playback("TRACK_START", item_id=getattr(self._current_item, "item_id", None), track=getattr(track, "title", None))
+            source_recovered = health_store.record_track_start(getattr(track, "source", None))
+            health_store.clear_guild_failure(getattr(self._guild, "id", None))
+            if source_recovered:
+                await NodePool.broadcast_playback_health()
+            elif self.is_ipc_connected:
+                await self._node.broadcast_playback_health(guild_id=self.guild.id)
 
     async def handle_track_end(self, track, reason: str, encoded: str = None) -> None:
         encoded = encoded or getattr(track, "track_id", None)
@@ -544,6 +551,27 @@ class Player(VoiceProtocol):
             uri=safe_log_text(getattr(track_obj, "uri", None), limit=180),
             **exception_log_fields(error if isinstance(error, dict) else None),
         )
+        classification, changed = health_store.record_exception(
+            source=getattr(track_obj, "source", None),
+            exception=error if isinstance(error, dict) else None,
+            item_id=getattr(self._current_item, "item_id", None),
+            encoded=encoded,
+            title=getattr(track_obj, "title", None),
+            guild_id=getattr(self._guild, "id", None),
+            node_available=bool(getattr(self._node, "_available", True)),
+        )
+        playback_failure = {
+            "code": classification.code,
+            "title": getattr(track_obj, "title", None),
+            "source": getattr(track_obj, "source", None),
+        }
+        if changed:
+            await NodePool.broadcast_playback_health()
+        elif self.is_ipc_connected:
+            await self._node.broadcast_playback_health(
+                guild_id=self.guild.id,
+                playback_failure=playback_failure,
+            )
 
     async def _exception_fallback_worker(self, attempt_id: Optional[int], item_id: Optional[int]) -> None:
         try:
