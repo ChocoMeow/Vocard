@@ -395,7 +395,7 @@ class PlaybackSession:
             if recorded is None or play_seq is None or recorded <= play_seq:
                 self.stale_ops.pop(item_id, None)
         if play_seq is not None:
-            for key in [k for k, seq in self.stale_ops.items() if seq <= play_seq]:
+            for key, seq in [(k, s) for k, s in self.stale_ops.items() if s <= play_seq]:
                 if key != (self.current_item.item_id if self.current_item else None):
                     if self.attempt and key == self.attempt.item_id and self.attempt.play_seq > play_seq:
                         continue
