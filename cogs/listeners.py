@@ -91,7 +91,7 @@ class Listeners(commands.Cog):
                     decoded_track = voicelink.Track.decode(track_id)
                     requester = channel.guild.get_member(track_data.get("requester_id"))
                     track = voicelink.Track(track_id=track_id, info=decoded_track, requester=requester)
-                    player.queue._queue.append(track)
+                    player.queue.put(track)
                 
                 # Restore queue settings.
                 player.queue._position = queue_data.get("position", 0) - 1
@@ -131,21 +131,16 @@ class Listeners(commands.Cog):
             func.logger.error("Failed to remove session file: %s", Config.LAST_SESSION_FILE_DIR, exc_info=del_error)
 
     @commands.Cog.listener()
-    async def on_voicelink_track_end(self, player: voicelink.Player, track, _):
-        await player.do_next()
+    async def on_voicelink_track_end(self, player: voicelink.Player, track, reason):
+        await player.handle_track_end(track, reason)
 
     @commands.Cog.listener()
     async def on_voicelink_track_stuck(self, player: voicelink.Player, track, _):
-        await asyncio.sleep(10)
-        await player.do_next()
+        await player.handle_track_stuck(track)
 
     @commands.Cog.listener()
     async def on_voicelink_track_exception(self, player: voicelink.Player, track, error: dict):
-        try:
-            player._track_is_stuck = True
-            await player.context.send(f"{error['message']} The next song will begin in the next 5 seconds.", delete_after=10)
-        except:
-            pass
+        await player.handle_track_exception(track, error)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):

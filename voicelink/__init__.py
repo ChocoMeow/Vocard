@@ -28,6 +28,7 @@ __copyright__ = "Copyright 2023 - present (c) Vocard Development, ChocoMeow"
 
 from .config import Config
 from .enums import SearchType, LoopType, TrackRecType
+from .playback import AttemptIntent
 from .events import *
 from .exceptions import *
 from .filters import *

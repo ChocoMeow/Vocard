@@ -345,7 +345,7 @@ class Basic(commands.Cog):
             if player.queue._repeat.mode == voicelink.LoopType.TRACK:
                 await player.set_repeat(voicelink.LoopType.OFF)
                 
-            await player.stop() if player.is_playing else await player.do_next()
+            await player.stop(intent=voicelink.AttemptIntent.FORCEPLAY) if player.is_playing else await player.do_next()
 
     @commands.hybrid_command(name="pause", aliases=get_aliases("pause"))
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
@@ -418,6 +418,7 @@ class Basic(commands.Cog):
 
         if index:
             player.queue.skipto(index)
+            player.queue.prepare_user_reselect()
 
         await send_localized_message(ctx, "player.controls.skip.success", ctx.author)
         if player.queue._repeat.mode == voicelink.LoopType.TRACK:
@@ -447,9 +448,11 @@ class Basic(commands.Cog):
 
         if not player.is_playing:
             player.queue.backto(index)
+            player.queue.prepare_user_reselect()
             await player.do_next()
         else:
             player.queue.backto(index + 1)
+            player.queue.prepare_user_reselect()
             await player.stop()
 
         await send_localized_message(ctx, "player.controls.back.success", ctx.author)

@@ -50,14 +50,26 @@ from .pool import Node, NodePool
 from .objects import Track, Playlist
 from .filters import Filter, Filters
 from .enums import SearchType, LoopType, RequestMethod
-from .events import VoicelinkEvent, TrackEndEvent, TrackStartEvent, TrackExceptionEvent
-from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, FilterTagAlreadyInUse, DuplicateTrack
+from .events import VoicelinkEvent, TrackStartEvent, is_youtube_content_unavailable
+from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, FilterTagAlreadyInUse, DuplicateTrack, NodeException
 from .placeholders import PlayerPlaceholder
 from .queue import Queue, QUEUE_TYPES
 from .mongodb import MongoDBHandler
 from .language import LangHandler
 from .views import InteractiveController
 from .utils import format_ms, dispatch_message
+from .playback import (
+    AttemptIntent,
+    AttemptState,
+    EventDisposition,
+    EXCEPTION_END_FALLBACK,
+    PendingEventKind,
+    PlaybackAdvanceReason,
+    PlaybackSession,
+    TerminalSource,
+    TRACK_START_TIMEOUT,
+)
+from .resume import fetch_player_state, remote_encoded_track
 
 if TYPE_CHECKING:
     from .ipc import IPCClient
@@ -129,11 +141,11 @@ class Player(VoiceProtocol):
 
         self._node = NodePool.get_node()
         self._current: Optional[Track] = None
+        self._current_item = None
         self._filters: Filters = Filters()
         self._paused: bool = False
         self._is_connected: bool = False
         self._ping: float = 0.0
-        self._track_is_stuck = False
 
         self._position: int = 0
         self._last_position: int = 0
@@ -141,6 +153,16 @@ class Player(VoiceProtocol):
         self._ending_track: Optional[Track] = None
 
         self._voice_state: dict = {}
+        self._playback = PlaybackSession()
+        self._attempt_lock = asyncio.Lock()
+        self._queue_lock = asyncio.Lock()
+        self._playback_log = logging.getLogger("vocard.playback")
+        self._watchdog_task: Optional[asyncio.Task] = None
+        self._exception_fallback_task: Optional[asyncio.Task] = None
+        self._recovery_task: Optional[asyncio.Task] = None
+        self._desired_connected: bool = True
+        self._tearing_down: bool = False
+        self._had_started: bool = False
 
         self.controller: Union[Message, PartialMessage] = None
         self._updating: bool = False
@@ -248,7 +270,7 @@ class Player(VoiceProtocol):
             "guild_id": self._guild.id,
             "channel_id": self.channel.id,
             "queue": {
-                "tracks": [track.data for track in self.queue._queue],
+                "tracks": self.queue.session_track_data(),
                 "position": self.queue._position,
                 "repeat_mode": self.queue._repeat.current.name,
                 "repeat_position": self.queue._repeat_position
@@ -318,10 +340,10 @@ class Player(VoiceProtocol):
         
         return PlayerPlaceholder.build_embed(embed_form, self._ph)
 
-    async def send(self, method: RequestMethod, query: str = None, data: Union[Dict, str] = {}) -> Dict:
+    async def send(self, method: RequestMethod, query: str = None, data: Union[Dict, str] = {}, kind: str = None) -> Dict:
         """Sends an HTTP request to the node with the given method, query, and data."""
         uri: str = f"sessions/{self._node._session_id}/players/{self._guild.id}" + (f"?{query}" if query else "")
-        return await self._node.send(method, query=uri, data=data)
+        return await self._node.send(method, query=uri, data=data, kind=kind)
         
     async def _update_state(self, data: dict) -> None:
         """Updates the player's state based on the provided data."""
@@ -379,40 +401,269 @@ class Player(VoiceProtocol):
 
         await self._dispatch_voice_update({**self._voice_state, "event": data})
 
+    def _sync_current(self) -> None:
+        self._playback.desired_connected = self._desired_connected
+        self._playback.tearing_down = self._tearing_down
+        self._current_item = self._playback.current_item
+        self._current = self._current_item.track if self._current_item else None
+
+    def _detach_attempt_tasks_locked(self) -> List[asyncio.Task]:
+        tasks = []
+        for name in ("_watchdog_task", "_exception_fallback_task"):
+            task: Optional[asyncio.Task] = getattr(self, name)
+            setattr(self, name, None)
+            if task and not task.done():
+                task.cancel()
+                tasks.append(task)
+        return tasks
+
+    def suspend_playback_watchdog(self) -> None:
+        self._playback.watchdog_suspended = True
+        task = self._watchdog_task
+        self._watchdog_task = None
+        if task and not task.done():
+            task.cancel()
+
+    def _log_playback(self, event: str, **fields) -> None:
+        self._playback.log(event, guild_id=getattr(self._guild, "id", None), **fields)
+        extras = " ".join(f"{key}={value}" for key, value in fields.items() if value is not None)
+        self._playback_log.info("%s %s", event, extras)
+
     async def _dispatch_event(self, data: dict):
         """Dispatches an event based on the type of event data received."""
         event_type = data.get("type")
-        event: VoicelinkEvent = getattr(events, event_type)(data, self)
-
-        if isinstance(event, TrackEndEvent) and event.reason != "replaced":
-            self._current = None
-        
-        if isinstance(event, TrackExceptionEvent) and event.exception["message"] == "This content isn’t available.":
-            if self._node.yt_ratelimit:
+        if not event_type:
+            return
+        if event_type == "TrackExceptionEvent":
+            if is_youtube_content_unavailable(data) and self._node.yt_ratelimit:
                 await self._node.yt_ratelimit.flag_active_token()
 
+        event: VoicelinkEvent = getattr(events, event_type)(data, self)
         event.dispatch(self._bot)
 
         if isinstance(event, TrackStartEvent):
-            self._ending_track = self._current
+            self._ending_track = event.track or self._current
+            await self.handle_track_start(event.track, encoded=event.encoded)
 
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) dispatched event {event_type}.")
 
-    async def do_next(self):
-        """Processes the next track in the queue."""
-        if self._current or self.is_playing or not self.channel:
+    async def handle_track_start(self, track, encoded: str = None) -> None:
+        encoded = encoded or getattr(track, "track_id", None)
+        applied = False
+        tasks: List[asyncio.Task] = []
+        async with self._attempt_lock:
+            disposition = self._playback.enqueue_or_apply(PendingEventKind.TRACK_START, encoded=encoded)
+            if disposition not in (EventDisposition.APPLY, EventDisposition.AMBIGUOUS):
+                return
+            applied = self._playback.apply_track_start(encoded)
+            if applied:
+                self._had_started = True
+            self._sync_current()
+            tasks = self._detach_attempt_tasks_locked()
+        await self._absorb_cancelled(tasks)
+        if applied:
+            self._log_playback("TRACK_START", item_id=getattr(self._current_item, "item_id", None), track=getattr(track, "title", None))
+
+    async def handle_track_end(self, track, reason: str, encoded: str = None) -> None:
+        encoded = encoded or getattr(track, "track_id", None)
+        async with self._attempt_lock:
+            disposition = self._playback.enqueue_or_apply(
+                PendingEventKind.TRACK_END, encoded=encoded, reason=reason
+            )
+            if disposition != EventDisposition.APPLY:
+                return
+            tasks = self._detach_attempt_tasks_locked()
+            if reason == "finished":
+                decision = self._playback.on_finished()
+                reason_enum = PlaybackAdvanceReason.FINISHED
+            elif reason == "loadFailed":
+                decision = self._playback.on_load_failed()
+                reason_enum = PlaybackAdvanceReason.LOAD_FAILED
+            elif reason == "replaced":
+                decision = self._playback.on_replaced()
+                reason_enum = PlaybackAdvanceReason.REPLACED
+            elif reason == "stopped":
+                decision = self._playback.on_stopped()
+                reason_enum = PlaybackAdvanceReason.MANUAL_SKIP
+            elif reason == "cleanup":
+                decision = self._playback.on_cleanup()
+                reason_enum = PlaybackAdvanceReason.CLEANUP
+            else:
+                self._log_playback("TRACK_END", reason=reason or "UNKNOWN")
+                decision = "IGNORE"
+                reason_enum = PlaybackAdvanceReason.UNKNOWN
+            self._sync_current()
+        await self._absorb_cancelled(tasks)
+        self._log_playback("TRACK_END", reason=reason, item_id=getattr(self._current_item, "item_id", None))
+        await self._run_decision(decision, reason_enum)
+
+    async def handle_track_stuck(self, track, threshold=None, encoded: str = None) -> None:
+        encoded = encoded or getattr(track, "track_id", None)
+        async with self._attempt_lock:
+            disposition = self._playback.enqueue_or_apply(
+                PendingEventKind.TRACK_STUCK, encoded=encoded, threshold=threshold
+            )
+            if disposition != EventDisposition.APPLY:
+                return
+            tasks = self._detach_attempt_tasks_locked()
+            decision = self._playback.on_stuck()
+            self._sync_current()
+        await self._absorb_cancelled(tasks)
+        self._log_playback("TRACK_STUCK", item_id=getattr(self._current_item, "item_id", None))
+        await self._run_decision(decision, PlaybackAdvanceReason.TRACK_STUCK)
+
+    async def handle_track_exception(self, track, error: dict, encoded: str = None) -> None:
+        encoded = encoded or getattr(track, "track_id", None)
+        start_fallback = False
+        async with self._attempt_lock:
+            disposition = self._playback.enqueue_or_apply(
+                PendingEventKind.TRACK_EXCEPTION, encoded=encoded, exception=error
+            )
+            if disposition != EventDisposition.APPLY:
+                return
+            started = self._playback.apply_track_exception(error)
+            start_fallback = started and self._exception_fallback_task is None
+            if start_fallback:
+                attempt_id = self._playback.attempt.attempt_id if self._playback.attempt else None
+                item_id = self._playback.attempt.item_id if self._playback.attempt else None
+                self._exception_fallback_task = self.bot.loop.create_task(
+                    self._exception_fallback_worker(attempt_id, item_id)
+                )
+        self._log_playback("TRACK_EXCEPTION", item_id=getattr(self._current_item, "item_id", None))
+
+    async def _exception_fallback_worker(self, attempt_id: Optional[int], item_id: Optional[int]) -> None:
+        try:
+            await asyncio.sleep(EXCEPTION_END_FALLBACK)
+            async with self._attempt_lock:
+                if not self._playback.attempt or self._playback.attempt.attempt_id != attempt_id:
+                    return
+                if self._playback.attempt.item_id != item_id:
+                    return
+                decision = self._playback.on_exception_fallback()
+                tasks = self._detach_attempt_tasks_locked()
+                self._sync_current()
+            await self._absorb_cancelled(tasks)
+            await self._run_decision(decision, PlaybackAdvanceReason.PLAYBACK_EXCEPTION)
+        except asyncio.CancelledError:
             return
-        
-        if self._paused:
-            self._paused = False
 
-        if self._track_is_stuck:
-            await asyncio.sleep(10)
-            self._track_is_stuck = False
+    async def _watchdog_worker(self, attempt_id: int, item_id: int, play_seq: int) -> None:
+        try:
+            await asyncio.sleep(TRACK_START_TIMEOUT)
+            async with self._attempt_lock:
+                if self._playback.watchdog_suspended:
+                    return
+                if not self._playback.attempt or self._playback.attempt.attempt_id != attempt_id:
+                    return
+                if self._playback.attempt.play_seq != play_seq or self._playback.attempt.item_id != item_id:
+                    return
+                decision = self._playback.on_watchdog()
+                tasks = self._detach_attempt_tasks_locked()
+                self._sync_current()
+            await self._absorb_cancelled(tasks)
+            await self._run_decision(decision, PlaybackAdvanceReason.PLAY_REQUEST_FAILED)
+        except asyncio.CancelledError:
+            return
 
+    async def _absorb_cancelled(self, tasks: List[asyncio.Task]) -> None:
+        if not tasks:
+            return
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def _run_decision(self, decision: str, reason: PlaybackAdvanceReason) -> None:
+        if decision in (None, "IGNORE"):
+            return
+        if decision == "TEARDOWN":
+            return
+        if decision == "RETRY":
+            await self._run_retry()
+            return
+        if decision in ("ADVANCE", "FORCEPLAY_ADVANCE"):
+            await self._commit_and_play(
+                reason,
+                skip_exhausted=reason in (
+                    PlaybackAdvanceReason.LOAD_FAILED,
+                    PlaybackAdvanceReason.TRACK_STUCK,
+                    PlaybackAdvanceReason.PLAY_REQUEST_FAILED,
+                    PlaybackAdvanceReason.PLAYBACK_EXCEPTION,
+                ),
+            )
+            return
+        if decision == "RECOVER":
+            await self.request_playback_recovery(resume_failed=True)
+            return
+        if decision == "RECONCILE":
+            await self._request_reconcile()
+
+    async def _commit_and_play(self, reason: PlaybackAdvanceReason, *, skip_exhausted: bool = False) -> None:
+        notify = None
+        cancelled = []
+        async with self._attempt_lock:
+            async with self._queue_lock:
+                cancelled = self._detach_attempt_tasks_locked()
+                next_item = self.queue.get_item(
+                    force_next=skip_exhausted and self.queue._repeat.mode == LoopType.TRACK,
+                    skip_exhausted=skip_exhausted,
+                )
+                commit = self._playback.commit_advance(
+                    reason,
+                    next_item,
+                    notify=reason in (
+                        PlaybackAdvanceReason.LOAD_FAILED,
+                        PlaybackAdvanceReason.TRACK_STUCK,
+                        PlaybackAdvanceReason.PLAY_REQUEST_FAILED,
+                        PlaybackAdvanceReason.PLAYBACK_EXCEPTION,
+                    ),
+                )
+                self._sync_current()
+                self._had_started = False
+                if commit.from_item is not None:
+                    self._log_playback(
+                        "QUEUE_ADVANCE",
+                        from_item=commit.from_item.item_id,
+                        to_item=commit.to_item.item_id if commit.to_item else None,
+                        attempt_id=commit.from_attempt_id,
+                        reason=str(reason),
+                        retry_count=commit.from_item.retry_count,
+                        track=getattr(commit.from_item.track, "title", None),
+                    )
+                notify = commit.notify
+        await self._absorb_cancelled(cancelled)
+        if notify and not self._tearing_down:
+            self.bot.loop.create_task(self._notify_playback_failure(notify))
+        await self._after_new_item()
+        if self._current_item and self._desired_connected and not self._tearing_down:
+            await self._issue_play()
+        elif not self._current_item and self.autoplay and not self._tearing_down:
+            if await self.get_recommendations():
+                await self.do_next()
+
+    async def _run_retry(self) -> None:
+        cancelled = []
+        async with self._attempt_lock:
+            if self._playback.reservation is None or self._playback.reservation.cancelled:
+                return
+            cancelled = self._detach_attempt_tasks_locked()
+            attempt = self._playback.commit_retry()
+            self._sync_current()
+            self._had_started = False
+        await self._absorb_cancelled(cancelled)
+        if not attempt or not self._current_item:
+            await self._commit_and_play(PlaybackAdvanceReason.LOAD_FAILED, skip_exhausted=True)
+            return
+        self._log_playback("RETRY", item_id=self._current_item.item_id, attempt_id=attempt.attempt_id, retry_count=self._current_item.retry_count)
         if not self.guild.me.voice:
             await self.connect(timeout=0.0, reconnect=True)
-        
+        await self._issue_play()
+
+    async def _after_new_item(self) -> None:
+        if not self.channel:
+            return
+        if self._paused:
+            self._paused = False
+        if self.guild and self.guild.me and not self.guild.me.voice:
+            await self.connect(timeout=0.0, reconnect=True)
+
         self.pause_votes.clear()
         self.resume_votes.clear()
         self.skip_votes.clear()
@@ -420,36 +671,208 @@ class Player(VoiceProtocol):
         self.shuffle_votes.clear()
         self.stop_votes.clear()
 
-        track = self.queue.get()
-
-        if not track:
-            if self.autoplay and await self.get_recommendations():
-                return await self.do_next()
+        if not self._current_item:
             if self.queue.is_empty:
                 self._schedule_inactive_cleanup_timer()
         else:
-            try:
-                await self.play(track, start=track.position)
-            except Exception as e:
-                self._logger.error(f"Something went wrong while playing music in {self.guild.name}({self.guild.id})", exc_info=e)
-                await asyncio.sleep(5)
-                return await self.do_next()
-
-            if not track.requester.bot:
-                self._bot.loop.create_task(MongoDBHandler.update_user(track.requester.id, {
-                    "$push": {"history": {"$each": [track.track_id], "$slice": -25}}
-                }))
+            self._cancel_inactive_cleanup_timer()
 
         await self.invoke_controller()
         await self.update_voice_status()
 
+        track = self._current
         if self.is_ipc_connected:
             await self.send_ws({
-                "op": "trackUpdate", 
+                "op": "trackUpdate",
                 "currentQueuePosition": self.queue._position if track else self.queue._position + 1,
                 "trackId": track.track_id if track else None,
                 "isPaused": self._paused
             })
+
+    async def _issue_play(self, *, recovery: bool = False) -> None:
+        async with self._attempt_lock:
+            item = self._playback.current_item
+            attempt = self._playback.attempt
+            if not item or not attempt or self._tearing_down or not self._desired_connected:
+                return
+            play_seq = attempt.play_seq
+            attempt_id = attempt.attempt_id
+            item_id = item.item_id
+            start = self._playback.retry_start_position(
+                recovery_after_started=recovery and self._had_started,
+                last_position=int(self._last_position or 0),
+            )
+            end_time = self._playback.intended_end_time()
+            track = item.track
+            self._playback.mark_play_in_flight()
+            self._playback.watchdog_suspended = False
+        self._log_playback("PLAY_REQUEST", item_id=item_id, attempt_id=attempt_id, play_seq=play_seq, start=start)
+        try:
+            await self.play(track, start=start, end=end_time or 0)
+        except asyncio.CancelledError:
+            raise
+        except NodeException as e:
+            if not e.is_play_patch:
+                self._logger.error(
+                    f"Non-play REST error during playback in {self.guild.name}({self.guild.id})",
+                    exc_info=e,
+                )
+                return
+            async with self._attempt_lock:
+                valid = self._playback.validate_play_completion(play_seq, item_id, attempt_id)
+                self._playback.fail_play_patch()
+                if not valid:
+                    self._playback.mark_reconcile()
+                    should_retry = False
+                    decision = "RECONCILE"
+                elif self._playback.claim(TerminalSource.PLAY_REST):
+                    decision = self._playback.decide_after_failure(TerminalSource.PLAY_REST)
+                    should_retry = True
+                else:
+                    decision = "IGNORE"
+                self._sync_current()
+            if decision == "RECONCILE":
+                await self._request_reconcile()
+            elif should_retry:
+                await self._run_decision(decision, PlaybackAdvanceReason.PLAY_REQUEST_FAILED)
+            return
+        except Exception as e:
+            self._logger.error(f"Something went wrong while playing music in {self.guild.name}({self.guild.id})", exc_info=e)
+            async with self._attempt_lock:
+                if self._playback.validate_play_completion(play_seq, item_id, attempt_id) and self._playback.claim(TerminalSource.PLAY_REST):
+                    decision = self._playback.decide_after_failure(TerminalSource.PLAY_REST)
+                else:
+                    decision = "IGNORE"
+            await self._run_decision(decision, PlaybackAdvanceReason.PLAY_REQUEST_FAILED)
+            return
+
+        pending = []
+        start_watchdog = False
+        async with self._attempt_lock:
+            if not self._playback.validate_play_completion(play_seq, item_id, attempt_id):
+                self._playback.mark_reconcile()
+                await_reconcile = True
+            else:
+                await_reconcile = False
+                pending = self._playback.arm_after_play_success()
+                if self._playback.record_history_if_needed() and track.requester and not track.requester.bot:
+                    self._bot.loop.create_task(MongoDBHandler.update_user(track.requester.id, {
+                        "$push": {"history": {"$each": [track.track_id], "$slice": -25}}
+                    }))
+                if self._playback.attempt and self._playback.attempt.state == AttemptState.STARTING:
+                    start_watchdog = True
+                    self._watchdog_task = self.bot.loop.create_task(
+                        self._watchdog_worker(attempt_id, item_id, play_seq)
+                    )
+            self._sync_current()
+        if await_reconcile:
+            await self._request_reconcile()
+            return
+        for event in pending:
+            await self._apply_pending_event(event)
+        if start_watchdog and self._playback.attempt and self._playback.attempt.state != AttemptState.STARTING:
+            task = self._watchdog_task
+            self._watchdog_task = None
+            if task and not task.done():
+                task.cancel()
+                await self._absorb_cancelled([task])
+
+    async def _apply_pending_event(self, event) -> None:
+        if event.kind == PendingEventKind.TRACK_START:
+            await self.handle_track_start(self._current, encoded=event.encoded)
+        elif event.kind == PendingEventKind.TRACK_END:
+            await self.handle_track_end(self._current, event.reason or "unknown", encoded=event.encoded)
+        elif event.kind == PendingEventKind.TRACK_EXCEPTION:
+            await self.handle_track_exception(self._current, event.exception or {}, encoded=event.encoded)
+        elif event.kind == PendingEventKind.TRACK_STUCK:
+            await self.handle_track_stuck(self._current, event.threshold, encoded=event.encoded)
+
+    async def _notify_playback_failure(self, snapshot) -> None:
+        if self._tearing_down or not self._desired_connected:
+            return
+        try:
+            if self.context:
+                await self.context.send(
+                    f"{snapshot.title} could not be played. Skipping to the next track.",
+                    delete_after=10,
+                )
+        except Exception:
+            self._playback_log.warning("Failed to send playback failure notification for item_id=%s", snapshot.item_id)
+
+    async def _request_reconcile(self) -> None:
+        generation = self._playback.mark_reconcile()
+        if self._recovery_task and not self._recovery_task.done():
+            return
+        self._recovery_task = self.bot.loop.create_task(self._reconcile_worker(generation))
+
+    async def _reconcile_worker(self, generation: int) -> None:
+        try:
+            async with self._attempt_lock:
+                if not self._playback.take_reconcile(generation):
+                    return
+                expected = self._playback.current_item
+            if expected is None or self._tearing_down or not self._desired_connected:
+                return
+            state = await fetch_player_state(self._node, self._node._session_id, self.guild.id)
+            remote = remote_encoded_track(state)
+            intended = getattr(expected.track, "track_id", None)
+            if remote == intended:
+                if self._playback.attempt and self._playback.attempt.state == AttemptState.STARTING:
+                    async with self._attempt_lock:
+                        self._playback.apply_track_start(intended)
+                        self._had_started = True
+                return
+            await self._issue_play(recovery=self._had_started)
+        except asyncio.CancelledError:
+            return
+        except Exception as e:
+            self._logger.error("Playback reconcile failed", exc_info=e)
+
+    async def on_session_resumed(self) -> None:
+        self._playback.watchdog_suspended = False
+        task = self._watchdog_task
+        self._watchdog_task = None
+        if task and not task.done():
+            task.cancel()
+            await self._absorb_cancelled([task])
+        await self._request_reconcile()
+
+    async def request_playback_recovery(self, *, resume_failed: bool = False) -> None:
+        if self._tearing_down or not self._desired_connected:
+            return
+        async with self._attempt_lock:
+            if not self._playback.current_item:
+                return
+            if self._playback.attempt and self._playback.attempt.intent in (AttemptIntent.SKIP, AttemptIntent.STOP, AttemptIntent.FORCEPLAY):
+                return
+            if self._playback.attempt:
+                self._playback.attempt.state = AttemptState.RECOVERING
+        if resume_failed:
+            await self._issue_play(recovery=self._had_started)
+
+    async def do_next(self):
+        """Processes the next track in the queue."""
+        if self._tearing_down or not self.channel:
+            return
+        if self._current or self.is_playing:
+            return
+        await self._commit_and_play(PlaybackAdvanceReason.FINISHED)
+
+    async def request_skip(self) -> None:
+        async with self._attempt_lock:
+            decision = self._playback.user_skip()
+        if decision == "STOP_THEN_ADVANCE":
+            try:
+                await self.send(method=RequestMethod.PATCH, data={"encodedTrack": None}, kind="PLAYER_STOP")
+            except Exception:
+                await self._commit_and_play(PlaybackAdvanceReason.MANUAL_SKIP)
+            return
+        if decision == "ADVANCE":
+            try:
+                await self.send(method=RequestMethod.PATCH, data={"encodedTrack": None}, kind="PLAYER_STOP")
+            except Exception:
+                pass
+            await self._commit_and_play(PlaybackAdvanceReason.MANUAL_SKIP)
 
     async def invoke_controller(self):
         """Sends or updates the music controller message in the designated channel."""
@@ -506,6 +929,18 @@ class Player(VoiceProtocol):
     
     async def teardown(self):
         """Cleans up the player and associated resources."""
+        self._desired_connected = False
+        self._tearing_down = True
+        async with self._attempt_lock:
+            self._playback.user_leave()
+            cancelled = self._detach_attempt_tasks_locked()
+            self._sync_current()
+        await self._absorb_cancelled(cancelled)
+        recovery = self._recovery_task
+        self._recovery_task = None
+        if recovery and not recovery.done():
+            recovery.cancel()
+            await self._absorb_cancelled([recovery])
         try:
             await MongoDBHandler.update_settings(self.guild.id, {"$set": {
                 "last_active": (timeNow := round(time.time())), 
@@ -554,15 +989,35 @@ class Player(VoiceProtocol):
         """Connects the player to a voice channel."""
         await self.guild.change_voice_state(channel=self.channel, self_deaf=True, self_mute=self_mute)
         self._node._players[self.guild.id] = self
+        self._desired_connected = True
+        self._tearing_down = False
         self._is_connected = True
 
         if self.channel:
             self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) has been connected to {self.channel.name}({self.channel.id}).")
             
-    async def stop(self):
+    async def stop(self, *, intent: AttemptIntent = AttemptIntent.SKIP):
         """Stops the currently playing track."""
-        self._current = None
-        await self.send(method=RequestMethod.PATCH, data={'encodedTrack': None})
+        should_advance = False
+        async with self._attempt_lock:
+            if intent == AttemptIntent.FORCEPLAY:
+                target = self.queue.peek_next_item()
+                if target:
+                    self._playback.begin_forceplay(target.item_id)
+            elif self._playback.attempt:
+                self._playback.attempt.intent = intent
+                if intent == AttemptIntent.SKIP and self._playback.attempt.state != AttemptState.STARTED:
+                    decision = self._playback.user_skip()
+                    should_advance = decision == "ADVANCE"
+            if self._playback.attempt and self._playback.attempt.play_in_flight:
+                self._playback.remember_stale(self._playback.attempt.item_id, self._playback.attempt.play_seq)
+        try:
+            await self.send(method=RequestMethod.PATCH, data={'encodedTrack': None}, kind="PLAYER_STOP")
+        except Exception:
+            if intent == AttemptIntent.SKIP:
+                should_advance = True
+        if should_advance:
+            await self._commit_and_play(PlaybackAdvanceReason.MANUAL_SKIP)
 
     async def disconnect(self, *, force: bool = False):
         """Disconnects the player from voice."""
@@ -608,11 +1063,12 @@ class Player(VoiceProtocol):
         if end or track.end_time:
             data["endTime"] = str(end or track.end_time)
         
-        await self.send(method=RequestMethod.PATCH, query=f"noReplace={ignore_if_playing}", data=data)
+        await self.send(method=RequestMethod.PATCH, query=f"noReplace={ignore_if_playing}", data=data, kind="PLAYER_PLAY")
         if self._node.yt_ratelimit:
             await self._node.yt_ratelimit.handle_request()
 
-        self._current = track
+        if not self._current:
+            self._current = track
 
         self._logger.debug(f"Player in {self.guild.name}({self.guild.id}) playing {track.title} from uri {track.uri} with a length of {track.length}")
         return self._current
@@ -653,7 +1109,7 @@ class Player(VoiceProtocol):
     async def add_track(self, raw_tracks: Union[Track, List[Track]], *, start_time: int = 0, end_time: int = 0, at_front: bool = False, duplicate: bool = True) -> int:
         """Adds one or more tracks to the queue."""
         tracks: List[Track] = []
-        _duplicate_tracks = [] if self.queue._allow_duplicate and duplicate else [track.uri for track in self.queue._queue]
+        _duplicate_tracks = [] if self.queue._allow_duplicate and duplicate else self.queue.queued_uris()
         raw_tracks = raw_tracks[0] if isinstance(raw_tracks, List) and len(raw_tracks) == 1 else raw_tracks
 
         try:
@@ -874,11 +1330,7 @@ class Player(VoiceProtocol):
         await self._dispatch_voice_update(self._voice_state)
 
         if self.current:
-            await self.play(self.current, start=self.position)
-            self._last_update = time.time() * 1000
-
-            if self.is_paused:
-                await self.set_pause(True)
+            await self.request_playback_recovery(resume_failed=True)
     
     async def get_recommendations(self, *, track: Optional[Track] = None) -> bool:
         """Fetches and adds recommended tracks based on the provided track or recent history."""

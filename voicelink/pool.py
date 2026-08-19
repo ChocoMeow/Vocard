@@ -48,6 +48,7 @@ from .exceptions import (
     TrackLoadError
 )
 from .objects import Playlist, Track
+from .resume import enable_session_resuming, websocket_headers
 from .utils import ExponentialBackoff, NodeStats, NodeInfo, Ping
 from .enums import RequestMethod
 from .ratelimit import YTRatelimit, YTToken, STRATEGY
@@ -97,20 +98,24 @@ class Node:
         self._websocket_uri: str = f"{'wss' if self._secure else 'ws'}://{self._host}:{self._port}/" + NODE_VERSION + "/websocket"
         self._rest_uri: str = f"{'https' if self._secure else 'http'}://{self._host}:{self._port}"
 
-        self._session: aiohttp.ClientSession = session or aiohttp.ClientSession()
+        self._session: aiohttp.ClientSession = session or aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=30, connect=10)
+        )
         self._websocket: aiohttp.ClientWebSocketResponse = None
         self._task: asyncio.Task = None
 
         self.resume_key: str = resume_key or str(os.urandom(8).hex())
         self._session_id: str = None
+        self._resumable_session_id: str = None
         self._available: bool = None
+        self._last_ready_resumed: bool = False
+        self._ready_event: asyncio.Event = asyncio.Event()
 
-        self._headers: Dict[str, str] = {
-            "Authorization": self._password,
-            "User-Id": str(bot.user.id),
-            "Client-Name": f"Voicelink/{__version__}",
-            'Resume-Key': self.resume_key
-        }
+        self._headers: Dict[str, str] = websocket_headers(
+            password=self._password,
+            user_id=str(bot.user.id),
+            client_name=f"Voicelink/{__version__}",
+        )
 
         self._players: Dict[int, Player] = {}
         self._info: Optional[NodeInfo] = None
@@ -200,10 +205,18 @@ class Node:
                 if msg.type == aiohttp.WSMsgType.CLOSED:
                     self._available = False
                     self._logger.warning(f"WebSocket closed for node [{self._identifier}]")
+                    for player in self._players.copy().values():
+                        suspend = getattr(player, "suspend_playback_watchdog", None)
+                        if callable(suspend):
+                            suspend()
                     break
 
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     self._logger.error(f"WebSocket error for node [{self._identifier}]")
+                    for player in self._players.copy().values():
+                        suspend = getattr(player, "suspend_playback_watchdog", None)
+                        if callable(suspend):
+                            suspend()
                     break
                 
                 self._bot.loop.create_task(self._handle_payload(msg.json()))
@@ -234,6 +247,14 @@ class Node:
 
         if op == "ready":
             self._session_id = data.get("sessionId")
+            self._last_ready_resumed = bool(data.get("resumed"))
+            if self._last_ready_resumed:
+                if self._session_id:
+                    self._resumable_session_id = self._session_id
+            elif self._session_id:
+                self._resumable_session_id = self._session_id
+            self._ready_event.set()
+            self._bot.loop.create_task(self._enable_resuming())
 
         if op == "stats":
             self._stats = NodeStats(data)
@@ -248,24 +269,89 @@ class Node:
         elif op == "playerUpdate":
             await player._update_state(data)
 
-    async def send(self, method: RequestMethod, query: str, data: Union[dict, str] = {}) -> dict:
+    def _rest_kind(self, method: RequestMethod, query: str, data: Union[dict, str]) -> str:
+        q = (query or "").lower()
+        if "loadtracks" in q:
+            return "LOADTRACKS"
+        if q.startswith("sessions/") and "/players/" not in q:
+            return "SESSION"
+        if "/players/" in q:
+            if method == RequestMethod.GET:
+                return "PLAYER_GET"
+            if method == RequestMethod.DELETE:
+                return "PLAYER_DELETE"
+            if method == RequestMethod.PATCH and isinstance(data, dict):
+                if "encodedTrack" in data:
+                    return "PLAYER_STOP" if data.get("encodedTrack") is None else "PLAYER_PLAY"
+                return "PLAYER_PATCH"
+        return "REST"
+
+    def _truncate_body(self, raw: str) -> str:
+        encoded = (raw or "").encode("utf-8", "replace")[:512]
+        return encoded.decode("utf-8", "replace")
+
+    async def send(
+        self,
+        method: RequestMethod,
+        query: str,
+        data: Union[dict, str] = {},
+        kind: str = None,
+    ) -> dict:
         if not self._available:
             raise NodeNotAvailable(f"The node '{self._identifier}' is unavailable.")
         
         uri: str = f"{self._rest_uri}/{NODE_VERSION}/{query}"
-        async with self._session.request(
-            method=method.value,
-            url=uri,
-            headers={"Authorization": self._password},
-            json=data
-        ) as resp:
-            if resp.status >= 300:
-                raise NodeException(f"Getting errors from Lavalink REST api")
-            
-            if method == RequestMethod.DELETE:
-                return await resp.json(content_type=None)
+        rest_kind = kind or self._rest_kind(method, query, data)
+        timeout = aiohttp.ClientTimeout(total=30, connect=10)
+        try:
+            async with self._session.request(
+                method=method.value,
+                url=uri,
+                headers={"Authorization": self._password},
+                json=data if not isinstance(data, str) else None,
+                timeout=timeout,
+            ) as resp:
+                raw = await resp.text()
+                if resp.status >= 300:
+                    raise NodeException(
+                        "Getting errors from Lavalink REST api",
+                        method=method.value,
+                        path=query,
+                        kind=rest_kind,
+                        status=resp.status,
+                        body=self._truncate_body(raw),
+                        node_id=self._identifier,
+                    )
+                
+                if method == RequestMethod.DELETE:
+                    if not raw:
+                        return {}
+                    return await resp.json(content_type=None)
 
-            return await resp.json()
+                if not raw:
+                    return {}
+                try:
+                    return await resp.json(content_type=None)
+                except Exception:
+                    return {}
+        except NodeException:
+            raise
+        except asyncio.TimeoutError as exc:
+            raise NodeException(
+                "Lavalink REST request timed out",
+                method=method.value,
+                path=query,
+                kind=rest_kind,
+                node_id=self._identifier,
+            ) from exc
+        except aiohttp.ClientError as exc:
+            raise NodeException(
+                "Lavalink REST request failed",
+                method=method.value,
+                path=query,
+                kind=rest_kind,
+                node_id=self._identifier,
+            ) from exc
 
     async def connect(self) -> Node:
         """Initiates a connection with a Lavalink node and adds it to the node pool."""
@@ -275,12 +361,23 @@ class Node:
                 self._logger.info(f"Node [{self._identifier}] already connected.")
                 return
             
+            self._ready_event.clear()
+            self._headers = websocket_headers(
+                password=self._password,
+                user_id=str(self._bot.user.id),
+                client_name=f"Voicelink/{__version__}",
+                session_id=self._resumable_session_id,
+            )
             self._websocket = await self._session.ws_connect(
                 self._websocket_uri, headers=self._headers, heartbeat=self._heartbeat
             )
 
             self._task = self._bot.loop.create_task(self._listen())
             self._available = True
+            try:
+                await asyncio.wait_for(self._ready_event.wait(), timeout=10)
+            except asyncio.TimeoutError:
+                self._logger.warning(f"Node [{self._identifier}] did not receive a ready event in time.")
             self._info = NodeInfo(await self.send(RequestMethod.GET, query="info"))
             
             self._logger.info(f"Node [{self._identifier}] is connected!")
@@ -299,9 +396,23 @@ class Node:
             )
         
         if self.players:
-            await self.reconnect()
+            if self._last_ready_resumed:
+                for player in self.players.copy().values():
+                    resumed = getattr(player, "on_session_resumed", None)
+                    if callable(resumed):
+                        await resumed()
+            else:
+                await self.reconnect()
 
         return self
+
+    async def _enable_resuming(self) -> None:
+        try:
+            if self._session_id:
+                await enable_session_resuming(self, self._session_id)
+        except Exception as e:
+            if self._logger:
+                self._logger.warning(f"Failed to enable Lavalink session resuming on [{self._identifier}]: {e}")
               
     async def disconnect(self, remove_from_pool: bool = False) -> None:
         """Disconnects a connected Lavalink node and removes it from the node pool.
@@ -326,12 +437,15 @@ class Node:
                 if player._voice_state:
                     await player._dispatch_voice_update(player._voice_state)
 
-                if player.current:
+                recover = getattr(player, "request_playback_recovery", None)
+                if callable(recover):
+                    await recover(resume_failed=True)
+                elif player.current:
                     await player.play(track=player.current, start=min(player._last_position, player.current.length))
 
                     if player.is_paused:
                         await player.set_pause(True)
-            except:
+            except Exception:
                 await player.teardown()
             await asyncio.sleep(2)
 
@@ -403,7 +517,14 @@ class Node:
             json={"refreshToken": token.token}
         ) as resp:
             if resp.status >= 300:
-                raise NodeException(f"Getting errors from Lavalink REST api")
+                raise NodeException(
+                    "Getting errors from Lavalink REST api",
+                    method="POST",
+                    path="/youtube",
+                    kind="YOUTUBE",
+                    status=resp.status,
+                    node_id=self._identifier,
+                )
 
 class NodePool:
     """The base class for the node pool.
