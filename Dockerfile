@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM python:3.12-slim-bookworm as builder
+FROM python:3.12-slim-bookworm AS builder
 
 # Install build dependencies (gcc, Python headers, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
