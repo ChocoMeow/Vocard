@@ -245,6 +245,27 @@ class PlaybackTransitionTests(unittest.TestCase):
         self.session.watchdog_suspended = True
         self.assertEqual(self.session.on_watchdog(), "IGNORE")
 
+    def test_node_unavailable_preserves_item_without_retry_or_advance(self):
+        attempt = self.session.create_attempt(self.item_a)
+        self.session.mark_play_in_flight()
+        decision = self.session.on_node_unavailable()
+        self.assertEqual(decision, "IGNORE")
+        self.assertEqual(self.session.current_item.item_id, 1)
+        self.assertEqual(self.item_a.retry_count, 0)
+        self.assertFalse(self.item_a.fail_exhausted)
+        self.assertEqual(attempt.state, AttemptState.RECOVERING)
+        self.assertFalse(attempt.play_in_flight)
+        self.assertEqual(self.session.side_effects, [])
+
+    def test_play_rest_exhaustion_still_advances(self):
+        self.session.create_attempt(self.item_a)
+        first = self.session.decide_after_failure(TerminalSource.PLAY_REST)
+        self.assertEqual(first, "RETRY")
+        self.session.commit_retry()
+        second = self.session.decide_after_failure(TerminalSource.PLAY_REST)
+        self.assertEqual(second, "ADVANCE")
+        self.assertTrue(self.item_a.fail_exhausted)
+
     def test_resume_starting_does_not_increment_retry(self):
         attempt = self.session.create_attempt(self.item_a)
         self.session.mark_play_in_flight()

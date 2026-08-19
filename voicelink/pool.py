@@ -24,11 +24,13 @@ SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import aiohttp
 import logging
 
+from dataclasses import dataclass
 from discord import Client, Member
 from discord.ext.commands import Bot
 from typing import Dict, Optional, Union, List, Any, TYPE_CHECKING
@@ -63,6 +65,70 @@ URL_REGEX = re.compile(
 )
 
 NODE_VERSION = "v4"
+
+_WS_CLOSE_TYPES = {
+    aiohttp.WSMsgType.CLOSE,
+    aiohttp.WSMsgType.CLOSED,
+}
+_CLOSING = getattr(aiohttp.WSMsgType, "CLOSING", None)
+if _CLOSING is not None:
+    _WS_CLOSE_TYPES.add(_CLOSING)
+
+_WS_PING_TYPES = {
+    aiohttp.WSMsgType.PING,
+    aiohttp.WSMsgType.PONG,
+}
+
+
+@dataclass(frozen=True)
+class LavalinkWsDecision:
+    action: str
+    payload: Optional[dict] = None
+    close_code: Optional[int] = None
+    close_reason: str = ""
+    error: Optional[BaseException] = None
+
+
+def interpret_lavalink_ws_message(msg) -> LavalinkWsDecision:
+    """Classify a Lavalink websocket frame without calling ``msg.json()`` blindly.
+
+    Lavalink v4 sends JSON on TEXT frames. CLOSE frames carry an integer close
+    code in ``msg.data``; calling ``WSMessage.json()`` on those raises TypeError.
+    """
+    msg_type = getattr(msg, "type", None)
+
+    if msg_type == aiohttp.WSMsgType.TEXT:
+        data = getattr(msg, "data", None)
+        if not isinstance(data, (str, bytes, bytearray)):
+            return LavalinkWsDecision(action="ignore")
+        try:
+            payload = json.loads(data)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return LavalinkWsDecision(action="ignore")
+        if not isinstance(payload, dict):
+            return LavalinkWsDecision(action="ignore")
+        return LavalinkWsDecision(action="dispatch", payload=payload)
+
+    if msg_type == aiohttp.WSMsgType.BINARY:
+        return LavalinkWsDecision(action="ignore")
+
+    if msg_type in _WS_CLOSE_TYPES:
+        data = getattr(msg, "data", None)
+        extra = getattr(msg, "extra", None)
+        code = data if isinstance(data, int) else None
+        reason = extra if isinstance(extra, str) else ""
+        return LavalinkWsDecision(action="reconnect", close_code=code, close_reason=reason)
+
+    if msg_type == aiohttp.WSMsgType.ERROR:
+        data = getattr(msg, "data", None)
+        error = data if isinstance(data, BaseException) else None
+        return LavalinkWsDecision(action="reconnect", error=error)
+
+    if msg_type in _WS_PING_TYPES:
+        return LavalinkWsDecision(action="ignore")
+
+    return LavalinkWsDecision(action="ignore")
+
 
 class Node:
     """The base class for a node. 
@@ -222,49 +288,73 @@ class Node:
             except KeyError:
                 return
             
+    async def _mark_websocket_lost(self) -> None:
+        self._available = False
+        self._sync_health(False)
+        for player in self._players.copy().values():
+            suspend = getattr(player, "suspend_playback_watchdog", None)
+            if callable(suspend):
+                suspend()
+        await NodePool.broadcast_playback_health()
+
     async def _listen(self) -> None:
         backoff = ExponentialBackoff(base=7)
 
         while True:
             try:
                 msg = await self._websocket.receive()
+                decision = interpret_lavalink_ws_message(msg)
 
-                if msg.type == aiohttp.WSMsgType.CLOSED:
-                    self._available = False
-                    self._sync_health(False)
-                    self._logger.warning(f"WebSocket closed for node [{self._identifier}]")
-                    for player in self._players.copy().values():
-                        suspend = getattr(player, "suspend_playback_watchdog", None)
-                        if callable(suspend):
-                            suspend()
-                    await NodePool.broadcast_playback_health()
-                    break
+                if decision.action == "dispatch":
+                    self._bot.loop.create_task(self._handle_payload(decision.payload))
+                    continue
 
-                elif msg.type == aiohttp.WSMsgType.ERROR:
-                    self._logger.error(f"WebSocket error for node [{self._identifier}]")
-                    self._available = False
-                    self._sync_health(False)
-                    for player in self._players.copy().values():
-                        suspend = getattr(player, "suspend_playback_watchdog", None)
-                        if callable(suspend):
-                            suspend()
-                    await NodePool.broadcast_playback_health()
-                    break
-                
-                self._bot.loop.create_task(self._handle_payload(msg.json()))
+                if decision.action == "ignore":
+                    if msg.type in _WS_PING_TYPES:
+                        continue
+                    if msg.type == aiohttp.WSMsgType.TEXT:
+                        self._logger.warning(
+                            "Ignoring non-JSON Lavalink TEXT frame for node [%s]",
+                            self._identifier,
+                        )
+                    elif msg.type == aiohttp.WSMsgType.BINARY:
+                        self._logger.debug(
+                            "Ignoring Lavalink BINARY frame for node [%s]",
+                            self._identifier,
+                        )
+                    else:
+                        self._logger.warning(
+                            "Ignoring unexpected Lavalink websocket frame type=%s for node [%s]",
+                            getattr(msg.type, "name", msg.type),
+                            self._identifier,
+                        )
+                    continue
+
+                if decision.error is not None:
+                    self._logger.error(
+                        "WebSocket error for node [%s]: %s",
+                        self._identifier,
+                        decision.error,
+                    )
+                else:
+                    self._logger.warning(
+                        "WebSocket closed for node [%s] code=%s reason=%s session_id=%s",
+                        self._identifier,
+                        decision.close_code,
+                        decision.close_reason or "",
+                        self._session_id,
+                    )
+                await self._mark_websocket_lost()
+                break
 
             except aiohttp.ClientConnectionError as e:
                 self._logger.error(f"Connection error: {e}")
-                self._available = False
-                self._sync_health(False)
-                await NodePool.broadcast_playback_health()
+                await self._mark_websocket_lost()
                 break
-            
+
             except Exception as e:
                 self._logger.exception(f"Unexpected error: {e}")
-                self._available = False
-                self._sync_health(False)
-                await NodePool.broadcast_playback_health()
+                await self._mark_websocket_lost()
                 break
 
         while not self._available:

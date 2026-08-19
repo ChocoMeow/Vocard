@@ -51,7 +51,7 @@ from .objects import Track, Playlist
 from .filters import Filter, Filters
 from .enums import SearchType, LoopType, RequestMethod
 from .events import VoicelinkEvent, TrackStartEvent, is_youtube_content_unavailable
-from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, FilterTagAlreadyInUse, DuplicateTrack, NodeException
+from .exceptions import VoicelinkException, FilterInvalidArgument, TrackInvalidPosition, FilterTagAlreadyInUse, DuplicateTrack, NodeException, NodeNotAvailable
 from .placeholders import PlayerPlaceholder
 from .queue import Queue, QUEUE_TYPES
 from .mongodb import MongoDBHandler
@@ -77,6 +77,30 @@ from .health import health_store
 
 if TYPE_CHECKING:
     from .ipc import IPCClient
+
+
+def cancel_owned_tasks(
+    owned: Dict[str, Optional[asyncio.Task]],
+    *,
+    current: Optional[asyncio.Task] = None,
+) -> Tuple[Dict[str, None], List[asyncio.Task]]:
+    """Detach owned task refs and cancel every task except the caller.
+
+    Returns (cleared name map, tasks to await outside any lock). Never
+    cancels ``asyncio.current_task()``, so attempt workers can clean up
+    without cancelling themselves.
+    """
+    if current is None:
+        current = asyncio.current_task()
+    pending: List[asyncio.Task] = []
+    cleared: Dict[str, None] = {name: None for name in owned}
+    for task in owned.values():
+        if task is None or task.done() or task is current:
+            continue
+        task.cancel()
+        pending.append(task)
+    return cleared, pending
+
 
 async def connect_channel(ctx: Union[commands.Context, Interaction], channel: VoiceChannel = None):
     texts = await LangHandler.get_lang(ctx.guild.id, "voice.connection.noChannel", "voice.connection.noPermission")
@@ -411,21 +435,22 @@ class Player(VoiceProtocol):
         self._current_item = self._playback.current_item
         self._current = self._current_item.track if self._current_item else None
 
-    def _detach_attempt_tasks_locked(self) -> List[asyncio.Task]:
-        tasks = []
-        for name in ("_watchdog_task", "_exception_fallback_task"):
-            task: Optional[asyncio.Task] = getattr(self, name)
+    def _cancel_attempt_tasks_locked(self) -> List[asyncio.Task]:
+        owned = {
+            "_watchdog_task": self._watchdog_task,
+            "_exception_fallback_task": self._exception_fallback_task,
+        }
+        cleared, pending = cancel_owned_tasks(owned)
+        for name in cleared:
             setattr(self, name, None)
-            if task and not task.done():
-                task.cancel()
-                tasks.append(task)
-        return tasks
+        return pending
 
     def suspend_playback_watchdog(self) -> None:
         self._playback.watchdog_suspended = True
         task = self._watchdog_task
         self._watchdog_task = None
-        if task and not task.done():
+        current = asyncio.current_task()
+        if task and not task.done() and task is not current:
             task.cancel()
 
     def _log_playback(self, event: str, *, level: int = logging.INFO, **fields) -> None:
@@ -463,7 +488,7 @@ class Player(VoiceProtocol):
             if applied:
                 self._had_started = True
             self._sync_current()
-            tasks = self._detach_attempt_tasks_locked()
+            tasks = self._cancel_attempt_tasks_locked()
         await self._absorb_cancelled(tasks)
         if applied:
             self._log_playback("TRACK_START", item_id=getattr(self._current_item, "item_id", None), track=getattr(track, "title", None))
@@ -482,7 +507,7 @@ class Player(VoiceProtocol):
             )
             if disposition != EventDisposition.APPLY:
                 return
-            tasks = self._detach_attempt_tasks_locked()
+            tasks = self._cancel_attempt_tasks_locked()
             if reason == "finished":
                 decision = self._playback.on_finished()
                 reason_enum = PlaybackAdvanceReason.FINISHED
@@ -515,7 +540,7 @@ class Player(VoiceProtocol):
             )
             if disposition != EventDisposition.APPLY:
                 return
-            tasks = self._detach_attempt_tasks_locked()
+            tasks = self._cancel_attempt_tasks_locked()
             decision = self._playback.on_stuck()
             self._sync_current()
         await self._absorb_cancelled(tasks)
@@ -582,7 +607,7 @@ class Player(VoiceProtocol):
                 if self._playback.attempt.item_id != item_id:
                     return
                 decision = self._playback.on_exception_fallback()
-                tasks = self._detach_attempt_tasks_locked()
+                tasks = self._cancel_attempt_tasks_locked()
                 self._sync_current()
             await self._absorb_cancelled(tasks)
             await self._run_decision(decision, PlaybackAdvanceReason.PLAYBACK_EXCEPTION)
@@ -600,7 +625,7 @@ class Player(VoiceProtocol):
                 if self._playback.attempt.play_seq != play_seq or self._playback.attempt.item_id != item_id:
                     return
                 decision = self._playback.on_watchdog()
-                tasks = self._detach_attempt_tasks_locked()
+                tasks = self._cancel_attempt_tasks_locked()
                 self._sync_current()
             await self._absorb_cancelled(tasks)
             await self._run_decision(decision, PlaybackAdvanceReason.PLAY_REQUEST_FAILED)
@@ -608,9 +633,11 @@ class Player(VoiceProtocol):
             return
 
     async def _absorb_cancelled(self, tasks: List[asyncio.Task]) -> None:
-        if not tasks:
+        current = asyncio.current_task()
+        wait = [task for task in tasks if task is not None and task is not current]
+        if not wait:
             return
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await asyncio.gather(*wait, return_exceptions=True)
 
     async def _run_decision(self, decision: str, reason: PlaybackAdvanceReason) -> None:
         if decision in (None, "IGNORE"):
@@ -642,7 +669,7 @@ class Player(VoiceProtocol):
         cancelled = []
         async with self._attempt_lock:
             async with self._queue_lock:
-                cancelled = self._detach_attempt_tasks_locked()
+                cancelled = self._cancel_attempt_tasks_locked()
                 next_item = self.queue.get_item(
                     force_next=skip_exhausted and self.queue._repeat.mode == LoopType.TRACK,
                     skip_exhausted=skip_exhausted,
@@ -685,7 +712,7 @@ class Player(VoiceProtocol):
         async with self._attempt_lock:
             if self._playback.reservation is None or self._playback.reservation.cancelled:
                 return
-            cancelled = self._detach_attempt_tasks_locked()
+            cancelled = self._cancel_attempt_tasks_locked()
             attempt = self._playback.commit_retry()
             self._sync_current()
             self._had_started = False
@@ -753,6 +780,22 @@ class Player(VoiceProtocol):
             await self.play(track, start=start, end=end_time or 0)
         except asyncio.CancelledError:
             raise
+        except NodeNotAvailable:
+            async with self._attempt_lock:
+                if self._playback.validate_play_completion(play_seq, item_id, attempt_id):
+                    decision = self._playback.on_node_unavailable()
+                else:
+                    decision = "IGNORE"
+                self._sync_current()
+            self._log_playback(
+                "NODE_DISCONNECT",
+                item_id=item_id,
+                attempt_id=attempt_id,
+                play_seq=play_seq,
+            )
+            if decision == "TEARDOWN":
+                return
+            return
         except NodeException as e:
             if not e.is_play_patch:
                 self._logger.error(
@@ -815,9 +858,8 @@ class Player(VoiceProtocol):
         if start_watchdog and self._playback.attempt and self._playback.attempt.state != AttemptState.STARTING:
             task = self._watchdog_task
             self._watchdog_task = None
-            if task and not task.done():
-                task.cancel()
-                await self._absorb_cancelled([task])
+            _, pending = cancel_owned_tasks({"_watchdog_task": task})
+            await self._absorb_cancelled(pending)
 
     async def _apply_pending_event(self, event) -> None:
         if event.kind == PendingEventKind.TRACK_START:
@@ -874,9 +916,8 @@ class Player(VoiceProtocol):
         self._playback.watchdog_suspended = False
         task = self._watchdog_task
         self._watchdog_task = None
-        if task and not task.done():
-            task.cancel()
-            await self._absorb_cancelled([task])
+        _, pending = cancel_owned_tasks({"_watchdog_task": task})
+        await self._absorb_cancelled(pending)
         await self._request_reconcile()
 
     async def request_playback_recovery(self, *, resume_failed: bool = False) -> None:
@@ -975,14 +1016,13 @@ class Player(VoiceProtocol):
         self._tearing_down = True
         async with self._attempt_lock:
             self._playback.user_leave()
-            cancelled = self._detach_attempt_tasks_locked()
+            cancelled = self._cancel_attempt_tasks_locked()
             self._sync_current()
         await self._absorb_cancelled(cancelled)
         recovery = self._recovery_task
         self._recovery_task = None
-        if recovery and not recovery.done():
-            recovery.cancel()
-            await self._absorb_cancelled([recovery])
+        _, pending = cancel_owned_tasks({"_recovery_task": recovery})
+        await self._absorb_cancelled(pending)
         try:
             await MongoDBHandler.update_settings(self.guild.id, {"$set": {
                 "last_active": (timeNow := round(time.time())), 

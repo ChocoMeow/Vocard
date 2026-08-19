@@ -732,6 +732,19 @@ class PlaybackSession:
             self.current_item.mark_exhausted()
         return "ADVANCE"
 
+    def on_node_unavailable(self) -> str:
+        """Keep the current item; node reconnect owns recovery.
+
+        A play REST failure caused by ``_available == False`` is not an
+        exhausted track failure and must not consume retries or advance.
+        """
+        if self.tearing_down or not self.desired_connected:
+            return "TEARDOWN"
+        if self.attempt and not self.attempt.is_terminal:
+            self.attempt.play_in_flight = False
+            self.attempt.state = AttemptState.RECOVERING
+        return "IGNORE"
+
     def user_skip(self) -> str:
         if self.tearing_down or not self.desired_connected:
             return "TEARDOWN"
