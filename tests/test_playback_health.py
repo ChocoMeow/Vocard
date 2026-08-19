@@ -2,6 +2,7 @@ import unittest
 
 from voicelink.health import (
     Classification,
+    DEGRADED_CLEAR_SECONDS,
     PlaybackHealthStore,
     classify_track_exception,
 )
@@ -56,13 +57,49 @@ class PlaybackHealthStoreTests(unittest.TestCase):
             now=now if now is not None else self.now,
         )
 
-    def test_one_bad_track_does_not_degrade_source(self):
+    def test_one_track_unavailable_keeps_source_healthy(self):
+        classification, changed = self.store.record_exception(
+            source="youtube",
+            exception={"message": "private video"},
+            item_id=1,
+            encoded="enc",
+            title="secret",
+            guild_id=1,
+            now=self.now,
+        )
+        self.assertEqual(classification, Classification("TRACK_UNAVAILABLE", "track"))
+        self.assertFalse(changed)
+        youtube = self.store.components["source:youtube"]
+        self.assertEqual(youtube.status, "ok")
+        self.assertEqual(self.store.guild_failure(1)["code"], "TRACK_UNAVAILABLE")
+
+    def test_one_auth_required_degrades_youtube_immediately(self):
+        classification, changed = self.store.record_exception(
+            source="youtube",
+            exception={"message": "Sign in", "cause": "AllClientsFailedException: oauth / no valid PO token"},
+            item_id=1,
+            encoded="enc",
+            title="Stateside",
+            guild_id=1,
+            now=self.now,
+        )
+        self.assertEqual(classification, Classification("SOURCE_AUTH_REQUIRED", "source"))
+        self.assertTrue(changed)
+        youtube = self.store.components["source:youtube"]
+        self.assertEqual(youtube.status, "degraded")
+        self.assertNotEqual(youtube.status, "unavailable")
+        self.assertEqual(youtube.last_error["code"], "SOURCE_AUTH_REQUIRED")
+        self.assertNotIn("repeated", youtube.message or "")
+
+    def test_one_youtube_source_failed_degrades_immediately(self):
         classification, changed = self._fail(1)
         self.assertEqual(classification.code, "YOUTUBE_SOURCE_FAILED")
-        self.assertFalse(changed)
-        self.assertEqual(self.store.components["source:youtube"].status, "ok")
+        self.assertTrue(changed)
+        youtube = self.store.components["source:youtube"]
+        self.assertEqual(youtube.status, "degraded")
+        self.assertNotEqual(youtube.status, "unavailable")
 
-        classification, changed = self.store.record_exception(
+        _, changed = self.store.record_exception(
             source="youtube",
             exception={"cause": "AllClientsFailedException"},
             item_id=1,
@@ -70,6 +107,7 @@ class PlaybackHealthStoreTests(unittest.TestCase):
             now=self.now + 10,
         )
         self.assertFalse(changed)
+        self.assertEqual(self.store.components["source:youtube"].status, "degraded")
 
     def test_age_restricted_never_degrades_source(self):
         for item_id in (1, 2, 3, 4):
@@ -83,7 +121,7 @@ class PlaybackHealthStoreTests(unittest.TestCase):
         youtube = self.store.components.get("source:youtube")
         self.assertTrue(youtube is None or youtube.status == "ok")
 
-    def test_three_distinct_items_degrade_youtube(self):
+    def test_repeated_source_failures_stay_degraded_and_persist(self):
         self.store.record_node(
             "DEFAULT",
             available=True,
@@ -91,17 +129,27 @@ class PlaybackHealthStoreTests(unittest.TestCase):
             plugins=[Plugin({"name": "youtube-plugin", "version": "1.18.0"})],
             now=self.now,
         )
-        self._fail(1, encoded=None)
-        self._fail(2, encoded=None)
-        classification, changed = self._fail(3, encoded=None)
+        _, changed = self._fail(1, encoded=None)
         self.assertTrue(changed)
         youtube = self.store.components["source:youtube"]
         self.assertEqual(youtube.status, "degraded")
         self.assertIn("1.18.0", youtube.message)
+        self.assertFalse(youtube.persistent)
+
+        self._fail(2, encoded=None)
+        _, changed = self._fail(3, encoded=None)
+        self.assertTrue(changed)
+        self.assertEqual(youtube.status, "degraded")
+        self.assertTrue(youtube.persistent)
+        self.assertIn("repeated", youtube.message)
         self.assertIsNone(youtube.available_version)
         self.assertNotIn("1.18.2", youtube.message or "")
 
-    def test_two_encoded_tracks_degrade_youtube(self):
+        recovered = self.store.expire_degraded(now=self.now + DEGRADED_CLEAR_SECONDS + 1)
+        self.assertFalse(recovered)
+        self.assertEqual(youtube.status, "degraded")
+
+    def test_two_encoded_tracks_mark_source_persistent(self):
         self.store.record_node(
             "DEFAULT",
             available=True,
@@ -111,7 +159,9 @@ class PlaybackHealthStoreTests(unittest.TestCase):
         self._fail(1, encoded="aaa")
         _, changed = self._fail(2, encoded="bbb")
         self.assertTrue(changed)
-        self.assertEqual(self.store.components["source:youtube"].status, "degraded")
+        youtube = self.store.components["source:youtube"]
+        self.assertEqual(youtube.status, "degraded")
+        self.assertTrue(youtube.persistent)
 
     def test_rate_limit_threshold_uses_distinct_items(self):
         self.store.record_node(
@@ -121,7 +171,9 @@ class PlaybackHealthStoreTests(unittest.TestCase):
             now=self.now,
         )
         exc = {"message": "This content isn’t available."}
-        self.store.record_exception(source="youtube", exception=exc, item_id=1, encoded="a", now=self.now)
+        _, changed = self.store.record_exception(source="youtube", exception=exc, item_id=1, encoded="a", now=self.now)
+        self.assertFalse(changed)
+        self.assertEqual(self.store.components["source:youtube"].status, "ok")
         self.store.record_exception(source="youtube", exception=exc, item_id=2, encoded="b", now=self.now)
         _, changed = self.store.record_exception(source="youtube", exception=exc, item_id=3, encoded="c", now=self.now)
         self.assertTrue(changed)
@@ -164,9 +216,18 @@ class PlaybackHealthStoreTests(unittest.TestCase):
             now=self.now,
         )
         self._fail(1, encoded="a")
-        self._fail(2, encoded="b")
         self.assertTrue(self.store.record_track_start("youtube", now=self.now + 5))
-        self.assertEqual(self.store.components["source:youtube"].status, "ok")
+        youtube = self.store.components["source:youtube"]
+        self.assertEqual(youtube.status, "ok")
+        self.assertFalse(youtube.persistent)
+
+    def test_first_source_failure_can_timeout_without_playback(self):
+        self._fail(1)
+        youtube = self.store.components["source:youtube"]
+        self.assertEqual(youtube.status, "degraded")
+        changed = self.store.expire_degraded(now=self.now + DEGRADED_CLEAR_SECONDS + 1)
+        self.assertTrue(changed)
+        self.assertEqual(youtube.status, "ok")
 
     def test_nodeinfo_parses_source_managers(self):
         info = NodeInfo({

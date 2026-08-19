@@ -91,6 +91,7 @@ class HealthComponent:
     last_seen: float = 0.0
     plugin_name: Optional[str] = None
     last_source_event_at: float = 0.0
+    persistent: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -187,41 +188,61 @@ class PlaybackHealthStore:
             item_id: event for item_id, event in window.items() if now - event.ts <= FAILURE_WINDOW_SECONDS
         }
 
-    def _source_message(self, component: HealthComponent) -> str:
+    def _source_message(self, component: HealthComponent, *, persistent: bool = False) -> str:
         plugin = component.plugin_name or component.component.split(":", 1)[-1]
         version = component.installed_version or "unknown"
         label = "YouTube" if component.component == "source:youtube" else plugin
+        if persistent:
+            return (
+                f"{label} source is reporting repeated failures. "
+                f"Installed plugin: {plugin} {version}. "
+                f"Check/update the Lavalink {label} plugin."
+            )
         return (
-            f"{label} source is reporting repeated failures. "
-            f"Installed plugin: {plugin} {version}. "
-            f"Check/update the Lavalink {label} plugin."
+            f"{label} source is reporting failures. "
+            f"Installed plugin: {plugin} {version}."
         )
 
-    def _evaluate_source(self, component_id: str, now: float) -> bool:
+    def _window_persistent(self, component_id: str, now: float) -> bool:
         self._prune_window(component_id, now)
-        component = self._component(component_id)
         events = list(self._windows.get(component_id, {}).values())
         source_events = [event for event in events if event.code in SOURCE_SCOPE_CODES]
         rate_events = [event for event in events if event.code == RATE_LIMIT_CODE]
         distinct_source_items = {event.item_id for event in source_events}
         distinct_source_encoded = {event.encoded for event in source_events if event.encoded}
         distinct_rate_items = {event.item_id for event in rate_events}
-
-        should_degrade = (
+        return (
             len(distinct_source_items) >= DISTINCT_ITEM_THRESHOLD
             or len(distinct_source_encoded) >= DISTINCT_ENCODED_THRESHOLD
             or len(distinct_rate_items) >= DISTINCT_ITEM_THRESHOLD
         )
+
+    def _evaluate_source(self, component_id: str, now: float, *, source_scoped_event: bool = False) -> bool:
+        persistent_now = self._window_persistent(component_id, now)
+        component = self._component(component_id)
+        if persistent_now:
+            component.persistent = True
         changed = False
-        if should_degrade and component.status != "degraded":
+
+        if component.status == "unavailable":
+            return False
+
+        if (source_scoped_event or component.persistent) and component.status == "ok":
             component.status = "degraded"
-            component.severity = "error"
-            component.message = self._source_message(component)
+            component.severity = "error" if component.persistent else "warning"
+            component.message = self._source_message(component, persistent=component.persistent)
             component.last_seen = now
             changed = True
-        elif component.status == "degraded":
+        elif component.status == "degraded" and component.persistent:
+            message = self._source_message(component, persistent=True)
+            if component.severity != "error" or component.message != message:
+                component.severity = "error"
+                component.message = message
+                component.last_seen = now
+                changed = True
+        elif component.status == "degraded" and not component.persistent:
             idle = now - (component.last_source_event_at or 0)
-            if not should_degrade and idle >= DEGRADED_CLEAR_SECONDS:
+            if not source_scoped_event and idle >= DEGRADED_CLEAR_SECONDS:
                 component.status = "ok"
                 component.severity = "info"
                 component.message = None
@@ -309,7 +330,11 @@ class PlaybackHealthStore:
                         code=classification.code,
                         ts=now,
                     )
-                changed = self._evaluate_source(component_id, now) or changed
+                changed = self._evaluate_source(
+                    component_id,
+                    now,
+                    source_scoped_event=classification.scope == "source",
+                ) or changed
 
         if guild_id is not None:
             self._guild_failures[guild_id] = {
@@ -331,6 +356,7 @@ class PlaybackHealthStore:
         component.status = "ok"
         component.severity = "info"
         component.message = None
+        component.persistent = False
         component.last_seen = now
         return True
 
