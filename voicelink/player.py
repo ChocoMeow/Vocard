@@ -63,9 +63,12 @@ from .playback import (
     AttemptState,
     EventDisposition,
     EXCEPTION_END_FALLBACK,
+    exception_log_fields,
+    format_playback_log_fields,
     PendingEventKind,
     PlaybackAdvanceReason,
     PlaybackSession,
+    safe_log_text,
     TerminalSource,
     TRACK_START_TIMEOUT,
 )
@@ -424,10 +427,10 @@ class Player(VoiceProtocol):
         if task and not task.done():
             task.cancel()
 
-    def _log_playback(self, event: str, **fields) -> None:
+    def _log_playback(self, event: str, *, level: int = logging.INFO, **fields) -> None:
         self._playback.log(event, guild_id=getattr(self._guild, "id", None), **fields)
-        extras = " ".join(f"{key}={value}" for key, value in fields.items() if value is not None)
-        self._playback_log.info("%s %s", event, extras)
+        extras = format_playback_log_fields(fields)
+        self._playback_log.log(level, "%s %s", event, extras)
 
     async def _dispatch_event(self, data: dict):
         """Dispatches an event based on the type of event data received."""
@@ -529,7 +532,18 @@ class Player(VoiceProtocol):
                 self._exception_fallback_task = self.bot.loop.create_task(
                     self._exception_fallback_worker(attempt_id, item_id)
                 )
-        self._log_playback("TRACK_EXCEPTION", item_id=getattr(self._current_item, "item_id", None))
+        track_obj = track or getattr(self._current_item, "track", None)
+        self._log_playback(
+            "TRACK_EXCEPTION",
+            level=logging.ERROR,
+            item_id=getattr(self._current_item, "item_id", None),
+            attempt_id=getattr(self._playback.attempt, "attempt_id", None),
+            node=getattr(self._node, "_identifier", None),
+            source=getattr(track_obj, "source", None),
+            track=getattr(track_obj, "title", None),
+            uri=safe_log_text(getattr(track_obj, "uri", None), limit=180),
+            **exception_log_fields(error if isinstance(error, dict) else None),
+        )
 
     async def _exception_fallback_worker(self, attempt_id: Optional[int], item_id: Optional[int]) -> None:
         try:

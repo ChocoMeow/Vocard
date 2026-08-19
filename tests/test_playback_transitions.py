@@ -13,6 +13,8 @@ from voicelink.playback import (
     QueueItem,
     TerminalSource,
     encoded_from_payload,
+    exception_log_fields,
+    format_playback_log_fields,
 )
 from voicelink.queue import FairQueue, Queue
 
@@ -371,6 +373,59 @@ class PlaybackTransitionTests(unittest.TestCase):
         load_err = NodeException("y", kind="LOADTRACKS")
         self.assertTrue(play_err.is_play_patch)
         self.assertFalse(load_err.is_play_patch)
+
+    def test_track_exception_log_fields_include_lavalink_details(self):
+        self._start(self.item_a)
+        self.session.apply_track_exception({
+            "message": "Something went wrong",
+            "severity": "common",
+            "cause": "java.lang.RuntimeException: boom",
+            "causeStackTrace": "line1\n" * 400,
+        })
+        record = [row for row in self.session.logs if row.get("event") == "TRACK_EXCEPTION"][-1]
+        self.assertEqual(record["item_id"], 1)
+        self.assertEqual(record["attempt_id"], 1)
+        self.assertEqual(record["message"], "Something went wrong")
+        self.assertEqual(record["severity"], "common")
+        self.assertEqual(record["cause"], "java.lang.RuntimeException: boom")
+        self.assertNotIn("causeStackTrace", record)
+
+
+class ExceptionLogTests(unittest.TestCase):
+    def test_missing_exception_fields_are_omitted(self):
+        self.assertEqual(exception_log_fields(None), {})
+        self.assertEqual(exception_log_fields({}), {})
+        self.assertEqual(exception_log_fields({"message": None, "severity": "", "cause": "  "}), {})
+
+    def test_nested_exception_and_truncation(self):
+        fields = exception_log_fields({
+            "exception": {
+                "message": "x" * 300,
+                "severity": "fault",
+                "cause": "y" * 50,
+            }
+        })
+        self.assertEqual(fields["severity"], "fault")
+        self.assertEqual(fields["cause"], "y" * 50)
+        self.assertTrue(fields["message"].endswith("..."))
+        self.assertLessEqual(len(fields["message"]), 240)
+
+    def test_example_track_exception_log_format(self):
+        line = format_playback_log_fields({
+            "item_id": 3,
+            "attempt_id": 5,
+            "node": "DEFAULT",
+            "source": "youtube",
+            "track": "Bi Bi Bi Bizamet",
+            "message": "This content isn’t available.",
+            "severity": "common",
+            "cause": "com.sedmelluq.discord.lavaplayer.tools.FriendlyException",
+        })
+        self.assertTrue(line.startswith("item_id=3 attempt_id=5 node=DEFAULT source=youtube"))
+        self.assertIn('track="Bi Bi Bi Bizamet"', line)
+        self.assertIn('message="This content isn’t available."', line)
+        self.assertIn('severity="common"', line)
+        self.assertIn("cause=", line)
 
 
 class QueueWrapperTests(unittest.TestCase):

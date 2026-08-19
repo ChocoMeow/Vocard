@@ -139,6 +139,20 @@ def encoded_from_payload(data: Optional[dict]) -> Optional[str]:
     return data.get("encodedTrack")
 
 
+EXCEPTION_LOG_TEXT_LIMIT = 240
+_EXCEPTION_LOG_SKIP_KEYS = {
+    "causestacktrace",
+    "stacktrace",
+    "stack",
+    "trace",
+    "authorization",
+    "password",
+    "token",
+    "secret",
+}
+_QUOTED_LOG_KEYS = {"track", "message", "cause", "uri", "causeMessage", "severity"}
+
+
 def snapshot_exception(data: Optional[dict]) -> dict:
     if not data:
         return {"severity": "", "message": "", "cause": ""}
@@ -150,6 +164,57 @@ def snapshot_exception(data: Optional[dict]) -> dict:
             "cause": exception.get("cause", ""),
         }
     return {"severity": "", "message": "", "cause": ""}
+
+
+def safe_log_text(value: Any, *, limit: int = EXCEPTION_LOG_TEXT_LIMIT) -> Optional[str]:
+    if value is None or isinstance(value, (dict, list, tuple, bytes, bytearray)):
+        return None
+    text = str(value).replace("\r", " ").replace("\n", " ").strip()
+    if not text:
+        return None
+    if len(text) > limit:
+        return text[: limit - 3] + "..."
+    return text
+
+
+def exception_log_fields(exception: Optional[dict]) -> Dict[str, Any]:
+    """Safe Lavalink exception fields for TRACK_EXCEPTION logs. No stack traces or secrets."""
+    if not isinstance(exception, dict):
+        return {}
+    payload = exception["exception"] if isinstance(exception.get("exception"), dict) else exception
+    fields: Dict[str, Any] = {}
+    for key in ("message", "severity", "cause", "causeMessage"):
+        text = safe_log_text(payload.get(key))
+        if text is not None:
+            fields[key] = text
+    for key, value in payload.items():
+        lowered = str(key).lower()
+        if lowered in _EXCEPTION_LOG_SKIP_KEYS or key in fields:
+            continue
+        if lowered in ("message", "severity", "cause", "causemessage"):
+            continue
+        if isinstance(value, (dict, list, tuple, bytes, bytearray)):
+            continue
+        text = safe_log_text(value, limit=120)
+        if text is not None:
+            fields[key] = text
+    return fields
+
+
+def format_playback_log_fields(fields: Dict[str, Any]) -> str:
+    parts = []
+    for key, value in fields.items():
+        if value is None or value == "":
+            continue
+        if isinstance(value, str):
+            escaped = value.replace('"', "'")
+            if key in _QUOTED_LOG_KEYS or " " in escaped:
+                parts.append(f'{key}="{escaped}"')
+            else:
+                parts.append(f"{key}={escaped}")
+        else:
+            parts.append(f"{key}={value}")
+    return " ".join(parts)
 
 
 @dataclass
@@ -533,7 +598,12 @@ class PlaybackSession:
         if self.attempt.recorded_exception:
             return False
         self.attempt.recorded_exception = exception or {}
-        self.log("TRACK_EXCEPTION", item_id=self.attempt.item_id, attempt_id=self.attempt.attempt_id)
+        self.log(
+            "TRACK_EXCEPTION",
+            item_id=self.attempt.item_id,
+            attempt_id=self.attempt.attempt_id,
+            **exception_log_fields(exception),
+        )
         return True
 
     def claim(self, source: TerminalSource) -> bool:
