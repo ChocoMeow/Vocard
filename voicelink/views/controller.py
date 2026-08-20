@@ -135,9 +135,11 @@ class Back(ControlButton):
 
         if not self.player.is_playing:
             self.player.queue.backto(1)
+            self.player.queue.prepare_user_reselect()
             await self.player.do_next()
         else:
             self.player.queue.backto(2)
+            self.player.queue.prepare_user_reselect()
             await self.player.stop()
 
         await self.send(interaction, "player.controls.back.success", interaction.user)
@@ -420,6 +422,7 @@ class Tracks(ControlSelect):
         await interaction.response.defer()
 
         self.player.queue.skipto(int(self.values[0].split(". ")[0]))
+        self.player.queue.prepare_user_reselect()
         await self.player.stop()
 
         if self.player.settings.get("controller_msg", True):

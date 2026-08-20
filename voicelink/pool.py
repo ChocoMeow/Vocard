@@ -256,24 +256,89 @@ class Node:
         elif op == "playerUpdate":
             await player._update_state(data)
 
-    async def send(self, method: RequestMethod, query: str, data: Union[dict, str] = {}) -> dict:
+    def _rest_kind(self, method: RequestMethod, query: str, data: Union[dict, str]) -> str:
+        q = (query or "").lower()
+        if "loadtracks" in q:
+            return "LOADTRACKS"
+        if q.startswith("sessions/") and "/players/" not in q:
+            return "SESSION"
+        if "/players/" in q:
+            if method == RequestMethod.GET:
+                return "PLAYER_GET"
+            if method == RequestMethod.DELETE:
+                return "PLAYER_DELETE"
+            if method == RequestMethod.PATCH and isinstance(data, dict):
+                if "encodedTrack" in data:
+                    return "PLAYER_STOP" if data.get("encodedTrack") is None else "PLAYER_PLAY"
+                return "PLAYER_PATCH"
+        return "REST"
+
+    def _truncate_body(self, raw: str) -> str:
+        encoded = (raw or "").encode("utf-8", "replace")[:512]
+        return encoded.decode("utf-8", "replace")
+
+    async def send(
+        self,
+        method: RequestMethod,
+        query: str,
+        data: Union[dict, str] = {},
+        kind: str = None,
+    ) -> dict:
         if not self._available:
             raise NodeNotAvailable(f"The node '{self._identifier}' is unavailable.")
         
         uri: str = f"{self._rest_uri}/{NODE_VERSION}/{query}"
-        async with self._session.request(
-            method=method.value,
-            url=uri,
-            headers={"Authorization": self._password},
-            json=data
-        ) as resp:
-            if resp.status >= 300:
-                raise NodeException(f"Getting errors from Lavalink REST api")
-            
-            if method == RequestMethod.DELETE:
-                return await resp.json(content_type=None)
+        rest_kind = kind or self._rest_kind(method, query, data)
+        timeout = aiohttp.ClientTimeout(total=30, connect=10)
+        try:
+            async with self._session.request(
+                method=method.value,
+                url=uri,
+                headers={"Authorization": self._password},
+                json=data if not isinstance(data, str) else None,
+                timeout=timeout,
+            ) as resp:
+                raw = await resp.text()
+                if resp.status >= 300:
+                    raise NodeException(
+                        "Getting errors from Lavalink REST api",
+                        method=method.value,
+                        path=query,
+                        kind=rest_kind,
+                        status=resp.status,
+                        body=self._truncate_body(raw),
+                        node_id=self._identifier,
+                    )
+                
+                if method == RequestMethod.DELETE:
+                    if not raw:
+                        return {}
+                    return await resp.json(content_type=None)
 
-            return await resp.json()
+                if not raw:
+                    return {}
+                try:
+                    return await resp.json(content_type=None)
+                except Exception:
+                    return {}
+        except NodeException:
+            raise
+        except asyncio.TimeoutError as exc:
+            raise NodeException(
+                "Lavalink REST request timed out",
+                method=method.value,
+                path=query,
+                kind=rest_kind,
+                node_id=self._identifier,
+            ) from exc
+        except aiohttp.ClientError as exc:
+            raise NodeException(
+                "Lavalink REST request failed",
+                method=method.value,
+                path=query,
+                kind=rest_kind,
+                node_id=self._identifier,
+            ) from exc
 
     async def connect(self) -> Node:
         """Initiates a connection with a Lavalink node and adds it to the node pool."""
