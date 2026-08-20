@@ -27,8 +27,20 @@ from .pool import NodePool
 from discord.ext.commands import Bot
 from typing import TYPE_CHECKING
 
+from .playback import encoded_from_payload
+
 if TYPE_CHECKING:
     from .player import Player
+
+
+def _snapshot_event_track(player: "Player", data: dict):
+    encoded = encoded_from_payload(data)
+    current = getattr(player, "_current", None)
+    if current is not None:
+        if not encoded or getattr(current, "track_id", None) == encoded:
+            return current
+    ending = getattr(player, "_ending_track", None)
+    return ending if ending is not None else current
 
 class VoicelinkEvent:
     """The base class for all events dispatched by a node. 
@@ -54,13 +66,15 @@ class TrackStartEvent(VoicelinkEvent):
 
     def __init__(self, data: dict, player: Player):
         self.player: Player = player
-        self.track = self.player._current
+        self.encoded = encoded_from_payload(data)
+        self.track = _snapshot_event_track(player, data)
 
         # on_voicelink_track_start(player, track)
         self.handler_args = self.player, self.track
 
     def __repr__(self) -> str:
-        return f"<Voicelink.TrackStartEvent player={self.player} track_id={self.track.track_id}>"
+        track_id = getattr(self.track, "track_id", None)
+        return f"<Voicelink.TrackStartEvent player={self.player} track_id={track_id}>"
 
 
 class TrackEndEvent(VoicelinkEvent):
@@ -71,15 +85,17 @@ class TrackEndEvent(VoicelinkEvent):
 
     def __init__(self, data: dict, player: Player):
         self.player: Player = player
-        self.track = self.player._ending_track
+        self.encoded = encoded_from_payload(data)
+        self.track = _snapshot_event_track(player, data)
         self.reason: str = data["reason"]
 
         # on_voicelink_track_end(player, track, reason)
         self.handler_args = self.player, self.track, self.reason
 
     def __repr__(self) -> str:
+        track_id = getattr(self.track, "track_id", None)
         return (
-            f"<Voicelink.TrackEndEvent player={self.player} track_id={self.track.track_id} "
+            f"<Voicelink.TrackEndEvent player={self.player} track_id={track_id} "
             f"reason={self.reason}>"
         )
 
@@ -93,7 +109,8 @@ class TrackStuckEvent(VoicelinkEvent):
 
     def __init__(self, data: dict, player: Player):
         self.player: Player = player
-        self.track = self.player._ending_track
+        self.encoded = encoded_from_payload(data)
+        self.track = _snapshot_event_track(player, data)
         self.threshold: float = data["thresholdMs"]
 
         # on_voicelink_track_stuck(player, track, threshold)
@@ -112,7 +129,8 @@ class TrackExceptionEvent(VoicelinkEvent):
 
     def __init__(self, data: dict, player: Player):
         self.player: Player = player
-        self.track = self.player._ending_track
+        self.encoded = encoded_from_payload(data)
+        self.track = _snapshot_event_track(player, data)
         self.exception: dict = data.get("exception", {
             "severity": "",
             "message": "",

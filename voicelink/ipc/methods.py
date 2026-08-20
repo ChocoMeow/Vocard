@@ -6,7 +6,7 @@ from typing import List, Dict, Union, Optional, TYPE_CHECKING
 
 from discord import User, Member
 from discord.ext import commands
-from voicelink import Player, Track, Playlist, NodePool, LoopType, Filters, Config, MongoDBHandler, LangHandler, LYRICS_PLATFORMS
+from voicelink import Player, Track, Playlist, NodePool, LoopType, Filters, Config, MongoDBHandler, LangHandler, LYRICS_PLATFORMS, AttemptIntent
 from voicelink.utils import TempCtx
 
 if TYPE_CHECKING:
@@ -124,7 +124,7 @@ async def initPlayer(player: Player, member: Member, data: Dict) -> Dict:
             "avatarUrl": member.display_avatar.url,
             "name": member.name
         } for member in player.channel.members ],
-        "tracks": [ {"trackId": track.track_id, "requesterId": str(track.requester.id)} for track in player.queue._queue ],
+        "tracks": player.queue.ipc_track_payloads(),
         "repeatMode": player.queue.repeat.lower(),
         "channelName": player.channel.name,
         "currentQueuePosition": player.queue._position + (0 if player.is_playing else 1),
@@ -177,6 +177,7 @@ async def skipTo(player: Player, member: Member, data: Dict) -> None:
     index = data.get("index", 1)
     if index > 1:
         player.queue.skipto(index)
+        player.queue.prepare_user_reselect()
 
     if player.queue._repeat.mode == LoopType.TRACK:
         await player.set_repeat(LoopType.OFF)
@@ -198,9 +199,11 @@ async def backTo(player: Player, member: Member, data: Dict) -> None:
     index = data.get("index", 1)
     if not player.is_playing:
         player.queue.backto(index)
+        player.queue.prepare_user_reselect()
         await player.do_next()
     else:
         player.queue.backto(index + 1)
+        player.queue.prepare_user_reselect()
         await player.stop()
 
 @require_permission()
@@ -226,7 +229,7 @@ async def addTracks(player: Player, member: Member, data: Dict) -> None:
     elif _type == "forcePlay":
         await player.add_track(tracks, at_front=True)
         if player.is_playing:
-            return await player.stop()
+            return await player.stop(intent=AttemptIntent.FORCEPLAY)
     
     elif _type == "addNext":
         await player.add_track(tracks, at_front=True)

@@ -28,6 +28,29 @@ class VoicelinkException(Exception):
 class NodeException(Exception):
     """Base exception for nodes."""
 
+    def __init__(
+        self,
+        message: str = "Getting errors from Lavalink REST api",
+        *,
+        method: str = None,
+        path: str = None,
+        kind: str = None,
+        status: int = None,
+        body: str = None,
+        node_id: str = None,
+    ):
+        super().__init__(message)
+        self.method = method
+        self.path = path
+        self.kind = kind
+        self.status = status
+        self.body = body
+        self.node_id = node_id
+
+    @property
+    def is_play_patch(self) -> bool:
+        return self.kind == "PLAYER_PLAY"
+
 
 class NodeCreationError(NodeException):
     """There was a problem while creating the node."""
