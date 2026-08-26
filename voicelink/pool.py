@@ -24,11 +24,13 @@ SOFTWARE.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import aiohttp
 import logging
 
+from dataclasses import dataclass
 from discord import Client, Member
 from discord.ext.commands import Bot
 from typing import Dict, Optional, Union, List, Any, TYPE_CHECKING
@@ -60,6 +62,70 @@ URL_REGEX = re.compile(
 )
 
 NODE_VERSION = "v4"
+
+_WS_CLOSE_TYPES = {
+    aiohttp.WSMsgType.CLOSE,
+    aiohttp.WSMsgType.CLOSED,
+}
+_CLOSING = getattr(aiohttp.WSMsgType, "CLOSING", None)
+if _CLOSING is not None:
+    _WS_CLOSE_TYPES.add(_CLOSING)
+
+_WS_PING_TYPES = {
+    aiohttp.WSMsgType.PING,
+    aiohttp.WSMsgType.PONG,
+}
+
+
+@dataclass(frozen=True)
+class LavalinkWsDecision:
+    action: str
+    payload: Optional[dict] = None
+    close_code: Optional[int] = None
+    close_reason: str = ""
+    error: Optional[BaseException] = None
+
+
+def interpret_lavalink_ws_message(msg) -> LavalinkWsDecision:
+    """Classify a Lavalink websocket frame without calling ``msg.json()`` blindly.
+
+    Lavalink v4 sends JSON on TEXT frames. CLOSE frames carry an integer close
+    code in ``msg.data``; calling ``WSMessage.json()`` on those raises TypeError.
+    """
+    msg_type = getattr(msg, "type", None)
+
+    if msg_type == aiohttp.WSMsgType.TEXT:
+        data = getattr(msg, "data", None)
+        if not isinstance(data, (str, bytes, bytearray)):
+            return LavalinkWsDecision(action="ignore")
+        try:
+            payload = json.loads(data)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return LavalinkWsDecision(action="ignore")
+        if not isinstance(payload, dict):
+            return LavalinkWsDecision(action="ignore")
+        return LavalinkWsDecision(action="dispatch", payload=payload)
+
+    if msg_type == aiohttp.WSMsgType.BINARY:
+        return LavalinkWsDecision(action="ignore")
+
+    if msg_type in _WS_CLOSE_TYPES:
+        data = getattr(msg, "data", None)
+        extra = getattr(msg, "extra", None)
+        code = data if isinstance(data, int) else None
+        reason = extra if isinstance(extra, str) else ""
+        return LavalinkWsDecision(action="reconnect", close_code=code, close_reason=reason)
+
+    if msg_type == aiohttp.WSMsgType.ERROR:
+        data = getattr(msg, "data", None)
+        error = data if isinstance(data, BaseException) else None
+        return LavalinkWsDecision(action="reconnect", error=error)
+
+    if msg_type in _WS_PING_TYPES:
+        return LavalinkWsDecision(action="ignore")
+
+    return LavalinkWsDecision(action="ignore")
+
 
 class Node:
     """The base class for a node. 
@@ -197,17 +263,31 @@ class Node:
         while True:
             try:
                 msg = await self._websocket.receive()
+                decision = interpret_lavalink_ws_message(msg)
 
-                if msg.type == aiohttp.WSMsgType.CLOSED:
-                    self._available = False
-                    self._logger.warning(f"WebSocket closed for node [{self._identifier}]")
-                    break
+                if decision.action == "dispatch":
+                    self._bot.loop.create_task(self._handle_payload(decision.payload))
+                    continue
 
-                elif msg.type == aiohttp.WSMsgType.ERROR:
-                    self._logger.error(f"WebSocket error for node [{self._identifier}]")
-                    break
-                
-                self._bot.loop.create_task(self._handle_payload(msg.json()))
+                if decision.action == "ignore":
+                    continue
+
+                self._available = False
+                if decision.error is not None:
+                    self._logger.error(
+                        "WebSocket error for node [%s]: %s",
+                        self._identifier,
+                        decision.error,
+                    )
+                else:
+                    self._logger.warning(
+                        "WebSocket closed for node [%s] code=%s reason=%s session_id=%s",
+                        self._identifier,
+                        decision.close_code,
+                        decision.close_reason or "",
+                        self._session_id,
+                    )
+                break
 
             except aiohttp.ClientConnectionError as e:
                 self._logger.error(f"Connection error: {e}")
