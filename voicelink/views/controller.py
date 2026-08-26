@@ -382,16 +382,14 @@ class Lyrics(ControlButton):
         
         await interaction.response.defer()
 
-        title = self.player.current.title
-        artist = self.player.current.author
-        
+        track = self.player.current
         lyrics_platform = voicelink.LYRICS_PLATFORMS.get(Config().lyrics_platform)
         if lyrics_platform:
-            lyrics = await lyrics_platform().get_lyrics(title, artist)
+            lyrics = await lyrics_platform().get_lyrics(track.title, track.author, track=track)
             if not lyrics:
                 return await self.send(interaction, "lyrics.notFound", ephemeral=True)
 
-            view = LyricsView(name=title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()}, author=interaction.user)
+            view = LyricsView(name=track.title, source={_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()}, author=interaction.user)
             view.response = await self.send_embed(interaction, await view.build_embed(), view=view, ephemeral=True)
 
 class Tracks(ControlSelect):

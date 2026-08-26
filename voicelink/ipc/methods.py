@@ -674,22 +674,31 @@ async def getSettings(bot: commands.Bot, data: Dict) -> Dict:
     }
 
 async def getLyrics(bot: commands.Bot, data: Dict) -> Dict:
-    title, artist, platform = data.get("title", ""), data.get("artist", ""), data.get("platform", "")
+    track_id, platform = data.get("trackId", ""), data.get("platform", "")
+    if not track_id:
+        return error_msg("No track ID could be located.", user_id=data.get("userId"), level="error")
+
     if not platform or platform not in LYRICS_PLATFORMS:
         platform = Config().lyrics_platform
     
     lyrics_platform = LYRICS_PLATFORMS.get(platform)
-    if lyrics_platform:
-        lyrics: dict[str, str] = await lyrics_platform().get_lyrics(title, artist)
-        return {
-            "op": "getLyrics",
-            "userId": data.get("userId"),
-            "title": title,
-            "artist": artist,
-            "platform": platform,
-            "lyrics": {_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()} if lyrics else {},
-            "callback": data.get("callback")
-        }
+    if not lyrics_platform:
+        return error_msg("Invalid lyrics platform.", user_id=data.get("userId"), level="error")
+
+    track = Track(track_id=track_id, info=Track.decode(track_id), requester=None)
+    if track.is_stream:
+        return error_msg("You are not allowed to get lyrics for streaming videos.", user_id=data.get("userId"), level="error")
+
+    lyrics: dict[str, str] = await lyrics_platform().get_lyrics(track.title, track.author, track=track)
+    return {
+        "op": "getLyrics",
+        "userId": data.get("userId"),
+        "title": track.title,
+        "artist": track.author,
+        "platform": platform,
+        "lyrics": {_: re.findall(r'.*\n(?:.*\n){,22}', v or "") for _, v in lyrics.items()} if lyrics else {},
+        "callback": data.get("callback")
+    }
 
 async def updateSettings(bot: commands.Bot, data: Dict) -> None:
     user_id = int(data.get("userId"))

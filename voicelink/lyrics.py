@@ -76,7 +76,7 @@ Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-US) AppleWebKit/530.5 (KHTM
 
 class LyricsPlatform(ABC):
     @abstractmethod
-    async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
+    async def get_lyrics(self, title: str, artist: str, track=None) -> Optional[dict[str, str]]:
         ...
 
 class A_ZLyrics(LyricsPlatform):
@@ -90,7 +90,7 @@ class A_ZLyrics(LyricsPlatform):
         except:
             return ""
 
-    async def get_lyrics(self, title: str, artist: str) -> dict[str, str]:
+    async def get_lyrics(self, title: str, artist: str, track=None) -> dict[str, str]:
         link = await self.googleGet(title=title, artist=artist)
         if not link:
             return 0
@@ -199,7 +199,7 @@ class Genius(LyricsPlatform):
         self.module = import_module("lyricsgenius")
         self.genius = self.module.Genius(Config().genius_token)
 
-    async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
+    async def get_lyrics(self, title: str, artist: str, track=None) -> Optional[dict[str, str]]:
         song = self.genius.search_song(title=title, artist=artist)
         if not song:
             return None
@@ -210,7 +210,7 @@ class Lyrist(LyricsPlatform):
     def __init__(self):
         self.base_url: str = "https://lyrist.vercel.app/api/"
 
-    async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
+    async def get_lyrics(self, title: str, artist: str, track=None) -> Optional[dict[str, str]]:
         try:
             request_url = self.base_url + title + "/" + artist
             async with aiohttp.ClientSession() as session:
@@ -237,7 +237,7 @@ class Lrclib(LyricsPlatform):
         except:
             return []
         
-    async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
+    async def get_lyrics(self, title: str, artist: str, track=None) -> Optional[dict[str, str]]:
         params = {"q": title}
         result = await self.get(self.base_url + "search", params)
         if result:
@@ -250,7 +250,7 @@ class MusixMatch(LyricsPlatform):
         self.base_url = "https://api.musixmatch.com/ws/1.1/"
         self.apikey = Config().musixmatch_token
 
-    async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
+    async def get_lyrics(self, title: str, artist: str, track=None) -> Optional[dict[str, str]]:
         if not self.apikey:
             return None
 
@@ -280,10 +280,51 @@ class MusixMatch(LyricsPlatform):
         except:
             return None
 
+class LavaLyrics(LyricsPlatform):
+    # Uses the LavaLyrics plugin on your Lavalink node (not a remote HTTP lyrics site).
+    # Requires the plugin installed server-side: https://github.com/topi314/LavaLyrics
+    # Prefer passing `track` (encoded Lavalink track) for accurate source matching.
+    async def get_lyrics(self, title: str, artist: str, track=None) -> Optional[dict[str, str]]:
+        # Lazy import avoids circular import with voicelink.pool / __init__
+        from .pool import NodePool
+        from .enums import RequestMethod
+
+        try:
+            node = NodePool.get_node()
+            encoded = getattr(track, "track_id", None) if track is not None else None
+
+            # Fallback: resolve title/artist through Lavalink, then fetch lyrics for that track
+            if not encoded:
+                query = f"{artist} {title}".strip() if artist else title
+                if not query:
+                    return None
+                results = await node.get_tracks(query, requester=None)
+                if not results:
+                    return None
+                first = results[0] if isinstance(results, list) else results.tracks[0]
+                encoded = first.track_id
+
+            data = await node.send(RequestMethod.GET, f"lyrics?track={quote(encoded)}")
+            if not data:
+                return None
+
+            # Normalize to Vocard's {section: text} format
+            text = data.get("text")
+            if not text:
+                lines = data.get("lines") or []
+                text = "\n".join(line.get("line", "") for line in lines).strip()
+            if not text:
+                return None
+
+            return {"default": text}
+        except:
+            return None
+
 LYRICS_PLATFORMS: dict[str, Type[LyricsPlatform]] = {
     "a_zlyrics": A_ZLyrics,
     "genius": Genius,
     "lyrist": Lyrist,
     "lrclib": Lrclib,
-    "musixmatch": MusixMatch
+    "musixmatch": MusixMatch,
+    "lavalyrics": LavaLyrics,
 }

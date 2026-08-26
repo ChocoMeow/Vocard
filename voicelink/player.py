@@ -555,6 +555,17 @@ class Player(VoiceProtocol):
             
         return await self._node.get_tracks(query, requester=requester, search_type=search_type)
 
+    async def get_lyrics(self, track: Track = None, skip_track_source: bool = False) -> Optional[Dict]:
+        """Fetch lyrics via the LavaLyrics plugin for a track (defaults to current).
+
+        GET /v4/lyrics?track={encodedTrack}
+        Docs: https://github.com/topi314/LavaLyrics
+        """
+        track = track or self.current
+        if not track:
+            return None
+        return await self._node.send(RequestMethod.GET, f"lyrics?track={track.track_id}&skipTrackSource={skip_track_source}")
+
     async def connect(self, *, timeout: float, reconnect: bool, self_deaf: bool = True, self_mute: bool = False):
         """Connects the player to a voice channel."""
         await self.guild.change_voice_state(channel=self.channel, self_deaf=True, self_mute=self_mute)

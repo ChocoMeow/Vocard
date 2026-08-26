@@ -792,8 +792,8 @@ class Basic(commands.Cog):
     @commands.dynamic_cooldown(cooldown_check, commands.BucketType.guild)
     async def lyrics(self, ctx: commands.Context, *, title: str = "", artist: str = ""):
         "Displays lyrics for the playing track."
+        player: voicelink.Player = ctx.guild.voice_client
         if not title:
-            player: voicelink.Player = ctx.guild.voice_client
             if not player or not player.is_playing:
                 return await send_localized_message(ctx, "player.errors.noTrackPlaying", ephemeral=True)
             
@@ -803,7 +803,7 @@ class Basic(commands.Cog):
         await ctx.defer()
         lyrics_platform = voicelink.LYRICS_PLATFORMS.get(Config().lyrics_platform)
         if lyrics_platform:
-            lyrics = await lyrics_platform().get_lyrics(title, artist)
+            lyrics = await lyrics_platform().get_lyrics(title, artist, track=player.current if player else None)
             if not lyrics:
                 return await send_localized_message(ctx, "lyrics.notFound", ephemeral=True)
             

@@ -256,7 +256,7 @@ class Node:
         elif op == "playerUpdate":
             await player._update_state(data)
 
-    async def send(self, method: RequestMethod, query: str, data: Union[dict, str] = {}) -> dict:
+    async def send(self, method: RequestMethod, query: str, data: Union[dict, str] = {}) -> Optional[dict]:
         if not self._available:
             raise NodeNotAvailable(f"The node '{self._identifier}' is unavailable.")
         
@@ -267,6 +267,10 @@ class Node:
             headers={"Authorization": self._password},
             json=data
         ) as resp:
+            # LavaLyrics returns 204 when no lyrics are found
+            if resp.status == 204:
+                return None
+
             if resp.status >= 300:
                 raise NodeException(f"Getting errors from Lavalink REST api")
             
