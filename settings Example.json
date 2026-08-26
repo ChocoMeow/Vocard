@@ -1,9 +1,10 @@
 {
     "token": "YOUR_BOT_TOKEN",
     "client_id": "YOUR_BOT_CLIENT_ID",
-    "genius_token": "YOUR_GENIUS_TOKEN",
     "mongodb_url": "YOUR_MONGODB_URL",
     "mongodb_name": "YOUR_MONGODB_DB_NAME",
+    "genius_token": "YOUR_GENIUS_TOKEN",
+    "musixmatch_token": "YOUR_MUSIXMATCH_API_KEY",
     "nodes": {
         "DEFAULT": {
             "host": "lavalink",

@@ -24,17 +24,11 @@ SOFTWARE.
 import aiohttp
 import random
 import re
-import hmac
-import hashlib
-import base64
-import json
-import urllib.parse
 
 from math import floor
 from urllib.parse import quote
 from abc import ABC, abstractmethod
 from importlib import import_module
-from datetime import datetime
 from typing import Optional, Type
 
 from .config import Config
@@ -249,124 +243,42 @@ class Lrclib(LyricsPlatform):
         if result:
             return {"default": result[0].get("plainLyrics", "")}
 
-"""
-Strvm/musicxmatch-api: a reverse engineered API wrapper for MusicXMatch  
-Copyright (c) 2025 Strvm
-
-Permission is hereby granted, free of charge, to any person obtaining a copy  
-of this software and associated documentation files (the "Software"), to deal  
-in the Software without restriction, including without limitation the rights  
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell  
-copies of the Software, and to permit persons to whom the Software is  
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all  
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR  
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE  
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER  
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  
-SOFTWARE.
-"""
 class MusixMatch(LyricsPlatform):
+    # Official Musixmatch API — requires musixmatch_token in settings
+    # Docs: https://docs.musixmatch.com/api-reference/lyrics-catalog/lyrics-catalog-overview
     def __init__(self):
-        self.base_url = "https://www.musixmatch.com/ws/1.1/"
-        self.headers = {'User-Agent': random.choice(userAgents)}
-        self.secret: Optional[str] = None
-
-    async def search_tracks(self, track_query: str, page: int = 1) -> dict:
-        url = f"track.search?app_id=web-desktop-app-v1.0&format=json&q={urllib.parse.quote(track_query)}&f_has_lyrics=true&page_size=5&page={page}"
-        return await self.make_request(url)
-
-    async def get_track_lyrics(self, track_id: Optional[str] = None, track_isrc: Optional[str] = None) -> dict:
-        if not (track_id or track_isrc):
-            raise ValueError("Either track_id or track_isrc must be provided.")
-        param = f"track_id={track_id}" if track_id else f"track_isrc={track_isrc}"
-        url = f"track.lyrics.get?app_id=web-desktop-app-v1.0&format=json&{param}"
-        return await self.make_request(url)
-
-    async def get_latest_app(self):
-        url = "https://www.musixmatch.com/search"
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers={**self.headers, "Cookie": "mxm_bab=AB"}) as response:
-                html_content = await response.text()
-                pattern = r'src="([^"]*/_next/static/chunks/pages/_app-[^"]+\.js)"'
-                matches = re.findall(pattern, html_content)
-
-                if not matches:
-                    raise Exception("_app URL not found in the HTML content.")
-                
-                return matches[-1]
-
-    async def get_secret(self) -> str:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(await self.get_latest_app(), headers=self.headers, timeout=5) as response:
-                javascript_code = await response.text()
-
-                pattern = r'from\(\s*"(.*?)"\s*\.split'
-                match = re.search(pattern, javascript_code)
-
-                if match:
-                    encoded_string = match.group(1)
-                    reversed_string = encoded_string[::-1]
-
-                    decoded_bytes = base64.b64decode(reversed_string)
-                    return decoded_bytes.decode("utf-8")
-                else:
-                    raise Exception("Encoded string not found in the JavaScript code.")
-
-    async def generate_signature(self, url: str) -> str:
-        current_date = datetime.now()
-        date_str = f"{current_date.year}{str(current_date.month).zfill(2)}{str(current_date.day).zfill(2)}"
-        message = (url + date_str).encode()
-
-        if not self.secret:
-            self.secret = await self.get_secret()
-
-        key = self.secret.encode()
-        hash_output = hmac.new(key, message, hashlib.sha256).digest()
-        signature = (
-            "&signature="
-            + urllib.parse.quote(base64.b64encode(hash_output).decode())
-            + "&signature_protocol=sha256"
-        )
-        return signature
-    
-    async def make_request(self, url: str) -> dict:
-        url = url.replace("%20", "+").replace(" ", "+")
-        url = self.base_url + url
-        signed_url = url + await self.generate_signature(url)
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(signed_url, headers=self.headers, timeout=5) as response:
-                if response.status != 200:
-                    raise Exception(f"HTTP Error: {response.status} for URL: {signed_url}")
-
-                try:
-                    text_data = await response.text()
-                    return json.loads(text_data)
-                except json.JSONDecodeError:
-                    raise Exception(f"Failed to parse JSON. Response: {text_data}")
+        self.base_url = "https://api.musixmatch.com/ws/1.1/"
+        self.apikey = Config().musixmatch_token
 
     async def get_lyrics(self, title: str, artist: str) -> Optional[dict[str, str]]:
-        results = await self.search_tracks(track_query=f"{artist} {title}" if artist else title)
-
-        track_list = results.get("message", {}).get("body", {}).get("track_list")
-        if not track_list:
+        if not self.apikey:
             return None
 
-        track_id = track_list[0]["track"]["track_id"]
-        lyric = await self.get_track_lyrics(track_id=track_id)
+        try:
+            # matcher.lyrics.get: fuzzy-match by title/artist and return lyrics in one call
+            params = {
+                "apikey": self.apikey,
+                "q_track": title,
+                "q_artist": artist,
+                "format": "json",
+            }
+            async with aiohttp.ClientSession() as session:
+                resp = await session.get(
+                    url=self.base_url + "matcher.lyrics.get",
+                    params=params,
+                    headers={"User-Agent": random.choice(userAgents)},
+                )
+                if resp.status != 200:
+                    return None
 
-        lyrics_body = lyric.get("message", {}).get("body", {}).get("lyrics", {}).get("lyrics_body", "")
-        if not lyrics_body:
+                data = await resp.json()
+                lyrics_body = data.get("message", {}).get("body", {}).get("lyrics", {}).get("lyrics_body", "")
+                if not lyrics_body:
+                    return None
+
+                return {"default": lyrics_body}
+        except:
             return None
-
-        return {"default": lyrics_body}
 
 LYRICS_PLATFORMS: dict[str, Type[LyricsPlatform]] = {
     "a_zlyrics": A_ZLyrics,
