@@ -704,7 +704,7 @@ class Playlists(commands.Cog, name="playlist"):
         ) + temp
         temp += raw
 
-        await ctx.send(content="", file=discord.File(StringIO(temp), filename=f"{tracks['name']}_playlist.txt"))
+        await dispatch_message(ctx, file=discord.File(StringIO(temp), filename=f"{tracks['name']}_playlist.txt"))
 
     @playlist.command(name="import", aliases=get_aliases("import"))
     @app_commands.describe(name="Give a name to your playlist.")

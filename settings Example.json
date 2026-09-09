@@ -13,6 +13,13 @@
             "secure": false,
             "identifier": "DEFAULT",
             "reconnect_strategy": "ReconnectOnDrop",
+            "timeouts": {
+                "reattach_initial_delay": 10,
+                "reattach_per_player_delay": 3,
+                "reattach_settle_delay": 2,
+                "rest_request_timeout": 15,
+                "ws_handshake_timeout": 10
+            },
             "yt_ratelimit": {
                 "tokens": [],
                 "config": {

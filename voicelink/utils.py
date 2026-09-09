@@ -27,6 +27,7 @@ import socket
 import discord
 
 from itertools import zip_longest
+from dataclasses import dataclass
 from typing import Dict, Optional, Union
 from timeit import default_timer as timer
 from discord.ext import commands
@@ -42,6 +43,24 @@ from .language import LangHandler
 #     "Plugin",
 #     "Ping"
 # ]
+
+@dataclass
+class NodeTimeouts:
+    """Per-node reattach delays and HTTP/WebSocket timeouts (seconds)."""
+    reattach_initial_delay: int = 10
+    reattach_per_player_delay: int = 3
+    reattach_settle_delay: int = 2
+    rest_request_timeout: int = 15
+    ws_handshake_timeout: int = 10
+
+    @classmethod
+    def from_value(cls, value: Optional[Union["NodeTimeouts", Dict[str, int]]] = None) -> "NodeTimeouts":
+        if value is None:
+            return cls()
+        if isinstance(value, cls):
+            return value
+        return cls(**{k: v for k, v in value.items() if k in cls.__dataclass_fields__})
+
 
 class ExponentialBackoff:
     """
@@ -323,7 +342,7 @@ async def dispatch_message(
         The sent message object, or None.
     """
     if not content:
-        content = "No content provided."
+        content = ""
 
     # Determine the text to send
     embed = content if isinstance(content, discord.Embed) else None
