@@ -339,16 +339,22 @@ class Settings(commands.Cog, name="settings"):
         if interaction.user.id not in voicelink.Config().bot_access_user:
             return await interaction.response.send_message("You are not able to use this command!", ephemeral=True)
 
-        memory = psutil.virtual_memory()
-        disk = psutil.disk_usage(func.ROOT_DIR)
+        try:
+            cpu_freq = psutil.cpu_freq()
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage(func.ROOT_DIR)
+            cpu = f"{cpu_freq.current:.0f}Mhz" if cpu_freq and cpu_freq.current else "N/A"
+            system_info = (
+                "```==    System Info    ==\n"
+                f"• CPU:     {cpu} ({psutil.cpu_percent()}%)\n"
+                f"• RAM:     {format_bytes(memory.total - memory.available)}/{format_bytes(memory.total, True)} ({memory.percent}%)\n"
+                f"• DISK:    {format_bytes(disk.total - disk.used)}/{format_bytes(disk.total, True)} ({disk.percent}%)```"
+            )
+        except Exception:
+            system_info = "```==    System Info    ==\n• CPU:     N/A\n• RAM:     N/A\n• DISK:    N/A```"
 
-        available_memory, total_memory = memory.available, memory.total
-        used_disk_space, total_disk_space = disk.used, disk.total
         embed = discord.Embed(title="📄 Debug Panel", color=voicelink.Config().embed_color)
-        embed.description = "```==    System Info    ==\n" \
-                            f"• CPU:     {psutil.cpu_freq().current}Mhz ({psutil.cpu_percent()}%)\n" \
-                            f"• RAM:     {format_bytes(total_memory - available_memory)}/{format_bytes(total_memory, True)} ({memory.percent}%)\n" \
-                            f"• DISK:    {format_bytes(total_disk_space - used_disk_space)}/{format_bytes(total_disk_space, True)} ({disk.percent}%)```"
+        embed.description = system_info
 
         embed.add_field(
             name="🤖 Bot Information",
